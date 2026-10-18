@@ -30,6 +30,7 @@ param(
   [Parameter(Mandatory = $true)][string]$RunDirectory,
   [Parameter(Mandatory = $true)][string]$FeatureDirectory,
   [string]$SamplesDirectory,
+  [string]$HtmlNamespace = 'orders-service-e2e',
   [string]$Python = 'C:\Users\demo\AppData\Local\Programs\Python\Python312\python.exe',
   [string]$Edge = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
   [int]$Width = 1500,
@@ -46,7 +47,7 @@ foreach ($path in @($renderer, $Python, $Edge)) {
 }
 $feature = Get-Item -LiteralPath $FeatureDirectory
 $run = Get-Item -LiteralPath $RunDirectory
-$htmlNs = Join-Path (Join-Path $SamplesDirectory 'html') 'orders-service-e2e'
+$htmlNs = Join-Path (Join-Path $SamplesDirectory 'html') $HtmlNamespace
 $made = New-Object System.Collections.Generic.List[string]
 
 function Shot([string]$page, [string]$png, [int]$w, [int]$h) {

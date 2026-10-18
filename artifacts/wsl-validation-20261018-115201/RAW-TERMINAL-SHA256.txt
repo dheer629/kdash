@@ -1,4 +1,4 @@
-# sha256 of every terminal.raw.log before gzip -9 compression
-a4084f7a382af661631aead9812b729775c438840a779e76b6817c50be75d4f3  artifacts/wsl-validation-20261018-115201/orders-service-e2e/terminal.raw.log
-0f64afe2d9548f0eaf730fb47717e5bd65c02baa83a55aae98073ad47b164d51  artifacts/wsl-validation-20261018-115201/gitops-core/terminal.raw.log
-4f0eb025899fda14929ec425fdf4041caa53379217c524dbbe3a48eaf72574a0  artifacts/wsl-validation-20261018-115201/ml-service-prod/terminal.raw.log
+# sha256 of every terminal.raw.log after redaction (see artifacts/README.md)
+8fa05f8923c64f40e0173cf752bf74440601f41233e670d0ea899505cb1a02b7  artifacts/wsl-validation-20261018-115201/gitops-core/terminal.raw.log
+83a000d30be06a2f99d2d673aea2ac1eb97d76a1f5907996724d0d1a0c600c2d  artifacts/wsl-validation-20261018-115201/ml-service-prod/terminal.raw.log
+37bf792577d9c8cce27fab5b5bd316c73613a282ccc7663fbf0829dc2154c083  artifacts/wsl-validation-20261018-115201/orders-service-e2e/terminal.raw.log

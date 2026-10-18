@@ -119,6 +119,33 @@ powershell -ExecutionPolicy Bypass -File scripts/collect-html-samples.ps1 -RunDi
 
 The first replays every saved ANSI capture into a PNG under `samples/cli/<namespace>/` (it needs Python with `pyte` and `Pillow`; the images are renders of the captured screen, not operating-system window screenshots). The second copies the HTML reports byte for byte into `samples/html/<namespace>/`, writes `samples/html/SHA256SUMS`, and optionally takes real browser screenshots of the main pages with Microsoft Edge in headless mode.
 
+### Publishing a run without your environment names
+
+`scripts/redact-run.sh` replaces environment-specific names - the kubeconfig
+context, the namespaces and the pod prefixes derived from them - across a run, its
+samples and the documentation, using a private mapping file that stays outside the
+repository:
+
+```bash
+printf 'old-context\tnew-context\nold-namespace\tnew-namespace\n' > /tmp/map.tsv
+bash scripts/redact-run.sh --check --map /tmp/map.tsv artifacts samples README.md
+bash scripts/redact-run.sh         --map /tmp/map.tsv artifacts samples README.md
+```
+
+It rewrites text files, gzip-compressed captures, and the names of files and
+directories. Images carry names as pixels, so re-render them afterwards
+(`render-cli-samples.ps1`, `collect-html-samples.ps1`, `make-sample-gallery.ps1`),
+refresh the raw-capture hash manifest and regenerate the checksums.
+
+Two things to state when publishing a redacted run:
+
+* an audit hash chain no longer verifies once its bytes change, so record the
+  verification result **before** redacting (the run's own `logs/13-audit-*.log`
+  does that) and say that the published copies are redacted;
+* the operator name, host name, home paths, node names and the standard cluster
+  namespaces are not touched by the script - decide deliberately whether they may
+  be published.
+
 ## 3. Start a namespace session
 
 From a fresh Ubuntu shell:

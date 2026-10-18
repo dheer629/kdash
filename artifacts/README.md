@@ -53,6 +53,34 @@ redraws continuously; `../scripts/compress-raw-captures.sh` compressed them to a
 Nothing else in this directory was modified after the run, and the captures, text
 files, reports, sessions and audit logs are exactly as kdash wrote them.
 
+## Redaction: the names here are placeholders
+
+Before publication, the cluster context, the namespaces and the pod prefixes
+derived from them were replaced with generic names by `../scripts/redact-run.sh`
+and a private mapping (the mapping itself is deliberately not in this repository,
+because it holds the names being removed):
+
+| Published as | Replaces |
+|---|---|
+| context `devops-admin@local-cluster` | the original kubeconfig context |
+| namespaces `orders-service-e2e`, `ml-service-prod`, `gitops-core` | the three namespaces that were observed |
+| pod / workload prefix `orders-` | the prefix the original namespace implied |
+| `ops-monitor`, `validation-demo-ns`, `demo-app` | the other namespaces that appear in the all-namespaces listing |
+
+Consequences, stated plainly:
+
+  * the audit logs are redacted as well, so **their hash chain no longer verifies**:
+    a chain covers the bytes as recorded, and redaction changes bytes. It verified
+    before redaction - `logs/13-audit-<namespace>.log` records "chain intact" for
+    each namespace - and that result cannot be reproduced from these copies.
+  * `RAW-TERMINAL-SHA256.txt` lists the sha256 of the uncompressed captures
+    **after** redaction, so the published `.gz` files can still be checked against it.
+  * the CLI screenshots were re-rendered from the redacted captures and the HTML
+    reports were re-copied after redaction, so text and images agree.
+  * not redacted: the operator name, the host name, the home path in audit details,
+    the node name, the standard cluster namespaces (`kube-system`, `cert-manager`,
+    `kube-flannel`, `local-path-storage`, `default`) and every measured value.
+
 ## Integrity
 
 `RUN_INVENTORY.md` lists the sha256 of every CLI capture. The audit log is

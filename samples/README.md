@@ -1,5 +1,14 @@
 # kdash samples
 
+The names in these samples are placeholders. Before publication the cluster
+context, the namespaces and the namespace-derived pod prefixes were replaced with
+generic names (`devops-admin@local-cluster`, `orders-service-e2e`,
+`ml-service-prod`, `gitops-core`, `orders-*`) using `../scripts/redact-run.sh` and
+a private mapping; the CLI screenshots were re-rendered from the redacted captures
+and the HTML files were re-copied, so text and images agree. See
+`../artifacts/README.md` (section "Redaction") for what was replaced and for the
+consequence that the published audit logs no longer verify their hash chain.
+
 Shareable examples produced by the validation run `wsl-validation-20261018-115201`
 (kdash 4.12.0, context `devops-admin@local-cluster`, three namespaces, five minutes
 each). The raw evidence behind every file here is in `../artifacts/`.
