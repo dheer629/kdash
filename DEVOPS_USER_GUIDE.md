@@ -142,9 +142,11 @@ Two things to state when publishing a redacted run:
 * an audit hash chain no longer verifies once its bytes change, so record the
   verification result **before** redacting (the run's own `logs/13-audit-*.log`
   does that) and say that the published copies are redacted;
-* the operator name, host name, home paths, node names and the standard cluster
-  namespaces are not touched by the script - decide deliberately whether they may
-  be published.
+* the script rewrites text files, gzip captures and file and directory names, but
+  it cannot rewrite an image: re-render the screenshots from the redacted captures
+  afterwards. Anything not in your mapping stays as it is - the standard cluster
+  namespaces, the node name, addresses and measured values - so decide explicitly
+  whether those may be published.
 
 ## 3. Start a namespace session
 

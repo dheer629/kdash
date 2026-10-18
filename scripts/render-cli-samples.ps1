@@ -18,20 +18,38 @@ powershell -ExecutionPolicy Bypass -File scripts/render-cli-samples.ps1 `
 param(
   [Parameter(Mandatory = $true)][string]$RunDirectory,
   [string]$SamplesDirectory,
-  [string]$Python = 'C:\Users\demo\AppData\Local\Programs\Python\Python312\python.exe',
+  [string]$Python,
   [int]$Columns = 170,
   [int]$Rows = 50,
   [int]$FontSize = 13
 )
 
 $ErrorActionPreference = 'Stop'
+
+# The renderer needs an interpreter with pyte and Pillow. Find one unless the
+# caller passed -Python, so the script carries no machine-specific path.
+function Resolve-Python {
+  param([string]$Given)
+  if ($Given) {
+    if (Test-Path -LiteralPath $Given) { return $Given }
+    throw "python not found: $Given"
+  }
+  foreach ($name in 'python.exe', 'python3.exe', 'py.exe') {
+    $cmd = Get-Command $name -ErrorAction SilentlyContinue
+    if (-not $cmd) { continue }
+    & $cmd.Source -c 'import PIL, pyte' 2>$null
+    if ($LASTEXITCODE -eq 0) { return $cmd.Source }
+  }
+  throw 'no Python with pyte and Pillow found; install them (pip install --user pillow pyte) or pass -Python PATH'
+}
+
 $scriptDir = $PSScriptRoot
 $repoRoot = Split-Path -Parent $scriptDir
 $renderer = Join-Path $scriptDir 'capture-terminal.py'
 if (-not $SamplesDirectory) { $SamplesDirectory = Join-Path $repoRoot 'samples' }
 if (-not (Test-Path -LiteralPath $RunDirectory)) { throw "run directory not found: $RunDirectory" }
 if (-not (Test-Path -LiteralPath $renderer)) { throw "renderer not found: $renderer" }
-if (-not (Test-Path -LiteralPath $Python)) { throw "python not found: $Python (needs pyte and Pillow)" }
+$Python = Resolve-Python -Given $Python
 
 $run = Get-Item -LiteralPath $RunDirectory
 $outputRoot = Join-Path $SamplesDirectory 'cli'

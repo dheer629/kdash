@@ -35,13 +35,18 @@ SED="$WORK/redact.sed"; PATTERNS="$WORK/patterns"; FILTER="$WORK/filter.sh"
 : > "$SED"; : > "$PATTERNS"
 {
   printf '#!/usr/bin/env bash\nset -uo pipefail\n'
+  printf 'sed -f %q </dev/null >/dev/null 2>&1 || { echo "invalid redaction rules" >&2; exit 1; }\n' "$SED"
   printf 'if grep -qF -f %q README.md DEVOPS_USER_GUIDE.md KDASH_EXPLAINER.txt 2>/dev/null; then\n' "$PATTERNS"
   printf '  find samples -name "*.png" -delete 2>/dev/null\n'
   printf '  find samples -type d -empty -delete 2>/dev/null\n'
   printf 'fi\n'
   printf 'find . -path ./.git -prune -o -type f ! -name "*.png" ! -name "*.lock" ! -name "*.gz" -print0 | xargs -0 -r sed -i -f %q\n' "$SED"
   printf 'find . -path ./.git -prune -o -type f -name "*.gz" -print0 | while IFS= read -r -d "" gz; do\n'
-  printf '  zcat -- "$gz" | sed -f %q | gzip -9 -n > "$gz.new" && mv -- "$gz.new" "$gz"\n' "$SED"
+  printf '  tmp="$(mktemp)"\n'
+  printf '  if zcat -- "$gz" | sed -f %q > "$tmp" && [ -s "$tmp" ]; then\n' "$SED"
+  printf '    gzip -9 -n -c "$tmp" > "$gz.new" && mv -- "$gz.new" "$gz"\n'
+  printf '  fi\n'
+  printf '  rm -f "$tmp"\n'
   printf 'done\n'
   printf 'find . -path ./.git -prune -o -depth -print0 | while IFS= read -r -d "" p; do\n'
   printf '  base="$(basename -- "$p")"; new="$base"\n'
@@ -51,8 +56,9 @@ while IFS= read -r line; do
   from="${line%%$'\t'*}"; to="${line#*$'\t'}"
   [ "$from" = "$line" ] && continue
   printf '%s\n' "$from" >> "$PATTERNS"
-  escaped="$(printf '%s' "$from" | sed 's/[][\\.^$*+?(){}|/]/\\&/g')"
-  printf 's/%s/%s/g\n' "$escaped" "$to" >> "$SED"
+  esc_from="$(printf '%s' "$from" | sed 's/[][\\.^$*+?(){}|/]/\\&/g')"
+  esc_to="$(printf '%s' "$to" | sed 's/[\\&/]/\\&/g')"
+  printf 's/%s/%s/g\n' "$esc_from" "$esc_to" >> "$SED"
   printf '  new="${new//%s/%s}"\n' "$from" "$to" >> "$FILTER"
 done < <(awk -F'\t' 'NF>=2 { print length($1) "\t" $0 }' "$MAP" | sort -rn -k1,1 | cut -f2-)
 {

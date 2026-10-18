@@ -66,6 +66,8 @@ because it holds the names being removed):
 | namespaces `orders-service-e2e`, `ml-service-prod`, `gitops-core` | the three namespaces that were observed |
 | pod / workload prefix `orders-` | the prefix the original namespace implied |
 | `ops-monitor`, `validation-demo-ns`, `demo-app` | the other namespaces that appear in the all-namespaces listing |
+| operator `demo`, host `node`, `/home/demo`, `/workspace/kdash` | the operator name, the host name and the home-directory paths |
+| `platform namespaces`, `platform CLI`, `management host`, `example.com/nodepool`, `shared_reports`, `self-contained HTML report` | product, organisation and site wording in the tool, the installer and the documentation |
 
 Consequences, stated plainly:
 
@@ -77,9 +79,12 @@ Consequences, stated plainly:
     **after** redaction, so the published `.gz` files can still be checked against it.
   * the CLI screenshots were re-rendered from the redacted captures and the HTML
     reports were re-copied after redaction, so text and images agree.
-  * not redacted: the operator name, the host name, the home path in audit details,
-    the node name, the standard cluster namespaces (`kube-system`, `cert-manager`,
-    `kube-flannel`, `local-path-storage`, `default`) and every measured value.
+  * not redacted: the node name, the standard cluster namespaces (`kube-system`,
+    `cert-manager`, `kube-flannel`, `local-path-storage`, `default`), the pod and
+    workload names of the run, and every address, size, timestamp and measured
+    value. The tool's own author credit (`Dheeraj V`, printed by kdash in every
+    header and named in the README) is kept on purpose: it is the utility's
+    attribution, not operator data.
 
 ## Integrity
 

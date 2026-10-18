@@ -8,7 +8,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
 
 {
   for f in kdash kdash-bundle.sh kdash-uninstall.sh tests/test-uninstall.sh \
-           README.md DEVOPS_USER_GUIDE.md KDASH_EXPLAINER.txt; do
+           README.md DEVOPS_USER_GUIDE.md KDASH_EXPLAINER.txt \
+           artifacts/README.md samples/README.md; do
     [ -f "$f" ] && sha256sum "$f"
   done
   for f in $(ls -1 samples/*.png 2>/dev/null | LC_ALL=C sort); do

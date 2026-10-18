@@ -104,7 +104,7 @@ Re-running is safe and always leaves the CLI on v4:
   in the usual bin directories is moved to `~/.kdash-old/`. For a root-owned copy
   (for example an old `sudo` install in `/usr/local/bin`) the exact `sudo mv` command
   is printed.
-- **Old shell definitions:** `kdash()` functions or aliases from an platform CLI or the
+- **Old shell definitions:** `kdash()` functions or aliases from a platform CLI or the
   3.x block are listed as `file:line` and overridden. The integration lives in
   `~/.kdash-shell.bash`, sourced from a marker block at the **end** of both `~/.bashrc`
   and `~/.bash_profile`, so it loads after anything defined earlier. In it, `kdash`

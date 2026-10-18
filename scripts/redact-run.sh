@@ -51,10 +51,19 @@ SED_SCRIPT="$(mktemp)"; PATTERN_FILE="$(mktemp)"
 trap 'rm -f "$SED_SCRIPT" "$PATTERN_FILE"' EXIT
 : > "$PATTERN_FILE"
 for i in "${!FROM[@]}"; do
-  escaped="$(printf '%s' "${FROM[$i]}" | sed 's/[][\\.^$*+?(){}|/]/\\&/g')"
-  printf 's/%s/%s/g\n' "$escaped" "${TO[$i]}" >> "$SED_SCRIPT"
+  # Escape the pattern (every regex metacharacter) and the replacement (backslash,
+  # the delimiter and &). An unescaped "/" in a replacement makes the whole sed
+  # script invalid, and an invalid script silently changes nothing.
+  esc_from="$(printf '%s' "${FROM[$i]}" | sed 's/[][\\.^$*+?(){}|/]/\\&/g')"
+  esc_to="$(printf '%s' "${TO[$i]}" | sed 's/[\\&/]/\\&/g')"
+  printf 's/%s/%s/g\n' "$esc_from" "$esc_to" >> "$SED_SCRIPT"
   printf '%s\n' "${FROM[$i]}" >> "$PATTERN_FILE"
 done
+# refuse to touch anything with a broken rule set
+if ! sed -f "$SED_SCRIPT" </dev/null >/dev/null 2>&1; then
+  printf 'the generated rules are invalid - nothing was changed\n' >&2
+  exit 3
+fi
 
 text=0; changed=0; gz=0; renamed=0; images=0
 for target in "${TARGETS[@]}"; do
@@ -66,7 +75,14 @@ for target in "${TARGETS[@]}"; do
       *.gz)
         gz=$((gz + 1))
         if [ "$CHECK" = 0 ]; then
-          zcat -- "$f" | sed -f "$SED_SCRIPT" | gzip -9 -n > "$f.new" && mv -- "$f.new" "$f"
+          # never replace a capture unless the rewrite produced content
+          tmp="$(mktemp)"
+          if zcat -- "$f" | sed -f "$SED_SCRIPT" > "$tmp" && [ -s "$tmp" ]; then
+            gzip -9 -n -c "$tmp" > "$f.new" && mv -- "$f.new" "$f"
+          else
+            printf 'left unchanged (rewrite failed): %s\n' "$f" >&2
+          fi
+          rm -f "$tmp"
         fi
         continue ;;
     esac

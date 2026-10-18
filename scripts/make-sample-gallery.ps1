@@ -31,7 +31,7 @@ param(
   [Parameter(Mandatory = $true)][string]$FeatureDirectory,
   [string]$SamplesDirectory,
   [string]$HtmlNamespace = 'orders-service-e2e',
-  [string]$Python = 'C:\Users\demo\AppData\Local\Programs\Python\Python312\python.exe',
+  [string]$Python,
   [string]$Edge = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
   [int]$Width = 1500,
   [int]$Height = 1100,
@@ -39,10 +39,29 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# The renderer needs an interpreter with pyte and Pillow. Find one unless the
+# caller passed -Python, so the script carries no machine-specific path.
+function Resolve-Python {
+  param([string]$Given)
+  if ($Given) {
+    if (Test-Path -LiteralPath $Given) { return $Given }
+    throw "python not found: $Given"
+  }
+  foreach ($name in 'python.exe', 'python3.exe', 'py.exe') {
+    $cmd = Get-Command $name -ErrorAction SilentlyContinue
+    if (-not $cmd) { continue }
+    & $cmd.Source -c 'import PIL, pyte' 2>$null
+    if ($LASTEXITCODE -eq 0) { return $cmd.Source }
+  }
+  throw 'no Python with pyte and Pillow found; install them (pip install --user pillow pyte) or pass -Python PATH'
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $renderer = Join-Path $PSScriptRoot 'capture-terminal.py'
 if (-not $SamplesDirectory) { $SamplesDirectory = Join-Path $repoRoot 'samples' }
-foreach ($path in @($renderer, $Python, $Edge)) {
+$Python = Resolve-Python -Given $Python
+foreach ($path in @($renderer, $Edge)) {
   if (-not (Test-Path -LiteralPath $path)) { throw "missing: $path" }
 }
 $feature = Get-Item -LiteralPath $FeatureDirectory

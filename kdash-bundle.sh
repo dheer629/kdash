@@ -6151,7 +6151,7 @@ elif [ "$PROBE_RC" = 0 ]; then
   say "Done. Load it in THIS terminal with:   exec bash -l"
 else
   say "A new login shell still resolves an older kdash. Something re-defines it AFTER"
-  say "the kdash block (for example an platform CLI file sourced at the very end of"
+  say "the kdash block (for example a platform CLI file sourced at the very end of"
   say ".bash_profile, or a regenerated .bashrc). Add this as the LAST line there:"
   say "    [ -r \"$SHELLFILE\" ] && . \"$SHELLFILE\""
   say "then check again with:   bash $0 --check"
