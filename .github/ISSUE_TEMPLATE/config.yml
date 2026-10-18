@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/dheer629/kdash/security/advisories/new
+    about: Please report vulnerabilities privately - see SECURITY.md, do not open a public issue.
+  - name: Question or usage help
+    url: https://github.com/dheer629/kdash/discussions
+    about: Ask how to read a view, or how to install kdash on your host.
+  - name: Read the documentation first
+    url: https://github.com/dheer629/kdash/blob/main/DEVOPS_USER_GUIDE.md
+    about: Install, run, export, troubleshoot and the audit trail.

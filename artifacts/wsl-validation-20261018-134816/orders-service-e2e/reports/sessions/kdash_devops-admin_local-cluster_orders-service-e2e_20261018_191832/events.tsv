@@ -1,0 +1,15 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1792331312	info	SESSION	orders-service-e2e	kdash 4.12.0 started on node by demo - filter .*
+1792331344	info	POD_ADDED	orders-cron-29872189-2ft8g	added on dev (CronJob/orders-cron, Succeeded)
+1792331344	warn	RESTART	orders-liveness	restarts +2 (now 787), last exit Error
+1792331344	warn	POD_REMOVED	orders-cron-29872188-xvxd9	gone (was on dev, Succeeded)
+1792331404	warn	RESTART	orders-crash	restarts +1 (now 409), last exit Error
+1792331404	info	POD_ADDED	orders-cron-29872190-xqkm7	added on dev (CronJob/orders-cron, Succeeded)
+1792331434	warn	POD_REMOVED	orders-cron-29872189-2ft8g	gone (was on dev, Succeeded)
+1792331463	info	POD_ADDED	orders-cron-29872191-fvq82	added on dev (CronJob/orders-cron, Succeeded)
+1792331494	warn	POD_REMOVED	orders-cron-29872190-xqkm7	gone (was on dev, Succeeded)
+1792331524	info	POD_ADDED	orders-cron-29872192-ps52p	added on dev (CronJob/orders-cron, Succeeded)
+1792331554	warn	POD_REMOVED	orders-cron-29872191-fvq82	gone (was on dev, Succeeded)
+1792331584	info	POD_ADDED	orders-cron-29872193-nphv7	added on dev (CronJob/orders-cron, Succeeded)
+1792331614	warn	POD_REMOVED	orders-cron-29872192-ps52p	gone (was on dev, Succeeded)
+1792331640	info	SESSION	orders-service-e2e	kdash stopped after 328s

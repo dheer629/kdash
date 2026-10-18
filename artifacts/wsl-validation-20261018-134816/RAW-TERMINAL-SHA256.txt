@@ -1,0 +1,4 @@
+# sha256 of every terminal.raw.log before gzip -9 compression
+df3d9eca8409b2c92a2ecbe2f4b76756ae5c6fd2cba2aeffa5e92ca5d4e04b10  artifacts/wsl-validation-20261018-134816/gitops-core/terminal.raw.log
+32c1372f84731b19556884ae32ed2a25c48633541395fd57056fcc49434e378a  artifacts/wsl-validation-20261018-134816/ml-service-prod/terminal.raw.log
+b29a3198b9d35eb30e60fecf4a0083f2612fa56e505793c76e0df5b0590d7476  artifacts/wsl-validation-20261018-134816/orders-service-e2e/terminal.raw.log

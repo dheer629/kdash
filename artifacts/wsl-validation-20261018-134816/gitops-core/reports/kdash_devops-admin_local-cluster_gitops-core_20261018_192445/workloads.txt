@@ -1,0 +1,44 @@
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 19:24:45 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns gitops-core   match .*   poll 2s  spec 1s/30s   sort cpu ▼ high first
+ health pods 7/7 ready  restarts 34  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 24m ░░░░░░ 0% lim  mem 236Mi ░░░░░░ 3% lim  │ workloads 7
+ WORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes
+ workloads 7: Deployment 7   pods 7 (7 ready)   0 degraded  0 rolling out  0 HA risk  0 skewed  0 unscheduled
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► WORKLOADS   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec
+  KIND        WORKLOAD                      READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Deployment  image-reflector-controller      1/1    1     1     1     9m / 100m      27Mi /    64Mi / 1024Mi     5 SINGLE
+      ├─ image-reflector-controller-6fd944c4d4-csnkf  Running              1/1 dev                          cpu     9m  mem    27Mi  rst 5  10.244.0.107
+      └─ image ghcr.io/fluxcd/image-reflector-controller:v1.1.2
+  Deployment  kustomize-controller            1/1    1     1     1     7m / 100m      47Mi /    64Mi / 1024Mi     5 SINGLE
+      ├─ kustomize-controller-75d659c96b-xcbt9        Running              1/1 dev                          cpu     7m  mem    47Mi  rst 5  10.244.0.130
+      └─ image ghcr.io/fluxcd/kustomize-controller:v1.8.5
+  Deployment  helm-controller                 1/1    1     1     1     3m / 100m      40Mi /    64Mi / 1024Mi     5 SINGLE
+      ├─ helm-controller-6f578444bb-c9sxb             Running              1/1 dev                          cpu     3m  mem    40Mi  rst 5  10.244.0.100
+      └─ image ghcr.io/fluxcd/helm-controller:v1.5.5
+  Deployment  source-controller               1/1    1     1     1     2m / 50m       45Mi /    64Mi / 1024Mi     4 SINGLE
+      ├─ source-controller-5bdbb8b84d-tzzn6           Running              1/1 dev                          cpu     2m  mem    45Mi  rst 4  10.244.0.108
+      └─ image ghcr.io/fluxcd/source-controller:v1.8.5
+  Deployment  image-automation-controller     1/1    1     1     1     1m / 100m      22Mi /    64Mi / 1024Mi     5 SINGLE
+      ├─ image-automation-controller-854455b684-2w96t Running              1/1 dev                          cpu     1m  mem    22Mi  rst 5  10.244.0.104
+      └─ image ghcr.io/fluxcd/image-automation-controller:v1.1.4
+  Deployment  notification-controller         1/1    1     1     1     1m / 100m      32Mi /    64Mi / 1024Mi     5 SINGLE
+      ├─ notification-controller-fb7d8d765-khcqd      Running              1/1 dev                          cpu     1m  mem    32Mi  rst 5  10.244.0.103
+      └─ image ghcr.io/fluxcd/notification-controller:v1.8.4
+  Deployment  source-watcher                  1/1    1     1     1     1m / 50m       23Mi /    64Mi / 1024Mi     5 SINGLE
+      ├─ source-watcher-57b7b9fc5-4gjw7               Running              1/1 dev                          cpu     1m  mem    23Mi  rst 5  10.244.0.109
+      └─ image ghcr.io/fluxcd/source-watcher:v2.1.1
+
+► SPREAD OVER WORKER NODES   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node
+  KIND        WORKLOAD                      N1  VERDICT
+  Deployment  image-reflector-controller     1  SINGLE
+  Deployment  kustomize-controller           1  SINGLE
+  Deployment  helm-controller                1  SINGLE
+  Deployment  source-controller              1  SINGLE
+  Deployment  image-automation-controller    1  SINGLE
+  Deployment  notification-controller        1  SINGLE
+  Deployment  source-watcher                 1  SINGLE
+              pods on node                   7
+  N1   dev                                      pool role:control-plane,master   pods 7
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hide pods.

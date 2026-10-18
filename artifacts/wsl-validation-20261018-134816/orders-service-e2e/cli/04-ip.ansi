@@ -1,0 +1,50 @@
+[1m══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.12.0[0m  [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [1;7m 4 IP POOL [0m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m  [1m2026-10-18 19:20:50[0m[90m IST    by Dheeraj V  │ AUDITED[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m orders-service-e2e   [90mmatch[39m .*   [90mpoll 5s  spec 17s/30s  session [39m19:18:32[90m up [39m2m18s   [1m[94msorted by IP address[0m
+[90m health [1m[31m! pods 14/27 ready[0m[90m  restarts [35m1571[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m3[90m  │ cpu [39m4m [32m░░░░░░[39m [32m0%[90m lim  mem [39m25Mi [32m░░░░░░[39m [32m1%[90m lim  │ workloads [39m23[90m  │ events 15m [32m! 0[39m [35m^ 4[39m
+ [1m[35mIP POOL   namespace pod IPs, node IP blocks, subnets and service addresses[0m
+ [90mpod IPs[39m [1m19[0m [90min use[39m   [90mno IP[39m [35m8[39m   [90mhost-network[39m 0   [90mduplicate[39m [32m0[39m   [90msubnets[39m 1
+ [90mservices[39m 8   [90mClusterIP[39m 7   [90mheadless[39m 1   [90mNodePort[39m 0   [90mLoadBalancer[39m 0   [90mexternal addresses[39m 0
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m[94m►[0m [1mPOD SUBNETS (observed, /24)[0m [90m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  SUBNET                 PODS  NODES
+  10.244.0.0/24            19  [90mdev[39m
+
+[1m[94m►[0m [1mNODE IP BLOCKS (per worker node)[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    19     0 [32m█░░░░░░░░░[39m  [94m10.244.0.64/26 10.244.0.128/26 10.244.0.0/26[39m
+
+[1m[94m►[0m [1mSERVICES[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  orders-kafka                         ClusterIP              10.98.161.242    -                        [90m9092/TCP[39m
+  orders-postgres                      ClusterIP              10.104.198.59    -                        [90m5432/TCP[39m
+  orders-stateful                      ClusterIP/Headless     None             -                        [90m80/TCP[39m
+  orders-transformer                   ClusterIP              10.107.28.181    -                        [90m80/TCP[39m
+  orders-web                           ClusterIP              10.106.246.85    -                        [90m80/TCP[39m
+  orders-web-second                    ClusterIP              10.98.194.155    -                        [90m80/TCP[39m
+  orders-wrong-port                    ClusterIP              10.100.47.189    -                        [90m80/TCP[39m
+  orders-zero                          ClusterIP              10.102.122.211   -                        [90m80/TCP[39m
+
+[1m[94m►[0m [1mPOD IP ASSIGNMENTS[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.55      orders-cron-29872190-xqkm7                   dev                        172.18.0.2       orders-cron                  [32mSucceeded[39m
+  10.244.0.99      orders-healthy-77bd9c5548-2p8kc              dev                        172.18.0.2       orders-healthy
+  10.244.0.111     orders-init-fail                             dev                        172.18.0.2       orders-init-fail             [90mPodInitializing[39m
+  10.244.0.112     orders-missing-config                        dev                        172.18.0.2       orders-missing-config        [1m[31mCreateContainerConfigError[0m
+  10.244.0.113     orders-logs                                  dev                        172.18.0.2       orders-logs
+  10.244.0.114     orders-image                                 dev                        172.18.0.2       orders-image                 [90mImagePullBackOff[39m
+  10.244.0.116     orders-transformer-d7565f89f-kcxgx           dev                        172.18.0.2       orders-transformer
+  10.244.0.117     orders-startup                               dev                        172.18.0.2       orders-startup
+  10.244.0.118     orders-not-ready                             dev                        172.18.0.2       orders-not-ready             [1m[31mNotReady[0m
+  10.244.0.120     orders-multi                                 dev                        172.18.0.2       orders-multi
+  10.244.0.121     orders-stateful-1                            dev                        172.18.0.2       orders-stateful
+  10.244.0.126     orders-change-654dff6f4d-2d6cm               dev                        172.18.0.2       orders-change
+  10.244.0.128     orders-crash                                 dev                        172.18.0.2       orders-crash                 [1m[31mCrashLoopBackOff[0m
+  10.244.0.129     orders-stateful-0                            dev                        172.18.0.2       orders-stateful
+  10.244.0.131     orders-daemon-wbq9p                          dev                        172.18.0.2       orders-daemon
+  10.244.0.132     orders-liveness                              dev                        172.18.0.2       orders-liveness              [1m[31mCrashLoopBackOff[0m
+  10.244.0.133     orders-longimage                             dev                        172.18.0.2       orders-longimage             [90mErrImageNeverPull[39m
+  10.244.0.135     orders-change-654dff6f4d-4rhlb               dev                        172.18.0.2       orders-change
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n[2m›
+[0;7m ● LIVE 19:20:50  next 3s  data 2s old  spec 17/30s  fetch 0.4s  poll 5s  AUDITED | ip | rows 1-39/48 | ? help  1-7 view  n ns  s sort(cpu)  / filter  P pause  x html  [0m

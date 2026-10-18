@@ -12,7 +12,7 @@ and the HTML files were re-copied, so text and images agree. See
 kept, and the consequence that the published audit logs no longer verify their
 hash chain.
 
-Shareable examples produced by the validation run `wsl-validation-20261018-115201`
+Shareable examples produced by the validation run `wsl-validation-20261018-134816`
 (kdash 4.12.0, context `devops-admin@local-cluster`, three namespaces, five minutes
 each). The raw evidence behind every file here is in `../artifacts/`.
 

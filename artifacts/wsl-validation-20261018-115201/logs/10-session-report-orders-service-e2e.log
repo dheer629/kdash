@@ -1,7 +1,0 @@
-$ timeout 240 kdash -c devops-admin@local-cluster -n orders-service-e2e --session-report /workspace/kdash/artifacts/wsl-validation-20261018-115201/orders-service-e2e/reports/sessions/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_172217
-
-kdash namespace report from session kdash_devops-admin_local-cluster_orders-service-e2e_20261018_172217
-  /workspace/kdash/artifacts/wsl-validation-20261018-115201/orders-service-e2e/reports/kdash_namespace_report_devops-admin_local-cluster_orders-service-e2e_20261018_172743.html
-  index   /workspace/kdash/artifacts/wsl-validation-20261018-115201/orders-service-e2e/reports/index.html
-
-[exit 0]

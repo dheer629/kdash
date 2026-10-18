@@ -1,0 +1,7 @@
+$ timeout 120 kdash --audit-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/audit
+
+kdash audit export
+  html  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/audit/kdash_audit_20261018_192431.html
+  csv   /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/audit/kdash_audit_20261018_192431.csv
+
+[exit 0]

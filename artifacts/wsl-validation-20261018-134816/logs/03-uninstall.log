@@ -1,0 +1,10 @@
+$ bash /workspace/kdash/kdash-uninstall.sh
+
+removed kdash setup blocks from /home/demo/.bashrc (backup: /home/demo/.bashrc.bak.kdash.20261018_134818.IjXmnr)
+removed /home/demo/.kdash-completion.bash
+removed /home/demo/.kdash-shell.bash
+removed /home/demo/.local/bin/kdash
+Uninstall complete. Configuration, reports, sessions, audit logs and old-version backups were kept.
+Open a new terminal to discard loaded kdash functions and command caches. Running dashboards continue until you quit them.
+
+[exit 0]

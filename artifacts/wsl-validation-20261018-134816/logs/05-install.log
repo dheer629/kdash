@@ -1,0 +1,40 @@
+$ bash /workspace/kdash/kdash-bundle.sh
+
+installed  /home/demo/.local/bin/kdash  (v4.12.0)
+installed  /home/demo/.kdash-completion.bash
+installed  /home/demo/.kdash-shell.bash
+updated    /home/demo/.bashrc  (backup: /home/demo/.bashrc.bak.kdash.20261018_134818)
+
+--- verification ---
+[OK]   kdash 4.12.0  (/home/demo/.local/bin/kdash)
+[OK]   kubectl: /home/demo/.local/bin/kubectl
+[WARN] context devops-admin@local-cluster binds no namespace - use -n NS, your _ns helper, or KDASH_NS_MAP
+[OK]   pod metrics readable - live usage will populate
+[OK]   nodes readable - node pools and allocatable will populate
+[OK]   node metrics readable - whole-node memory and other-namespace share shown
+[OK]   bash 5.2.21
+  login shell: kdash is a function (kdash 34 /home/demo/.kdash-shell.bash), first binary on PATH /home/demo/.local/bin/kdash
+  login shell: kdash runs 4.12.0
+[OK]   a new login shell runs kdash v4
+
+Done. Load it in THIS terminal with:   exec bash -l
+
+  kdash / kdpods     1 pods vs requests and limits (live)
+  kdnodes            2 node pools: namespace memory / CPU per worker node
+  kdwl               3 pods per worker node by workload + HA spread
+  kdip               4 namespace IP pool
+  kdmemlive          5 live memory dashboard
+  kdio               6 network in / out and disk IO per worker node and pod
+  kdsnap [sel]       one HTML with every tab (+ live history); sel all | 25 | nodes,mem = separate files
+  kdns               pick a namespace from a list (also key n while running)
+  kdhist [DIR]       all tabs + full history of the last live kdash run (after you quit)
+  kdreport           combined HTML + TSV/CSV bundle under ~/kdash_reports
+  kdtop  kdmem  kdwatch        kdash --help
+
+author: Dheeraj V    audit: kdash --about | --audit | --audit-verify | --audit-report
+DISCLAIMER: provided as is. The person running kdash is solely responsible for its use and
+for having authorisation to read the clusters / namespaces. Every run, user action, report and
+kubectl call is audited (~/kdash_reports/audit, /var/log/kdash when present, syslog).
+keys: 1-7/Tab view (7 = live ALERTS)  ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / filter  h/l pan  j/k scroll  q quit
+
+[exit 0]

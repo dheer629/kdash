@@ -1,0 +1,7 @@
+$ timeout 300 kdash -c devops-admin@local-cluster -n ml-service-prod --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports
+
+kdash report
+  html    /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_devops-admin_local-cluster_ml-service-prod_20261018_192430.html
+  bundle  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_devops-admin_local-cluster_ml-service-prod_20261018_192430  (text views, tsv/, csv/, SHA256SUMS)
+
+[exit 0]

@@ -1,0 +1,715 @@
+2026-10-18T13:48:16+00:00 run id        wsl-validation-20261018-134816
+2026-10-18T13:48:16+00:00 repository    /workspace/kdash
+2026-10-18T13:48:16+00:00 context       devops-admin@local-cluster
+2026-10-18T13:48:16+00:00 namespaces    orders-service-e2e ml-service-prod gitops-core
+2026-10-18T13:48:16+00:00 live window   5 minute(s), poll 5s, history sample 5s, terminal 170x50
+2026-10-18T13:48:16+00:00 artifacts     /workspace/kdash/artifacts/wsl-validation-20261018-134816
+2026-10-18T13:48:16+00:00 
+2026-10-18T13:48:16+00:00 ==================== 1  inventory: host, installed kdash, cluster (read-only) ====================
+$ bash -c 
+  set -u
+  echo "date:            $(date -Is)"
+  echo "host:            $(hostname)  (kernel $(uname -r))"
+  echo "user:            $(id -un) uid=$(id -u)"
+  echo "bash:            $(bash --version | head -1)"
+  echo "tmux:            $(tmux -V 2>&1)"
+  echo "python3:         $(command -v python3 || echo missing)"
+  echo "kubectl:         $(command -v kubectl || echo missing)"
+  echo "kubectl client:  $(kubectl version --client 2>/dev/null | tr "\n" " ")"
+  echo "awk:             $(awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1)"
+  echo
+  echo "kdash on PATH (this shell):"
+  type -a kdash 2>&1 || echo "  (not found in this non-login shell)"
+  echo
+  echo "kdash installed files:"
+  ls -l "$HOME/.local/bin/kdash" /usr/local/bin/kdash "$HOME/.kdash-shell.bash" "$HOME/.kdash-completion.bash" 2>&1
+  echo
+  echo "installed kdash version:"
+  "$HOME/.local/bin/kdash" --version 2>&1 | head -3 || true
+  echo
+  echo "installed kdash sha256 vs repository copy:"
+  sha256sum "$HOME/.local/bin/kdash" "/workspace/kdash/kdash" 2>&1
+  echo
+  echo "kept data before removal (config, reports, sessions, audit, old versions):"
+  ls -ld "$HOME/.config/kdash" "$HOME/kdash_reports" "$HOME/kdash_reports/audit" "$HOME/.kdash-old" 2>&1
+  find "$HOME/kdash_reports" -maxdepth 1 -mindepth 1 -printf "  %f\n" 2>/dev/null | sort | head -20
+  echo
+  echo "kubectl contexts:"
+  kubectl config get-contexts 2>&1
+  echo
+  echo "nodes:"
+  kubectl --context "devops-admin@local-cluster" get nodes -o wide 2>&1 | head -5
+  echo
+  echo "namespaces:"
+  kubectl --context "devops-admin@local-cluster" get ns --no-headers -o custom-columns=NAME:.metadata.name 2>&1 | tr "\n" " "
+  echo
+  echo "pods per namespace in scope:"
+  for ns in orders-service-e2e ml-service-prod gitops-core; do
+    printf "  %-24s %s\n" "$ns" "$(kubectl --context "devops-admin@local-cluster" -n "$ns" get pods --no-headers 2>/dev/null | wc -l)"
+  done
+  echo
+  echo "kubectl read permissions used by kdash:"
+  for v in "list pods" "list nodes" "list services" "get nodes/proxy" "list pods.metrics.k8s.io"; do
+    printf "  %-28s %s\n" "$v" "$(kubectl --context "devops-admin@local-cluster" auth can-i $v 2>/dev/null | head -1)"
+  done
+
+
+date:            2026-10-18T13:48:16+00:00
+host:            node  (kernel 6.6.114.1-microsoft-standard-WSL2)
+user:            demo uid=1000
+bash:            GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+tmux:            tmux 3.4
+python3:         /usr/bin/python3
+kubectl:         /home/demo/.local/bin/kubectl
+kubectl client:  Client Version: v1.30.4 Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3 
+awk:             GNU Awk 5.2.1, API 3.2, PMA Avon 8-g1, (GNU MPFR 4.2.1, GNU MP 6.3.0)
+
+kdash on PATH (this shell):
+kdash is /home/demo/.local/bin/kdash
+
+kdash installed files:
+ls: cannot access '/usr/local/bin/kdash': No such file or directory
+-rw-r--r-- 1 demo demo   2080 Oct 18 13:10 /home/demo/.kdash-completion.bash
+-rw-r--r-- 1 demo demo   3064 Oct 18 13:10 /home/demo/.kdash-shell.bash
+-rwxr-xr-x 1 demo demo 461951 Oct 18 13:10 /home/demo/.local/bin/kdash
+
+installed kdash version:
+kdash 4.12.0
+
+installed kdash sha256 vs repository copy:
+68c1297b6d3e7eff4ee0a511a00a5c204ec7fcad486d73f8f0421d3e030063be  /home/demo/.local/bin/kdash
+2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0  /workspace/kdash/kdash
+
+kept data before removal (config, reports, sessions, audit, old versions):
+ls: cannot access '/home/demo/.kdash-old': No such file or directory
+drwxr-xr-x 2 demo demo 4096 Oct 18 13:11 /home/demo/.config/kdash
+drwxr-xr-x 4 demo demo 4096 Oct 17 13:35 /home/demo/kdash_reports
+drwx------ 2 demo demo 4096 Oct 17 13:18 /home/demo/kdash_reports/audit
+  audit
+  index.html
+  kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261017_122428.html
+  kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261017_133550.html
+  sessions
+
+kubectl contexts:
+CURRENT   NAME                         CLUSTER   AUTHINFO                 NAMESPACE
+*         devops-admin@local-cluster   dev       devops-admin   
+
+nodes:
+NAME   STATUS   ROLES                  AGE    VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION                      CONTAINER-RUNTIME
+dev    Ready    control-plane,master   122d   v1.30.4   172.18.0.2    <none>        Ubuntu 24.04.4 LTS   6.6.114.1-microsoft-standard-WSL2   containerd://1.7.27
+
+namespaces:
+cert-manager default ops-monitor orders-service-e2e orders-service-e2e-gitops orders-service-e2e-peer orders-service-e2e-pki gitops-core kube-flannel kube-node-lease kube-public kube-system ml-service-prod local-path-storage validation-demo-ns 
+pods per namespace in scope:
+  orders-service-e2e       27
+  ml-service-prod           4
+  gitops-core              7
+
+kubectl read permissions used by kdash:
+  list pods                    yes
+  list nodes                   yes
+  list services                yes
+  get nodes/proxy              yes
+  list pods.metrics.k8s.io     yes
+
+[exit 0]
+2026-10-18T13:48:18+00:00 
+2026-10-18T13:48:18+00:00 ==================== 2  uninstall: preview, then remove the installed copy ====================
+$ bash /workspace/kdash/kdash-uninstall.sh --dry-run
+
+would back up and remove kdash setup blocks from /home/demo/.bashrc
+would remove /home/demo/.kdash-completion.bash
+would remove /home/demo/.kdash-shell.bash
+would remove /home/demo/.local/bin/kdash
+Dry run complete; no files changed.
+
+[exit 0]
+$ bash /workspace/kdash/kdash-uninstall.sh
+
+removed kdash setup blocks from /home/demo/.bashrc (backup: /home/demo/.bashrc.bak.kdash.20261018_134818.IjXmnr)
+removed /home/demo/.kdash-completion.bash
+removed /home/demo/.kdash-shell.bash
+removed /home/demo/.local/bin/kdash
+Uninstall complete. Configuration, reports, sessions, audit logs and old-version backups were kept.
+Open a new terminal to discard loaded kdash functions and command caches. Running dashboards continue until you quit them.
+
+[exit 0]
+2026-10-18T13:48:18+00:00 
+2026-10-18T13:48:18+00:00 ==================== 3  uninstall verification (binary gone, data kept) ====================
+$ bash -c 
+  set -u
+  echo "kdash files that must be gone:"
+  for f in "$HOME/.local/bin/kdash" "$HOME/.kdash-shell.bash" "$HOME/.kdash-completion.bash"; do
+    if [ -e "$f" ] || [ -L "$f" ]; then echo "  STILL PRESENT  $f"; else echo "  removed        $f"; fi
+  done
+  echo
+  echo "kdash setup block in startup files:"
+  grep -n "kdash setup" "$HOME/.bashrc" "$HOME/.bash_profile" 2>/dev/null || echo "  none (correct)"
+  echo
+  echo "startup backups written by the uninstaller:"
+  ls -l "$HOME"/.bashrc.bak.kdash.* "$HOME"/.bash_profile.bak.kdash.* 2>/dev/null || echo "  none"
+  echo
+  echo "data that must survive:"
+  ls -ld "$HOME/.config/kdash" "$HOME/kdash_reports" "$HOME/kdash_reports/audit" 2>&1
+  ls -l "$HOME"/kdash_reports/audit/*.log 2>&1 | tail -3
+  echo
+  echo "login shell resolution after removal:"
+  bash -lc "type -a kdash 2>&1 | head -3; kdash --version 2>&1 | head -2" 2>&1
+  echo
+  echo "hash chain of the kept audit log (verified with the repository copy):"
+  bash "/workspace/kdash/kdash" --audit-verify 2>&1 | head -6 || true
+
+
+kdash files that must be gone:
+  removed        /home/demo/.local/bin/kdash
+  removed        /home/demo/.kdash-shell.bash
+  removed        /home/demo/.kdash-completion.bash
+
+kdash setup block in startup files:
+  none (correct)
+
+startup backups written by the uninstaller:
+-rw-r--r-- 1 demo demo 4179 Oct  4 06:06 /home/demo/.bashrc.bak.kdash.20261017_121552
+-rw-r--r-- 1 demo demo 4453 Oct 17 12:15 /home/demo/.bashrc.bak.kdash.20261017_131800
+-rw-r--r-- 1 demo demo 4181 Oct 18 11:23 /home/demo/.bashrc.bak.kdash.20261018_112340
+-rw-r--r-- 1 demo demo 4454 Oct 17 13:18 /home/demo/.bashrc.bak.kdash.20261018_112340.rskj5x
+-rw-r--r-- 1 demo demo 4182 Oct 18 11:41 /home/demo/.bashrc.bak.kdash.20261018_114127
+-rw-r--r-- 1 demo demo 4455 Oct 18 11:23 /home/demo/.bashrc.bak.kdash.20261018_114127.FrSWTs
+-rw-r--r-- 1 demo demo 4183 Oct 18 11:44 /home/demo/.bashrc.bak.kdash.20261018_114420
+-rw-r--r-- 1 demo demo 4456 Oct 18 11:41 /home/demo/.bashrc.bak.kdash.20261018_114420.EncQHl
+-rw-r--r-- 1 demo demo 4184 Oct 18 11:52 /home/demo/.bashrc.bak.kdash.20261018_115203
+-rw-r--r-- 1 demo demo 4457 Oct 18 11:44 /home/demo/.bashrc.bak.kdash.20261018_115203.ww1hYe
+-rw-r--r-- 1 demo demo 4458 Oct 18 11:52 /home/demo/.bashrc.bak.kdash.20261018_124529
+-rw-r--r-- 1 demo demo 4459 Oct 18 12:45 /home/demo/.bashrc.bak.kdash.20261018_131025
+-rw-r--r-- 1 demo demo 4460 Oct 18 13:10 /home/demo/.bashrc.bak.kdash.20261018_134818.IjXmnr
+  none
+
+data that must survive:
+drwxr-xr-x 2 demo demo 4096 Oct 18 13:11 /home/demo/.config/kdash
+drwxr-xr-x 4 demo demo 4096 Oct 17 13:35 /home/demo/kdash_reports
+drwx------ 2 demo demo 4096 Oct 17 13:18 /home/demo/kdash_reports/audit
+-rw------- 1 demo demo 28469 Oct 18 13:31 /home/demo/kdash_reports/audit/audit_202610.log
+
+login shell resolution after removal:
+bash: line 1: type: kdash: not found
+bash: line 1: kdash: command not found
+
+hash chain of the kept audit log (verified with the repository copy):
+OK      /home/demo/kdash_reports/audit/audit_202610.log  (101 events, chain intact)
+
+[exit 0]
+2026-10-18T13:48:18+00:00 
+2026-10-18T13:48:18+00:00 ==================== 4  install again with kdash-bundle.sh (current user -> ~/.local/bin) ====================
+$ bash /workspace/kdash/kdash-bundle.sh
+
+installed  /home/demo/.local/bin/kdash  (v4.12.0)
+installed  /home/demo/.kdash-completion.bash
+installed  /home/demo/.kdash-shell.bash
+updated    /home/demo/.bashrc  (backup: /home/demo/.bashrc.bak.kdash.20261018_134818)
+
+--- verification ---
+[OK]   kdash 4.12.0  (/home/demo/.local/bin/kdash)
+[OK]   kubectl: /home/demo/.local/bin/kubectl
+[WARN] context devops-admin@local-cluster binds no namespace - use -n NS, your _ns helper, or KDASH_NS_MAP
+[OK]   pod metrics readable - live usage will populate
+[OK]   nodes readable - node pools and allocatable will populate
+[OK]   node metrics readable - whole-node memory and other-namespace share shown
+[OK]   bash 5.2.21
+  login shell: kdash is a function (kdash 34 /home/demo/.kdash-shell.bash), first binary on PATH /home/demo/.local/bin/kdash
+  login shell: kdash runs 4.12.0
+[OK]   a new login shell runs kdash v4
+
+Done. Load it in THIS terminal with:   exec bash -l
+
+  kdash / kdpods     1 pods vs requests and limits (live)
+  kdnodes            2 node pools: namespace memory / CPU per worker node
+  kdwl               3 pods per worker node by workload + HA spread
+  kdip               4 namespace IP pool
+  kdmemlive          5 live memory dashboard
+  kdio               6 network in / out and disk IO per worker node and pod
+  kdsnap [sel]       one HTML with every tab (+ live history); sel all | 25 | nodes,mem = separate files
+  kdns               pick a namespace from a list (also key n while running)
+  kdhist [DIR]       all tabs + full history of the last live kdash run (after you quit)
+  kdreport           combined HTML + TSV/CSV bundle under ~/kdash_reports
+  kdtop  kdmem  kdwatch        kdash --help
+
+author: Dheeraj V    audit: kdash --about | --audit | --audit-verify | --audit-report
+DISCLAIMER: provided as is. The person running kdash is solely responsible for its use and
+for having authorisation to read the clusters / namespaces. Every run, user action, report and
+kubectl call is audited (~/kdash_reports/audit, /var/log/kdash when present, syslog).
+keys: 1-7/Tab view (7 = live ALERTS)  ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / filter  h/l pan  j/k scroll  q quit
+
+[exit 0]
+$ bash -c 
+  set -u
+  echo "installer self-check:"
+  bash "/workspace/kdash/kdash-bundle.sh" --check 2>&1
+  echo
+  echo "login shell resolution:"
+  bash -lc "type -a kdash; kdash --version" 2>&1
+  echo
+  echo "installed sha256 vs repository copy:"
+  sha256sum "$HOME/.local/bin/kdash" "/workspace/kdash/kdash" 2>&1
+  echo
+  echo "author and audit locations:"
+  kdash --about 2>&1 | head -12
+
+
+installer self-check:
+kdash files found:
+  /home/demo/.local/bin/kdash  (v4.12.0)
+kdash shell definitions outside the kdash block:
+  none
+  login shell: kdash is a function (kdash 34 /home/demo/.kdash-shell.bash), first binary on PATH /home/demo/.local/bin/kdash
+  login shell: kdash runs 4.12.0
+[OK]   a new login shell runs kdash v4
+
+login shell resolution:
+kdash is /home/demo/.local/bin/kdash
+kdash is /home/demo/.local/bin/kdash
+kdash 4.12.0
+
+installed sha256 vs repository copy:
+2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0  /home/demo/.local/bin/kdash
+2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0  /workspace/kdash/kdash
+
+author and audit locations:
+kdash 4.12.0 - live Kubernetes namespace operations dashboard
+author   Dheeraj V
+
+DISCLAIMER - kdash is provided as is, without warranty of any kind. The 
+person running this utility is solely responsible for its use, for having 
+authorisation to access the clusters and namespaces it reads, and for any 
+decision or action taken on its output. kdash is read-only, but every run is 
+AUDITED: the user, host, origin, context, namespace, every action taken in 
+the dashboard, every report written and every kubectl call are logged and 
+stored (local audit log, central audit log when configured, and syslog).
+
+audit    local    /home/demo/kdash_reports/audit/audit_202610.log
+
+[exit 0]
+$ timeout 120 bash -c KDASH_ACCEPT_DISCLAIMER=1 kdash -c 'devops-admin@local-cluster' -n 'orders-service-e2e' --once -o text
+
+════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS  
+    13:48:21 UTC
+ ctx devops-admin@local-cluster   ns orders-service-e2e   match .*
+    sort cpu ▼ high first
+ ! pods 14/27 ready rst 1568 oom 0 oomk 0 nolim 3 cpu 4m 0% lim mem 25Mi 1% lim
+    wl 23
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+────────────────────────────────────────────────────────────────────────────────
+► Deployment orders-healthy  ~ 2/2   3 │      2 ·      25 · │     10    200      16     128 │  20.0   1.0 156.2  19.5
+  orders-healthy-77bd9c5548-2~ 1/1   2 │      1 ·      13 · │      5    100       8      64 │  20.0   1.0 162.5  20.3
+      node dev   pool role:control-plane,master   ip 10.244.0.99   qos Burstable   status Running   last-exit Error
+    └─ main                    Y     2 │      1 ·      13 · │      5    100       8      64 │  20.0   1.0 162.5  20.3
+        last-exit Error
+  orders-healthy-77bd9c5548-6~ 1/1   1 │      1 ·      12 · │      5    100       8      64 │  20.0   1.0 150.0  18.8
+      node dev   pool role:control-plane,master   ip 10.244.0.137   qos Burstable   status Running   last-exit Unknown
+    └─ main                    Y     1 │      1 ·      12 · │      5    100       8      64 │  20.0   1.0 150.0  18.8
+        last-exit Unknown
+................................................................................
+► Pod orders-not-ready  (1 po~ 0/1  34 │      2 ·       0 · │      5    100       8      64 │  40.0   2.0   0.0   0.0
+  orders-not-ready             0/1  34 │      2 ·       0 · │      5    100       8      64 │  40.0   2.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.118   qos Burstable   status NotReady   last-exit Completed
+    └─ main                    N    34 │      2 ·       0 · │      5    100       8      64 │  40.0   2.0   0.0   0.0
+        last-exit Completed
+................................................................................
+► Deployment orders-change  (~ 2/2  66 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+  orders-change-654dff6f4d-2d~ 1/1  33 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.126   qos BestEffort   status Running   last-exit Completed
+    └─ main                    Y    33 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+        last-exit Completed
+  orders-change-654dff6f4d-4r~ 1/1  33 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.135   qos BestEffort   status Running   last-exit Completed
+    └─ main                    Y    33 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+        last-exit Completed
+................................................................................
+► DaemonSet orders-daemon  (1~ 1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+  orders-daemon-wbq9p          1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.131   qos Burstable   status Running   last-exit Completed
+    └─ main                    Y    34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+................................................................................
+► Pod orders-logs  (1 pod)     1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+  orders-logs                  1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.113   qos Burstable   status Running   last-exit Completed
+    └─ main                    Y    34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+................................................................................
+► Pod orders-multi  (1 pod)    1/1  68 │      0 ·       0 · │     10    200      16     128 │   0.0   0.0   0.0   0.0
+  orders-multi                 2/2  68 │      0 ·       0 · │     10    200      16     128 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.120   qos Burstable   status Running   last-exit Completed
+    ├─ main                    Y    34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+    └─ sidecar                 Y    34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+................................................................................
+► Pod orders-startup  (1 pod)  1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+  orders-startup               1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.117   qos Burstable   status Running   last-exit Completed
+    └─ main                    Y    34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+................................................................................
+► StatefulSet orders-stateful~ 2/2  68 │      0 ·       0 · │     10    200      16     128 │   0.0   0.0   0.0   0.0
+  orders-stateful-0            1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.129   qos Burstable   status Running   last-exit Completed
+    └─ main                    Y    34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+  orders-stateful-1            1/1  34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.121   qos Burstable   status Running   last-exit Completed
+    └─ main                    Y    34 │      0 ·       0 · │      5    100       8      64 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+................................................................................
+► Deployment orders-transform~ 1/1  34 │      0 ·       0 · │      5     50       8      32 │   0.0   0.0   0.0   0.0
+  orders-transformer-d7565f89~ 1/1  34 │      0 ·       0 · │      5     50       8      32 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.116   qos Burstable   status Running   last-exit Completed
+    └─ main                    Y    34 │      0 ·       0 · │      5     50       8      32 │   0.0   0.0   0.0   0.0
+        last-exit Completed
+................................................................................
+► Pod orders-crash  (1 pod)    0/1 408 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-crash                 0/1 408 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.128   qos Burstable   status CrashLoopBackOff   last-exit Error
+    └─ main                    N   408 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+        waiting CrashLoopBackOff   last-exit Error
+................................................................................
+► CronJob orders-cron  (1 pod) 0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-cron-29872188-xvxd9   0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.53   qos Burstable   status Succeeded
+    └─ main                    N     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+................................................................................
+► Pod orders-image  (1 pod)    0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-image                 0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.114   qos Burstable   status ImagePullBackOff
+    └─ main                    N     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+        waiting ImagePullBackOff   
+................................................................................
+► Pod orders-init-fail  (1 po~ 0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-init-fail             0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.111   qos Burstable   status PodInitializing
+    └─ main                    N     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+        waiting PodInitializing   
+................................................................................
+► Job orders-job-failed  (2 p~ 0/2   0 │      - ·       - · │     10    200      16     128 │     -     -     -     -
+  orders-job-failed-9hwvb      0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Failed
+    └─ main                    N     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-job-failed-p5fdq      0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Failed
+    └─ main                    N     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+................................................................................
+► Job orders-job-success  (1 ~ 0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-job-success-dlrdg     0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Succeeded
+    └─ main                    N     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+................................................................................
+► Pod orders-kafka  (1 pod)    0/1   0 │      - ·       - · │    200   1500     512    1536 │     -     -     -     -
+  orders-kafka                 0/1   0 │      - ·       - · │    200   1500     512    1536 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Failed
+    └─ kafka                   N     0 │      - ·       - · │    200   1500     512    1536 │     -     -     -     -
+................................................................................
+► Pod orders-liveness  (1 pod) 0/1 785 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-liveness              0/1 785 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.132   qos Burstable   status CrashLoopBackOff   last-exit Error
+    └─ main                    N   785 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+        waiting CrashLoopBackOff   last-exit Error
+................................................................................
+► Pod orders-longimage  (1 po~ 0/1   0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+  orders-longimage             0/1   0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.133   qos BestEffort   status ErrImageNeverPull
+    └─ main                    N     0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+        waiting ErrImageNeverPull   
+................................................................................
+► Pod orders-missing-config  ~ 0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-missing-config        0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.112   qos Burstable   status CreateContainerConfigError
+    └─ main                    N     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+        waiting CreateContainerConfigError   
+................................................................................
+► Pod orders-oom  (1 pod)      0/1   0 │      - ·       - · │      5    100       8      32 │     -     -     -     -
+  orders-oom                   0/1   0 │      - ·       - · │      5    100       8      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Failed
+    └─ main                    N     0 │      - ·       - · │      5    100       8      32 │     -     -     -     -
+................................................................................
+► Pod orders-pg-client  (1 po~ 0/1   0 │      - ·       - · │     25    500      32     256 │     -     -     -     -
+  orders-pg-client             0/1   0 │      - ·       - · │     25    500      32     256 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Succeeded
+    └─ client                  N     0 │      - ·       - · │     25    500      32     256 │     -     -     -     -
+................................................................................
+► Pod orders-postgres  (1 pod) 0/1   0 │      - ·       - · │     25    500      64     256 │     -     -     -     -
+  orders-postgres              0/1   0 │      - ·       - · │     25    500      64     256 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Failed
+    └─ postgres                N     0 │      - ·       - · │     25    500      64     256 │     -     -     -     -
+................................................................................
+► Pod orders-unschedulable  (~ 0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+  orders-unschedulable         0/1   0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    └─ main                    -     0 │      - ·       - · │      5    100       8      64 │     -     -     -     -
+────────────────────────────────────────────────────────────────────────────────
+TOTAL (27 pods, 23 workloads)      1568 │      4 ·      25 · │    360   4650     784    3392 │   1.1   0.1   3.2   0.7
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+
+[exit 0]
+$ timeout 120 bash -c kdash -c 'devops-admin@local-cluster' -n 'orders-service-e2e' --once -v pods -o tsv --io-wait 8 | head -15
+
+# pods
+KEY	NAMESPACE	POD	STATUS	READY	RESTARTS	NODE	POOL	POD_IP	HOST_IP	QOS	KIND	WORKLOAD	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	CONTAINERS	HOST_NETWORK
+orders-change-654dff6f4d-2d6cm	orders-service-e2e	orders-change-654dff6f4d-2d6cm	Running	1/1	33	dev	role:control-plane,master	10.244.0.126	172.18.0.2	BestEffort	Deployment	orders-change	0	-	-	0	-	-	0	0	Completed	1	false
+orders-change-654dff6f4d-4rhlb	orders-service-e2e	orders-change-654dff6f4d-4rhlb	Running	1/1	33	dev	role:control-plane,master	10.244.0.135	172.18.0.2	BestEffort	Deployment	orders-change	0	-	-	0	-	-	0	0	Completed	1	false
+orders-crash	orders-service-e2e	orders-crash	CrashLoopBackOff	0/1	408	dev	role:control-plane,master	10.244.0.128	172.18.0.2	Burstable	Pod	orders-crash	-	5	100	-	8	64	-	-	Error	1	false
+orders-cron-29872188-xvxd9	orders-service-e2e	orders-cron-29872188-xvxd9	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.53	172.18.0.2	Burstable	CronJob	orders-cron	-	5	100	-	8	64	-	-	-	1	false
+orders-daemon-wbq9p	orders-service-e2e	orders-daemon-wbq9p	Running	1/1	34	dev	role:control-plane,master	10.244.0.131	172.18.0.2	Burstable	DaemonSet	orders-daemon	0	5	100	0	8	64	0	0	Completed	1	false
+orders-healthy-77bd9c5548-2p8kc	orders-service-e2e	orders-healthy-77bd9c5548-2p8kc	Running	1/1	2	dev	role:control-plane,master	10.244.0.99	172.18.0.2	Burstable	Deployment	orders-healthy	1	5	100	13	8	64	1	13	Error	1	false
+orders-healthy-77bd9c5548-6nqpw	orders-service-e2e	orders-healthy-77bd9c5548-6nqpw	Running	1/1	1	dev	role:control-plane,master	10.244.0.137	172.18.0.2	Burstable	Deployment	orders-healthy	1	5	100	12	8	64	1	12	Unknown	1	false
+orders-image	orders-service-e2e	orders-image	ImagePullBackOff	0/1	0	dev	role:control-plane,master	10.244.0.114	172.18.0.2	Burstable	Pod	orders-image	-	5	100	-	8	64	-	-	-	1	false
+orders-init-fail	orders-service-e2e	orders-init-fail	PodInitializing	0/1	0	dev	role:control-plane,master	10.244.0.111	172.18.0.2	Burstable	Pod	orders-init-fail	-	5	100	-	8	64	-	-	-	1	false
+orders-job-failed-9hwvb	orders-service-e2e	orders-job-failed-9hwvb	Failed	0/1	0	dev	role:control-plane,master	-	172.18.0.2	Burstable	Job	orders-job-failed	-	5	100	-	8	64	-	-	-	1	false
+orders-job-failed-p5fdq	orders-service-e2e	orders-job-failed-p5fdq	Failed	0/1	0	dev	role:control-plane,master	-	172.18.0.2	Burstable	Job	orders-job-failed	-	5	100	-	8	64	-	-	-	1	false
+orders-job-success-dlrdg	orders-service-e2e	orders-job-success-dlrdg	Succeeded	0/1	0	dev	role:control-plane,master	-	172.18.0.2	Burstable	Job	orders-job-success	-	5	100	-	8	64	-	-	-	1	false
+orders-kafka	orders-service-e2e	orders-kafka	Failed	0/1	0	dev	role:control-plane,master	-	172.18.0.2	Burstable	Pod	orders-kafka	-	200	1500	-	512	1536	-	-	-	1	false
+
+[exit 0]
+2026-10-18T13:48:31+00:00 
+2026-10-18T13:48:31+00:00 ==================== 5  live run: 5 minute(s) per namespace, views 1-7 captured ====================
+2026-10-18T13:48:31+00:00   started kdash-validation-1 for orders-service-e2e (terminal 170x50, reports /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports)
+2026-10-18T13:48:31+00:00   started kdash-validation-2 for ml-service-prod (terminal 170x50, reports /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports)
+2026-10-18T13:48:31+00:00   started kdash-validation-3 for gitops-core (terminal 170x50, reports /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports)
+2026-10-18T13:48:36+00:00   all dashboards up; live window starts now (t0=1792331316)
+2026-10-18T13:48:50+00:00   captured 01-pods for every namespace (50 rows)
+2026-10-18T13:49:30+00:00   captured 02-nodes for every namespace (50 rows)
+2026-10-18T13:50:10+00:00   captured 03-workloads for every namespace (50 rows)
+2026-10-18T13:50:50+00:00   captured 04-ip for every namespace (50 rows)
+2026-10-18T13:51:30+00:00   captured 05-mem for every namespace (50 rows)
+2026-10-18T13:52:10+00:00   captured 06-io for every namespace (50 rows)
+2026-10-18T13:52:50+00:00   captured 07-alerts for every namespace (50 rows)
+2026-10-18T13:53:40+00:00   live window complete (304s); exporting the all-tabs HTML with key x
+2026-10-18T13:54:00+00:00   HTML written by x for orders-service-e2e: /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/index.html /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_report_devops-admin_local-cluster_orders-service-e2e_20261018_192340.html 
+2026-10-18T13:54:00+00:00   HTML written by x for ml-service-prod: /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/index.html /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261018_192340.html 
+2026-10-18T13:54:00+00:00   HTML written by x for gitops-core: /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/index.html /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_namespace_report_devops-admin_local-cluster_gitops-core_20261018_192340.html 
+2026-10-18T13:54:02+00:00   orders-service-e2e: kdash exit=0, measured live duration=329s
+2026-10-18T13:54:02+00:00   ml-service-prod: kdash exit=0, measured live duration=329s
+2026-10-18T13:54:02+00:00   gitops-core: kdash exit=0, measured live duration=329s
+2026-10-18T13:54:02+00:00 
+2026-10-18T13:54:02+00:00 ==================== 6  reports: session rebuild, one-shot snapshots, bundle, audit evidence ====================
+2026-10-18T19:24:02+05:30   orders-service-e2e recorded session: /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/sessions/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_191832
+$ timeout 240 kdash -c devops-admin@local-cluster -n orders-service-e2e --session-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/sessions/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_191832
+
+kdash namespace report from session kdash_devops-admin_local-cluster_orders-service-e2e_20261018_191832
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_report_devops-admin_local-cluster_orders-service-e2e_20261018_192402.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/index.html
+
+[exit 0]
+$ timeout 300 kdash -c devops-admin@local-cluster -n orders-service-e2e --snapshot all --io-wait 10
+
+kdash HTML snapshots  (devops-admin@local-cluster / orders-service-e2e)
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_pod_container_resources_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_node_pools_worker_nodes_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_workloads_per_worker_node_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_ip_pool_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_memory_dashboard_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_network_disk_io_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/index.html
+
+[exit 0]
+$ timeout 300 kdash -c devops-admin@local-cluster -n orders-service-e2e --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports
+
+kdash report
+  html    /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_192416.html
+  bundle  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_192416  (text views, tsv/, csv/, SHA256SUMS)
+
+[exit 0]
+$ timeout 120 bash -c kdash --audit 200; echo; kdash --audit-verify
+
+TIME                     USER (REAL) @HOST      FROM / TTY             CONTEXT / NAMESPACE          EVENT                DETAIL
+2026-10-18 19:18:31+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / START                mode=live view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 170x50 argv=-c devops-admin@local-cluster -n orders-service-e2e -i 5
+2026-10-18 19:18:46+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=pods
+2026-10-18 19:19:26+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=nodes
+2026-10-18 19:20:06+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=workloads
+2026-10-18 19:20:46+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=ip
+2026-10-18 19:21:26+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=mem
+2026-10-18 19:22:06+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=io
+2026-10-18 19:22:46+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=alerts
+2026-10-18 19:23:40+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_report_devops-admin_local-cluster_orders-service-e2e_20261018_192340.html bytes=593817 sha256=30fdb313f0ce13c489e262900815c24cbe4a3586d988d7800be5d3a657f1ab04
+2026-10-18 19:23:40+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / REPORT_REQUEST       key=x result=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_report_devops-admin_local-cluster_orders-service-e2e_20261018_192340.html
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / QUIT                 key q
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / KUBECTL              calls=221 failed=1 refused=0 | 66x --context devops-admin@local-cluster -n orders-service-e2e top pod --containers --no-headers | 66x --context devops-admin@local-cluster top node --no-headers | 22x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=20s | 11x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 11x --context devops-admin@local-cluster get nodes -o <fmt> | 11x --context devops-admin@local-cluster -n orders-service-e2e get pods -o <fmt> | 11x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 11x --context devops-admin@local-cluster -n orders-service-e2e get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 11x --context devops-admin@local-cluster -n orders-service-e2e get services -o <fmt> | 1x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=10s
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / END                  rc=0 mode=live duration=329s reports=1
+2026-10-18 19:24:02+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=session-report view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n orders-service-e2e --session-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/sessions/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_191832
+2026-10-18 19:24:02+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_report_devops-admin_local-cluster_orders-service-e2e_20261018_192402.html bytes=573539 sha256=61a2e28c364782a830db562e1ac436f0bd8d7d77be43f4b4c19db707b090d9b9
+2026-10-18 19:24:02+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=session-report duration=0s reports=1
+2026-10-18 19:24:03+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=snapshot view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n orders-service-e2e --snapshot all --io-wait 10
+2026-10-18 19:24:14+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_pod_container_resources_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html bytes=201519 sha256=d683520117938be45abeb1730ce65f1c9742845cbdf6957b73ce3698d10cf646
+2026-10-18 19:24:14+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_node_pools_worker_nodes_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html bytes=101433 sha256=4d8c1436150e8a636477a9408d1e773f3018ad769c3dcae7a3a211aa5b4bae9d
+2026-10-18 19:24:14+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_workloads_per_worker_node_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html bytes=139604 sha256=d58025752da7b8d1ee8ea3db29b94a5d4673463a05b51110018df2a93df42057
+2026-10-18 19:24:14+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_ip_pool_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html bytes=108152 sha256=5be3f13acea5614e27a85dab0b1c98e7cca1b38af2070372fa9803053b447f9e
+2026-10-18 19:24:14+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_memory_dashboard_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html bytes=148422 sha256=1f7a12ce97b389a794605ac0d555e3e9bef24697e89d37243d7ec49f066ceede
+2026-10-18 19:24:15+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_network_disk_io_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html bytes=101284 sha256=7ae83b715db105ff104cfdce2cee66d0e6cb87c9e5774be2a62142dd5d7db696
+2026-10-18 19:24:15+0530 demo@node          local notty            devops-admin@local-cluster / KUBECTL              calls=13 failed=1 refused=0 | 4x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=20s | 1x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=10s | 1x --context devops-admin@local-cluster get nodes -o <fmt> | 1x --context devops-admin@local-cluster -n orders-service-e2e get pods -o <fmt> | 1x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 1x --context devops-admin@local-cluster -n orders-service-e2e get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster -n orders-service-e2e top pod --containers --no-headers | 1x --context devops-admin@local-cluster top node --no-headers | 1x --context devops-admin@local-cluster -n orders-service-e2e get services -o <fmt>
+2026-10-18 19:24:15+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=snapshot duration=13s reports=6
+2026-10-18 19:24:15+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=report view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n orders-service-e2e --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports
+2026-10-18 19:24:16+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_BUNDLE        file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_192416.html bytes=93265 sha256=7c2960d77838336b1c97aa551bf6865ec3907d7fe35eb1a9f48b41ec5ea2933f
+2026-10-18 19:24:16+0530 demo@node          local notty            devops-admin@local-cluster / KUBECTL              calls=8 failed=0 refused=0 | 1x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster get nodes -o <fmt> | 1x --context devops-admin@local-cluster -n orders-service-e2e get pods -o <fmt> | 1x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 1x --context devops-admin@local-cluster -n orders-service-e2e get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster -n orders-service-e2e top pod --containers --no-headers | 1x --context devops-admin@local-cluster top node --no-headers | 1x --context devops-admin@local-cluster -n orders-service-e2e get services -o <fmt>
+2026-10-18 19:24:16+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=report duration=1s reports=1
+2026-10-18 19:24:16+0530 demo@node          local notty            - / -                        AUDIT_VIEW           n=200 all=0 grep=
+
+OK      /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/audit/audit_202610.log  (30 events, chain intact)
+
+[exit 0]
+$ timeout 120 kdash --audit-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/audit
+
+kdash audit export
+  html  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/audit/kdash_audit_20261018_192416.html
+  csv   /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/audit/kdash_audit_20261018_192416.csv
+
+[exit 0]
+2026-10-18T19:24:16+05:30   ml-service-prod recorded session: /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/sessions/kdash_devops-admin_local-cluster_ml-service-prod_20261018_191832
+$ timeout 240 kdash -c devops-admin@local-cluster -n ml-service-prod --session-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/sessions/kdash_devops-admin_local-cluster_ml-service-prod_20261018_191832
+
+kdash namespace report from session kdash_devops-admin_local-cluster_ml-service-prod_20261018_191832
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261018_192417.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/index.html
+
+[exit 0]
+$ timeout 300 kdash -c devops-admin@local-cluster -n ml-service-prod --snapshot all --io-wait 10
+
+kdash HTML snapshots  (devops-admin@local-cluster / ml-service-prod)
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_pod_container_resources_devops-admin_local-cluster_ml-service-prod_20261018_192428.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_node_pools_worker_nodes_devops-admin_local-cluster_ml-service-prod_20261018_192428.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_workloads_per_worker_node_devops-admin_local-cluster_ml-service-prod_20261018_192428.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_ip_pool_devops-admin_local-cluster_ml-service-prod_20261018_192428.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_memory_dashboard_devops-admin_local-cluster_ml-service-prod_20261018_192428.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_network_disk_io_devops-admin_local-cluster_ml-service-prod_20261018_192428.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/index.html
+
+[exit 0]
+$ timeout 300 kdash -c devops-admin@local-cluster -n ml-service-prod --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports
+
+kdash report
+  html    /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_devops-admin_local-cluster_ml-service-prod_20261018_192430.html
+  bundle  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_devops-admin_local-cluster_ml-service-prod_20261018_192430  (text views, tsv/, csv/, SHA256SUMS)
+
+[exit 0]
+$ timeout 120 bash -c kdash --audit 200; echo; kdash --audit-verify
+
+TIME                     USER (REAL) @HOST      FROM / TTY             CONTEXT / NAMESPACE          EVENT                DETAIL
+2026-10-18 19:18:31+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / START                mode=live view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 170x50 argv=-c devops-admin@local-cluster -n ml-service-prod -i 5
+2026-10-18 19:18:46+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=pods
+2026-10-18 19:19:26+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=nodes
+2026-10-18 19:20:06+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=workloads
+2026-10-18 19:20:46+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=ip
+2026-10-18 19:21:26+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=mem
+2026-10-18 19:22:06+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=io
+2026-10-18 19:22:46+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=alerts
+2026-10-18 19:23:40+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261018_192340.html bytes=267373 sha256=0f3e4f0af972c3e0349a5c997f4332f873e611b3e766f8b68db1279e01cb7def
+2026-10-18 19:23:40+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / REPORT_REQUEST       key=x result=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261018_192340.html
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / QUIT                 key q
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / KUBECTL              calls=221 failed=1 refused=0 | 66x --context devops-admin@local-cluster -n ml-service-prod top pod --containers --no-headers | 66x --context devops-admin@local-cluster top node --no-headers | 22x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=20s | 11x --context devops-admin@local-cluster -n ml-service-prod get services -o <fmt> | 11x --context devops-admin@local-cluster -n ml-service-prod get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 11x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 11x --context devops-admin@local-cluster get nodes -o <fmt> | 11x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 11x --context devops-admin@local-cluster -n ml-service-prod get pods -o <fmt> | 1x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=10s
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / END                  rc=0 mode=live duration=329s reports=1
+2026-10-18 19:24:17+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=session-report view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n ml-service-prod --session-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/sessions/kdash_devops-admin_local-cluster_ml-service-prod_20261018_191832
+2026-10-18 19:24:17+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261018_192417.html bytes=251593 sha256=33bb976f3e19094acf68cca02c6e759784363193cc0da6dec28f3843955bf215
+2026-10-18 19:24:17+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=session-report duration=1s reports=1
+2026-10-18 19:24:17+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=snapshot view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n ml-service-prod --snapshot all --io-wait 10
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_pod_container_resources_devops-admin_local-cluster_ml-service-prod_20261018_192428.html bytes=91356 sha256=949ce5cd308538271f44755b9038a3ad6a15d3dc5112112e68c0b0d5e660ee11
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_node_pools_worker_nodes_devops-admin_local-cluster_ml-service-prod_20261018_192428.html bytes=97373 sha256=e7e95e380e6dcd134feee2702ea605e8a7fb3ed47ab2686517e79700ad58d448
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_workloads_per_worker_node_devops-admin_local-cluster_ml-service-prod_20261018_192428.html bytes=83344 sha256=c8781d8d4a123c0834dec1ac239d50229fb694f9e5db2d79b9f9ac9a12ca783c
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_ip_pool_devops-admin_local-cluster_ml-service-prod_20261018_192428.html bytes=79279 sha256=abc44c9bf63c3b18ca134eed9a7bb5bbfb33605440808716050352153e26bc34
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_memory_dashboard_devops-admin_local-cluster_ml-service-prod_20261018_192428.html bytes=96534 sha256=3007ed2331ee01354c07d6b0793d63a6afa018049894e64a0e12d4fba50b10b5
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_network_disk_io_devops-admin_local-cluster_ml-service-prod_20261018_192428.html bytes=74524 sha256=9b78af6429eeed53bfda76d4daad9d17c7cf11c8eee79d6cbd1dffef60338beb
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / KUBECTL              calls=13 failed=1 refused=0 | 4x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=20s | 1x --context devops-admin@local-cluster -n ml-service-prod get services -o <fmt> | 1x --context devops-admin@local-cluster -n ml-service-prod get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=10s | 1x --context devops-admin@local-cluster get nodes -o <fmt> | 1x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 1x --context devops-admin@local-cluster -n ml-service-prod get pods -o <fmt> | 1x --context devops-admin@local-cluster -n ml-service-prod top pod --containers --no-headers | 1x --context devops-admin@local-cluster top node --no-headers
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=snapshot duration=12s reports=6
+2026-10-18 19:24:29+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=report view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n ml-service-prod --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports
+2026-10-18 19:24:31+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_BUNDLE        file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_devops-admin_local-cluster_ml-service-prod_20261018_192430.html bytes=31781 sha256=c7aefd60cfd5e4bf480ed89052cfe0b95594813702b19a18264f571349936aab
+2026-10-18 19:24:31+0530 demo@node          local notty            devops-admin@local-cluster / KUBECTL              calls=8 failed=0 refused=0 | 1x --context devops-admin@local-cluster -n ml-service-prod get services -o <fmt> | 1x --context devops-admin@local-cluster -n ml-service-prod get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster get nodes -o <fmt> | 1x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 1x --context devops-admin@local-cluster -n ml-service-prod get pods -o <fmt> | 1x --context devops-admin@local-cluster -n ml-service-prod top pod --containers --no-headers | 1x --context devops-admin@local-cluster top node --no-headers
+2026-10-18 19:24:31+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=report duration=2s reports=1
+2026-10-18 19:24:31+0530 demo@node          local notty            - / -                        AUDIT_VIEW           n=200 all=0 grep=
+
+OK      /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/audit/audit_202610.log  (30 events, chain intact)
+
+[exit 0]
+$ timeout 120 kdash --audit-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/audit
+
+kdash audit export
+  html  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/audit/kdash_audit_20261018_192431.html
+  csv   /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/audit/kdash_audit_20261018_192431.csv
+
+[exit 0]
+2026-10-18T19:24:31+05:30   gitops-core recorded session: /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/sessions/kdash_devops-admin_local-cluster_gitops-core_20261018_191832
+$ timeout 240 kdash -c devops-admin@local-cluster -n gitops-core --session-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/sessions/kdash_devops-admin_local-cluster_gitops-core_20261018_191832
+
+kdash namespace report from session kdash_devops-admin_local-cluster_gitops-core_20261018_191832
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_namespace_report_devops-admin_local-cluster_gitops-core_20261018_192431.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/index.html
+
+[exit 0]
+$ timeout 300 kdash -c devops-admin@local-cluster -n gitops-core --snapshot all --io-wait 10
+
+kdash HTML snapshots  (devops-admin@local-cluster / gitops-core)
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_pod_container_resources_devops-admin_local-cluster_gitops-core_20261018_192443.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_node_pools_worker_nodes_devops-admin_local-cluster_gitops-core_20261018_192443.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_workloads_per_worker_node_devops-admin_local-cluster_gitops-core_20261018_192443.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_namespace_ip_pool_devops-admin_local-cluster_gitops-core_20261018_192443.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_memory_dashboard_devops-admin_local-cluster_gitops-core_20261018_192443.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_network_disk_io_devops-admin_local-cluster_gitops-core_20261018_192443.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/index.html
+
+[exit 0]
+$ timeout 300 kdash -c devops-admin@local-cluster -n gitops-core --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports
+
+kdash report
+  html    /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_devops-admin_local-cluster_gitops-core_20261018_192445.html
+  bundle  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_devops-admin_local-cluster_gitops-core_20261018_192445  (text views, tsv/, csv/, SHA256SUMS)
+
+[exit 0]
+$ timeout 120 bash -c kdash --audit 200; echo; kdash --audit-verify
+
+TIME                     USER (REAL) @HOST      FROM / TTY             CONTEXT / NAMESPACE          EVENT                DETAIL
+2026-10-18 19:18:31+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / START                mode=live view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 170x50 argv=-c devops-admin@local-cluster -n gitops-core -i 5
+2026-10-18 19:18:46+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / VIEW                 view=pods
+2026-10-18 19:19:26+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / VIEW                 view=nodes
+2026-10-18 19:20:06+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / VIEW                 view=workloads
+2026-10-18 19:20:46+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / VIEW                 view=ip
+2026-10-18 19:21:26+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / VIEW                 view=mem
+2026-10-18 19:22:06+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / VIEW                 view=io
+2026-10-18 19:22:46+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / VIEW                 view=alerts
+2026-10-18 19:23:40+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_namespace_report_devops-admin_local-cluster_gitops-core_20261018_192340.html bytes=315200 sha256=f299f241d4e6b568cf1cdc3d8a54f9b843242b6781169fc27cf8a425d9f0cf41
+2026-10-18 19:23:40+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / REPORT_REQUEST       key=x result=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_namespace_report_devops-admin_local-cluster_gitops-core_20261018_192340.html
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / QUIT                 key q
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / KUBECTL              calls=221 failed=1 refused=0 | 66x --context devops-admin@local-cluster top node --no-headers | 66x --context devops-admin@local-cluster -n gitops-core top pod --containers --no-headers | 22x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=20s | 11x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 11x --context devops-admin@local-cluster -n gitops-core get pods -o <fmt> | 11x --context devops-admin@local-cluster get nodes -o <fmt> | 11x --context devops-admin@local-cluster -n gitops-core get services -o <fmt> | 11x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 11x --context devops-admin@local-cluster -n gitops-core get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=10s
+2026-10-18 19:24:00+0530 demo@node          local /dev/pts/7       devops-admin@local-cluster / END                  rc=0 mode=live duration=329s reports=1
+2026-10-18 19:24:31+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=session-report view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n gitops-core --session-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/sessions/kdash_devops-admin_local-cluster_gitops-core_20261018_191832
+2026-10-18 19:24:32+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_namespace_report_devops-admin_local-cluster_gitops-core_20261018_192431.html bytes=297827 sha256=cc09dc10a2baa68765168f4f9e83bbca715b13794b4869bc66bd27e5c28a032b
+2026-10-18 19:24:32+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=session-report duration=1s reports=1
+2026-10-18 19:24:32+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=snapshot view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n gitops-core --snapshot all --io-wait 10
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_pod_container_resources_devops-admin_local-cluster_gitops-core_20261018_192443.html bytes=105924 sha256=429f2699bf694772036ccbdd4b9bba32a370f717952fd18d1f645769c68c8f94
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_node_pools_worker_nodes_devops-admin_local-cluster_gitops-core_20261018_192443.html bytes=97396 sha256=9a58c5b50acdc46fa0b2951fda7af2137e9af5be8b6a5d53bd13dcf1211dd637
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_workloads_per_worker_node_devops-admin_local-cluster_gitops-core_20261018_192443.html bytes=95462 sha256=99fcd988cfa61b01b13cf1638ca4844d4a6277df95a6b9ce077c8ff3e18908a8
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_namespace_ip_pool_devops-admin_local-cluster_gitops-core_20261018_192443.html bytes=82487 sha256=e1bb3ad8a59f87199a25900c8f15a3d675be6ce46e75847a648705ad133c3628
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_memory_dashboard_devops-admin_local-cluster_gitops-core_20261018_192443.html bytes=104688 sha256=c9712e5030ff92b88b580e2394c61999559b34e36e84b35b4b3a4bc516f750f3
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_HTML          file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_network_disk_io_devops-admin_local-cluster_gitops-core_20261018_192443.html bytes=78493 sha256=d3a486c3ba3aab003fbdfbc4b48b6fe8c157caf5546657075461b6a7877c8a34
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / KUBECTL              calls=13 failed=1 refused=0 | 4x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=20s | 1x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster -n gitops-core get pods -o <fmt> | 1x --context devops-admin@local-cluster get --raw /api/v1/nodes/dev/proxy/metrics/cadvisor --request-timeout=10s | 1x --context devops-admin@local-cluster get nodes -o <fmt> | 1x --context devops-admin@local-cluster -n gitops-core get services -o <fmt> | 1x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 1x --context devops-admin@local-cluster -n gitops-core get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster top node --no-headers | 1x --context devops-admin@local-cluster -n gitops-core top pod --containers --no-headers
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=snapshot duration=12s reports=6
+2026-10-18 19:24:44+0530 demo@node          local notty            devops-admin@local-cluster / START                mode=report view=pods filter=.* kubeconfig=/home/demo/.kube/config term=xterm-256color 80x24 argv=-c devops-admin@local-cluster -n gitops-core --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports
+2026-10-18 19:24:46+0530 demo@node          local notty            devops-admin@local-cluster / REPORT_BUNDLE        file=/workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/reports/kdash_devops-admin_local-cluster_gitops-core_20261018_192445.html bytes=41468 sha256=0844a35afc1853fca31ead3865a0481361d9aa2b65e1e93e457cafea4402e7ac
+2026-10-18 19:24:46+0530 demo@node          local notty            devops-admin@local-cluster / KUBECTL              calls=8 failed=0 refused=0 | 1x --context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster -n gitops-core get pods -o <fmt> | 1x --context devops-admin@local-cluster get nodes -o <fmt> | 1x --context devops-admin@local-cluster -n gitops-core get services -o <fmt> | 1x --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-timeout=20s | 1x --context devops-admin@local-cluster -n gitops-core get deployments,statefulsets,daemonsets,cronjobs --request-timeout=20s -o <fmt> | 1x --context devops-admin@local-cluster top node --no-headers | 1x --context devops-admin@local-cluster -n gitops-core top pod --containers --no-headers
+2026-10-18 19:24:46+0530 demo@node          local notty            devops-admin@local-cluster / END                  rc=0 mode=report duration=2s reports=1
+2026-10-18 19:24:46+0530 demo@node          local notty            - / -                        AUDIT_VIEW           n=200 all=0 grep=
+
+OK      /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/audit/audit_202610.log  (30 events, chain intact)
+
+[exit 0]
+$ timeout 120 kdash --audit-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/audit
+
+kdash audit export
+  html  /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/audit/kdash_audit_20261018_192446.html
+  csv   /workspace/kdash/artifacts/wsl-validation-20261018-134816/gitops-core/audit/kdash_audit_20261018_192446.csv
+
+[exit 0]
+2026-10-18T19:24:46+05:30 
+2026-10-18T19:24:46+05:30 ==================== 7  run inventory ====================
+  52 controller actions -> /workspace/kdash/artifacts/wsl-validation-20261018-134816/controller-actions.json
+2026-10-18T19:24:46+05:30   metadata: /workspace/kdash/artifacts/wsl-validation-20261018-134816/run-metadata.json
+2026-10-18T19:24:46+05:30 DONE - all steps completed, no failures
+2026-10-18T19:24:46+05:30 artifacts: /workspace/kdash/artifacts/wsl-validation-20261018-134816

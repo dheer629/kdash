@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 19:20:50 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns orders-service-e2e   match .*   poll 5s  spec 17s/30s  session 19:18:32 up 2m18s   sorted by IP address
+ health ! pods 14/27 ready  restarts 1571  OOM risk 0  OOMKilled 0  no-limit 3  │ cpu 4m ░░░░░░ 0% lim  mem 25Mi ░░░░░░ 1% lim  │ workloads 23  │ events 15m ! 0 ^ 4
+ IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
+ pod IPs 19 in use   no IP 8   host-network 0   duplicate 0   subnets 1
+ services 8   ClusterIP 7   headless 1   NodePort 0   LoadBalancer 0   external addresses 0
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► POD SUBNETS (observed, /24) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SUBNET                 PODS  NODES
+  10.244.0.0/24            19  dev
+
+► NODE IP BLOCKS (per worker node) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    19     0 █░░░░░░░░░  10.244.0.64/26 10.244.0.128/26 10.244.0.0/26
+
+► SERVICES ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  orders-kafka                         ClusterIP              10.98.161.242    -                        9092/TCP
+  orders-postgres                      ClusterIP              10.104.198.59    -                        5432/TCP
+  orders-stateful                      ClusterIP/Headless     None             -                        80/TCP
+  orders-transformer                   ClusterIP              10.107.28.181    -                        80/TCP
+  orders-web                           ClusterIP              10.106.246.85    -                        80/TCP
+  orders-web-second                    ClusterIP              10.98.194.155    -                        80/TCP
+  orders-wrong-port                    ClusterIP              10.100.47.189    -                        80/TCP
+  orders-zero                          ClusterIP              10.102.122.211   -                        80/TCP
+
+► POD IP ASSIGNMENTS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.55      orders-cron-29872190-xqkm7                   dev                        172.18.0.2       orders-cron                  Succeeded
+  10.244.0.99      orders-healthy-77bd9c5548-2p8kc              dev                        172.18.0.2       orders-healthy
+  10.244.0.111     orders-init-fail                             dev                        172.18.0.2       orders-init-fail             PodInitializing
+  10.244.0.112     orders-missing-config                        dev                        172.18.0.2       orders-missing-config        CreateContainerConfigError
+  10.244.0.113     orders-logs                                  dev                        172.18.0.2       orders-logs
+  10.244.0.114     orders-image                                 dev                        172.18.0.2       orders-image                 ImagePullBackOff
+  10.244.0.116     orders-transformer-d7565f89f-kcxgx           dev                        172.18.0.2       orders-transformer
+  10.244.0.117     orders-startup                               dev                        172.18.0.2       orders-startup
+  10.244.0.118     orders-not-ready                             dev                        172.18.0.2       orders-not-ready             NotReady
+  10.244.0.120     orders-multi                                 dev                        172.18.0.2       orders-multi
+  10.244.0.121     orders-stateful-1                            dev                        172.18.0.2       orders-stateful
+  10.244.0.126     orders-change-654dff6f4d-2d6cm               dev                        172.18.0.2       orders-change
+  10.244.0.128     orders-crash                                 dev                        172.18.0.2       orders-crash                 CrashLoopBackOff
+  10.244.0.129     orders-stateful-0                            dev                        172.18.0.2       orders-stateful
+  10.244.0.131     orders-daemon-wbq9p                          dev                        172.18.0.2       orders-daemon
+  10.244.0.132     orders-liveness                              dev                        172.18.0.2       orders-liveness              CrashLoopBackOff
+  10.244.0.133     orders-longimage                             dev                        172.18.0.2       orders-longimage             ErrImageNeverPull
+  10.244.0.135     orders-change-654dff6f4d-4rhlb               dev                        172.18.0.2       orders-change
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n›
+ ● LIVE 19:20:50  next 3s  data 2s old  spec 17/30s  fetch 0.4s  poll 5s  AUDITED | ip | rows 1-39/48 | ? help  1-7 view  n ns  s sort(cpu)  / filter  P pause  x html

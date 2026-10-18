@@ -1,8 +1,0 @@
-POD	NODE	WORKLOAD	NET_RX_Bps	NET_TX_Bps	DISK_R_Bps	DISK_W_Bps	DISK_R_IOPS	DISK_W_IOPS
-helm-controller-6f578444bb-c9sxb	dev	Deployment/helm-controller	6538	1255	0	0	0	0
-image-automation-controller-854455b684-2w96t	dev	Deployment/image-automation-controller	312	272	7063	0	0	0
-image-reflector-controller-6fd944c4d4-csnkf	dev	Deployment/image-reflector-controller	281	238	0	0	0	0
-kustomize-controller-75d659c96b-xcbt9	dev	Deployment/kustomize-controller	57959	6994	0	751	0	0
-notification-controller-fb7d8d765-khcqd	dev	Deployment/notification-controller	628	370	0	0	0	0
-source-controller-5bdbb8b84d-tzzn6	dev	Deployment/source-controller	10521	15078	1115	0	0	0
-source-watcher-57b7b9fc5-4gjw7	dev	Deployment/source-watcher	528	524	0	0	0	0

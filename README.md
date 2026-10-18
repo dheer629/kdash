@@ -1,5 +1,11 @@
 # kdash 4.12
 
+[![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![platform: Linux / WSL](https://img.shields.io/badge/platform-Linux%20%2F%20WSL-informational.svg)](#install--upgrade-from-3x)
+[![bash 4+](https://img.shields.io/badge/bash-4%2B-1f425f.svg)](kdash)
+[![no dependencies](https://img.shields.io/badge/runtime-kubectl%20%2B%20awk-success.svg)](kdash)
+
 **Author:** Dheeraj V
 
 > **Disclaimer.** kdash is provided as is, without warranty of any kind. The person running
@@ -57,7 +63,7 @@ command to run under it - followed by the live top consumers and recent events.
 ### All seven views, on a namespace with real problems
 
 `orders-service-e2e` in the recorded run: 27 pods, 14 ready, a crash loop, an image
-error, an unschedulable pod and 1482 cumulative restarts.
+error, an unschedulable pod and 1571 cumulative restarts.
 
 | View | What it answers | Screenshot |
 |---|---|---|
@@ -906,6 +912,39 @@ HTML reports: clearer data, easier hand-off.
 - Installer replaces every older kdash (binaries moved aside, shell functions / aliases overridden), puts v4 first
   on PATH, verifies a real login shell runs v4 (`--check`), adds `kdpods`, `kdnodes`, `kdwl`, `kdip`, `kdmemlive`,
   `kdreport`, no longer takes over `kd` when it is already `kubectl describe`, and writes the namespace map.
+
+## Project
+
+| | |
+|---|---|
+| Documentation | [DevOps user guide](DEVOPS_USER_GUIDE.md) - install, run, capture, export, troubleshoot · [Explainer](KDASH_EXPLAINER.txt) - how to read each view and its evidence |
+| Screenshots and samples | [samples/](samples/README.md) - every view, the HTML reports, and how they were produced |
+| Raw evidence | [artifacts/](artifacts/README.md) - the recorded run: logs, captures, sessions, reports and audit trail |
+| Changes | [CHANGELOG.md](CHANGELOG.md) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) - issues and pull requests are welcome; `main` is protected and only the maintainer merges |
+| Security | [SECURITY.md](SECURITY.md) - read-only by design; report problems privately |
+| Code of conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
+| Ownership | [.github/CODEOWNERS](.github/CODEOWNERS) - every path is owned by [@dheer629](https://github.com/dheer629) |
+| Continuous integration | [.github/workflows/ci.yml](.github/workflows/ci.yml) - Bash syntax, installer payload, uninstall tests, checksums, no credentials, README links |
+
+### Repository layout
+
+```text
+kdash                 the whole CLI (one Bash file)
+kdash-bundle.sh       installer (embeds kdash byte for byte) + the uninstaller
+kdash-uninstall.sh    standalone uninstaller
+tests/                uninstall integration tests (11)
+scripts/              capture, render, redact and checksum helpers
+samples/              published screenshots and HTML samples
+artifacts/            the recorded validation run: logs, captures, reports, audit
+DEVOPS_USER_GUIDE.md  how to install, run, capture, export and troubleshoot
+KDASH_EXPLAINER.txt   how to read each view and its evidence
+.github/              CI, issue and pull-request templates, CODEOWNERS
+```
+
+Free to use, free to fork, free to change your own copy: MIT (see below). This
+repository itself stays under the maintainer's control - see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

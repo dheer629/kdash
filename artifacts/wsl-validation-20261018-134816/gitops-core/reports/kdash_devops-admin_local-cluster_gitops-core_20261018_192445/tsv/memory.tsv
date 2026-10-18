@@ -1,0 +1,8 @@
+POD	NODE	POOL	KIND	WORKLOAD	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	PCT_OF_REQ	PCT_OF_LIM	RESTARTS	LAST_TERMINATION	RISK
+kustomize-controller-75d659c96b-xcbt9	dev	role:control-plane,master	Deployment	kustomize-controller	47	64	1024	73.4	4.6	5	Error	-
+source-controller-5bdbb8b84d-tzzn6	dev	role:control-plane,master	Deployment	source-controller	45	64	1024	70.3	4.4	4	Error	-
+helm-controller-6f578444bb-c9sxb	dev	role:control-plane,master	Deployment	helm-controller	40	64	1024	62.5	3.9	5	Error	-
+notification-controller-fb7d8d765-khcqd	dev	role:control-plane,master	Deployment	notification-controller	32	64	1024	50.0	3.1	5	Error	-
+image-reflector-controller-6fd944c4d4-csnkf	dev	role:control-plane,master	Deployment	image-reflector-controller	27	64	1024	42.2	2.6	5	Error	-
+source-watcher-57b7b9fc5-4gjw7	dev	role:control-plane,master	Deployment	source-watcher	23	64	1024	35.9	2.2	5	Error	-
+image-automation-controller-854455b684-2w96t	dev	role:control-plane,master	Deployment	image-automation-controller	22	64	1024	34.4	2.1	5	Error	-

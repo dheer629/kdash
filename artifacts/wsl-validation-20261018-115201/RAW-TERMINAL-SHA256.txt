@@ -1,4 +1,0 @@
-# sha256 of every terminal.raw.log after redaction (see artifacts/README.md)
-bd9b53ed08007b0b2e3984114a7e8f56ce83d760c5df1ca202400b3d73bb04af  artifacts/wsl-validation-20261018-115201/gitops-core/terminal.raw.log
-bef08eb58d77e6684656a7d6a78f2d4c273d383d772f27ebd9a5ad1007c7566a  artifacts/wsl-validation-20261018-115201/ml-service-prod/terminal.raw.log
-00d625300cf434f64df17476f5010fb0d276c5989f82828e2343af16354aa06e  artifacts/wsl-validation-20261018-115201/orders-service-e2e/terminal.raw.log

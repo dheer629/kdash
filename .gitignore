@@ -1,0 +1,43 @@
+# Files that must never be committed to this repository.
+
+# kubeconfig, credentials and keys
+.kube/
+kubeconfig
+*.kubeconfig
+*.pem
+*.key
+*.crt
+*.kdbx
+*.ovpn
+credentials
+.aws/
+.ssh/
+*.token
+.env
+.env.*
+
+# personal notes, private mappings and temporary work
+_*
+*.local
+*.private
+TODO.local
+NOTES.local
+
+# editors and operating systems
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# python bytecode from the sample renderer
+__pycache__/
+*.pyc
+.venv/
+
+# a run that was started but not published
+artifacts/tmp/
+artifacts/scratch/

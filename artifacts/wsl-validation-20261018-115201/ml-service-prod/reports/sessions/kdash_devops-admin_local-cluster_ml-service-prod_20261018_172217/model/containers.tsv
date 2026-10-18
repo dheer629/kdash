@@ -1,5 +1,0 @@
-KEY	POD	CONTAINER	READY	RESTARTS	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	WAITING
-ml-service-prod-backend-8454d7556-qr4x7	ml-service-prod-backend-8454d7556-qr4x7	backend	Y	2	2	150	750	79	256	768	2	79	Unknown	-
-ml-service-prod-frontend-7bbcc8b78-vlv4w	ml-service-prod-frontend-7bbcc8b78-vlv4w	frontend	Y	2	2	100	500	66	192	512	2	66	Unknown	-
-postgres-0	postgres-0	postgres	Y	3	4	100	500	38	256	512	3	38	Unknown	-
-redis-5d66f5d4b6-ct9xs	redis-5d66f5d4b6-ct9xs	redis	Y	3	4	50	250	6	64	256	4	6	Unknown	-

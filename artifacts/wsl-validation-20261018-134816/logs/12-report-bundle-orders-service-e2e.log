@@ -1,0 +1,7 @@
+$ timeout 300 kdash -c devops-admin@local-cluster -n orders-service-e2e --report /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports
+
+kdash report
+  html    /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_192416.html
+  bundle  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_devops-admin_local-cluster_orders-service-e2e_20261018_192416  (text views, tsv/, csv/, SHA256SUMS)
+
+[exit 0]

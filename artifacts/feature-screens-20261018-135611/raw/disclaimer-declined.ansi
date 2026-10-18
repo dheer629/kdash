@@ -1,0 +1,50 @@
+ kdash 4.12.0  -  author Dheeraj V
+
+ DISCLAIMER - kdash is provided as is, without warranty of any kind. The
+ person running this utility is solely responsible for its use, for having
+ authorisation to access the clusters and namespaces it reads, and for any
+ decision or action taken on its output. kdash is read-only, but every run
+ is AUDITED: the user, host, origin, context, namespace, every action taken
+ in the dashboard, every report written and every kubectl call are logged
+ and stored (local audit log, central audit log when configured, and syslog).
+
+ audit log: /workspace/kdash/artifacts/feature-screens-20261018-135611/audit   session 20261018-192827-56813
+
+ Type yes to accept and continue (anything else exits): no
+ not accepted - kdash exits
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pane is dead (status 5, Sun Oct 18 13:58:37 2026)

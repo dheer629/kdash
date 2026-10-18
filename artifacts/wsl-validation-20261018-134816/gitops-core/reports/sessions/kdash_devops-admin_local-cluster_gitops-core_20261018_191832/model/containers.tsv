@@ -1,0 +1,8 @@
+KEY	POD	CONTAINER	READY	RESTARTS	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	WAITING
+helm-controller-6f578444bb-c9sxb	helm-controller-6f578444bb-c9sxb	manager	Y	5	1	100	1000	40	64	1024	1	40	Error	-
+image-automation-controller-854455b684-2w96t	image-automation-controller-854455b684-2w96t	manager	Y	5	1	100	1000	22	64	1024	1	22	Error	-
+image-reflector-controller-6fd944c4d4-csnkf	image-reflector-controller-6fd944c4d4-csnkf	manager	Y	5	8	100	1000	27	64	1024	8	27	Error	-
+kustomize-controller-75d659c96b-xcbt9	kustomize-controller-75d659c96b-xcbt9	manager	Y	5	5	100	1000	47	64	1024	5	47	Error	-
+notification-controller-fb7d8d765-khcqd	notification-controller-fb7d8d765-khcqd	manager	Y	5	1	100	1000	32	64	1024	1	32	Error	-
+source-controller-5bdbb8b84d-tzzn6	source-controller-5bdbb8b84d-tzzn6	manager	Y	4	3	50	1000	45	64	1024	3	45	Error	-
+source-watcher-57b7b9fc5-4gjw7	source-watcher-57b7b9fc5-4gjw7	manager	Y	5	2	50	1000	23	64	1024	2	23	Error	-

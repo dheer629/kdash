@@ -1,5 +1,0 @@
-KEY	NAMESPACE	POD	STATUS	READY	RESTARTS	NODE	POOL	POD_IP	HOST_IP	QOS	KIND	WORKLOAD	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	CONTAINERS	HOST_NETWORK
-ml-service-prod-backend-8454d7556-qr4x7	ml-service-prod	ml-service-prod-backend-8454d7556-qr4x7	Running	1/1	2	dev	role:control-plane,master	10.244.0.101	172.18.0.2	Burstable	Deployment	ml-service-prod-backend	2	150	750	79	256	768	2	79	Unknown	1	false
-ml-service-prod-frontend-7bbcc8b78-vlv4w	ml-service-prod	ml-service-prod-frontend-7bbcc8b78-vlv4w	Running	1/1	2	dev	role:control-plane,master	10.244.0.106	172.18.0.2	Burstable	Deployment	ml-service-prod-frontend	1	100	500	66	192	512	1	66	Unknown	1	false
-postgres-0	ml-service-prod	postgres-0	Running	1/1	3	dev	role:control-plane,master	10.244.0.102	172.18.0.2	Burstable	StatefulSet	postgres	3	100	500	38	256	512	3	38	Unknown	1	false
-redis-5d66f5d4b6-ct9xs	ml-service-prod	redis-5d66f5d4b6-ct9xs	Running	1/1	3	dev	role:control-plane,master	10.244.0.105	172.18.0.2	Burstable	Deployment	redis	5	50	250	6	64	256	5	6	Unknown	1	false

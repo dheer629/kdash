@@ -4,15 +4,15 @@ This guide describes the kdash 4.12.0 implementation in this repository. kdash i
 
 ## What the recorded run actually produced
 
-Everything below was exercised on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `68c1297b6d3e7eff4ee0a511a00a5c204ec7fcad486d73f8f0421d3e030063be` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-115201/`; `artifacts/latest-run.txt` names it.
+Everything below was exercised on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
 
 | Step | Measured result | Evidence |
 |---|---|---|
 | Inventory | Ubuntu 24.04 on WSL2, bash 5.2.21, tmux 3.4, kubectl client v1.30.4, gawk 5.2.1, 15 namespaces | `logs/01-preinstall.log` |
 | Uninstall | `.bashrc` block removed (backup written), completion, shell integration and `~/.local/bin/kdash` removed; a login shell no longer finds kdash | `logs/02-uninstall-preview.log`, `logs/03-uninstall.log`, `logs/04-uninstall-verification.log` |
-| Data kept by the uninstall | configuration, disclaimer acceptance, reports, sessions, audit log (`12180` bytes, 45 events, chain intact), startup backups | `logs/04-uninstall-verification.log` |
+| Data kept by the uninstall | configuration, disclaimer acceptance, reports, sessions, audit log (`28469` bytes, 101 events, chain intact), startup backups | `logs/04-uninstall-verification.log` |
 | Reinstall | installer self-check passed, `--check` OK, a fresh login shell runs 4.12.0, installed sha256 equals the repository file's | `logs/05-install.log`, `logs/06-install-verification.log` |
-| Live run | `orders-service-e2e` (27 pods), `ml-service-prod` (4 pods), `gitops-core` (7 pods) each ran live for 330 measured seconds and exited 0 | `run-metadata.json`, `RUN_INVENTORY.md` |
+| Live run | `orders-service-e2e` (27 pods), `ml-service-prod` (4 pods), `gitops-core` (7 pods) each ran live for 329 measured seconds and exited 0 | `run-metadata.json`, `RUN_INVENTORY.md` |
 | CLI evidence | views 1-7 captured for every namespace (21 screens, 50x170 each) as ANSI plus plain text | `<namespace>/cli/0N-*.ansi` and `.txt` |
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |

@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 19:21:30 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns orders-service-e2e   match .*   poll 5s  spec 27s/30s  session 19:18:32 up 2m58s   sort mem ▼ high first
+ health ! pods 15/28 ready  restarts 1571  OOM risk 0  OOMKilled 0  no-limit 3  │ cpu 4m ░░░░░░ 0% lim  mem 25Mi ░░░░░░ 1% lim  │ workloads 23  │ events 15m ! 0 ^ 4
+ MEMORY   live namespace memory dashboard
+ MEMORY used     25Mi  req    792Mi  lim   3456Mi   used/req    3.2%  used/lim    0.7%  ░░░░░░░░░░░░░░░░░░░░░░░░
+ window 19:18:32 -> 19:21:30 IST (UTC+05:30)   2m58s, all since kdash started   samples 32 every 5s   z: 15m 1h 6h 24h all
+ CPU    used       4m  req     365m  lim    4750m   used/req    1.1%  used/lim    0.1%  ░░░░░░░░░░░░░░░░░░░░░░░░
+ risk  >=90% of limit 0   no limit 3   over request 2   OOMKilled before 0   restarts 1571
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► TIMELINE  19:18:32 -> 19:21:30 IST  (all since kdash started, host clock) ─────────────────────────────────────────────────────────────────────────────────────────────
+  MEMORY used - namespace                                                               CPU used - namespace
+    29Mi┤                 ·                   ·                 ·                           5m┤                 ·                   ·                 ·
+        │███████████████████████████████████████████████████████████████████████████          │███████████████████████████████████████████████████████████████████████████
+        │███████████████████████████████████████████████████████████████████████████          │███████████████████████████████████████████████████████████████████████████
+        │███████████████████████████████████████████████████████████████████████████          │███████████████████████████████████████████████████████████████████████████
+    14Mi┤███████████████████████████████████████████████████████████████████████████        2m┤███████████████████████████████████████████████████████████████████████████
+        │███████████████████████████████████████████████████████████████████████████          │███████████████████████████████████████████████████████████████████████████
+        │███████████████████████████████████████████████████████████████████████████          │███████████████████████████████████████████████████████████████████████████
+        │███████████████████████████████████████████████████████████████████████████          │███████████████████████████████████████████████████████████████████████████
+     0Mi└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴        0m└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         19:18:32                         19:20:01                          19:21:30           19:18:32                         19:20:01                          19:21:30
+  events              ^                        ^            ^                           events              ^                        ^            ^
+  now 25Mi  min 25Mi  avg 25Mi  max 25Mi @ 19:21:30                                     now 4m  min 4m  avg 4m  max 4m @ 19:21:30
+  request 792Mi (above)  limit 3456Mi (above)  1% of limit                              request 365m (above)  limit 4750m (above)  0% of limit
+  EVENTS 8 in window   ! 0 critical   ^ 4 warning
+  19:21:03       - POD_ADDED        orders-cron-29872191-fvq82               added on dev (CronJob/orders-cron, Succeeded)
+  19:20:34       ^ POD_REMOVED      orders-cron-29872189-2ft8g               gone (was on dev, Succeeded)
+  19:20:04       - POD_ADDED        orders-cron-29872190-xqkm7               added on dev (CronJob/orders-cron, Succeeded)
+  19:20:04       ^ RESTART          orders-crash                             restarts +1 (now 409), last exit Error
+  19:19:04       ^ POD_REMOVED      orders-cron-29872188-xvxd9               gone (was on dev, Succeeded)
+  19:19:04       ^ RESTART          orders-liveness                          restarts +2 (now 787), last exit Error
+  19:19:04       - POD_ADDED        orders-cron-29872189-2ft8g               added on dev (CronJob/orders-cron, Succeeded)
+  19:18:32       - SESSION          orders-service-e2e                       kdash 4.12.0 started on node by demo - filter .*
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (19:18:32 -> 19:21:28 IST) ───────────────────────────────────────────────────────────────────────────────────
+  orders-healthy-77bd9c5548-2p8kc    │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │  20.0 now
+  orders-healthy-77bd9c5548-6nqpw    │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │  19.0 now
+  orders-crash                       │                                                        !                                                    │   0.0 now   1 rst
+  orders-cron-29872188-xvxd9         │                                                                                                             │   0.0 now
+  orders-daemon-wbq9p                │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  orders-image                       │                                                                                                             │   0.0 now
+  orders-init-fail                   │                                                                                                             │   0.0 now
+  orders-job-failed-9hwvb            │                                                                                                             │   0.0 now
+  orders-job-failed-p5fdq            │                                                                                                             │   0.0 now
+  orders-job-success-dlrdg           │                                                                                                             │   0.0 now
+  orders-kafka                       │                                                                                                             │   0.0 now
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 36 polls.  metrics refresh about every 15 s.
+ ● LIVE 19:21:30  next 3s  data 2s old  spec 27/30s  fetch 0.3s  poll 5s  AUDITED | mem | rows 1-37/95 | ? help  1-7 view  n ns  s sort(cpu)  / filter  P pause  x html

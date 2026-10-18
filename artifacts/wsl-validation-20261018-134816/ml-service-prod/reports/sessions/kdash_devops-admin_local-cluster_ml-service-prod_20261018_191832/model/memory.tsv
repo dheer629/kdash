@@ -1,0 +1,5 @@
+POD	NODE	POOL	KIND	WORKLOAD	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	PCT_OF_REQ	PCT_OF_LIM	RESTARTS	LAST_TERMINATION	RISK
+ml-service-prod-backend-8454d7556-qr4x7	dev	role:control-plane,master	Deployment	ml-service-prod-backend	78	256	768	30.5	10.2	2	Unknown	-
+ml-service-prod-frontend-7bbcc8b78-vlv4w	dev	role:control-plane,master	Deployment	ml-service-prod-frontend	66	192	512	34.4	12.9	2	Unknown	-
+postgres-0	dev	role:control-plane,master	StatefulSet	postgres	38	256	512	14.8	7.4	3	Unknown	-
+redis-5d66f5d4b6-ct9xs	dev	role:control-plane,master	Deployment	redis	6	64	256	9.4	2.3	3	Unknown	-

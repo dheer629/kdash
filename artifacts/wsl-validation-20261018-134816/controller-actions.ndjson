@@ -1,0 +1,52 @@
+{"epoch": 1792331316, "time_utc": "2026-10-18T13:48:36+00:00", "action": "controller_start", "namespace": "-", "epoch": 1792331316, "namespaces": "orders-service-e2e+ml-service-prod+gitops-core"}
+{"epoch": 1792331326, "time_utc": "2026-10-18T13:48:46+00:00", "action": "select_view", "namespace": "orders-service-e2e", "view": 1}
+{"epoch": 1792331326, "time_utc": "2026-10-18T13:48:46+00:00", "action": "select_view", "namespace": "ml-service-prod", "view": 1}
+{"epoch": 1792331326, "time_utc": "2026-10-18T13:48:46+00:00", "action": "select_view", "namespace": "gitops-core", "view": 1}
+{"epoch": 1792331330, "time_utc": "2026-10-18T13:48:50+00:00", "action": "capture_view", "namespace": "orders-service-e2e", "view": 1, "stem": "01-pods"}
+{"epoch": 1792331330, "time_utc": "2026-10-18T13:48:50+00:00", "action": "capture_view", "namespace": "ml-service-prod", "view": 1, "stem": "01-pods"}
+{"epoch": 1792331330, "time_utc": "2026-10-18T13:48:50+00:00", "action": "capture_view", "namespace": "gitops-core", "view": 1, "stem": "01-pods"}
+{"epoch": 1792331366, "time_utc": "2026-10-18T13:49:26+00:00", "action": "select_view", "namespace": "orders-service-e2e", "view": 2}
+{"epoch": 1792331366, "time_utc": "2026-10-18T13:49:26+00:00", "action": "select_view", "namespace": "ml-service-prod", "view": 2}
+{"epoch": 1792331366, "time_utc": "2026-10-18T13:49:26+00:00", "action": "select_view", "namespace": "gitops-core", "view": 2}
+{"epoch": 1792331370, "time_utc": "2026-10-18T13:49:30+00:00", "action": "capture_view", "namespace": "orders-service-e2e", "view": 2, "stem": "02-nodes"}
+{"epoch": 1792331370, "time_utc": "2026-10-18T13:49:30+00:00", "action": "capture_view", "namespace": "ml-service-prod", "view": 2, "stem": "02-nodes"}
+{"epoch": 1792331370, "time_utc": "2026-10-18T13:49:30+00:00", "action": "capture_view", "namespace": "gitops-core", "view": 2, "stem": "02-nodes"}
+{"epoch": 1792331406, "time_utc": "2026-10-18T13:50:06+00:00", "action": "select_view", "namespace": "orders-service-e2e", "view": 3}
+{"epoch": 1792331406, "time_utc": "2026-10-18T13:50:06+00:00", "action": "select_view", "namespace": "ml-service-prod", "view": 3}
+{"epoch": 1792331406, "time_utc": "2026-10-18T13:50:06+00:00", "action": "select_view", "namespace": "gitops-core", "view": 3}
+{"epoch": 1792331410, "time_utc": "2026-10-18T13:50:10+00:00", "action": "capture_view", "namespace": "orders-service-e2e", "view": 3, "stem": "03-workloads"}
+{"epoch": 1792331410, "time_utc": "2026-10-18T13:50:10+00:00", "action": "capture_view", "namespace": "ml-service-prod", "view": 3, "stem": "03-workloads"}
+{"epoch": 1792331410, "time_utc": "2026-10-18T13:50:10+00:00", "action": "capture_view", "namespace": "gitops-core", "view": 3, "stem": "03-workloads"}
+{"epoch": 1792331446, "time_utc": "2026-10-18T13:50:46+00:00", "action": "select_view", "namespace": "orders-service-e2e", "view": 4}
+{"epoch": 1792331446, "time_utc": "2026-10-18T13:50:46+00:00", "action": "select_view", "namespace": "ml-service-prod", "view": 4}
+{"epoch": 1792331446, "time_utc": "2026-10-18T13:50:46+00:00", "action": "select_view", "namespace": "gitops-core", "view": 4}
+{"epoch": 1792331450, "time_utc": "2026-10-18T13:50:50+00:00", "action": "capture_view", "namespace": "orders-service-e2e", "view": 4, "stem": "04-ip"}
+{"epoch": 1792331450, "time_utc": "2026-10-18T13:50:50+00:00", "action": "capture_view", "namespace": "ml-service-prod", "view": 4, "stem": "04-ip"}
+{"epoch": 1792331450, "time_utc": "2026-10-18T13:50:50+00:00", "action": "capture_view", "namespace": "gitops-core", "view": 4, "stem": "04-ip"}
+{"epoch": 1792331486, "time_utc": "2026-10-18T13:51:26+00:00", "action": "select_view", "namespace": "orders-service-e2e", "view": 5}
+{"epoch": 1792331486, "time_utc": "2026-10-18T13:51:26+00:00", "action": "select_view", "namespace": "ml-service-prod", "view": 5}
+{"epoch": 1792331486, "time_utc": "2026-10-18T13:51:26+00:00", "action": "select_view", "namespace": "gitops-core", "view": 5}
+{"epoch": 1792331490, "time_utc": "2026-10-18T13:51:30+00:00", "action": "capture_view", "namespace": "orders-service-e2e", "view": 5, "stem": "05-mem"}
+{"epoch": 1792331490, "time_utc": "2026-10-18T13:51:30+00:00", "action": "capture_view", "namespace": "ml-service-prod", "view": 5, "stem": "05-mem"}
+{"epoch": 1792331490, "time_utc": "2026-10-18T13:51:30+00:00", "action": "capture_view", "namespace": "gitops-core", "view": 5, "stem": "05-mem"}
+{"epoch": 1792331526, "time_utc": "2026-10-18T13:52:06+00:00", "action": "select_view", "namespace": "orders-service-e2e", "view": 6}
+{"epoch": 1792331526, "time_utc": "2026-10-18T13:52:06+00:00", "action": "select_view", "namespace": "ml-service-prod", "view": 6}
+{"epoch": 1792331526, "time_utc": "2026-10-18T13:52:06+00:00", "action": "select_view", "namespace": "gitops-core", "view": 6}
+{"epoch": 1792331530, "time_utc": "2026-10-18T13:52:10+00:00", "action": "capture_view", "namespace": "orders-service-e2e", "view": 6, "stem": "06-io"}
+{"epoch": 1792331530, "time_utc": "2026-10-18T13:52:10+00:00", "action": "capture_view", "namespace": "ml-service-prod", "view": 6, "stem": "06-io"}
+{"epoch": 1792331530, "time_utc": "2026-10-18T13:52:10+00:00", "action": "capture_view", "namespace": "gitops-core", "view": 6, "stem": "06-io"}
+{"epoch": 1792331566, "time_utc": "2026-10-18T13:52:46+00:00", "action": "select_view", "namespace": "orders-service-e2e", "view": 7}
+{"epoch": 1792331566, "time_utc": "2026-10-18T13:52:46+00:00", "action": "select_view", "namespace": "ml-service-prod", "view": 7}
+{"epoch": 1792331566, "time_utc": "2026-10-18T13:52:46+00:00", "action": "select_view", "namespace": "gitops-core", "view": 7}
+{"epoch": 1792331570, "time_utc": "2026-10-18T13:52:50+00:00", "action": "capture_view", "namespace": "orders-service-e2e", "view": 7, "stem": "07-alerts"}
+{"epoch": 1792331570, "time_utc": "2026-10-18T13:52:50+00:00", "action": "capture_view", "namespace": "ml-service-prod", "view": 7, "stem": "07-alerts"}
+{"epoch": 1792331570, "time_utc": "2026-10-18T13:52:50+00:00", "action": "capture_view", "namespace": "gitops-core", "view": 7, "stem": "07-alerts"}
+{"epoch": 1792331620, "time_utc": "2026-10-18T13:53:40+00:00", "action": "export_namespace_html", "namespace": "orders-service-e2e"}
+{"epoch": 1792331620, "time_utc": "2026-10-18T13:53:40+00:00", "action": "export_namespace_html", "namespace": "ml-service-prod"}
+{"epoch": 1792331620, "time_utc": "2026-10-18T13:53:40+00:00", "action": "export_namespace_html", "namespace": "gitops-core"}
+{"epoch": 1792331640, "time_utc": "2026-10-18T13:54:00+00:00", "action": "quit", "namespace": "orders-service-e2e"}
+{"epoch": 1792331640, "time_utc": "2026-10-18T13:54:00+00:00", "action": "quit", "namespace": "ml-service-prod"}
+{"epoch": 1792331640, "time_utc": "2026-10-18T13:54:00+00:00", "action": "quit", "namespace": "gitops-core"}
+{"epoch": 1792331642, "time_utc": "2026-10-18T13:54:02+00:00", "action": "completed", "namespace": "orders-service-e2e", "exit_status": 0, "elapsed_seconds": 329}
+{"epoch": 1792331642, "time_utc": "2026-10-18T13:54:02+00:00", "action": "completed", "namespace": "ml-service-prod", "exit_status": 0, "elapsed_seconds": 329}
+{"epoch": 1792331642, "time_utc": "2026-10-18T13:54:02+00:00", "action": "completed", "namespace": "gitops-core", "exit_status": 0, "elapsed_seconds": 329}

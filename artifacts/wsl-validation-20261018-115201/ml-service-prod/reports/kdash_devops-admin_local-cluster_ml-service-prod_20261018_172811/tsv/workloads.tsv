@@ -1,5 +1,0 @@
-KIND	WORKLOAD	PODS	PODS_READY	UNSCHEDULED	NODES	MAX_PER_NODE	VERDICT	CPU_USED_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	DISTRIBUTION	DESIRED	READY_REPLICAS	UPDATED	AVAILABLE	ROLLOUT	CPU_REQ_m	RESTARTS	IMAGES	SCHEDULE	LAST_SCHEDULE
-Deployment	ml-service-prod-backend	1	1	0	1	1	SINGLE	2	79	256	768	dev:1	1	1	1	1	complete	150	2	ml-service-prod-backend:local	-	-
-Deployment	ml-service-prod-frontend	1	1	0	1	1	SINGLE	1	66	192	512	dev:1	1	1	1	1	complete	100	2	ml-service-prod-frontend:local	-	-
-Deployment	redis	1	1	0	1	1	SINGLE	5	6	64	256	dev:1	1	1	1	1	complete	50	3	redis:7-alpine	-	-
-StatefulSet	postgres	1	1	0	1	1	SINGLE	3	38	256	512	dev:1	1	1	1	1	complete	100	3	postgres:16-alpine	-	-

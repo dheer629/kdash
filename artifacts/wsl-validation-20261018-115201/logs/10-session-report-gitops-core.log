@@ -1,7 +1,0 @@
-$ timeout 240 kdash -c devops-admin@local-cluster -n gitops-core --session-report /workspace/kdash/artifacts/wsl-validation-20261018-115201/gitops-core/reports/sessions/kdash_devops-admin_local-cluster_gitops-core_20261018_172217
-
-kdash namespace report from session kdash_devops-admin_local-cluster_gitops-core_20261018_172217
-  /workspace/kdash/artifacts/wsl-validation-20261018-115201/gitops-core/reports/kdash_namespace_report_devops-admin_local-cluster_gitops-core_20261018_172812.html
-  index   /workspace/kdash/artifacts/wsl-validation-20261018-115201/gitops-core/reports/index.html
-
-[exit 0]

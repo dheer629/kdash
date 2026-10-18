@@ -1,0 +1,8 @@
+# Owners of every path in this repository.
+#
+# A pull request that touches any of these paths needs an approving review from
+# the owner before it can be merged, which - together with the protected main
+# branch - is what keeps changes to this repository under the maintainer's
+# control. Forks are unaffected: the MIT licence lets anyone change their own
+# copy.
+* @dheer629

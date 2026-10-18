@@ -1,7 +1,0 @@
-$ timeout 300 kdash -c devops-admin@local-cluster -n gitops-core --report /workspace/kdash/artifacts/wsl-validation-20261018-115201/gitops-core/reports
-
-kdash report
-  html    /workspace/kdash/artifacts/wsl-validation-20261018-115201/gitops-core/reports/kdash_devops-admin_local-cluster_gitops-core_20261018_172826.html
-  bundle  /workspace/kdash/artifacts/wsl-validation-20261018-115201/gitops-core/reports/kdash_devops-admin_local-cluster_gitops-core_20261018_172826  (text views, tsv/, csv/, SHA256SUMS)
-
-[exit 0]

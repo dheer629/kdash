@@ -1,0 +1,12 @@
+$ timeout 300 kdash -c devops-admin@local-cluster -n orders-service-e2e --snapshot all --io-wait 10
+
+kdash HTML snapshots  (devops-admin@local-cluster / orders-service-e2e)
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_pod_container_resources_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_node_pools_worker_nodes_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_workloads_per_worker_node_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_namespace_ip_pool_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_memory_dashboard_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/kdash_network_disk_io_devops-admin_local-cluster_orders-service-e2e_20261018_192414.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/orders-service-e2e/reports/index.html
+
+[exit 0]

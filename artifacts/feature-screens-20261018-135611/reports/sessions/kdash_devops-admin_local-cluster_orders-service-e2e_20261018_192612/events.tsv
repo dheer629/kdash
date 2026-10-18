@@ -1,0 +1,7 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1792331772	info	SESSION	orders-service-e2e	kdash 4.12.0 started on node by demo - filter .*
+1792331833	info	POD_ADDED	orders-cron-29872197-ct24g	added on dev (CronJob/orders-cron, Succeeded)
+1792331833	warn	POD_REMOVED	orders-cron-29872196-6rg9s	gone (was on dev, Succeeded)
+1792331893	info	POD_ADDED	orders-cron-29872198-cjm6v	added on dev (CronJob/orders-cron, Succeeded)
+1792331893	warn	POD_REMOVED	orders-cron-29872197-ct24g	gone (was on dev, Succeeded)
+1792331925	info	SESSION	orders-service-e2e	kdash stopped after 153s

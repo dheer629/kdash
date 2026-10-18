@@ -28,7 +28,7 @@ Two consequences follow from "read-only":
 
 2. WHAT THIS EXERCISE DID
 -------------------------
-The run recorded in artifacts/wsl-validation-20261018-115201 did the following on
+The run recorded in artifacts/wsl-validation-20261018-134816 did the following on
 the local Ubuntu WSL distribution, against the local vcluster context:
 
   1. inventoried the host, the installed kdash and the cluster (read-only)
@@ -48,7 +48,7 @@ Cluster: vcluster context devops-admin@local-cluster with the single node "dev"
 (v1.30.4, containerd 1.7.27) and 15 namespaces.
 Namespaces observed: orders-service-e2e (27 pods), ml-service-prod (4 pods),
 gitops-core (7 pods).
-kdash 4.12.0, sha256 68c1297b6d3e7eff4ee0a511a00a5c204ec7fcad486d73f8f0421d3e030063be
+kdash 4.12.0, sha256 2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0
 for both the installed copy and the repository file.
 
 3. WHERE THE EVIDENCE LIVES
@@ -247,12 +247,12 @@ block and backing up each file. --dry-run prints the plan and changes nothing;
 keeps the shell setup. It keeps configuration, disclaimer acceptance, reports,
 recorded sessions, audit logs, old-version backups and startup backups.
 
-Observed in this run (artifacts/wsl-validation-20261018-115201/logs/):
+Observed in this run (artifacts/wsl-validation-20261018-134816/logs/):
   02-uninstall-preview.log   the plan, no file changed
   03-uninstall.log           removed the .bashrc block (backup written), the
                              completion file, the shell integration and the binary
   04-uninstall-verification.log  binary/completion/integration gone, no setup block
-                             left, the kept audit log still verifies (45 events,
+                             left, the kept audit log still verifies (101 events,
                              chain intact), and a login shell no longer finds kdash
   05-install.log             reinstalled, installer self-check passed
   06-install-verification.log   --check OK, a login shell runs 4.12.0, and the
@@ -314,7 +314,7 @@ DATA COVERAGE ACTUALLY OBSERVED IN THIS RUN
   * view 6 read the kubelet cAdvisor endpoint through the API node proxy, sampled
     every 15 s, and showed live network rates (namespace in 700B/s, out 1.0K/s)
     with zero disk activity in the window - a measured zero, not a missing source.
-  * orders-service-e2e was the interesting namespace: 27 pods, 14 ready, 1482
+  * orders-service-e2e was the interesting namespace: 27 pods, 14 ready, 1571
     cumulative restarts, one unschedulable pod, a crash loop and an image error,
     which is why view 7 reported 11 critical and 12 warning signals for it.
   * ml-service-prod (4 pods) and gitops-core (7 pods) were quiet reference

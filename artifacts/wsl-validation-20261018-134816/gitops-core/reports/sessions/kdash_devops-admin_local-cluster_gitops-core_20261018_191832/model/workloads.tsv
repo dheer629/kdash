@@ -1,0 +1,8 @@
+KIND	WORKLOAD	PODS	PODS_READY	UNSCHEDULED	NODES	MAX_PER_NODE	VERDICT	CPU_USED_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	DISTRIBUTION	DESIRED	READY_REPLICAS	UPDATED	AVAILABLE	ROLLOUT	CPU_REQ_m	RESTARTS	IMAGES	SCHEDULE	LAST_SCHEDULE
+Deployment	helm-controller	1	1	0	1	1	SINGLE	1	40	64	1024	dev:1	1	1	1	1	complete	100	5	ghcr.io/fluxcd/helm-controller:v1.5.5	-	-
+Deployment	image-automation-controller	1	1	0	1	1	SINGLE	1	22	64	1024	dev:1	1	1	1	1	complete	100	5	ghcr.io/fluxcd/image-automation-controller:v1.1.4	-	-
+Deployment	image-reflector-controller	1	1	0	1	1	SINGLE	8	27	64	1024	dev:1	1	1	1	1	complete	100	5	ghcr.io/fluxcd/image-reflector-controller:v1.1.2	-	-
+Deployment	kustomize-controller	1	1	0	1	1	SINGLE	5	47	64	1024	dev:1	1	1	1	1	complete	100	5	ghcr.io/fluxcd/kustomize-controller:v1.8.5	-	-
+Deployment	notification-controller	1	1	0	1	1	SINGLE	1	32	64	1024	dev:1	1	1	1	1	complete	100	5	ghcr.io/fluxcd/notification-controller:v1.8.4	-	-
+Deployment	source-controller	1	1	0	1	1	SINGLE	3	45	64	1024	dev:1	1	1	1	1	complete	50	4	ghcr.io/fluxcd/source-controller:v1.8.5	-	-
+Deployment	source-watcher	1	1	0	1	1	SINGLE	2	23	64	1024	dev:1	1	1	1	1	complete	50	5	ghcr.io/fluxcd/source-watcher:v2.1.1	-	-

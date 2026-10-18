@@ -1,0 +1,34 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 19:24:30 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns ml-service-prod   match .*   poll 2s  spec 1s/30s   sort cpu ▼ high first
+ health pods 4/4 ready  restarts 10  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 13m ░░░░░░ 1% lim  mem 188Mi █░░░░░ 9% lim  │ workloads 4
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                                         │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)      
+WORKLOAD / POD / CONTAINER                       RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM 
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► Deployment redis  (1 pod)                      1/1   3 │      5 ·       6 · │     50    250      64     256 │  10.0   2.0 ░░░░░░░░   9.4   2.3 ░░░░░░░░
+  redis-5d66f5d4b6-ct9xs                         1/1   3 │      5 ·       6 · │     50    250      64     256 │  10.0   2.0 ░░░░░░░░   9.4   2.3 ░░░░░░░░
+      node dev   pool role:control-plane,master   ip 10.244.0.105   qos Burstable   status Running   last-exit Unknown
+    └─ redis                                     Y     3 │      5 ·       6 · │     50    250      64     256 │  10.0   2.0 ░░░░░░░░   9.4   2.3 ░░░░░░░░
+        last-exit Unknown
+..........................................................................................................................................................
+► StatefulSet postgres  (1 pod)                  1/1   3 │      4 ·      38 · │    100    500     256     512 │   4.0   0.8 ░░░░░░░░  14.8   7.4 █░░░░░░░
+  postgres-0                                     1/1   3 │      4 ·      38 · │    100    500     256     512 │   4.0   0.8 ░░░░░░░░  14.8   7.4 █░░░░░░░
+      node dev   pool role:control-plane,master   ip 10.244.0.102   qos Burstable   status Running   last-exit Unknown
+    └─ postgres                                  Y     3 │      4 ·      38 · │    100    500     256     512 │   4.0   0.8 ░░░░░░░░  14.8   7.4 █░░░░░░░
+        last-exit Unknown
+..........................................................................................................................................................
+► Deployment ml-service-prod-backend  (1 pod)     1/1   2 │      3 ·      78 · │    150    750     256     768 │   2.0   0.4 ░░░░░░░░  30.5  10.2 █░░░░░░░
+  ml-service-prod-backend-8454d7556-qr4x7         1/1   2 │      3 ·      78 · │    150    750     256     768 │   2.0   0.4 ░░░░░░░░  30.5  10.2 █░░░░░░░
+      node dev   pool role:control-plane,master   ip 10.244.0.101   qos Burstable   status Running   last-exit Unknown
+    └─ backend                                   Y     2 │      3 ·      78 · │    150    750     256     768 │   2.0   0.4 ░░░░░░░░  30.5  10.2 █░░░░░░░
+        last-exit Unknown
+..........................................................................................................................................................
+► Deployment ml-service-prod-frontend  (1 pod)    1/1   2 │      1 ·      66 · │    100    500     192     512 │   1.0   0.2 ░░░░░░░░  34.4  12.9 █░░░░░░░
+  ml-service-prod-frontend-7bbcc8b78-vlv4w        1/1   2 │      1 ·      66 · │    100    500     192     512 │   1.0   0.2 ░░░░░░░░  34.4  12.9 █░░░░░░░
+      node dev   pool role:control-plane,master   ip 10.244.0.106   qos Burstable   status Running   last-exit Unknown
+    └─ frontend                                  Y     2 │      1 ·      66 · │    100    500     192     512 │   1.0   0.2 ░░░░░░░░  34.4  12.9 █░░░░░░░
+        last-exit Unknown
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (4 pods, 4 workloads)                           10 │     13 ·     188 · │    400   2000     768    2048 │   3.2   0.7 ░░░░░░░░  24.5   9.2 █░░░░░░░
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.

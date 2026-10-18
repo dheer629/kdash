@@ -1,8 +1,0 @@
-NODE	POOL	KIND	WORKLOAD	PODS	PODS_READY	RESTARTS	CPU_USED_m	MEM_USED_Mi	MEM_REQ_Mi	POD_NAMES
-dev	role:control-plane,master	Deployment	helm-controller	1	1	5	2	40	64	helm-controller-6f578444bb-c9sxb
-dev	role:control-plane,master	Deployment	image-automation-controller	1	1	5	1	22	64	image-automation-controller-854455b684-2w96t
-dev	role:control-plane,master	Deployment	image-reflector-controller	1	1	5	7	27	64	image-reflector-controller-6fd944c4d4-csnkf
-dev	role:control-plane,master	Deployment	kustomize-controller	1	1	5	8	45	64	kustomize-controller-75d659c96b-xcbt9
-dev	role:control-plane,master	Deployment	notification-controller	1	1	5	1	32	64	notification-controller-fb7d8d765-khcqd
-dev	role:control-plane,master	Deployment	source-controller	1	1	4	2	44	64	source-controller-5bdbb8b84d-tzzn6
-dev	role:control-plane,master	Deployment	source-watcher	1	1	5	1	24	64	source-watcher-57b7b9fc5-4gjw7

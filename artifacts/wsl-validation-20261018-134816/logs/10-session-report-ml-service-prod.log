@@ -1,0 +1,7 @@
+$ timeout 240 kdash -c devops-admin@local-cluster -n ml-service-prod --session-report /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/sessions/kdash_devops-admin_local-cluster_ml-service-prod_20261018_191832
+
+kdash namespace report from session kdash_devops-admin_local-cluster_ml-service-prod_20261018_191832
+  /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/kdash_namespace_report_devops-admin_local-cluster_ml-service-prod_20261018_192417.html
+  index   /workspace/kdash/artifacts/wsl-validation-20261018-134816/ml-service-prod/reports/index.html
+
+[exit 0]

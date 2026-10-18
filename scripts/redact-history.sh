@@ -45,7 +45,7 @@ SED="$WORK/redact.sed"; PATTERNS="$WORK/patterns"; FILTER="$WORK/filter.sh"
 {
   printf '#!/usr/bin/env bash\nset -uo pipefail\n'
   printf 'sed -f %q </dev/null >/dev/null 2>&1 || { echo "invalid redaction rules" >&2; exit 1; }\n' "$SED"
-  printf 'if grep -qF -f %q README.md DEVOPS_USER_GUIDE.md KDASH_EXPLAINER.txt 2>/dev/null; then\n' "$PATTERNS"
+  printf 'if grep -qF -f %q README.md DEVOPS_USER_GUIDE.md KDASH_EXPLAINER.txt CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md 2>/dev/null; then\n' "$PATTERNS"
   printf '  find samples -name "*.png" -delete 2>/dev/null\n'
   printf '  find samples -type d -empty -delete 2>/dev/null\n'
   printf 'fi\n'
