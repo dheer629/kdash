@@ -51,14 +51,16 @@ owns the code, the releases and the published evidence:
 ## Before you open a pull request
 
 ```bash
-bash -n kdash kdash-bundle.sh kdash-uninstall.sh scripts/*.sh   # syntax
-bash tests/test-uninstall.sh                                   # 11 integration tests
-sed -n '347,5894p' kdash-bundle.sh > /tmp/payload && cmp /tmp/payload kdash  # embedded copy
-bash scripts/update-checksums.sh && sha256sum -c SHA256SUMS    # checksums
+bash scripts/validate-all.sh
 ```
 
-The same checks run in CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)),
-so a red build there means the pull request is not ready.
+That one command checks the Bash syntax of every shipped script, that the
+installer embeds `kdash` byte for byte, the 11 uninstall integration tests, every
+checksum, the recorded run and its captures, the published samples, that no
+environment, product, site or personal name and no credential is in the tree, that
+every README reference resolves, and that the working tree is clean. CI runs the
+same script ([.github/workflows/ci.yml](.github/workflows/ci.yml)), so a red build
+there means the pull request is not ready.
 
 ## For the maintainer: how "nobody else can change it" is enforced
 

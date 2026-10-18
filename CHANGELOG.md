@@ -26,6 +26,11 @@ the detailed per-release notes.
   inventories the host, uninstalls, verifies the removal, reinstalls, runs kdash
   live for N minutes per namespace, captures views 1-7, exports the HTML reports
   and writes a run inventory.
+- `scripts/validate-all.sh`: one command that checks everything the repository
+  publishes - Bash syntax, the embedded installer payload, the uninstall tests,
+  every checksum, the recorded run and its captures, the samples, the absence of
+  environment, product, site or personal names and of credentials, the README
+  references and the git state. CI runs the same script.
 - `artifacts/` and `samples/`: a complete, redacted validation run with its logs,
   raw captures, recorded sessions, reports and audit trail, plus the screenshots
   published in the README.

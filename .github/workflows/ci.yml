@@ -23,42 +23,5 @@ jobs:
           awk --version | head -1 || true
           kubectl version --client 2>/dev/null | head -1 || echo "kubectl not installed (not needed by these checks)"
 
-      - name: Bash syntax of every shell file
-        run: |
-          rc=0
-          for f in kdash kdash-bundle.sh kdash-uninstall.sh scripts/*.sh tests/*.sh; do
-            if bash -n "$f"; then echo "ok    $f"; else echo "FAIL  $f"; rc=1; fi
-          done
-          exit $rc
-
-      - name: The installer embeds the CLI byte for byte
-        run: |
-          awk '/^cat > "\$tmp" <<.KDASH_PAYLOAD_EOF./{c=1;next} /^KDASH_PAYLOAD_EOF$/{if(c)exit} c' kdash-bundle.sh > /tmp/payload
-          cmp /tmp/payload kdash && echo "payload matches kdash"
-
-      - name: Uninstall integration tests
-        run: bash tests/test-uninstall.sh
-
-      - name: Checksums
-        run: sha256sum -c SHA256SUMS
-
-      - name: No credentials or keys in the repository
-        run: |
-          if grep -rniE 'client-key-data|client-certificate-data|BEGIN [A-Z ]*PRIVATE KEY|^[[:space:]]*password[[:space:]]*[:=]|bearer [A-Za-z0-9._-]{20,}' \
-               --exclude-dir=.git --exclude-dir=.github . ; then
-            echo "::error::a credential-looking string is present"; exit 1
-          fi
-          echo "no credential patterns found"
-
-      - name: README references resolve
-        run: |
-          missing=0
-          while IFS= read -r p; do
-            case "$p" in ''|http*|mailto:*) continue ;; esac
-            if [ ! -e "$p" ]; then echo "MISSING $p"; missing=$((missing+1)); fi
-          done < <({
-            grep -o 'src="[^"]*"' README.md | sed 's/^src="//; s/"$//'
-            grep -o '](\([^)]*\))' README.md | sed 's/^](//; s/)$//'
-          } | sed 's/#.*$//' | sort -u)
-          [ "$missing" = 0 ] || { echo "::error::$missing README reference(s) do not exist"; exit 1; }
-          echo "all README references resolve"
+      - name: Validate everything this repository publishes
+        run: bash scripts/validate-all.sh

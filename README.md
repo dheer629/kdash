@@ -934,7 +934,8 @@ kdash                 the whole CLI (one Bash file)
 kdash-bundle.sh       installer (embeds kdash byte for byte) + the uninstaller
 kdash-uninstall.sh    standalone uninstaller
 tests/                uninstall integration tests (11)
-scripts/              capture, render, redact and checksum helpers
+scripts/              capture, render, redact, validate and checksum helpers
+                       (scripts/validate-all.sh checks everything in one go)
 samples/              published screenshots and HTML samples
 artifacts/            the recorded validation run: logs, captures, reports, audit
 DEVOPS_USER_GUIDE.md  how to install, run, capture, export and troubleshoot
