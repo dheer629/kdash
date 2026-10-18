@@ -1,0 +1,50 @@
+[1m══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.12.0[0m  [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [1;7m 4 IP POOL [0m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m  [1m2026-10-18 17:24:35[0m[90m IST    by Dheeraj V  │ AUDITED[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m ml-service-prod   [90mmatch[39m .*   [90mpoll 5s  spec 17s/30s  session [39m17:22:17[90m up [39m2m18s   [1m[94msorted by IP address[0m
+[90m health [32mpods 4/4 ready[90m  restarts [35m10[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [32m0[90m  │ cpu [39m13m [32m░░░░░░[39m [32m1%[90m lim  mem [39m190Mi [32m█░░░░░[39m [32m9%[90m lim  │ workloads [39m4[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mIP POOL   namespace pod IPs, node IP blocks, subnets and service addresses[0m
+ [90mpod IPs[39m [1m4[0m [90min use[39m   [90mno IP[39m 0   [90mhost-network[39m 0   [90mduplicate[39m [32m0[39m   [90msubnets[39m 1
+ [90mservices[39m 4   [90mClusterIP[39m 4   [90mheadless[39m 0   [90mNodePort[39m 0   [90mLoadBalancer[39m 0   [90mexternal addresses[39m 0
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m[94m►[0m [1mPOD SUBNETS (observed, /24)[0m [90m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  SUBNET                 PODS  NODES
+  10.244.0.0/24             4  [90mdev[39m
+
+[1m[94m►[0m [1mNODE IP BLOCKS (per worker node)[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254     4     0 [32m░░░░░░░░░░[39m  [94m10.244.0.64/26[39m
+
+[1m[94m►[0m [1mSERVICES[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  ml-service-prod-backend               ClusterIP              10.102.49.30     -                        [90m8000/TCP[39m
+  ml-service-prod-frontend              ClusterIP              10.103.216.154   -                        [90m3000/TCP[39m
+  postgres                             ClusterIP              10.102.76.185    -                        [90m5432/TCP[39m
+  redis                                ClusterIP              10.101.82.147    -                        [90m6379/TCP[39m
+
+[1m[94m►[0m [1mPOD IP ASSIGNMENTS[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.101     ml-service-prod-backend-8454d7556-qr4x7       dev                        172.18.0.2       ml-service-prod-backend
+  10.244.0.102     postgres-0                                   dev                        172.18.0.2       postgres
+  10.244.0.105     redis-5d66f5d4b6-ct9xs                       dev                        172.18.0.2       redis
+  10.244.0.106     ml-service-prod-frontend-7bbcc8b78-vlv4w      dev                        172.18.0.2       ml-service-prod-frontend
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n[2m›
+[0;7m ○ LIVE 17:24:35  next 3s  data 2s old  spec 17/30s  fetch 0.4s  poll 5s  AUDITED | ip | ? help  1-7 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit         [0m

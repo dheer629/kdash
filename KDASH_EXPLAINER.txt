@@ -1,0 +1,372 @@
+KDASH 4.12.0 - EXPLAINER: THE DASHBOARD, ITS SEVEN VIEWS AND ITS EVIDENCE
+=========================================================================
+
+WHAT THIS FILE IS
+-----------------
+A reading guide for the kdash utility in this repository and for the evidence the
+exercise in this repository produced. It explains what every view answers, how to
+read the numbers without over-claiming, where the proof of each statement lives,
+and which limitations must be stated whenever this output is shared. It is
+deliberately plain text: it can be read in the same terminal as the dashboard.
+
+1. WHAT KDASH IS
+----------------
+kdash is a read-only Kubernetes namespace operations dashboard written as a single
+Bash file. It reads objects and metrics through kubectl, joins them locally with
+awk, and renders seven live terminal views plus HTML, text, TSV and CSV reports.
+It installs no agent, needs no build step, no jq and no Python, and it never
+creates, changes or deletes a cluster object: every kubectl call goes through a
+wrapper that refuses mutation verbs with exit 126.
+
+Two consequences follow from "read-only":
+
+  * kdash cannot fix anything. Every suggested action in view 7 is a command for
+    an operator to inspect and run deliberately.
+  * kdash shows only what the credentials and APIs of the current context allow.
+    A blank field, a "-" or a coverage warning means unknown or not permitted, and
+    must never be reported as zero.
+
+2. WHAT THIS EXERCISE DID
+-------------------------
+The run recorded in artifacts/wsl-validation-20261018-115201 did the following on
+the local Ubuntu WSL distribution, against the local vcluster context:
+
+  1. inventoried the host, the installed kdash and the cluster (read-only)
+  2. removed the installed copy with kdash-uninstall.sh, keeping every log line
+  3. verified that the binary, completion and shell integration were gone and that
+     configuration, reports, sessions and audit logs survived
+  4. reinstalled with kdash-bundle.sh and verified with --check and a login shell
+  5. ran kdash live for five minutes in three namespaces at the same time, in
+     separate tmux sessions of 170x50, capturing views 1-7 of each namespace,
+     exporting the all-tabs HTML with x and quitting with q
+  6. rebuilt the HTML from the recorded session and wrote the one-shot snapshots,
+     the text/TSV/CSV evidence bundle and the audit report for each namespace
+
+Measured environment: Ubuntu 24.04 on WSL2 (kernel 6.6.114.1-microsoft-standard-WSL2),
+user demo, GNU bash 5.2.21, tmux 3.4, kubectl client v1.30.4, GNU awk 5.2.1.
+Cluster: vcluster context devops-admin@local-cluster with the single node "dev"
+(v1.30.4, containerd 1.7.27) and 15 namespaces.
+Namespaces observed: orders-service-e2e (27 pods), ml-service-prod (4 pods),
+gitops-core (7 pods).
+kdash 4.12.0, sha256 68c1297b6d3e7eff4ee0a511a00a5c204ec7fcad486d73f8f0421d3e030063be
+for both the installed copy and the repository file.
+
+3. WHERE THE EVIDENCE LIVES
+---------------------------
+artifacts/   the run itself: step logs, per-namespace live terminal capture, the
+             recorded session, the reports and the audit log, plus run-metadata.json,
+             controller-actions.json and RUN_INVENTORY.md
+samples/     the shareable result: rendered screenshots of CLI views 1-7 and the
+             HTML reports, with checksums
+DEVOPS_USER_GUIDE.md   how to install, run, capture, export and troubleshoot
+KDASH_EXPLAINER.txt    this file
+
+4. THE SEVEN VIEWS, ONE BY ONE
+------------------------------
+Every view is live: the header and footer stay pinned, the body scrolls, and each
+view can be printed once as text, TSV or CSV with --once -o, and exported to HTML
+with e, x or --snapshot. Press ? in any view for the same explanation on screen.
+
+VIEW 1 - PODS (key 1, -v pods)
+Question: what is each pod and container actually using, against what it asked for?
+Read: one row per pod (grouped by owning workload, w toggles a flat list), and one
+row per container underneath. RDY is ready/expected containers, RST the cumulative
+restart count, CPUm and MEM are measured usage with a trend arrow, CPUreq/CPUlim
+and MEMreq/MEMlim are the declared values, c%REQ/c%LIM and m%REQ/m%LIM compare
+usage with request and limit, and CPU/LIM, MEM/LIM are the raw ratios.
+Detail line: node, node pool, pod IP, owning workload, QoS class, status, last exit
+reason (for example OOMKilled) and any waiting reason (CrashLoopBackOff, ...).
+Traps: a pod total can hide one container at its limit, so open the container rows
+with d. A restart count is cumulative for the pod's life: compare it with the
+events line and with an earlier capture instead of assuming a restart just happened.
+"-" in a usage column means the metrics API returned nothing for that container.
+
+VIEW 2 - NODE POOLS (key 2, -v nodes)
+Question: how much of the cluster can this namespace use, and how much does it use?
+Read: a namespace summary, then per pool and per node: allocatable memory and CPU,
+this namespace's used and requested share, and (with permission) what all other
+namespaces request and use. Press a to include or hide nodes that host none of this
+namespace's pods; Z toggles magnified bars versus true scale; the percentage values
+are unaffected by that toggle.
+Traps: namespace usage against node allocatable capacity is a different question
+from whole-node utilisation; read the label before comparing two percentages. In a
+vcluster the visible nodes and capacity belong to that virtual cluster and are not
+automatically the whole underlying host. If the cluster-wide read is forbidden, the
+comparison shows only the namespaces the credentials can read, and the footer says so.
+
+VIEW 3 - WORKLOADS (key 3, -v workloads)
+Question: is every Deployment, StatefulSet, DaemonSet and CronJob complete, and
+where do its pods actually run?
+Read: desired versus ready replicas, rollout state, image, per-pod status/node/IP,
+and a pods-per-node matrix. HA_RISK marks a workload with two or more replicas whose
+pods all sit on one node; SKEWED marks an uneven spread.
+Traps: on a single-node cluster every multi-replica workload is HA_RISK by
+construction, so the flag describes topology, not an outage. A CronJob that is
+between runs is not degraded. Compare "ready" with the desired count, not with the
+number of pods that happen to exist right now.
+
+VIEW 4 - IP POOL (key 4, -v ip)
+Question: which addresses does this namespace hold, and are any of them suspicious?
+Read: pod IPs per node, the node CIDR blocks and subnets behind them, service
+addresses, counts of pods without an IP, host-network pods and duplicate IPs.
+Traps: a Pending pod legitimately has no IP yet. Host-network pods share the node
+address, which is expected and not a conflict. A duplicate signal deserves a look at
+the two pods and their owner before it is called a networking fault.
+
+VIEW 5 - MEMORY (key 5, -v mem)
+Question: how is memory and CPU moving over time, and who is at risk?
+Read: time charts for memory and CPU with start/middle/end times on the axis,
+request and limit lines, event markers (! critical, ^ warning), session events,
+per-node bars, the pods with the highest memory, OOM risk, a memory-growth forecast
+with the clock time at which a pod would reach its limit, the OOMKilled history and
+memory grouped by workload.
+Traps: the forecast extends the recent measured trend and changes as the workload
+changes; it is not a prediction of a kill. A past OOMKilled entry is history, not
+proof of a current problem. Five minutes is a diagnostic window, not capacity
+planning evidence: read the session start and end times from the saved session.
+
+VIEW 6 - NET & DISK IO (key 6, -v io)
+Question: how much network and disk traffic is this namespace producing, and where?
+Read: network receive/send and disk read/write and IOPS over time, per worker node
+and per pod, with this namespace's share of each node.
+Traps: rates need two counter samples, so the first moments of a run show a warm-up
+message rather than numbers. The source is a Prometheus/cAdvisor endpoint (or the
+kubelet proxy), not metrics-server: metrics-server supplies only CPU and memory. A
+missing source or a denied proxy is unavailable data, not zero traffic. --io-wait
+SEC makes one-shot reports sample twice.
+
+VIEW 7 - ALERTS (key 7, -v alerts)
+Question: what needs attention right now, and what should I run next?
+Read: the verdict line (CRITICAL / WARNING / HEALTHY) with critical and warning
+counts, newly raised alerts, recently cleared alerts and the thresholds in force;
+one health line per section (PODS, MEMORY, NODES, WORKLOADS, IP, TRAFFIC) with a
+red/magenta/green dot and the key live numbers; then every active alert, critical
+first, each with age, section, object, signal, the live value that fired the rule,
+the trend, and the kubectl command to investigate it. Below that, the live top
+consumers and the recent events.
+5. RESOURCES AND UNITS
+----------------------
+Measured usage, declared request and configured limit answer three different
+questions and are not interchangeable. CPU 250m is 250 millicores (0.25 core);
+1000m is one core. Memory is shown in binary units (MiB, GiB) and the exported
+numeric tables use MiB. A percentage labelled %LIM divides usage by the configured
+limit; a percentage labelled %al divides namespace usage by allocatable capacity.
+Never compare percentages with different bases, and never treat a missing limit as
+"unlimited memory is available" - it only means that limit-based risk is unknown.
+High CPU against a limit indicates throttling pressure, not measured throttling;
+near-limit memory is risk, while an OOMKilled status or event is stronger evidence
+of an actual kill.
+
+6. TIME, SAMPLING, AND WHAT FIVE MINUTES PROVES
+-----------------------------------------------
+The dashboard and the HTML report show the running host's clock and time zone (this
+run: Asia/Kolkata in the terminal, host/UTC switchable in HTML). -i 5 asks for a
+five-second usage poll, -R 30 re-reads specifications every thirty seconds, and
+KDASH_SAMPLE_EVERY=5 records a history sample every five seconds. API latency makes
+the real cadence longer, so the honest statement is "about five minutes of
+observations with N samples", which the session files state exactly - not "exactly
+five minutes". A process runtime is not the same as the first-to-last sample span.
+
+Five minutes is enough to see a trend start, to catch a crash loop or a restart
+that is happening now, and to prove that the tooling works. It is not enough for
+capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
+
+7. SCREENSHOTS, TEXT, HTML, SESSION FILES: WHAT EACH ONE PROVES
+---------------------------------------------------------------
+  * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
+    screen at one moment, including colours and the pinned header/footer. It is
+    viewport evidence: a long table continues below the visible 50 rows.
+  * The rendered PNG screenshots in samples/cli/ replay those captures cell by
+    cell. They are a faithful render of the captured screen, and each image states
+    its namespace, view and source file. They are not operating-system window
+    screenshots and must be described that way.
+  * The text/TSV/CSV exports and the session TSV files hold every row that was
+    collected, so they are the right source for counts, sums and diffs.
+  * The HTML report holds the same data with charts, filters, per-table CSV export
+    and the history of the live run.
+  * The audit log is the record of who ran what, when, with which context and
+    namespace, which reports were written and which kubectl calls were made.
+
+A screenshot without its namespace, view, timestamp and run id is decoration. Keep
+them together.
+
+8. HTML OUTPUT MAPPING
+----------------------
+  * x, while live: one HTML file with every tab (0 Overview, 1 Pods, 2 Node Pools,
+    3 Workloads, 4 IP Pool, 5 Memory, 6 Net & Disk IO, 7 History) plus the history
+    recorded since that run started. This is the flagship report of a live run.
+  * --snapshot all: separate standalone HTML files, one per view, plus an
+    index.html that lists every snapshot in the report directory (newest first).
+  * --snapshot with no selection or --snapshot current: one combined report.
+  * --session-report latest | DIR: rebuilds the all-tabs report from a recorded
+    session, without touching the cluster. Use the exact session directory when
+    several runs exist.
+  * --report [DIR]: a full evidence bundle (text, TSV, CSV plus SHA256SUMS) and a
+    combined HTML dashboard.
+  * --audit-report [DIR]: the audit log as HTML plus CSV.
+9. THE AUDIT TRAIL
+------------------
+Every run is audited: start and end (user, real user, uid, host, SSH origin, tty,
+pid, version, context, namespace, arguments), every action taken in the dashboard,
+namespace switches with their result, alerts raised and cleared, every report
+written with its path and sha256, a summary of kubectl calls, and failures. kubectl
+verbs that could change the cluster are refused with exit 126 and recorded.
+
+Storage: a local file under KDASH_AUDIT_DIR (default ~/kdash_reports/audit, mode 600
+in a 700 directory), a central file under /var/log/kdash when that directory exists
+and is writable, and syslog via logger -t kdash. In this run each namespace wrote
+its own audit file under its artifacts directory, which is why the three namespaces
+can be told apart. Each line is tab separated, and the last field is a hash chain
+over the previous line, so an edited or removed line inside a file is detectable:
+
+  kdash --audit [N]        last N events (default 40)
+  kdash --audit-grep RE    only matching events
+  kdash --audit-all        include the central log (root / auditors)
+  kdash --audit-verify     verify every chain; non-zero exit when a file was edited
+  kdash --audit-report DIR audit log as HTML plus CSV
+
+Honest statement of the limit: a chain proves continuity inside the file it is in.
+Removing whole lines from the end of a file cannot be detected from that file
+alone, which is exactly why the central and syslog copies exist. Verify the
+original before making any redacted copy; redaction changes bytes and invalidates
+the chain, so label such copies and keep the original verification result.
+
+10. INSTALL, UNINSTALL, REINSTALL: WHAT THE RUN SHOWED
+------------------------------------------------------
+The installer (kdash-bundle.sh) installs the single Bash file as "kdash", plus a
+completion file and a shell integration file, and adds one marked block to the
+user's startup file, with a timestamped backup. Without root the prefix is
+~/.local/bin; with root it is /usr/local/bin plus /etc/kdash.conf. --check answers
+"which kdash does a fresh login shell run?".
+
+The uninstaller (kdash-uninstall.sh, also embedded in the bundle as
+kdash-bundle.sh --uninstall) removes the binary, the completion file and the shell
+integration, and edits only complete kdash setup blocks, after validating every
+block and backing up each file. --dry-run prints the plan and changes nothing;
+--prefix selects the same directory that was used for installation; --no-shell
+keeps the shell setup. It keeps configuration, disclaimer acceptance, reports,
+recorded sessions, audit logs, old-version backups and startup backups.
+
+Observed in this run (artifacts/wsl-validation-20261018-115201/logs/):
+  02-uninstall-preview.log   the plan, no file changed
+  03-uninstall.log           removed the .bashrc block (backup written), the
+                             completion file, the shell integration and the binary
+  04-uninstall-verification.log  binary/completion/integration gone, no setup block
+                             left, the kept audit log still verifies (45 events,
+                             chain intact), and a login shell no longer finds kdash
+  05-install.log             reinstalled, installer self-check passed
+  06-install-verification.log   --check OK, a login shell runs 4.12.0, and the
+                             installed sha256 equals the repository file's sha256
+A separate system-wide copy in /usr/local/bin belongs to the root install path and
+is not removed by a user uninstall; check with type -a kdash and --check rather
+than assuming one removal covered every copy.
+
+11. AUTOMATING A VALIDATION RUN
+-------------------------------
+scripts/wsl-validation.sh performs the whole cycle described in section 2 and
+writes the artifacts directory, including per-step logs, live captures, the
+recorded session, reports and the run inventory. It is safe to re-run: it never
+touches the cluster except to read it, and it never deletes a checkout file.
+
+  bash scripts/wsl-validation.sh
+  bash scripts/wsl-validation.sh --namespaces "orders-service-e2e gitops-core" --minutes 3
+
+Two practical findings are baked into it:
+  * --accept-disclaimer only sets the acceptance flag and then continues into the
+    live dashboard, so it does not terminate on its own. For unattended use, accept
+    through KDASH_ACCEPT_DISCLAIMER=1 together with a mode that exits (--once,
+    --snapshot, --report), or accept interactively once; the acceptance is then
+    stored per user and reused by later runs.
+  * a detached tmux server must be started fresh for a run: the pane size given at
+    session creation only applies when this run's server and config are used, so
+    the script ends a leftover server and waits for it to disappear before starting
+    its own. Without that, captures come back with a status line and the wrong height.
+12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
+--------------------------------------------------
+Version 4.12.0:
+  * the all-namespaces route (-A / --all-namespaces) has a known kubectl
+    argument-order issue; use an explicit -n NAME and do not read a failed -A as
+    "the namespace is empty or forbidden".
+  * IO (view 6) needs a reachable Prometheus/cAdvisor endpoint or the kubelet
+    proxy. metrics-server supplies CPU and memory only. Where no source is
+    reachable, IO is reported as unavailable, never as zero.
+  * the memory-growth forecast is a linear extension of recent samples.
+  * session folders are read as trusted input when a report is rebuilt from them.
+
+This run and this environment:
+  * the context is a vcluster: one visible node ("dev") with its own capacity view.
+    Statements about "the cluster" mean the virtual cluster this credential sees.
+  * a single node cannot demonstrate multi-node resilience, so HA_RISK and SKEWED
+    are topology observations, not outage evidence.
+  * the observation window is five minutes at five-second sampling; that is a
+    diagnostic snapshot, not a baseline.
+  * whole-node usage and other-namespace share depend on node metrics and on
+    cluster-wide read permission; where that is denied, the corresponding panel is
+    marked as unavailable and the namespace-only numbers remain valid.
+  * the PNG screenshots in samples/cli/ are renders of the saved tmux screens. The
+    captured screens themselves are in artifacts/ as .ansi and .txt.
+
+DATA COVERAGE ACTUALLY OBSERVED IN THIS RUN
+  * node metrics and the cluster-wide pod read were both permitted, so NODE POOLS
+    compared this namespace with the whole vcluster (1 node, 2 pools, 7524Mi and
+    24.0c allocatable; 44 pods in 11 namespaces requesting 1802Mi and 1350m), and
+    none of the captured view headers carried a coverage warning.
+  * view 6 read the kubelet cAdvisor endpoint through the API node proxy, sampled
+    every 15 s, and showed live network rates (namespace in 700B/s, out 1.0K/s)
+    with zero disk activity in the window - a measured zero, not a missing source.
+  * orders-service-e2e was the interesting namespace: 27 pods, 14 ready, 1482
+    cumulative restarts, one unschedulable pod, a crash loop and an image error,
+    which is why view 7 reported 11 critical and 12 warning signals for it.
+  * ml-service-prod (4 pods) and gitops-core (7 pods) were quiet reference
+    namespaces; on a single visible node every multi-replica workload is HA_RISK.
+
+13. REPRODUCING THIS EXERCISE
+-----------------------------
+Requirements: Ubuntu (here WSL2) with bash 4+, kubectl with a working context,
+awk (gawk recommended), tmux for the unattended capture, and coreutils. No Python,
+no jq and no agent are needed by kdash itself.
+
+  # 1 inventory the machine and the cluster (read-only)
+  bash scripts/wsl-env-probe.sh
+
+  # 2 uninstall, keeping every log line, then reinstall and verify
+  bash kdash-uninstall.sh --dry-run | tee artifacts/uninstall-preview.log
+  bash kdash-uninstall.sh             | tee artifacts/uninstall.log
+  bash kdash-bundle.sh                | tee artifacts/install.log
+  bash kdash-bundle.sh --check
+
+  # 3 the whole cycle in one command (uninstall, install, 5-minute live run in
+  #   three namespaces, captures of views 1-7, HTML exports, audit, inventory)
+  bash scripts/wsl-validation.sh --namespaces "orders-service-e2e ml-service-prod gitops-core" --minutes 5
+
+  # 4 turn the saved captures into screenshots and collect the HTML samples
+  #   (Windows side; needs Python with pyte and Pillow for the PNG renderer)
+  powershell -ExecutionPolicy Bypass -File scripts/render-cli-samples.ps1 -RunDirectory artifacts/<run-id>
+  powershell -ExecutionPolicy Bypass -File scripts/collect-html-samples.ps1 -RunDirectory artifacts/<run-id> -Screenshot
+
+A single namespace, by hand, without tmux:
+
+  ctx='devops-admin@local-cluster'; ns='orders-service-e2e'
+  export KDASH_REPORT_DIR="$PWD/artifacts/manual/$ns" KDASH_SAMPLE_EVERY=5
+  kdash -c "$ctx" -n "$ns" -i 5 -R 30        # then: 1..7, x, q
+  kdash -c "$ctx" -n "$ns" --session-report "$KDASH_REPORT_DIR"/sessions/<dir>
+
+14. SHARING AND COMMITTING SAFELY
+---------------------------------
+Reports and captures contain infrastructure metadata: context and namespace names,
+pod, workload and image names, IP addresses, node names, operator name, host name
+and timestamps. Review what is about to be published.
+
+  * Never commit kubeconfig files, tokens, client keys, credential stores or
+    unrelated shell/application logs. Use the existing credential helper instead of
+    putting secrets in commands.
+  * Verify the audit chain before making a redacted copy, and state that the copy is
+    redacted and no longer verifiable.
+  * Keep filenames and relative links when sharing an HTML set; the report pages
+    reference each other and their history data.
+  * Publish an inventory: utility version, context and namespace scope, observation
+    window, exit statuses, unavailable sources, audit verification result and
+    checksums. That is exactly what artifacts/<run>/RUN_INVENTORY.md and
+    samples/html/SHA256SUMS provide.
+  * Separate raw evidence (artifacts/), rendered screenshots (samples/cli/) and
+    curated HTML samples (samples/html/) so a reader can always tell which is which.

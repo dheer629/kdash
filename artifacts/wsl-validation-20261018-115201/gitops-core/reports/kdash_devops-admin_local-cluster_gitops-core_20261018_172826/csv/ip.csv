@@ -1,0 +1,8 @@
+POD,POD_IP,NODE,POOL,HOST_IP,KIND,WORKLOAD,STATUS,NOTE
+helm-controller-6f578444bb-c9sxb,10.244.0.100,dev,"role:control-plane,master",172.18.0.2,Deployment,helm-controller,Running,
+notification-controller-fb7d8d765-khcqd,10.244.0.103,dev,"role:control-plane,master",172.18.0.2,Deployment,notification-controller,Running,
+image-automation-controller-854455b684-2w96t,10.244.0.104,dev,"role:control-plane,master",172.18.0.2,Deployment,image-automation-controller,Running,
+image-reflector-controller-6fd944c4d4-csnkf,10.244.0.107,dev,"role:control-plane,master",172.18.0.2,Deployment,image-reflector-controller,Running,
+source-controller-5bdbb8b84d-tzzn6,10.244.0.108,dev,"role:control-plane,master",172.18.0.2,Deployment,source-controller,Running,
+source-watcher-57b7b9fc5-4gjw7,10.244.0.109,dev,"role:control-plane,master",172.18.0.2,Deployment,source-watcher,Running,
+kustomize-controller-75d659c96b-xcbt9,10.244.0.130,dev,"role:control-plane,master",172.18.0.2,Deployment,kustomize-controller,Running,

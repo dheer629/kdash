@@ -1,0 +1,50 @@
+[1m══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.12.0[0m  [90m 1 PODS [39m [90m 2 NODE POOLS [39m [1;7m 3 WORKLOADS [0m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m  [1m2026-10-18 17:23:55[0m[90m IST    by Dheeraj V  │ AUDITED[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m ml-service-prod   [90mmatch[39m .*   [90mpoll 5s  spec 7s/30s  session [39m17:22:17[90m up [39m1m38s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 4/4 ready[90m  restarts [35m10[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [32m0[90m  │ cpu [39m13m [32m░░░░░░[39m [32m1%[90m lim  mem [39m189Mi [32m█░░░░░[39m [32m9%[90m lim  │ workloads [39m4[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mWORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes[0m
+ [1mworkloads 4:[0m Deployment 3  StatefulSet 1   pods 4 (4 ready)   [32m0[39m degraded  [32m0[39m rolling out  [32m0[39m HA risk  [32m0[39m skewed  [32m0[39m unscheduled
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m[94m►[0m [1mWORKLOADS[0m[90m   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec[39m
+  KIND        WORKLOAD                   READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Deployment  [1mredis                   [0m [32m    1/1[39m    1     1     1     5m / 50m        6Mi /    64Mi / 256Mi   [35m   3[39m [90mSINGLE[39m
+      [90m├─ cpu [32m________█████___[90m  mem [94m░░░░░░░░░░░░░░░░[90m  last 17 samples, sum of its pods[39m
+      [90m├─ [39mredis-5d66f5d4b6-ct9xs                  [90mRunning           [39m [32m  1/1[39m dev                          cpu     5m  mem     6Mi  rst [35m3[39m  [90m10.244.0.105[39m
+      [90m└─ image redis:7-alpine[39m
+  StatefulSet [1mpostgres                [0m [32m    1/1[39m    1     1     1     4m / 100m      38Mi /   256Mi / 512Mi   [35m   3[39m [90mSINGLE[39m
+      [90m├─ cpu [32m______▒▒███▒▒▒▒▒[90m  mem [94m░░░░░░░░░░░░░░░░[90m  last 17 samples, sum of its pods[39m
+      [90m├─ [39mpostgres-0                              [90mRunning           [39m [32m  1/1[39m dev                          cpu     4m  mem    38Mi  rst [35m3[39m  [90m10.244.0.102[39m
+      [90m└─ image postgres:16-alpine[39m
+  Deployment  [1mml-service-prod-backend  [0m [32m    1/1[39m    1     1     1     3m / 150m      79Mi /   256Mi / 768Mi   [35m   2[39m [90mSINGLE[39m
+      [90m├─ cpu [32m___█████████████[90m  mem [94m░░░░░░░░░░░░░░░░[90m  last 17 samples, sum of its pods[39m
+      [90m├─ [39mml-service-prod-backend-8454d7556-qr4x7  [90mRunning           [39m [32m  1/1[39m dev                          cpu     3m  mem    79Mi  rst [35m2[39m  [90m10.244.0.101[39m
+      [90m└─ image ml-service-prod-backend:local[39m
+  Deployment  [1mml-service-prod-frontend [0m [32m    1/1[39m    1     1     1     1m / 100m      66Mi /   192Mi / 512Mi   [35m   2[39m [90mSINGLE[39m
+      [90m├─ cpu [32m______██________[90m  mem [94m___█████___██___[90m  last 17 samples, sum of its pods[39m
+      [90m├─ [39mml-service-prod-frontend-7bbcc8b78-vlv4w [90mRunning           [39m [32m  1/1[39m dev                          cpu     1m  mem    66Mi  rst [35m2[39m  [90m10.244.0.106[39m
+      [90m└─ image ml-service-prod-frontend:local[39m
+
+[1m[94m►[0m [1mSPREAD OVER WORKER NODES[0m[90m   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node[39m
+  KIND        WORKLOAD                   N1  VERDICT
+  Deployment  redis                    [1m   1[0m  [90mSINGLE[39m
+  StatefulSet postgres                 [1m   1[0m  [90mSINGLE[39m
+  Deployment  ml-service-prod-backend   [1m   1[0m  [90mSINGLE[39m
+  Deployment  ml-service-prod-frontend  [1m   1[0m  [90mSINGLE[39m
+              pods on node             [1m[94m   4[0m
+  [1m[94mN1  [0m dev                                      [90mpool role:control-plane,master   pods 4[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hi[2m›
+[0;7m ○ LIVE 17:23:55  next 3s  data 2s old  spec 7/30s  fetch 0.2s  poll 5s  AUDITED | workloads | ? help  1-7 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit   [0m

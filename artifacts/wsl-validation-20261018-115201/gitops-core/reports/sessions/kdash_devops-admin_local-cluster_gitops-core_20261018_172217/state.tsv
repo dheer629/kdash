@@ -1,0 +1,8 @@
+P	helm-controller-6f578444bb-c9sxb	dev	Running	1/1	5	Error	Deployment/helm-controller	0
+P	image-automation-controller-854455b684-2w96t	dev	Running	1/1	5	Error	Deployment/image-automation-controller	0
+P	image-reflector-controller-6fd944c4d4-csnkf	dev	Running	1/1	5	Error	Deployment/image-reflector-controller	0
+P	kustomize-controller-75d659c96b-xcbt9	dev	Running	1/1	5	Error	Deployment/kustomize-controller	0
+P	notification-controller-fb7d8d765-khcqd	dev	Running	1/1	5	Error	Deployment/notification-controller	0
+P	source-controller-5bdbb8b84d-tzzn6	dev	Running	1/1	4	Error	Deployment/source-controller	0
+P	source-watcher-57b7b9fc5-4gjw7	dev	Running	1/1	5	Error	Deployment/source-watcher	0
+N	dev	-	Ready

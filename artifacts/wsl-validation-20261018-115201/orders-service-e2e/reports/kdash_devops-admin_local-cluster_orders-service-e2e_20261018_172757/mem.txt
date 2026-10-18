@@ -1,0 +1,71 @@
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 17:27:57 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns orders-service-e2e   match .*   poll 2s  spec 1s/30s   sort mem ▼ high first
+ health ! pods 14/27 ready  restarts 1483  OOM risk 0  OOMKilled 0  no-limit 3  │ cpu 4m ░░░░░░ 0% lim  mem 27Mi ░░░░░░ 1% lim  │ workloads 23
+ MEMORY   live namespace memory dashboard
+ MEMORY used     27Mi  req    784Mi  lim   3392Mi   used/req    3.4%  used/lim    0.8%  ░░░░░░░░░░░░░░░░░░░░░░░░
+ window 17:27:56 -> 17:27:57 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
+ CPU    used       4m  req     360m  lim    4650m   used/req    1.1%  used/lim    0.1%  ░
+ risk  >=90% of limit 0   no limit 3   over request 2   OOMKilled before 0   restarts 1483
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► TIMELINE  17:27:56 -> 17:27:57 IST  (all since kdash started, host clock) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  MEMORY used - namespace                                                                              CPU used - namespace                                                                             
+         one sample so far - the chart starts with the 2nd (run kdash live)                                   one sample so far - the chart starts with the 2nd (run kdash live)                        
+  events: recorded in live mode (session history)
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (live sessions) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  builds from the session samples while kdash runs live (no samples yet)
+
+► MEMORY BY WORKER NODE ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory                           ns trend
+  dev                          role:contro~     27Mi   7524Mi   0.4  27.1  █▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░  ░
+
+► PODS BY MEMORY USED  (top 15, --top N) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD                                NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  orders-healthy-77bd9c5548-2p8kc    dev                            13Mi      8Mi     64Mi 162.5  20.3 ██░░░░░░   2  OVER_REQUEST
+  orders-healthy-77bd9c5548-6nqpw    dev                            12Mi      8Mi     64Mi 150.0  18.8 ██░░░░░░   1  OVER_REQUEST
+  orders-change-654dff6f4d-2d6cm     dev                             1Mi        -        -     -     - n/a       31  NO_LIMIT
+  orders-change-654dff6f4d-4rhlb     dev                             1Mi        -        -     -     - n/a       31  NO_LIMIT
+  orders-daemon-wbq9p                dev                             0Mi      8Mi     64Mi   0.0   0.0 ░░░░░░░░  32  
+  orders-logs                        dev                             0Mi      8Mi     64Mi   0.0   0.0 ░░░░░░░░  32  
+  orders-multi                       dev                             0Mi     16Mi    128Mi   0.0   0.0 ░░░░░░░░  64  
+  orders-not-ready                   dev                             0Mi      8Mi     64Mi   0.0   0.0 ░░░░░░░░  32  
+  orders-startup                     dev                             0Mi      8Mi     64Mi   0.0   0.0 ░░░░░░░░  32  
+  orders-stateful-0                  dev                             0Mi      8Mi     64Mi   0.0   0.0 ░░░░░░░░  32  
+  orders-stateful-1                  dev                             0Mi      8Mi     64Mi   0.0   0.0 ░░░░░░░░  32  
+  orders-transformer-d7565f89f-kcxgx dev                             0Mi      8Mi     32Mi   0.0   0.0 ░░░░░░░░  32  
+  orders-crash                       dev                               -      8Mi     64Mi     -     - n/a      387  
+  orders-cron-29872077-6hvrq         dev                               -      8Mi     64Mi     -     - n/a        0  
+  orders-image                       dev                               -      8Mi     64Mi     -     - n/a        0  
+
+► OOM RISK  (>= 90% of memory limit) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► MEMORY GROWTH FORECAST  (linear trend of the last 30m, a restart starts the trend again) ────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  needs a live session with 2m of samples (every 5s) - the forecast appears here
+
+► RECENT OOMKilled  (last container termination) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► NO MEMORY LIMIT  (unbounded containers) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  orders-change-654dff6f4d-2d6cm  orders-change-654dff6f4d-4rhlb  orders-longimage
+
+► MEMORY BY WORKLOAD ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  KIND        WORKLOAD                              PODS     USED      REQ      LIM  %LIM MEM/LIM 
+  Deployment  orders-healthy                           2     25Mi     16Mi    128Mi  19.5 ██░░░░░░
+  Deployment  orders-change                            2      2Mi        -        -     - n/a     
+  DaemonSet   orders-daemon                            1      0Mi      8Mi     64Mi   0.0 ░░░░░░░░
+  Deployment  orders-transformer                       1      0Mi      8Mi     32Mi   0.0 ░░░░░░░░
+  Pod         orders-logs                              1      0Mi      8Mi     64Mi   0.0 ░░░░░░░░
+  Pod         orders-multi                             1      0Mi     16Mi    128Mi   0.0 ░░░░░░░░
+  Pod         orders-not-ready                         1      0Mi      8Mi     64Mi   0.0 ░░░░░░░░
+  Pod         orders-startup                           1      0Mi      8Mi     64Mi   0.0 ░░░░░░░░
+  StatefulSet orders-stateful                          2      0Mi     16Mi    128Mi   0.0 ░░░░░░░░
+  CronJob     orders-cron                              1        -      8Mi     64Mi     - n/a     
+  Job         orders-job-failed                        2        -     16Mi    128Mi     - n/a     
+  Job         orders-job-success                       1        -      8Mi     64Mi     - n/a     
+  Pod         orders-crash                             1        -      8Mi     64Mi     - n/a     
+  Pod         orders-image                             1        -      8Mi     64Mi     - n/a     
+  Pod         orders-init-fail                         1        -      8Mi     64Mi     - n/a     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 1 polls.  metrics refresh about every 15 s.

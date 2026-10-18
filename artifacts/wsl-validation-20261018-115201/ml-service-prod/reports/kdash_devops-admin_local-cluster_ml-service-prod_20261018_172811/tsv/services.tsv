@@ -1,0 +1,5 @@
+NAMESPACE	SERVICE	TYPE	CLUSTER_IP	EXTERNAL_IPS	LB_INGRESS	PORTS
+ml-service-prod	ml-service-prod-backend	ClusterIP	10.102.49.30	-	-	8000/TCP
+ml-service-prod	ml-service-prod-frontend	ClusterIP	10.103.216.154	-	-	3000/TCP
+ml-service-prod	postgres	ClusterIP	10.102.76.185	-	-	5432/TCP
+ml-service-prod	redis	ClusterIP	10.101.82.147	-	-	6379/TCP

@@ -1,0 +1,5 @@
+P	ml-service-prod-backend-8454d7556-qr4x7	dev	Running	1/1	2	Unknown	Deployment/ml-service-prod-backend	0
+P	ml-service-prod-frontend-7bbcc8b78-vlv4w	dev	Running	1/1	2	Unknown	Deployment/ml-service-prod-frontend	0
+P	postgres-0	dev	Running	1/1	3	Unknown	StatefulSet/postgres	0
+P	redis-5d66f5d4b6-ct9xs	dev	Running	1/1	3	Unknown	Deployment/redis	0
+N	dev	-	Ready

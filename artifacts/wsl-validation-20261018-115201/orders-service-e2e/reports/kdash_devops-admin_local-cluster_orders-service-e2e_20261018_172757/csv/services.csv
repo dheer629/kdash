@@ -1,0 +1,9 @@
+NAMESPACE,SERVICE,TYPE,CLUSTER_IP,EXTERNAL_IPS,LB_INGRESS,PORTS
+orders-service-e2e,orders-kafka,ClusterIP,10.98.161.242,,,9092/TCP
+orders-service-e2e,orders-postgres,ClusterIP,10.104.198.59,,,5432/TCP
+orders-service-e2e,orders-stateful,ClusterIP/Headless,None,,,80/TCP
+orders-service-e2e,orders-transformer,ClusterIP,10.107.28.181,,,80/TCP
+orders-service-e2e,orders-web,ClusterIP,10.106.246.85,,,80/TCP
+orders-service-e2e,orders-web-second,ClusterIP,10.98.194.155,,,80/TCP
+orders-service-e2e,orders-wrong-port,ClusterIP,10.100.47.189,,,80/TCP
+orders-service-e2e,orders-zero,ClusterIP,10.102.122.211,,,80/TCP

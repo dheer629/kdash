@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 17:26:35 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns gitops-core   match .*   poll 5s  spec 18s/30s  session 17:22:17 up 4m18s   sort cpu ▼ high first
+ health pods 7/7 ready  restarts 34  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 32m ░░░░░░ 0% lim  mem 235Mi ░░░░░░ 3% lim  │ workloads 7  │ events 15m ! 0 ^ 0
+ ALERTS   live critical summary of every section, with the action for each signal
+   HEALTHY    0 critical   0 warning   0 new   0 cleared in 5 min   rules run every refresh (5s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► SECTIONS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ● PODS       7/7 ready  rst 34  0 crit 0 warn                                      ● MEMORY     235Mi / 7168Mi lim  3.3%  0 >=90%  0 no-limit  ____███_____
+  ● NODES      1 hosting  0 NotReady  max node mem 27.2% dev                         ● WORKLOADS  7  0 degraded  0 HA risk  0 rolling
+  ● IP         7 pod IPs  0 no IP  0 duplicate  4 svc                                ● TRAFFIC    in 47.4K/s out 23.1K/s  disk r 5.8K/s w 768B/s  ▓░░░███___██
+
+► ACTIVE ALERTS   (0 critical, 0 warning)   critical first, NEW first, action under each ────────────────────────────────────────────────────────────────────────────────
+  no critical or warning signal right now - every rule passed on the live data
+
+► LIVE TOP CONSUMERS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  memory % of limit                                       CPU % of limit                                          traffic in+out (ns 70.6K/s)
+    4.4 kustomize-controller-75d659c96b-xcbt9               1.2 kustomize-controller-75d659c96b-xcbt9               45.3K/s █████░░░ kustomize-controller-75d659c96b-x~
+    4.3 source-controller-5bdbb8b84d-tzzn6                  1.0 image-reflector-controller-6fd944c4d4-csnkf         16.4K/s ██░░░░░░ source-controller-5bdbb8b84d-tzzn6
+    4.0 helm-controller-6f578444bb-c9sxb                    0.3 source-controller-5bdbb8b84d-tzzn6                   5.7K/s █░░░░░░░ helm-controller-6f578444bb-c9sxb
+    3.1 notification-controller-fb7d8d765-khcqd             0.2 helm-controller-6f578444bb-c9sxb                     1.1K/s ░░░░░░░░ source-watcher-57b7b9fc5-4gjw7
+    2.6 image-reflector-controller-6fd944c4d4-csnkf         0.2 notification-controller-fb7d8d765-khcqd              976B/s ░░░░░░░░ notification-controller-fb7d8d765~
+
+► EVENTS  last hour ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  EVENTS 1 in window   ! 0 critical   ^ 0 warning
+  17:22:17       - SESSION          gitops-core                              kdash 4.12.0 started on node by demo - filter .*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS›
+ ○ LIVE 17:26:35  next 2s  data 3s old  spec 18/30s  fetch 0.3s  poll 5s  AUDITED | alerts | ? help  1-7 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit

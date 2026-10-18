@@ -1,0 +1,9 @@
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 17:28:26 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns gitops-core   match .*   poll 2s  spec 1s/30s   sort cpu ▼ high first
+ health pods 7/7 ready  restarts 34  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 22m ░░░░░░ 0% lim  mem 234Mi ░░░░░░ 3% lim  │ workloads 7
+ NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod
+ ! IO is sampled in live mode (or with --io-wait SEC in one-shot modes) - rates need two samples
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ nothing to show yet
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

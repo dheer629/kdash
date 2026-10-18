@@ -1,0 +1,9 @@
+$ bash /workspace/kdash/kdash-uninstall.sh --dry-run
+
+would back up and remove kdash setup blocks from /home/demo/.bashrc
+would remove /home/demo/.kdash-completion.bash
+would remove /home/demo/.kdash-shell.bash
+would remove /home/demo/.local/bin/kdash
+Dry run complete; no files changed.
+
+[exit 0]

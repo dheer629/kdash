@@ -1,0 +1,33 @@
+# Line-ending policy for this repository.
+#
+# kdash is a Bash utility that is executed directly on Linux/WSL. If a shell
+# script is checked out with CRLF, bash fails immediately with
+# "syntax error near unexpected token" or "set: pipefail: invalid option name",
+# which is exactly the failure this file prevents. Checksum files must also stay
+# LF or "sha256sum -c" rejects every line.
+#
+# Windows-only helper scripts (.ps1) keep CRLF, which is what PowerShell expects.
+* text=auto
+
+# Bash entry points and helpers: always LF, on every platform.
+kdash            text eol=lf
+kdash-bundle.sh  text eol=lf
+kdash-uninstall.sh text eol=lf
+*.sh             text eol=lf
+SHA256SUMS       text eol=lf
+*.sha256         text eol=lf
+
+# Text formats that are read by the tools above.
+*.md             text eol=lf
+*.txt            text eol=lf
+*.json           text eol=lf
+*.tsv            text eol=lf
+*.csv            text eol=lf
+*.html           text eol=lf
+
+# Windows helper scripts.
+*.ps1            text eol=crlf
+
+# Evidence and images are byte-exact: never normalise them.
+*.ansi           -text
+*.png            -text

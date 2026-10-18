@@ -1,0 +1,58 @@
+$ bash -c 
+  set -u
+  echo "kdash files that must be gone:"
+  for f in "$HOME/.local/bin/kdash" "$HOME/.kdash-shell.bash" "$HOME/.kdash-completion.bash"; do
+    if [ -e "$f" ] || [ -L "$f" ]; then echo "  STILL PRESENT  $f"; else echo "  removed        $f"; fi
+  done
+  echo
+  echo "kdash setup block in startup files:"
+  grep -n "kdash setup" "$HOME/.bashrc" "$HOME/.bash_profile" 2>/dev/null || echo "  none (correct)"
+  echo
+  echo "startup backups written by the uninstaller:"
+  ls -l "$HOME"/.bashrc.bak.kdash.* "$HOME"/.bash_profile.bak.kdash.* 2>/dev/null || echo "  none"
+  echo
+  echo "data that must survive:"
+  ls -ld "$HOME/.config/kdash" "$HOME/kdash_reports" "$HOME/kdash_reports/audit" 2>&1
+  ls -l "$HOME"/kdash_reports/audit/*.log 2>&1 | tail -3
+  echo
+  echo "login shell resolution after removal:"
+  bash -lc "type -a kdash 2>&1 | head -3; kdash --version 2>&1 | head -2" 2>&1
+  echo
+  echo "hash chain of the kept audit log (verified with the repository copy):"
+  bash "/workspace/kdash/kdash" --audit-verify 2>&1 | head -6 || true
+
+
+kdash files that must be gone:
+  removed        /home/demo/.local/bin/kdash
+  removed        /home/demo/.kdash-shell.bash
+  removed        /home/demo/.kdash-completion.bash
+
+kdash setup block in startup files:
+  none (correct)
+
+startup backups written by the uninstaller:
+-rw-r--r-- 1 demo demo 4179 Oct  4 06:06 /home/demo/.bashrc.bak.kdash.20261017_121552
+-rw-r--r-- 1 demo demo 4453 Oct 17 12:15 /home/demo/.bashrc.bak.kdash.20261017_131800
+-rw-r--r-- 1 demo demo 4181 Oct 18 11:23 /home/demo/.bashrc.bak.kdash.20261018_112340
+-rw-r--r-- 1 demo demo 4454 Oct 17 13:18 /home/demo/.bashrc.bak.kdash.20261018_112340.rskj5x
+-rw-r--r-- 1 demo demo 4182 Oct 18 11:41 /home/demo/.bashrc.bak.kdash.20261018_114127
+-rw-r--r-- 1 demo demo 4455 Oct 18 11:23 /home/demo/.bashrc.bak.kdash.20261018_114127.FrSWTs
+-rw-r--r-- 1 demo demo 4183 Oct 18 11:44 /home/demo/.bashrc.bak.kdash.20261018_114420
+-rw-r--r-- 1 demo demo 4456 Oct 18 11:41 /home/demo/.bashrc.bak.kdash.20261018_114420.EncQHl
+-rw-r--r-- 1 demo demo 4457 Oct 18 11:44 /home/demo/.bashrc.bak.kdash.20261018_115203.ww1hYe
+  none
+
+data that must survive:
+drwxr-xr-x 2 demo demo 4096 Oct 18 11:44 /home/demo/.config/kdash
+drwxr-xr-x 4 demo demo 4096 Oct 17 13:35 /home/demo/kdash_reports
+drwx------ 2 demo demo 4096 Oct 17 13:18 /home/demo/kdash_reports/audit
+-rw------- 1 demo demo 16848 Oct 18 11:44 /home/demo/kdash_reports/audit/audit_202610.log
+
+login shell resolution after removal:
+bash: line 1: type: kdash: not found
+bash: line 1: kdash: command not found
+
+hash chain of the kept audit log (verified with the repository copy):
+OK      /home/demo/kdash_reports/audit/audit_202610.log  (56 events, chain intact)
+
+[exit 0]

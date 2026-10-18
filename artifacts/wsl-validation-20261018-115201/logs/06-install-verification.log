@@ -1,0 +1,48 @@
+$ bash -c 
+  set -u
+  echo "installer self-check:"
+  bash "/workspace/kdash/kdash-bundle.sh" --check 2>&1
+  echo
+  echo "login shell resolution:"
+  bash -lc "type -a kdash; kdash --version" 2>&1
+  echo
+  echo "installed sha256 vs repository copy:"
+  sha256sum "$HOME/.local/bin/kdash" "/workspace/kdash/kdash" 2>&1
+  echo
+  echo "author and audit locations:"
+  kdash --about 2>&1 | head -12
+
+
+installer self-check:
+kdash files found:
+  /home/demo/.local/bin/kdash  (v4.12.0)
+kdash shell definitions outside the kdash block:
+  none
+  login shell: kdash is a function (kdash 34 /home/demo/.kdash-shell.bash), first binary on PATH /home/demo/.local/bin/kdash
+  login shell: kdash runs 4.12.0
+[OK]   a new login shell runs kdash v4
+
+login shell resolution:
+kdash is /home/demo/.local/bin/kdash
+kdash is /home/demo/.local/bin/kdash
+kdash 4.12.0
+
+installed sha256 vs repository copy:
+68c1297b6d3e7eff4ee0a511a00a5c204ec7fcad486d73f8f0421d3e030063be  /home/demo/.local/bin/kdash
+68c1297b6d3e7eff4ee0a511a00a5c204ec7fcad486d73f8f0421d3e030063be  /workspace/kdash/kdash
+
+author and audit locations:
+kdash 4.12.0 - live Kubernetes namespace operations dashboard
+author   Dheeraj V
+
+DISCLAIMER - kdash is provided as is, without warranty of any kind. The 
+person running this utility is solely responsible for its use, for having 
+authorisation to access the clusters and namespaces it reads, and for any 
+decision or action taken on its output. kdash is read-only, but every run is 
+AUDITED: the user, host, origin, context, namespace, every action taken in 
+the dashboard, every report written and every kubectl call are logged and 
+stored (local audit log, central audit log when configured, and syslog).
+
+audit    local    /home/demo/kdash_reports/audit/audit_202610.log
+
+[exit 0]

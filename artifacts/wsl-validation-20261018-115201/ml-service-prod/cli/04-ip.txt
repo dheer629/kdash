@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 17:24:35 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns ml-service-prod   match .*   poll 5s  spec 17s/30s  session 17:22:17 up 2m18s   sorted by IP address
+ health pods 4/4 ready  restarts 10  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 13m ░░░░░░ 1% lim  mem 190Mi █░░░░░ 9% lim  │ workloads 4  │ events 15m ! 0 ^ 0
+ IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
+ pod IPs 4 in use   no IP 0   host-network 0   duplicate 0   subnets 1
+ services 4   ClusterIP 4   headless 0   NodePort 0   LoadBalancer 0   external addresses 0
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► POD SUBNETS (observed, /24) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SUBNET                 PODS  NODES
+  10.244.0.0/24             4  dev
+
+► NODE IP BLOCKS (per worker node) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254     4     0 ░░░░░░░░░░  10.244.0.64/26
+
+► SERVICES ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  ml-service-prod-backend               ClusterIP              10.102.49.30     -                        8000/TCP
+  ml-service-prod-frontend              ClusterIP              10.103.216.154   -                        3000/TCP
+  postgres                             ClusterIP              10.102.76.185    -                        5432/TCP
+  redis                                ClusterIP              10.101.82.147    -                        6379/TCP
+
+► POD IP ASSIGNMENTS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.101     ml-service-prod-backend-8454d7556-qr4x7       dev                        172.18.0.2       ml-service-prod-backend
+  10.244.0.102     postgres-0                                   dev                        172.18.0.2       postgres
+  10.244.0.105     redis-5d66f5d4b6-ct9xs                       dev                        172.18.0.2       redis
+  10.244.0.106     ml-service-prod-frontend-7bbcc8b78-vlv4w      dev                        172.18.0.2       ml-service-prod-frontend
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n›
+ ○ LIVE 17:24:35  next 3s  data 2s old  spec 17/30s  fetch 0.4s  poll 5s  AUDITED | ip | ? help  1-7 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit

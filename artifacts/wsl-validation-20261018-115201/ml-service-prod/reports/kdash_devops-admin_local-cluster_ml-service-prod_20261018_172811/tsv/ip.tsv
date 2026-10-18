@@ -1,0 +1,5 @@
+POD	POD_IP	NODE	POOL	HOST_IP	KIND	WORKLOAD	STATUS	NOTE
+ml-service-prod-backend-8454d7556-qr4x7	10.244.0.101	dev	role:control-plane,master	172.18.0.2	Deployment	ml-service-prod-backend	Running	-
+postgres-0	10.244.0.102	dev	role:control-plane,master	172.18.0.2	StatefulSet	postgres	Running	-
+redis-5d66f5d4b6-ct9xs	10.244.0.105	dev	role:control-plane,master	172.18.0.2	Deployment	redis	Running	-
+ml-service-prod-frontend-7bbcc8b78-vlv4w	10.244.0.106	dev	role:control-plane,master	172.18.0.2	Deployment	ml-service-prod-frontend	Running	-

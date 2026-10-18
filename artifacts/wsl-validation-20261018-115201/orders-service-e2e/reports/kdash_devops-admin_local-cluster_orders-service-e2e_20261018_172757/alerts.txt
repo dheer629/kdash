@@ -1,0 +1,70 @@
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 17:27:57 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns orders-service-e2e   match .*   poll 2s  spec 1s/30s   sort cpu ▼ high first
+ health ! pods 14/27 ready  restarts 1483  OOM risk 0  OOMKilled 0  no-limit 3  │ cpu 4m ░░░░░░ 0% lim  mem 27Mi ░░░░░░ 1% lim  │ workloads 23
+ ALERTS   live critical summary of every section, with the action for each signal
+   CRITICAL    11 critical   11 warning   0 new   0 cleared in 5 min   rules run every refresh (2s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► SECTIONS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ● PODS       14/27 ready  rst 1483  10 crit 1 warn               ● MEMORY     27Mi / 3392Mi lim  0.8%  0 >=90%  3 no-limit  ░     ● NODES      1 hosting  0 NotReady  max node mem 27.1% dev     
+  ● WORKLOADS  23  0 degraded  3 HA risk  0 rolling                ● IP         19 pod IPs  8 no IP  0 duplicate  8 svc             ● TRAFFIC    no IO source (not-sampled)                        
+
+► ACTIVE ALERTS  22 (11 critical, 11 warning)   critical first, NEW first, action under each ──────────────────────────────────────────────────────────────────────────────────────────────────────────
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE                           TREND
+  ! -      PODS      orders-crash                   CrashLoopBackOff   restarts 387, ready 0/1              
+                   ↳ kubectl -n orders-service-e2e logs orders-crash --previous --all-containers --tail=100
+  ! -      PODS      orders-image                   ImagePullBackOff   image / config error                 
+                   ↳ kubectl -n orders-service-e2e describe pod orders-image
+  ! -      PODS      orders-job-failed-9hwvb        Failed             node dev                             
+                   ↳ kubectl -n orders-service-e2e describe pod orders-job-failed-9hwvb
+  ! -      PODS      orders-job-failed-p5fdq        Failed             node dev                             
+                   ↳ kubectl -n orders-service-e2e describe pod orders-job-failed-p5fdq
+  ! -      PODS      orders-kafka                   Failed             node dev                             
+                   ↳ kubectl -n orders-service-e2e describe pod orders-kafka
+  ! -      PODS      orders-liveness                CrashLoopBackOff   restarts 743, ready 0/1              
+                   ↳ kubectl -n orders-service-e2e logs orders-liveness --previous --all-containers --tail=100
+  ! -      PODS      orders-longimage               ErrImageNeverPull  image / config error                 
+                   ↳ kubectl -n orders-service-e2e describe pod orders-longimage
+  ! -      PODS      orders-missing-config          CreateContainerCo~ restarts 0, ready 0/1                
+                   ↳ kubectl -n orders-service-e2e logs orders-missing-config --previous --all-containers --tail=100
+  ! -      PODS      orders-oom                     Failed             node dev                             
+                   ↳ kubectl -n orders-service-e2e describe pod orders-oom
+  ! -      PODS      orders-postgres                Failed             node dev                             
+                   ↳ kubectl -n orders-service-e2e describe pod orders-postgres
+  ! -      WORKLOADS Pod/orders-unschedulable       UNSCHEDULED        1 pod(s) not placed                  
+                   ↳ kubectl -n orders-service-e2e get events --field-selector reason=FailedScheduling
+  ^ -      PODS      orders-unschedulable           Pending            node (unscheduled)                   
+                   ↳ kubectl -n orders-service-e2e get events --field-selector involvedObject.name=orders-unschedulable
+  ^ -      MEMORY    3 pod(s)                       NO_MEM_LIMIT       can grow until the node runs out     
+                   ↳ kubectl -n orders-service-e2e get pods -o custom-columns=POD:.metadata.name,LIM:.spec.containers[*].resources.limits.memory
+  ^ -      WORKLOADS Deployment/orders-change       HA_RISK            2 replicas on 1 node                 
+                   ↳ kubectl -n orders-service-e2e get pods -o wide | grep orders-change   (topologySpreadConstraints)
+  ^ -      WORKLOADS Deployment/orders-healthy      HA_RISK            2 replicas on 1 node                 
+                   ↳ kubectl -n orders-service-e2e get pods -o wide | grep orders-healthy   (topologySpreadConstraints)
+  ^ -      WORKLOADS StatefulSet/orders-stateful    HA_RISK            2 replicas on 1 node                 
+                   ↳ kubectl -n orders-service-e2e get pods -o wide | grep orders-stateful   (topologySpreadConstraints)
+  ^ -      IP        orders-job-failed-9hwvb        NO_IP              status Failed                        
+                   ↳ kubectl -n orders-service-e2e describe pod orders-job-failed-9hwvb
+  ^ -      IP        orders-job-failed-p5fdq        NO_IP              status Failed                        
+                   ↳ kubectl -n orders-service-e2e describe pod orders-job-failed-p5fdq
+  ^ -      IP        orders-kafka                   NO_IP              status Failed                        
+                   ↳ kubectl -n orders-service-e2e describe pod orders-kafka
+  ^ -      IP        orders-oom                     NO_IP              status Failed                        
+                   ↳ kubectl -n orders-service-e2e describe pod orders-oom
+  ^ -      IP        orders-postgres                NO_IP              status Failed                        
+                   ↳ kubectl -n orders-service-e2e describe pod orders-postgres
+  ^ -      IP        orders-unschedulable           NO_IP              status Pending                       
+                   ↳ kubectl -n orders-service-e2e describe pod orders-unschedulable
+
+► LIVE TOP CONSUMERS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  memory % of limit                                                 CPU % of limit                                                    traffic in+out
+   20.3 orders-healthy-77bd9c5548-2p8kc                               2.0 orders-not-ready                                            
+   18.8 orders-healthy-77bd9c5548-6nqpw                               1.0 orders-healthy-77bd9c5548-2p8kc                             
+    0.0 orders-daemon-wbq9p                                           1.0 orders-healthy-77bd9c5548-6nqpw                             
+    0.0 orders-logs                                                   0.0 orders-daemon-wbq9p                                         
+    0.0 orders-multi                                                  0.0 orders-logs                                                 
+
+► EVENTS  last hour ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  events: recorded in live mode (session history)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS.  x = HTML report.

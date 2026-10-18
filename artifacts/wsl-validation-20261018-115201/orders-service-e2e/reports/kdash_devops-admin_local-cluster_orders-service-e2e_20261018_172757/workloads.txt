@@ -1,0 +1,97 @@
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-10-18 17:27:57 IST    by Dheeraj V  │ AUDITED
+ ctx devops-admin@local-cluster   ns orders-service-e2e   match .*   poll 2s  spec 1s/30s   sort cpu ▼ high first
+ health ! pods 14/27 ready  restarts 1483  OOM risk 0  OOMKilled 0  no-limit 3  │ cpu 4m ░░░░░░ 0% lim  mem 27Mi ░░░░░░ 1% lim  │ workloads 23
+ WORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes
+ workloads 23: Deployment 3  StatefulSet 1  DaemonSet 1  CronJob 1  Job 2  Pod 15   pods 27 (14 ready)   0 degraded  0 rolling out  3 HA risk  0 skewed  1 unscheduled
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► WORKLOADS   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec
+  KIND        WORKLOAD                   READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Deployment  orders-healthy               2/2    2     2     1     2m / 10m       25Mi /    16Mi / 128Mi      3 HA_RISK
+      ├─ orders-healthy-77bd9c5548-2p8kc    Running              1/1 dev                          cpu     1m  mem    13Mi  rst 2  10.244.0.99
+      ├─ orders-healthy-77bd9c5548-6nqpw    Running              1/1 dev                          cpu     1m  mem    12Mi  rst 1  10.244.0.137
+      └─ image orders-tools:local
+  Pod         orders-not-ready             0/1    -     1     1     2m / 5m         0Mi /     8Mi / 64Mi      32 N/A
+      └─ orders-not-ready                   NotReady             0/1 dev                          cpu     2m  mem     0Mi  rst 32  10.244.0.118
+  DaemonSet   orders-daemon                1/1    1     1     1     0m / 5m         0Mi /     8Mi / 64Mi      32 PER_NODE
+      ├─ orders-daemon-wbq9p                Running              1/1 dev                          cpu     0m  mem     0Mi  rst 32  10.244.0.131
+      └─ image orders-tools:local
+  Deployment  orders-change                2/2    2     2     1     0m / -          2Mi /       - / -         62 HA_RISK
+      ├─ orders-change-654dff6f4d-2d6cm     Running              1/1 dev                          cpu     0m  mem     1Mi  rst 31  10.244.0.126
+      ├─ orders-change-654dff6f4d-4rhlb     Running              1/1 dev                          cpu     0m  mem     1Mi  rst 31  10.244.0.135
+      └─ image orders-tools:local
+  Deployment  orders-transformer           1/1    1     1     1     0m / 5m         0Mi /     8Mi / 32Mi      32 SINGLE
+      ├─ orders-transformer-d7565f89f-kcxgx Running              1/1 dev                          cpu     0m  mem     0Mi  rst 32  10.244.0.116
+      └─ image orders-tools:local
+  Pod         orders-logs                  1/1    -     1     1     0m / 5m         0Mi /     8Mi / 64Mi      32 N/A
+      └─ orders-logs                        Running              1/1 dev                          cpu     0m  mem     0Mi  rst 32  10.244.0.113
+  Pod         orders-multi                 1/1    -     1     1     0m / 10m        0Mi /    16Mi / 128Mi     64 N/A
+      └─ orders-multi                       Running              2/2 dev                          cpu     0m  mem     0Mi  rst 64  10.244.0.120
+  Pod         orders-startup               1/1    -     1     1     0m / 5m         0Mi /     8Mi / 64Mi      32 N/A
+      └─ orders-startup                     Running              1/1 dev                          cpu     0m  mem     0Mi  rst 32  10.244.0.117
+  StatefulSet orders-stateful              2/2    2     2     1     0m / 10m        0Mi /    16Mi / 128Mi     64 HA_RISK
+      ├─ orders-stateful-0                  Running              1/1 dev                          cpu     0m  mem     0Mi  rst 32  10.244.0.129
+      ├─ orders-stateful-1                  Running              1/1 dev                          cpu     0m  mem     0Mi  rst 32  10.244.0.121
+      └─ image orders-tools:local
+  CronJob     orders-cron                  1/1    -     1     1      - / 5m           - /     8Mi / 64Mi       0 N/A  rollout scheduled
+      ├─ orders-cron-29872077-6hvrq         Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.193
+      ├─ schedule * * * * *   last run 2026-10-18T11:57:00Z
+      └─ image orders-tools:local
+  Job         orders-job-failed            0/2    -     2     1      - / 10m          - /    16Mi / 128Mi      0 N/A
+      ├─ orders-job-failed-9hwvb            Failed               0/1 dev                          cpu      -  mem       -  rst 0  -
+      └─ orders-job-failed-p5fdq            Failed               0/1 dev                          cpu      -  mem       -  rst 0  -
+  Job         orders-job-success           1/1    -     1     1      - / 5m           - /     8Mi / 64Mi       0 N/A
+      └─ orders-job-success-dlrdg           Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  -
+  Pod         orders-crash                 0/1    -     1     1      - / 5m           - /     8Mi / 64Mi     387 N/A
+      └─ orders-crash                       CrashLoopBackOff     0/1 dev                          cpu      -  mem       -  rst 387  10.244.0.128
+  Pod         orders-image                 0/1    -     1     1      - / 5m           - /     8Mi / 64Mi       0 N/A
+      └─ orders-image                       ImagePullBackOff     0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.114
+  Pod         orders-init-fail             0/1    -     1     1      - / 5m           - /     8Mi / 64Mi       0 N/A
+      └─ orders-init-fail                   PodInitializing      0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.111
+  Pod         orders-kafka                 0/1    -     1     1      - / 200m         - /   512Mi / 1536Mi     0 N/A
+      └─ orders-kafka                       Failed               0/1 dev                          cpu      -  mem       -  rst 0  -
+  Pod         orders-liveness              0/1    -     1     1      - / 5m           - /     8Mi / 64Mi     743 N/A
+      └─ orders-liveness                    CrashLoopBackOff     0/1 dev                          cpu      -  mem       -  rst 743  10.244.0.132
+  Pod         orders-longimage             0/1    -     1     1      - / -            - /       - / -          0 N/A
+      └─ orders-longimage                   ErrImageNeverPull    0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.133
+  Pod         orders-missing-config        0/1    -     1     1      - / 5m           - /     8Mi / 64Mi       0 N/A
+      └─ orders-missing-config              CreateContainerCo~   0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.112
+  Pod         orders-oom                   0/1    -     1     1      - / 5m           - /     8Mi / 32Mi       0 N/A
+      └─ orders-oom                         Failed               0/1 dev                          cpu      -  mem       -  rst 0  -
+  Pod         orders-pg-client             1/1    -     1     1      - / 25m          - /    32Mi / 256Mi      0 N/A
+      └─ orders-pg-client                   Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  -
+  Pod         orders-postgres              0/1    -     1     1      - / 25m          - /    64Mi / 256Mi      0 N/A
+      └─ orders-postgres                    Failed               0/1 dev                          cpu      -  mem       -  rst 0  -
+  Pod         orders-unschedulable         0/1    -     1     0      - / 5m           - /     8Mi / 64Mi       0 N/A+UNSCHEDULED+NOT_READY
+      └─ orders-unschedulable               Pending              0/1 (unscheduled)                cpu      -  mem       -  rst 0  -
+
+► SPREAD OVER WORKER NODES   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node
+  KIND        WORKLOAD                   N1  N2  VERDICT
+  Deployment  orders-healthy              2   .  HA_RISK
+  Pod         orders-not-ready            1   .  N/A
+  DaemonSet   orders-daemon               1   .  PER_NODE
+  Deployment  orders-change               2   .  HA_RISK
+  Deployment  orders-transformer          1   .  SINGLE
+  Pod         orders-logs                 1   .  N/A
+  Pod         orders-multi                1   .  N/A
+  Pod         orders-startup              1   .  N/A
+  StatefulSet orders-stateful             2   .  HA_RISK
+  CronJob     orders-cron                 1   .  N/A
+  Job         orders-job-failed           2   .  N/A
+  Job         orders-job-success          1   .  N/A
+  Pod         orders-crash                1   .  N/A
+  Pod         orders-image                1   .  N/A
+  Pod         orders-init-fail            1   .  N/A
+  Pod         orders-kafka                1   .  N/A
+  Pod         orders-liveness             1   .  N/A
+  Pod         orders-longimage            1   .  N/A
+  Pod         orders-missing-config       1   .  N/A
+  Pod         orders-oom                  1   .  N/A
+  Pod         orders-pg-client            1   .  N/A
+  Pod         orders-postgres             1   .  N/A
+  Pod         orders-unschedulable        .   1  N/A+UNSCHEDULED+NOT_READY
+              pods on node               26   1
+  N1   dev                                      pool role:control-plane,master   pods 26
+  N2   (unscheduled)                            pool (none)   pods 1
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hide pods.

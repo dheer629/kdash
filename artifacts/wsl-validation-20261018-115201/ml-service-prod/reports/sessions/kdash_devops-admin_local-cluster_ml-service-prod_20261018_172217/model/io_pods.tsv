@@ -1,0 +1,5 @@
+POD	NODE	WORKLOAD	NET_RX_Bps	NET_TX_Bps	DISK_R_Bps	DISK_W_Bps	DISK_R_IOPS	DISK_W_IOPS
+ml-service-prod-backend-8454d7556-qr4x7	dev	Deployment/ml-service-prod-backend	172	208	0	0	0	0
+ml-service-prod-frontend-7bbcc8b78-vlv4w	dev	Deployment/ml-service-prod-frontend	45	45	0	0	0	0
+postgres-0	dev	StatefulSet/postgres	73	54	0	0	0	0
+redis-5d66f5d4b6-ct9xs	dev	Deployment/redis	75	26	0	0	0	0

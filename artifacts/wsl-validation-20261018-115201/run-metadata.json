@@ -1,0 +1,19 @@
+{
+  "run_id": "wsl-validation-20261018-115201",
+  "started_iso": "2026-10-18T11:52:01+00:00",
+  "finished_iso": "2026-10-18T17:28:27+05:30",
+  "context": "devops-admin@local-cluster",
+  "timezone": "Asia/Kolkata",
+  "kdash_version": "4.12.0",
+  "live_window_seconds": 300,
+  "poll_seconds": 5,
+  "history_sample_seconds": 5,
+  "terminal": {"columns": 170, "rows": 50},
+  "namespaces": ["orders-service-e2e", "ml-service-prod", "gitops-core"],
+  "sessions": [
+    {"namespace": "orders-service-e2e", "tmux_session": "kdash-validation-1", "directory": "/workspace/kdash/artifacts/wsl-validation-20261018-115201/orders-service-e2e", "exit_status": "0", "elapsed_seconds": 325},
+    {"namespace": "ml-service-prod", "tmux_session": "kdash-validation-2", "directory": "/workspace/kdash/artifacts/wsl-validation-20261018-115201/ml-service-prod", "exit_status": "0", "elapsed_seconds": 325},
+    {"namespace": "gitops-core", "tmux_session": "kdash-validation-3", "directory": "/workspace/kdash/artifacts/wsl-validation-20261018-115201/gitops-core", "exit_status": "0", "elapsed_seconds": 325}
+  ],
+  "failures": []
+}

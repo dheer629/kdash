@@ -1,0 +1,5 @@
+NAMESPACE,SERVICE,TYPE,CLUSTER_IP,EXTERNAL_IPS,LB_INGRESS,PORTS
+gitops-core,notification-controller,ClusterIP,10.98.116.34,,,80/TCP
+gitops-core,source-controller,ClusterIP,10.98.166.50,,,80/TCP
+gitops-core,source-watcher,ClusterIP,10.110.155.218,,,80/TCP
+gitops-core,webhook-receiver,ClusterIP,10.108.160.100,,,80/TCP
