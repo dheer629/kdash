@@ -1,0 +1,6177 @@
+#!/usr/bin/env bash
+#===============================================================================
+#  kdash-bundle.sh - complete one-file setup for the kdash v4 dashboard
+#                    (pods, node pools, workloads, IP pool, live memory)
+#
+#  Author: Dheeraj V
+#  Disclaimer: provided as is. Whoever runs kdash is solely responsible for its
+#  use; every run and user action is audited (local log, /var/log/kdash, syslog).
+#
+#  Run on any management host. Re-running is safe: it replaces the previous
+#  install and every OLDER kdash it can find, so the CLI always runs v4.
+#
+#    bash kdash-bundle.sh                 install for the current user
+#    sudo bash kdash-bundle.sh            install system-wide for all users
+#    bash kdash-bundle.sh --prefix DIR    install the binary into DIR
+#    bash kdash-bundle.sh --no-shell      binary only, do not touch shell files
+#    bash kdash-bundle.sh --keep-old      do not move older kdash copies aside
+#    bash kdash-bundle.sh --check         only report which kdash your shell runs
+#    bash kdash-bundle.sh --uninstall     remove what this script installed
+#    bash kdash-uninstall.sh             standalone uninstaller (also --dry-run)
+#    bash kdash-bundle.sh --help
+#
+#  Installs
+#    <prefix>/kdash                 the dashboard (root: /usr/local/bin,
+#                                   otherwise ~/.local/bin)
+#    /etc/kdash.conf                site defaults, root only, kept if present
+#    ~/.config/kdash.conf           context -> namespace map, only if you have none
+#    completion                     /etc/bash_completion.d/kdash as root,
+#                                   otherwise ~/.kdash-completion.bash
+#    ~/.kdash-shell.bash            shell integration: kdash always resolves to
+#                                   the v4 binary; kdpods kdnodes kdwl kdip
+#                                   kdmemlive kdsnap kdhist kdns kdio kdreport kdtop kdmem kdwatch
+#    ~/.bashrc, ~/.bash_profile     one marker block at the END of each that
+#                                   sources ~/.kdash-shell.bash, so it loads
+#                                   after any older kdash function or alias
+#
+#  Older kdash copies on PATH (any version below 4) are moved to
+#  ~/.kdash-old/ when writable; for root-owned copies the exact sudo command
+#  is printed. Old kdash functions / aliases in your shell files are reported
+#  (file:line) and overridden at shell start-up.
+#===============================================================================
+set -uo pipefail
+# A damaged PATH from an earlier shell start-up must not stop the repair.
+PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; export PATH
+
+VERSION="4.12.0"
+PREFIX=""; DO_SHELL=1; UNINSTALL=0; KEEP_OLD=0; CHECK_ONLY=0; DRY_RUN=0
+BEGIN_MARK="# >>> kdash setup >>>"
+END_MARK="# <<< kdash setup <<<"
+STAMP="$(date +%Y%m%d_%H%M%S)"
+
+say()  { printf '%s\n' "$*"; }
+warn() { printf 'kdash-setup: %s\n' "$*" >&2; }
+die()  { printf 'kdash-setup: %s\n' "$*" >&2; exit 1; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --prefix)    [ -n "${2:-}" ] || die "--prefix needs a directory"; PREFIX="$2"; shift 2 ;;
+    --no-shell)  DO_SHELL=0; shift ;;
+    --keep-old)  KEEP_OLD=1; shift ;;
+    --check)     CHECK_ONLY=1; shift ;;
+    --uninstall) UNINSTALL=1; shift ;;
+    --dry-run)   DRY_RUN=1; shift ;;
+    -h|--help)   sed -n '3,36p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) die "unknown option '$1' (try --help)" ;;
+  esac
+done
+
+[ "$DRY_RUN" = 0 ] || [ "$UNINSTALL" = 1 ] || die '--dry-run requires --uninstall'
+if [ "$UNINSTALL" = 1 ] && { [ "$CHECK_ONLY" = 1 ] || [ "$KEEP_OLD" = 1 ]; }; then
+  die '--uninstall cannot be combined with --check or --keep-old'
+fi
+
+AS_ROOT=0; [ "$(id -u)" -eq 0 ] && AS_ROOT=1
+if [ -z "$PREFIX" ]; then
+  if [ "$AS_ROOT" = 1 ]; then PREFIX=/usr/local/bin; else PREFIX="$HOME/.local/bin"; fi
+fi
+BIN="$PREFIX/kdash"
+RC="$HOME/.bashrc"; PROFILE="$HOME/.bash_profile"
+SHELLFILE="$HOME/.kdash-shell.bash"
+OLDDIR="$HOME/.kdash-old"
+[ "$AS_ROOT" = 1 ] && COMPFILE=/etc/bash_completion.d/kdash || COMPFILE="$HOME/.kdash-completion.bash"
+
+#-- bounded runners: never let a shell start-up (OIDC prompt, kubectl call, read
+#   from /dev/tty) hang the installer. Output goes to a file, not a pipe, the
+#   child runs in its own session without a terminal, and the whole session is
+#   killed when the time is up.
+run_bounded() {   # seconds cmd args...  -> stdout of cmd (empty on timeout)
+  local t="$1" out pid i=0; shift
+  out="$(mktemp)" || return 1
+  if command -v setsid >/dev/null 2>&1; then setsid -w "$@" </dev/null >"$out" 2>/dev/null &
+  else "$@" </dev/null >"$out" 2>/dev/null & fi
+  pid=$!
+  while kill -0 "$pid" 2>/dev/null && [ "$i" -lt $(( t * 5 )) ]; do sleep 0.2; i=$((i + 1)); done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -9 -- "-$pid" 2>/dev/null; kill -9 "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    rm -f "$out"; return 124
+  fi
+  wait "$pid" 2>/dev/null
+  cat "$out"; rm -f "$out"; return 0
+}
+run_shell_probe() {   # seconds bash-args... ; prints output up to the end marker
+  local t="$1" out; shift
+  out="$(run_bounded "$t" env TERM=dumb bash "$@")" || return 124
+  printf '%s\n' "$out"
+}
+
+#-- helpers ---------------------------------------------------------------------
+# version of a kdash file: 4.0.0, 3.1.0, ... or "unknown"
+kdash_file_version() {
+  local v
+  v="$(grep -m1 -oE 'KDASH_VERSION="?[0-9][0-9.]*' "$1" 2>/dev/null | grep -oE '[0-9][0-9.]*$')"
+  if [ -z "$v" ] && [ -x "$1" ]; then
+    v="$(run_bounded 5 "$1" --version 2>/dev/null | grep -m1 -oE '[0-9]+\.[0-9]+(\.[0-9]+)?')"
+  fi
+  printf '%s' "${v:-unknown}"
+}
+is_v4() { case "$1" in 4.*|[5-9].*) return 0 ;; *) return 1 ;; esac; }
+
+# every kdash executable reachable from a login shell or a usual bin dir
+find_kdash_files() {
+  {
+    run_shell_probe 15 -lc 'type -aP kdash'
+    type -aP kdash 2>/dev/null
+    for d in /usr/local/bin /usr/local/sbin /usr/bin /usr/sbin /bin /opt/bin /opt/kdash \
+             "$HOME/bin" "$HOME/.local/bin" "$HOME/scripts" "$HOME/tools"; do
+      [ -f "$d/kdash" ] && printf '%s\n' "$d/kdash"
+    done
+  } | while IFS= read -r f; do
+    [ -n "$f" ] && readlink -f -- "$f" 2>/dev/null
+  done | awk '!seen[$0]++'
+}
+
+# shell-level kdash definitions (functions / aliases) in start-up files
+find_kdash_defs() {
+  local f files=("$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.bash_aliases" "$HOME/.bash_login")
+  for f in /etc/profile.d/*.sh /etc/bashrc /etc/bash.bashrc "$HOME"/.bashrc.d/* "$HOME"/.platform* "$HOME"/.*cli*; do
+    [ -f "$f" ] && files+=("$f")
+  done
+  local seen=" "
+  for f in "${files[@]}"; do
+    [ -f "$f" ] || continue
+    case "$seen" in *" $f "*) continue ;; esac; seen="$seen$f "
+    [ "$f" = "$SHELLFILE" ] && continue
+    grep -nE '^[[:space:]]*(function[[:space:]]+)?(kdash|kdtop|kdmem|kdwatch|kdnodes|kdwl|kdip|kdmemlive|kdreport|kdpods|kdsnap|kdhist|kdns|kdio)[[:space:]]*\(\)|^[[:space:]]*alias[[:space:]]+(kdash|kdtop|kdmem|kdwatch)=|^[[:space:]]*(function[[:space:]]+)?kd[[:space:]]*\(\).*kdash|^[[:space:]]*alias[[:space:]]+kd=.*kdash' "$f" 2>/dev/null |
+      grep -v 'kdash setup' | sed "s|^|$f:|"
+  done
+}
+
+# what an interactive login shell really runs for "kdash"
+probe_shell() {
+  run_shell_probe 20 -il -c '
+      t=$(type -t kdash 2>/dev/null); printf "KDASH_TYPE=%s\n" "${t:-none}"
+      if [ "$t" = function ]; then shopt -s extdebug; d=$(declare -F kdash); printf "KDASH_FUNC=%s\n" "$d"; fi
+      printf "KDASH_PATH=%s\n" "$(type -P kdash 2>/dev/null)"
+      if [ "$t" = function ]; then printf "KDASH_BINVAR=%s\n" "${KDASH_BIN:-}"; fi
+      printf "KDASH_PROBE_END\n"' | grep -E '^(KDASH_)'
+}
+report_probe() {
+  local p type func path binvar ver
+  if ! p="$(probe_shell)" || ! printf '%s\n' "$p" | grep -q '^KDASH_PROBE_END'; then
+    say "[WARN] could not verify a login shell within 20 s - your shell start-up waits for"
+    say "       input or a slow command (OIDC login, kubectl call). Install is complete;"
+    say "       check by hand:   exec bash -l   then   type kdash; kdash --version"
+    return 2
+  fi
+  type="$(printf '%s\n' "$p" | sed -n 's/^KDASH_TYPE=//p')"
+  func="$(printf '%s\n' "$p" | sed -n 's/^KDASH_FUNC=//p')"
+  path="$(printf '%s\n' "$p" | sed -n 's/^KDASH_PATH=//p')"
+  binvar="$(printf '%s\n' "$p" | sed -n 's/^KDASH_BINVAR=//p')"
+  say "  login shell: kdash is a ${type:-?}${func:+ ($func)}, first binary on PATH ${path:-none}"
+  case "$func" in *"$SHELLFILE"*) ver="$(kdash_file_version "${binvar:-$BIN}")" ;;
+                  "") ver="$( [ -n "$path" ] && kdash_file_version "$path")" ;;
+                  *) ver="old shell function" ;; esac
+  say "  login shell: kdash runs ${ver:-nothing}"
+  case "$ver" in
+    4.*|[5-9].*) say "[OK]   a new login shell runs kdash v4"; return 0 ;;
+    *) say "[FAIL] a new login shell does NOT run kdash v4"; return 1 ;;
+  esac
+}
+
+#-- check only --------------------------------------------------------------------
+if [ "$CHECK_ONLY" = 1 ]; then
+  say "kdash files found:"
+  find_kdash_files | while IFS= read -r f; do say "  $f  (v$(kdash_file_version "$f"))"; done
+  say "kdash shell definitions outside the kdash block:"
+  defs="$(find_kdash_defs)"; [ -n "$defs" ] && printf '  %s\n' "$defs" || say "  none"
+  report_probe; exit $?
+fi
+
+#-- uninstall (embedded standalone script; keep both copies in sync) ---------------
+if [ "$UNINSTALL" = 1 ]; then
+  uninstall_args=(--prefix "$PREFIX")
+  [ "$DO_SHELL" = 1 ] || uninstall_args+=(--no-shell)
+  [ "$DRY_RUN" = 0 ] || uninstall_args+=(--dry-run)
+  bash -s -- "${uninstall_args[@]}" <<'KDASH_UNINSTALL_EOF'
+#!/usr/bin/env bash
+# Standalone uninstaller for kdash. Author: Dheeraj V. License: MIT.
+# Keep the KDASH_UNINSTALL_EOF payload in kdash-bundle.sh identical to this file.
+set -uo pipefail
+PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; export PATH
+
+say() { printf '%s\n' "$*"; }
+die() { printf 'kdash-uninstall: %s\n' "$*" >&2; exit 1; }
+usage() {
+  cat <<'HELP'
+Usage: bash kdash-uninstall.sh [--prefix DIR] [--no-shell] [--dry-run]
+
+Remove kdash, its completion file and the current user's shell integration.
+The script works on its own; no installer, kubectl or cluster connection is needed.
+
+  --prefix DIR  Binary directory (default: ~/.local/bin; root: /usr/local/bin).
+                Use the same prefix that was passed to the installer.
+  --no-shell    Keep shell integration and startup blocks; remove binary/completion.
+  --dry-run     Show the planned changes without changing any files.
+  -h, --help    Show this help.
+
+Edits only complete kdash setup blocks in ~/.bashrc and ~/.bash_profile, with
+backups. Shell integration for a different prefix is kept, including completion.
+Root removes /etc/bash_completion.d/kdash and uses root's current HOME; other
+users' homes are not scanned. Open a new terminal after uninstalling.
+
+Configuration, disclaimer acceptance, reports, sessions, audit logs, startup
+backups and ~/.kdash-old are kept. Running dashboards are not stopped.
+HELP
+}
+
+PREFIX=""; DO_SHELL=1; DRY_RUN=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --prefix)
+      [ -n "${2:-}" ] && [[ "$2" != --* ]] || die '--prefix needs a directory'
+      PREFIX="$2"; shift 2 ;;
+    --no-shell) DO_SHELL=0; shift ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) die "unknown option '$1' (try --help)" ;;
+  esac
+done
+[ -n "${HOME:-}" ] && [ -d "$HOME" ] || die 'HOME must name an existing directory'
+if [ "$(id -u)" -eq 0 ]; then
+  PREFIX="${PREFIX:-/usr/local/bin}"; COMPFILE=/etc/bash_completion.d/kdash
+else
+  PREFIX="${PREFIX:-$HOME/.local/bin}"; COMPFILE="$HOME/.kdash-completion.bash"
+fi
+# Resolve directory aliases, but never follow the final kdash symlink for removal.
+PREFIX="$(readlink -m -- "$PREFIX")" || die 'cannot resolve the install prefix'
+BIN="$PREFIX/kdash"; SHELLFILE="$HOME/.kdash-shell.bash"
+REMOVE=("$COMPFILE"); EDIT=(); STAGED=(); BACKUPS=()
+KEEP_INTEGRATION=0
+BEGIN_MARK='# >>> kdash setup >>>'; END_MARK='# <<< kdash setup <<<'
+
+if [ -e "$SHELLFILE" ] || [ -L "$SHELLFILE" ]; then
+  [ -f "$SHELLFILE" ] && [ -r "$SHELLFILE" ] || die "cannot read regular shell integration file $SHELLFILE"
+  # Read the installer's literal assignment, never execute a shell/config file.
+  bound="$(sed -n 's/^KDASH_BIN="\(.*\)"$/\1/p' "$SHELLFILE")"
+  if [ -n "$bound" ] && [ "$(readlink -m -- "$bound")" != "$(readlink -m -- "$BIN")" ]; then
+    KEEP_INTEGRATION=1; REMOVE=()
+    say "kept shell integration and completion for another install: $bound"
+  fi
+fi
+if [ "$DO_SHELL" = 1 ] && [ "$KEEP_INTEGRATION" = 0 ]; then
+  REMOVE+=("$SHELLFILE")
+  for startup in "$HOME/.bashrc" "$HOME/.bash_profile"; do
+    [ -e "$startup" ] || [ -L "$startup" ] || continue
+    [ -f "$startup" ] && [ -r "$startup" ] || die "cannot read regular startup file $startup"
+    target="$(readlink -f -- "$startup")" || die "cannot resolve $startup"
+    # Validate all pairs first; an unmatched start must never delete the file tail.
+    count="$(awk -v begin="$BEGIN_MARK" -v end="$END_MARK" '
+      $0 == begin { if (inside) bad=1; inside=1; count++; next }
+      $0 == end { if (!inside) bad=1; inside=0 }
+      END { if (inside || bad) exit 1; print count+0 }
+    ' "$target")" || die "malformed kdash setup markers in $startup; nothing removed"
+    [ "$count" -gt 0 ] || continue
+    duplicate=0
+    for existing in "${EDIT[@]}"; do [ "$existing" != "$target" ] || duplicate=1; done
+    [ "$duplicate" = 0 ] || continue
+    [ -w "$target" ] && [ -w "$(dirname -- "$target")" ] || die "cannot edit/back up $startup; nothing removed"
+    EDIT+=("$target")
+  done
+fi
+# Unlink only named installation files, with the binary last. Never recurse.
+REMOVE+=("$BIN")
+for target in "${REMOVE[@]}"; do
+  [ -e "$target" ] || [ -L "$target" ] || continue
+  [ -L "$target" ] || [ -f "$target" ] || die "refusing to remove non-file $target; nothing removed"
+  [ -w "$(dirname -- "$target")" ] || die "cannot remove $target; nothing removed"
+done
+
+if [ "$DRY_RUN" = 1 ]; then
+  for target in "${EDIT[@]}"; do say "would back up and remove kdash setup blocks from $target"; done
+  for target in "${REMOVE[@]}"; do
+    if [ -e "$target" ] || [ -L "$target" ]; then say "would remove $target"; fi
+  done
+  say 'Dry run complete; no files changed.'
+  exit 0
+fi
+
+cleanup() {
+  local staged
+  for staged in "${STAGED[@]}"; do rm -f -- "$staged"; done
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+STAMP="$(date +%Y%m%d_%H%M%S)"
+# Prepare every edit and backup before changing any installation file.
+for target in "${EDIT[@]}"; do
+  staged="$(mktemp "$(dirname -- "$target")/.kdash-uninstall.XXXXXX")" || die "cannot stage $target"
+  STAGED+=("$staged")
+  cp -p -- "$target" "$staged" || die "cannot preserve permissions for $target"
+  sed "/^$BEGIN_MARK\$/,/^$END_MARK\$/d" "$target" > "$staged" || die "cannot prepare $target"
+  backup="$(mktemp "$target.bak.kdash.$STAMP.XXXXXX")" || die "cannot create backup for $target"
+  cp -p -- "$target" "$backup" || die "cannot back up $target"
+  BACKUPS+=("$backup")
+done
+for ((i=0; i<${#EDIT[@]}; i++)); do
+  # EDIT holds the symlink target, preserving a symlinked startup file itself.
+  mv -f -- "${STAGED[i]}" "${EDIT[i]}" || die "cannot update ${EDIT[i]} (backup: ${BACKUPS[i]})"
+  say "removed kdash setup blocks from ${EDIT[i]} (backup: ${BACKUPS[i]})"
+done
+for target in "${REMOVE[@]}"; do
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    rm -f -- "$target" || die "cannot remove $target"
+    say "removed $target"
+  fi
+done
+say 'Uninstall complete. Configuration, reports, sessions, audit logs and old-version backups were kept.'
+say 'Open a new terminal to discard loaded kdash functions and command caches. Running dashboards continue until you quit them.'
+KDASH_UNINSTALL_EOF
+  exit $?
+fi
+
+#-- 0. quarantine a broken user config ---------------------------------------
+USERCONF="${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"
+if [ -f "$USERCONF" ] && grep -q 'kcns\|\$(' "$USERCONF"; then
+  mv -f "$USERCONF" "$USERCONF.broken.$STAMP" &&
+    warn "moved aside $USERCONF - it contained unevaluated command substitutions"
+fi
+
+#-- 1. the dashboard ----------------------------------------------------------
+mkdir -p "$PREFIX" 2>/dev/null || die "cannot create $PREFIX"
+[ -w "$PREFIX" ] || die "$PREFIX is not writable (re-run with sudo, or use --prefix DIR)"
+
+tmp="$(mktemp)" || die "mktemp failed"
+cat > "$tmp" <<'KDASH_PAYLOAD_EOF'
+#!/usr/bin/env bash
+#===============================================================================
+#  kdash - live Kubernetes namespace operations dashboard
+#
+#  Five live views over one namespace (or every namespace with -A):
+#    1 PODS        actual usage next to requests / limits, per pod and container
+#    2 NODE POOLS  worker nodes grouped by pool: what this namespace uses on
+#                  each node versus the node's allocatable capacity
+#    3 WORKLOADS   pods per worker node grouped by workload, plus replica
+#                  spread / HA risk per Deployment / StatefulSet / DaemonSet
+#    4 IP POOL     pod IPs, per-node IP blocks, subnets, host-network pods,
+#                  duplicate IPs, service ClusterIP / LoadBalancer addresses
+#    5 MEMORY      live memory dashboard: namespace trend sparkline, per-node
+#                  memory bars, top pods, OOM risk, OOMKilled history
+#
+#  Requirements : kubectl, bash 4+, any awk (gawk/mawk/busybox), coreutils
+#                 metrics-server for live usage (optional)
+#  Permissions  : get/list pods + services in the namespace; optional
+#                 get/list nodes and pods/nodes.metrics.k8s.io
+#  Author       : Dheeraj V
+#  License      : MIT
+#  Disclaimer   : provided as is. The person running kdash is solely responsible
+#                 for its use; every run and user action is audited (see AUDIT).
+#===============================================================================
+set -uo pipefail
+
+KDASH_VERSION="4.12.0"
+
+for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
+  [ -r "$_cf" ] && . "$_cf"
+done
+unset _cf
+
+NS="${KDASH_NS:-}"; FILTER="${KDASH_FILTER:-.*}"; CTX="${KDASH_CONTEXT:-}"
+KUBECONF="${KDASH_KUBECONFIG:-}"; INTERVAL="${KDASH_INTERVAL:-2}"; SPEC_TTL="${KDASH_SPEC_TTL:-30}"
+VIEW="${KDASH_VIEW:-pods}"; OUTFMT="text"; POOL_LABEL="${KDASH_POOL_LABEL:-}"
+TOPN="${KDASH_TOPN:-15}"; HIST_N="${KDASH_HISTORY:-60}"; NODE_METRICS="${KDASH_NODE_METRICS:-1}"
+REPORT_DIR="${KDASH_REPORT_DIR:-$HOME/kdash_reports}"; DO_REPORT=0; DO_SNAP=0; SNAP_SEL=""; DO_SREP=0; SREP_ARG=""
+SORT="${KDASH_SORT:-cpu}"; SORT_REV=0; GROUP="${KDASH_GROUP:-1}"; ONCE=0; PODS_ONLY=0; DETAIL=1; BARCHR="${KDASH_GLYPHS:-unicode}"; COLOR=1; ALTSCR=1
+ALL_NS=0; PICK_NS=0
+TWIN="${KDASH_WINDOW:-all}"; FC_WIN="${KDASH_FORECAST_WINDOW:-1800}"; ZOOM="${KDASH_ZOOM:-1}"; COMPARE_NS="${KDASH_COMPARE_NS:-}"
+THEME="${KDASH_THEME:-safe}"; CLUSTER="${KDASH_CLUSTER:-1}"; ALL_NODES="${KDASH_ALL_NODES:-1}"
+[ -n "${NO_COLOR:-}" ] && COLOR=0
+SELF="$(cd "$(dirname "$0")" 2>/dev/null && pwd)/$(basename "$0")"
+
+#-- author, disclaimer, audit trail -----------------------------------------------
+# Every run of kdash is audited: who ran it (user, sudo user, uid), from where
+# (host, SSH client address, tty), which context / namespace, every user action
+# in the live dashboard, every report written (with its sha256) and every kubectl
+# call (counted per command shape). Each line carries a hash of the line before
+# it, so an edited or deleted line breaks the chain (kdash --audit-verify).
+#   local    $KDASH_AUDIT_DIR            (default <report dir>/audit, mode 700)
+#   central  $KDASH_AUDIT_CENTRAL        (default /var/log/kdash, used when it
+#                                         exists and is writable; the installer
+#                                         creates it as root with mode 1733)
+#   syslog   logger -t kdash             (KDASH_AUDIT_SYSLOG=0 turns it off)
+# KDASH_AUDIT_REQUIRED=1 (e.g. in /etc/kdash.conf) refuses to run when no audit
+# file can be written. kdash only reads the cluster: the kubectl wrapper refuses
+# every verb that could change it.
+KDASH_AUTHOR="Dheeraj V"
+KDASH_DISCLAIMER_VER=1
+KDASH_DISCLAIMER="DISCLAIMER - kdash is provided as is, without warranty of any kind. The person running this utility is solely responsible for its use, for having authorisation to access the clusters and namespaces it reads, and for any decision or action taken on its output. kdash is read-only, but every run is AUDITED: the user, host, origin, context, namespace, every action taken in the dashboard, every report written and every kubectl call are logged and stored (local audit log, central audit log when configured, and syslog)."
+AUDIT_DIR="${KDASH_AUDIT_DIR:-${KDASH_REPORT_DIR:-$HOME/kdash_reports}/audit}"
+AUDIT_CENTRAL="${KDASH_AUDIT_CENTRAL:-/var/log/kdash}"
+AUDIT_SYSLOG="${KDASH_AUDIT_SYSLOG:-1}"
+AUDIT_ARGV="$*"
+AUDIT_T0="$(date +%s)"
+AUDIT_SID="$(date +%Y%m%d-%H%M%S)-$$"
+AUDIT_USER="$(id -un 2>/dev/null || printf '%s' "${USER:-unknown}")"
+AUDIT_REAL="${SUDO_USER:-$(logname 2>/dev/null || printf '%s' "$AUDIT_USER")}"
+AUDIT_UID="$(id -u 2>/dev/null || printf '?')"
+AUDIT_HOST="$(hostname 2>/dev/null || uname -n 2>/dev/null || printf '?')"
+AUDIT_FROM="${SSH_CLIENT:-}"; AUDIT_FROM="${AUDIT_FROM%% *}"; [ -n "$AUDIT_FROM" ] || AUDIT_FROM="local"
+AUDIT_TTY="$(tty 2>/dev/null)" || AUDIT_TTY="notty"
+AUDIT_READY=0; AUDIT_FILE=""; AUDIT_CFILE=""; AUDIT_ENDED=0; AUDIT_WARNED=0; AUDIT_MODE="live"; AUDIT_REPORTS=0
+
+# tabs / newlines out, secrets masked (tokens, passwords, user:pass@ in URLs)
+audit_clean() {
+  printf '%s' "$1" | tr '\t\n\r' '   ' | cut -c1-1500 |
+    sed -E 's/(--(token|password|client-key|client-certificate)[= ])[^ ]+/\1***/g; s#(://)[^/@ ]+:[^/@ ]+@#\1***@#g; s/((password|passwd|secret|token|apikey|api_key)=)[^ &]+/\1***/Ig'
+}
+_audit_file_ok() {        # create with a header line; 600, owner only
+  local f="$1"
+  if [ ! -e "$f" ]; then
+    ( umask 077; printf '# kdash audit log v1 - TIME\tEPOCH\tSESSION\tUSER\tREAL_USER\tUID\tHOST\tFROM\tTTY\tPID\tVERSION\tCONTEXT\tNAMESPACE\tEVENT\tDETAIL\tCHAIN\n' > "$f" ) 2>/dev/null || return 1
+  fi
+  [ -w "$f" ]
+}
+audit_init() {
+  local m; printf -v m '%(%Y%m)T' -1
+  AUDIT_READY=1
+  if ( umask 077; mkdir -p "$AUDIT_DIR" ) 2>/dev/null && _audit_file_ok "$AUDIT_DIR/audit_$m.log"; then AUDIT_FILE="$AUDIT_DIR/audit_$m.log"
+  else
+    AUDIT_DIR="${TMPDIR:-/tmp}/kdash_audit_$AUDIT_UID"
+    if ( umask 077; mkdir -p "$AUDIT_DIR" ) 2>/dev/null && _audit_file_ok "$AUDIT_DIR/audit_$m.log"; then AUDIT_FILE="$AUDIT_DIR/audit_$m.log"; fi
+    [ "$AUDIT_WARNED" = 0 ] && printf 'kdash: audit directory not writable - audit log is %s\n' "${AUDIT_FILE:-NOT WRITTEN}" >&2; AUDIT_WARNED=1
+  fi
+  if [ -d "$AUDIT_CENTRAL" ] && [ -w "$AUDIT_CENTRAL" ] && _audit_file_ok "$AUDIT_CENTRAL/audit_${m}_$(printf '%s' "$AUDIT_USER" | tr -c 'A-Za-z0-9._-' '_').log"; then
+    AUDIT_CFILE="$AUDIT_CENTRAL/audit_${m}_$(printf '%s' "$AUDIT_USER" | tr -c 'A-Za-z0-9._-' '_').log"
+  fi
+  if [ -z "$AUDIT_FILE" ] && [ -z "$AUDIT_CFILE" ] && [ "${KDASH_AUDIT_REQUIRED:-0}" = 1 ]; then
+    printf 'kdash: KDASH_AUDIT_REQUIRED=1 and no audit log can be written (%s, %s) - refusing to run\n' "$AUDIT_DIR" "$AUDIT_CENTRAL" >&2
+    exit 6
+  fi
+}
+# append one line, chained: CHAIN = first 16 hex of sha256(previous CHAIN <tab> this line)
+_audit_append() {
+  local f="$1" body="$2" prev h
+  {
+    command -v flock >/dev/null 2>&1 && flock -w 3 9
+    prev="$(tail -n 1 "$f" 2>/dev/null)"; prev="${prev##*$'\t'h=}"; case "$prev" in [0-9a-f]*) prev="${prev:0:16}" ;; *) prev=0 ;; esac
+    h="$(printf '%s\t%s' "$prev" "$body" | sha256sum 2>/dev/null)"; h="${h:0:16}"; [ -n "$h" ] || h=nosha
+    printf '%s\th=%s\n' "$body" "$h" >> "$f"
+  } 9>>"$f.lock" 2>/dev/null
+}
+audit() {                 # audit EVENT [DETAIL]
+  [ "$AUDIT_READY" = 1 ] || audit_init
+  local ev="$1" d ts ep body
+  d="$(audit_clean "${2:-}")"
+  printf -v ts '%(%Y-%m-%dT%H:%M:%S%z)T' -1; printf -v ep '%(%s)T' -1
+  body="$ts	$ep	$AUDIT_SID	$AUDIT_USER	$AUDIT_REAL	$AUDIT_UID	$AUDIT_HOST	$AUDIT_FROM	$AUDIT_TTY	$$	${KDASH_VERSION:-?}	${CTX_NAME:-${CTX:--}}	${NS:--}	$ev	$d"
+  [ -n "$AUDIT_FILE" ] && _audit_append "$AUDIT_FILE" "$body"
+  [ -n "$AUDIT_CFILE" ] && _audit_append "$AUDIT_CFILE" "$body"
+  if [ "$AUDIT_SYSLOG" = 1 ] && command -v logger >/dev/null 2>&1; then
+    logger -t kdash -p user.notice -- "sid=$AUDIT_SID user=$AUDIT_USER real=$AUDIT_REAL from=$AUDIT_FROM ctx=${CTX_NAME:-${CTX:--}} ns=${NS:--} event=$ev $d" 2>/dev/null
+  fi
+  return 0
+}
+audit_file() {            # audit_file EVENT PATH: the file with its size and sha256
+  local s=""; [ -f "$2" ] && s="$(sha256sum "$2" 2>/dev/null)" && s="${s%% *}"
+  AUDIT_REPORTS=$(( AUDIT_REPORTS + 1 ))
+  audit "$1" "file=$2 bytes=$(wc -c < "$2" 2>/dev/null | tr -d ' ') sha256=${s:--}"
+}
+# kubectl: every call goes through a small wrapper that refuses anything but reads
+# and records "epoch <tab> rc <tab> command shape" (templates shortened)
+audit_wrap_kubectl() {    # after TMPD exists
+  local real; real="$(command -v "${KC[0]}" 2>/dev/null)" || return 0
+  case "$real" in /*) ;; *) return 0 ;; esac                     # a shell function / alias: leave as is
+  AUDIT_KLOG="$TMPD/kcalls"; : > "$AUDIT_KLOG"
+  cat > "$TMPD/kubectl" <<'KWRAP'
+#!/usr/bin/env bash
+# kdash kubectl guard: read-only verbs only, every call recorded for the audit log
+verb=""; sub=""; nxt=""; shape=""
+for a in "$@"; do
+  if [ -n "$nxt" ]; then
+    case "$nxt" in fmt) shape="$shape <fmt>" ;; secret) shape="$shape ***" ;; *) shape="$shape ${a:0:80}" ;; esac
+    nxt=""; continue
+  fi
+  case "$a" in
+    -o|--output) shape="$shape $a"; nxt=fmt ;;
+    -o?*|--output=*) shape="$shape -o <fmt>" ;;
+    --token|--password) shape="$shape $a"; nxt=secret ;;
+    --token=*|--password=*) shape="$shape ${a%%=*}=***" ;;
+    --context|-n|--namespace|--kubeconfig|-s|--server|--user|--cluster|-l|--selector|--field-selector|-c|--container) shape="$shape $a"; nxt=val ;;
+    -*) shape="$shape ${a:0:80}" ;;
+    *) if [ -z "$verb" ]; then verb="$a"; elif [ -z "$sub" ]; then sub="$a"; fi
+       case "$a" in *'{'*|*$'\n'*) shape="$shape <tpl>" ;; *) shape="$shape ${a:0:80}" ;; esac ;;
+  esac
+done
+ok=1
+case "$verb" in
+  get|top|version|api-resources|api-versions|cluster-info|explain|describe|logs) ;;
+  auth) case "$sub" in can-i|whoami) ;; *) ok=0 ;; esac ;;
+  config) case "$sub" in view|get-contexts|current-context|get-clusters|get-users) ;; *) ok=0 ;; esac ;;
+  *) ok=0 ;;
+esac
+if [ "$ok" = 0 ]; then
+  printf '%s\t126\tREFUSED%s\n' "$(date +%s)" "$shape" >> "$KDASH_KLOG" 2>/dev/null
+  printf 'kdash: refused "kubectl %s %s" - kdash is read-only\n' "$verb" "$sub" >&2
+  exit 126
+fi
+"$KDASH_REAL_KUBECTL" "$@"; rc=$?
+printf '%s\t%s\t%s\n' "$(date +%s)" "$rc" "${shape:0:300}" >> "$KDASH_KLOG" 2>/dev/null
+exit "$rc"
+KWRAP
+  chmod 700 "$TMPD/kubectl"
+  export KDASH_REAL_KUBECTL="$real" KDASH_KLOG="$AUDIT_KLOG"
+  KC[0]="$TMPD/kubectl"
+}
+audit_kubectl_summary() { # calls, failures, refused and the 12 most used shapes
+  [ -n "${AUDIT_KLOG:-}" ] && [ -s "$AUDIT_KLOG" ] || return 0
+  awk -F'\t' '{ n++; if ($2 != 0) f++; if ($3 ~ /^REFUSED/) r++; s = $3; gsub(/  +/, " ", s); C[s]++ }
+    END { printf "calls=%d failed=%d refused=%d", n, f + 0, r + 0
+          k = 0; for (s in C) { k++; S[k] = s }
+          for (i = 2; i <= k; i++) { v = S[i]; j = i - 1; while (j > 0 && C[S[j]] < C[v]) { S[j + 1] = S[j]; j-- } S[j + 1] = v }
+          for (i = 1; i <= k && i <= 12; i++) printf " | %dx%s", C[S[i]], S[i] }' "$AUDIT_KLOG"
+}
+audit_end() {             # once, from cleanup
+  [ "$AUDIT_ENDED" = 1 ] && return 0; AUDIT_ENDED=1
+  local rc="${1:-0}"
+  [ -n "${AUDIT_KLOG:-}" ] && [ -s "$AUDIT_KLOG" ] && audit KUBECTL "$(audit_kubectl_summary)"
+  local nr=0; [ -n "$AUDIT_FILE" ] && nr=$(grep -cE "	$AUDIT_SID	.*	(REPORT_HTML|REPORT_BUNDLE|AUDIT_EXPORT)	" "$AUDIT_FILE" 2>/dev/null)
+  audit END "rc=$rc${AUDIT_SIG:+ signal=$AUDIT_SIG} mode=$AUDIT_MODE duration=$(( $(date +%s) - AUDIT_T0 ))s reports=${nr:-0}"
+}
+
+# disclaimer: accepted once per user (interactive "yes"), or by --accept-disclaimer /
+# KDASH_ACCEPT_DISCLAIMER=1 for automation; shown on stderr while not accepted
+DISCLAIMER_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/kdash/disclaimer_v${KDASH_DISCLAIMER_VER}_accepted"
+disclaimer_text() { printf '%s\n' "$KDASH_DISCLAIMER" | fold -s -w "${1:-78}"; }
+disclaimer_gate() {
+  [ -f "$DISCLAIMER_FILE" ] && return 0
+  local how=""
+  if [ "${KDASH_ACCEPT_DISCLAIMER:-0}" = 1 ]; then how="flag"
+  elif [ -t 0 ] && [ -t 2 ]; then
+    { printf '\n kdash %s  -  author %s\n\n' "${KDASH_VERSION:-}" "$KDASH_AUTHOR"; disclaimer_text 76 | sed 's/^/ /'
+      printf '\n audit log: %s   session %s\n\n Type yes to accept and continue (anything else exits): ' "${AUDIT_FILE:-$AUDIT_DIR}" "$AUDIT_SID"; } >&2
+    local ans=""; IFS= read -r ans || ans=""
+    case "$ans" in yes|YES|Yes|y|Y) how="prompt" ;; *) audit DISCLAIMER_DECLINED "answer=${ans:0:20}"; printf ' not accepted - kdash exits\n' >&2; exit 5 ;; esac
+  else
+    disclaimer_text 100 | sed 's/^/kdash: /' >&2
+    audit DISCLAIMER_SHOWN "non-interactive run; accept once with --accept-disclaimer or KDASH_ACCEPT_DISCLAIMER=1"
+    return 0
+  fi
+  ( umask 077; mkdir -p "${DISCLAIMER_FILE%/*}" && printf 'accepted\t%s\t%s@%s\tfrom %s\tvia %s\tkdash %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$AUDIT_USER" "$AUDIT_HOST" "$AUDIT_FROM" "$how" "${KDASH_VERSION:-}" > "$DISCLAIMER_FILE" ) 2>/dev/null
+  audit DISCLAIMER_ACCEPTED "via=$how version=$KDASH_DISCLAIMER_VER"
+}
+
+# ---- reading the audit log --------------------------------------------------------
+audit_files() {           # every audit file this user can read, oldest first
+  { ls -1 "$AUDIT_DIR"/audit_*.log 2>/dev/null
+    [ "${AUDIT_ALL:-0}" = 1 ] && ls -1 "$AUDIT_CENTRAL"/audit_*.log 2>/dev/null; } | sort -u | while IFS= read -r f; do [ -r "$f" ] && printf '%s\n' "$f"; done
+}
+audit_show() {            # last N events, newest last
+  local n="${1:-40}" re="${AUDIT_GREP:-.}" fs
+  fs="$(audit_files)"; [ -n "$fs" ] || { printf 'no audit log yet in %s\n' "$AUDIT_DIR"; return 0; }
+  printf '%s\n' "$fs" | while IFS= read -r f; do grep -v '^#' "$f"; done | sort -s -t$'\t' -k2,2n | grep -E -- "$re" | tail -n "$n" |
+    awk -F'\t' -v c="$([ -t 1 ] && printf 1 || printf 0)" '
+      function C(k, s) { return c ? "\033[" k "m" s "\033[0m" : s }
+      BEGIN { printf "%-24s %-22s %-22s %-28s %-20s %s\n", "TIME", "USER (REAL) @HOST", "FROM / TTY", "CONTEXT / NAMESPACE", "EVENT", "DETAIL" }
+      { t = substr($1, 1, 19) substr($1, 20); sub("T", " ", t); u = $4 ($5 != $4 ? " (" $5 ")" : "") "@" $7
+        ev = $14; k = (ev ~ /FAIL|DECLINED|REFUSED|DENIED|ALERT/) ? "1;31" : ((ev ~ /START|END/) ? "1;94" : ((ev ~ /REPORT|ACCEPT/) ? "32" : "0"))
+        printf "%-24s %-22s %-22s %-28s %s %s\n", t, substr(u, 1, 22), substr($8 " " $9, 1, 22), substr($12 " / " $13, 1, 28), C(k, sprintf("%-20s", ev)), $15 }'
+}
+audit_verify() {          # recompute every chain; rc 0 = intact, 1 = broken
+  local f bad=0 fs
+  fs="$(audit_files)"; [ -n "$fs" ] || { printf 'no audit log yet in %s\n' "$AUDIT_DIR"; return 0; }
+  while IFS= read -r f; do
+    local prev=0 ln=0 line body h want ok=1 n=0
+    while IFS= read -r line; do
+      ln=$((ln + 1)); case "$line" in '#'*|'') continue ;; esac
+      n=$((n + 1)); body="${line%$'\t'h=*}"; h="${line##*$'\t'h=}"
+      want="$(printf '%s\t%s' "$prev" "$body" | sha256sum)"; want="${want:0:16}"
+      if [ "$h" != "$want" ]; then printf 'BROKEN  %s line %d (expected %s, found %s) - edited, inserted or deleted line before here\n' "$f" "$ln" "$want" "$h"; ok=0; bad=1; break; fi
+      prev="$h"
+    done < "$f"
+    [ "$ok" = 1 ] && printf 'OK      %s  (%d events, chain intact)\n' "$f" "$n"
+  done <<< "$fs"
+  audit AUDIT_VERIFY "result=$([ "$bad" = 0 ] && echo intact || echo BROKEN)"
+  return "$bad"
+}
+audit_export() {          # --audit-report [DIR]: CSV + HTML of the audit log
+  local dir="${1:-${KDASH_REPORT_DIR:-$HOME/kdash_reports}}" st fs csv html vr
+  fs="$(audit_files)"; [ -n "$fs" ] || { printf 'no audit log yet in %s\n' "$AUDIT_DIR"; return 0; }
+  ( umask 077; mkdir -p "$dir" ) || return 1
+  printf -v st '%(%Y%m%d_%H%M%S)T' -1
+  csv="$dir/kdash_audit_$st.csv"; html="$dir/kdash_audit_$st.html"
+  vr="$(audit_verify 2>&1)"
+  printf '%s\n' "$fs" | while IFS= read -r f; do grep -v '^#' "$f"; done | sort -s -t$'\t' -k2,2n > "$dir/.audit_$st.tsv"
+  awk -F'\t' 'BEGIN { print "time,epoch,session,user,real_user,uid,host,from,tty,pid,version,context,namespace,event,detail,chain" }
+    { o = ""; for (i = 1; i <= NF; i++) { v = $i; gsub(/"/, "\"\"", v); o = o (i > 1 ? "," : "") "\"" v "\"" } print o }' "$dir/.audit_$st.tsv" > "$csv"
+  awk -F'\t' -v gen="$(date '+%Y-%m-%d %H:%M:%S %Z')" -v ver="${KDASH_VERSION:-}" -v author="$KDASH_AUTHOR" -v disc="$KDASH_DISCLAIMER" -v vr="$vr" -v who="$AUDIT_USER@$AUDIT_HOST" '
+    function tm(s) { s = substr(s, 1, 19); sub("T", " ", s); return s }
+    function esc(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); gsub(/"/, "\\&quot;", s); return s }
+    { n++; R[n] = $0; E[$14]++; U[$4 ($5 != $4 ? " (" $5 ")" : "")]++; H[$7]++; S[$3]++; if (!($3 in SU)) { SU[$3] = $4 "@" $7; SF[$3] = $8; ST[$3] = $1; SC[$3] = $12; SN[$3] = $13 } SL[$3] = $1
+      if ($14 == "END") SE[$3] = $15; if ($14 == "START") { SM[$3] = $15; SC[$3] = $12; SN[$3] = $13 }
+      if ($14 ~ /FAIL|DECLINED|REFUSED|DENIED/) bad++ }
+    END {
+      print "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>kdash audit log</title><style>"
+      print ":root{--bg:#0b1020;--pn:#111833;--ln:#26304f;--tx:#e6e9f2;--mu:#9aa3b8;--ok:#4ade80;--wa:#f59e0b;--ba:#f87171;--in:#38bdf8}@media(prefers-color-scheme:light){:root{--bg:#f5f7fb;--pn:#fff;--ln:#dfe4ee;--tx:#111827;--mu:#5b6478}}"
+      print "body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.45 system-ui,sans-serif}main{max-width:1500px;margin:0 auto;padding:18px}h1{font-size:20px;margin:0}h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}.mu{color:var(--mu)}"
+      print ".pn{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:14px 16px;margin:14px 0}.k{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}.k div{border:1px solid var(--ln);border-radius:8px;padding:8px 10px}.k b{display:block;font:700 22px ui-monospace,monospace}"
+      print "table{width:100%;border-collapse:collapse;font:12px ui-monospace,monospace}th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--ln);vertical-align:top}th{color:var(--mu);font-weight:600;position:sticky;top:0;background:var(--pn)}td.d{white-space:normal;word-break:break-word;max-width:640px}"
+      print ".b{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--ln)}.ba{color:var(--ba);border-color:var(--ba)}.ok{color:var(--ok);border-color:var(--ok)}.in{color:var(--in);border-color:var(--in)}.wa{color:var(--wa);border-color:var(--wa)}.sc{max-height:70vh;overflow:auto}input{background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:5px 9px;width:320px}.disc{border-left:4px solid var(--wa)}footer{color:var(--mu);font-size:12px;text-align:center;padding:18px}</style></head><body><main>"
+      printf "<h1>kdash audit log</h1><p class=\"mu\">generated %s by %s &middot; kdash %s &middot; author %s</p>\n", esc(gen), esc(who), esc(ver), esc(author)
+      printf "<div class=\"pn disc\"><h2>Disclaimer</h2>%s</div>\n", esc(disc)
+      ns = 0; for (s in S) ns++; nu = 0; for (u in U) nu++; nh = 0; for (h in H) nh++
+      printf "<div class=\"pn\"><div class=\"k\"><div><span class=\"mu\">events</span><b>%d</b></div><div><span class=\"mu\">sessions</span><b>%d</b></div><div><span class=\"mu\">users</span><b>%d</b></div><div><span class=\"mu\">hosts</span><b>%d</b></div><div><span class=\"mu\">reports written</span><b>%d</b></div><div><span class=\"mu\">failures / refused / declined</span><b style=\"color:%s\">%d</b></div></div></div>\n", n, ns, nu, nh, E["REPORT_HTML"] + E["REPORT_BUNDLE"], (bad ? "var(--ba)" : "var(--ok)"), bad + 0
+      printf "<div class=\"pn\"><h2>Chain verification</h2><pre style=\"white-space:pre-wrap;margin:0\">%s</pre></div>\n", esc(vr)
+      print "<div class=\"pn\"><h2>Sessions</h2><div class=\"sc\"><table><tr><th>START</th><th>LAST EVENT</th><th>SESSION</th><th>USER@HOST</th><th>FROM</th><th>CONTEXT / NAMESPACE</th><th>EVENTS</th><th>START</th><th>END</th></tr>"
+      for (i = n; i >= 1; i--) { split(R[i], a, "\t"); s = a[3]; if (s in DONE) continue; DONE[s] = 1
+        printf "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s / %s</td><td>%d</td><td class=\"d\">%s</td><td class=\"d\">%s</td></tr>\n", esc(tm(ST[s])), esc(substr(SL[s], 12, 8)), esc(s), esc(SU[s]), esc(SF[s]), esc(SC[s]), esc(SN[s]), S[s], esc(SM[s]), esc(SE[s]) }
+      print "</table></div></div>"
+      print "<div class=\"pn\"><h2>Users</h2><table><tr><th>USER (REAL USER)</th><th>EVENTS</th></tr>"; for (u in U) printf "<tr><td>%s</td><td>%d</td></tr>\n", esc(u), U[u]; print "</table></div>"
+      print "<div class=\"pn\"><h2>All events</h2><p><input id=\"q\" placeholder=\"filter: user, namespace, event, detail ...\" oninput=\"var q=this.value.toLowerCase();document.querySelectorAll(&quot;#ev tr[data-s]&quot;).forEach(function(r){r.style.display=r.getAttribute(&quot;data-s&quot;).indexOf(q)>=0?&quot;&quot;:&quot;none&quot;;});\"></p><div class=\"sc\"><table id=\"ev\"><tr><th>TIME</th><th>USER (REAL)</th><th>HOST</th><th>FROM / TTY</th><th>CONTEXT / NAMESPACE</th><th>EVENT</th><th>DETAIL</th><th>CHAIN</th></tr>"
+      for (i = n; i >= 1; i--) { split(R[i], a, "\t"); c = (a[14] ~ /FAIL|DECLINED|REFUSED|DENIED|ALERT/) ? "ba" : ((a[14] ~ /START|END/) ? "in" : ((a[14] ~ /REPORT|ACCEPT|VERIFY/) ? "ok" : (a[14] ~ /DISCLAIMER|SHOWN/ ? "wa" : "")))
+        printf "<tr data-s=\"%s\"><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s / %s</td><td><span class=\"b %s\">%s</span></td><td class=\"d\">%s</td><td class=\"mu\">%s</td></tr>\n", esc(tolower(R[i])), esc(tm(a[1])), esc(a[4] (a[5] != a[4] ? " (" a[5] ")" : "")), esc(a[7]), esc(a[8]), esc(a[9]), esc(a[12]), esc(a[13]), c, esc(a[14]), esc(a[15]), esc(a[16]) }
+      printf "</table></div></div><footer>kdash %s &middot; author %s &middot; audit export &middot; %s</footer></main></body></html>\n", esc(ver), esc(author), esc(gen) }' "$dir/.audit_$st.tsv" > "$html"
+  rm -f "$dir/.audit_$st.tsv"
+  chmod 600 "$csv" "$html" 2>/dev/null
+  printf 'kdash audit export\n  html  %s\n  csv   %s\n' "$html" "$csv"
+  audit_file AUDIT_EXPORT "$html"
+}
+kdash_about() {
+  printf 'kdash %s - live Kubernetes namespace operations dashboard\nauthor   %s\n\n' "${KDASH_VERSION:-}" "$KDASH_AUTHOR"
+  disclaimer_text 78; printf '\n'
+  [ "$AUDIT_READY" = 1 ] || audit_init
+  printf 'audit    local    %s\n         central  %s\n         syslog   %s\n         session  %s (%s@%s from %s)\n' "${AUDIT_FILE:-not writable}" \
+    "${AUDIT_CFILE:-not configured ($AUDIT_CENTRAL missing or not writable)}" "$([ "$AUDIT_SYSLOG" = 1 ] && command -v logger >/dev/null 2>&1 && echo "on (logger -t kdash)" || echo off)" "$AUDIT_SID" "$AUDIT_USER" "$AUDIT_HOST" "$AUDIT_FROM"
+  printf 'accepted %s\n' "$( [ -f "$DISCLAIMER_FILE" ] && cut -f2-6 "$DISCLAIMER_FILE" | tr '\t' ' ' || echo 'not yet')"
+}
+
+_kdash_help() {
+  printf 'kdash %s - live Kubernetes namespace operations dashboard\nauthor %s\n\n' "$KDASH_VERSION" "$KDASH_AUTHOR"
+  disclaimer_text 78
+  command cat <<'KDASH_HELP_EOF'
+
+USAGE
+  kdash [POD-REGEX] [OPTIONS]
+
+  POD-REGEX is an extended regular expression matched against pod names.
+  Omit it to show every pod in scope. It applies to every view.
+
+VIEWS  (-v VIEW, or keys 1-7 / Tab while running)
+  1  pods        pod / container usage vs requests and limits     (default)
+  2  nodes       node pools: namespace usage per worker node vs allocatable
+  3  workloads   pods per worker node by workload + replica spread / HA risk
+  4  ip          namespace IP pool: pod IPs, node IP blocks, subnets, services
+  5  mem         live memory dashboard: trend, node bars, top pods, OOM risk
+  6  io          network in / out and disk read / write per worker node and pod
+  7  alerts      live critical summary: every section on one page, each alert
+                 with its age, live value, trend and the kubectl action
+     all         every view, one after another (with --once / --report)
+
+TARGETING
+  -n, --namespace NS     namespace (default: the context's namespace)
+  -n, --pick-ns          no NS given: pick from the namespace list (also key n
+                         while running; automatic when the context has none)
+  -A, --all-namespaces   every namespace you can read
+  -c, --context NAME     context; a unique substring is accepted
+  -k, --kubeconfig PATH  kubeconfig file (default: $KUBECONFIG or ~/.kube/config)
+
+REFRESH
+  -i, --interval SEC     usage poll period                    (default 2)
+  -R, --spec-ttl SEC     pods / nodes / services re-read      (default 30)
+  -1, --once             render one frame and exit
+
+OUTPUT
+  -v, --view VIEW        pods | nodes | workloads | ip | mem | all
+  -o, --output FMT       with --once: text | tsv | csv         (default text)
+      --snapshot [SEL]   write HTML, then exit. No SEL: ONE file with every
+                         tab (overview, 5 views, history). If kdash is running
+                         live on this namespace, its history is included.
+                         SEL = separate files: current | all | 2 | 25 | nodes,mem
+      --session-report [latest|DIR]
+                         rebuild the all-tabs report from a recorded live
+                         session after kdash exited (no cluster access needed)
+      --report [DIR]     write a full evidence bundle (text + TSV + CSV) and a
+                         combined HTML dashboard, then exit
+                         (default DIR: ~/kdash_reports, or $KDASH_REPORT_DIR)
+      --top N            rows in "top pods" lists              (default 15)
+      --pool-label KEY   node label that names the node pool (default: auto)
+      --no-node-metrics  never call kubectl top node
+      --no-cluster       skip the cluster-wide pod read (all namespaces); the
+                         NODE POOLS cluster graph then shows capacity only
+      --no-io            no network / disk IO collection (view 6)
+      --prom-url URL     read IO rates from this Prometheus (curl, /federate)
+      --prom-svc SVC     ...or from a Prometheus service through the API proxy:
+                         [namespace/]name:port (default: auto-detect in the namespace)
+      --io-wait SEC      one-shot modes (--once, --snapshot): sample IO twice
+                         SEC seconds apart so rates can be shown
+      --compare NS,NS    compare this namespace with exactly these namespaces
+                         (default: the whole cluster, or - without cluster-wide
+                         rights - every namespace you can read)
+      --bell             ring the terminal bell when a new critical event appears
+                         (OOMKilled, CrashLoop, NotReady node ...; KDASH_BELL=1)
+      --no-zoom          NODE POOLS: true-scale bars (default: small shares are
+                         magnified, % values stay true; key Z toggles)
+      --hosting-nodes    NODE POOLS: only nodes running this namespace
+                         (default: every node, key a toggles)
+
+VIEW OPTIONS
+  -s, --sort KEY         cpu | mem | cpupct | mempct | name | restarts (default
+                         cpu); applies to every view. Key s cycles, o reverses.
+      --reverse          lowest first (names Z-A)
+      --window DUR       time charts show the last DUR: 15m | 1h | 6h | 24h |
+                         all (default: all since kdash started; key z cycles)
+      --flat             PODS: one flat list (default: grouped by workload, key w)
+  -P, --pods-only        pod totals only (pods view)
+  -C, --containers       force container rows (overrides -P)
+  -D, --no-detail        hide detail lines
+      --ascii            ASCII bars and arrows (same as --glyphs ascii)
+      --glyphs SET       safe (default: blocks every terminal font has, also
+                         PuTTY / MobaXterm) | full (finer sparklines) | ascii
+  -N, --no-color         disable colour
+      --theme NAME       safe (default: readable on black and white) | dark |
+                         light | mono       (key T cycles while running)
+  -S, --no-altscreen     draw in the normal buffer
+
+OTHER
+      --install [DIR]    install as "kdash"
+      --completion bash  print a bash completion script
+  -V, --version          print version
+  -h, --help             this help
+
+KEYS WHILE RUNNING
+  1-7 / Tab     switch view       x         HTML report: all tabs + history so far
+  e             HTML menu: all-tabs report, current view, views 1-6, or the bundle
+  j k / arrows  scroll            space b   page down / up
+  h l / arrows  pan left / right  0         back to column 1
+  g G           top / bottom      /         change pod filter (empty = all)
+  p             pods-only         d         toggle detail lines
+  s             cycle sort key    o         reverse sort order
+  w             PODS: group by workload / flat list       r   re-read spec now
+  n             pick namespace    a         NODE POOLS: all nodes / hosting only
+  T             colour theme      z         chart window 15m/1h/6h/24h/all
+  Z             NODE POOLS: auto zoom / true scale
+  P             pause / resume live refresh  + -  poll interval 1..60 s
+  q             quit
+
+TIME
+  Every clock in the dashboard and in the HTML report is this host's clock
+  and time zone (date +%Z). TZ=UTC kdash  shows everything in UTC. The HTML
+  report can switch between host, browser and UTC time.
+  MEMORY and IO draw time charts from the session history: start, middle and
+  end times on the axis, window start -> end, now / min / avg / max with the
+  time of the peak, request (-) and limit (=) lines, and event markers
+  (! critical, ^ warning). The MEMORY view also forecasts memory growth per
+  pod: a linear trend over the last KDASH_FORECAST_WINDOW seconds (default
+  1800) with the clock time a pod would reach its memory limit.
+
+SESSION HISTORY
+  A live run records namespace totals, memory per worker node, every pod and
+  change events (added / removed / restarts / OOMKilled / rescheduled / OOM
+  risk / node state) into $KDASH_REPORT_DIR/sessions/ (newest 30 kept).
+  KDASH_SAMPLE_EVERY=SEC sets the sample period (default 15). Past
+  KDASH_SESSION_MAX_MB (default 64) older samples are thinned to half.
+
+READING THE VIEWS
+  ACTUAL        measured via kubectl top. T: up / down / flat since last poll.
+  ASSIGNED      requests and limits from the pod spec.
+  %LIM >= 90    red: CPU throttling or OOMKill risk.
+  NODE BARS     solid = this namespace, shaded = other namespaces (needs
+                node metrics), light = free allocatable memory.
+  HA_RISK       a workload with 2+ replicas whose pods all sit on one node.
+  SKEWED        one node holds more replicas than an even spread would.
+  "-"           unset, unknown or not permitted.
+
+CONFIGURATION  (later overrides earlier)
+  /etc/kdash.conf, $XDG_CONFIG_HOME/kdash.conf, environment, flags
+  KDASH_NS KDASH_CONTEXT KDASH_KUBECONFIG KDASH_INTERVAL KDASH_SPEC_TTL
+  KDASH_FILTER KDASH_KUBECTL KDASH_NS_MAP KDASH_VIEW KDASH_POOL_LABEL
+  KDASH_TOPN KDASH_HISTORY KDASH_NODE_METRICS KDASH_REPORT_DIR KDASH_THEME
+  KDASH_CLUSTER KDASH_ALL_NODES KDASH_WINDOW KDASH_FORECAST_WINDOW KDASH_ZOOM KDASH_COMPARE_NS KDASH_NS_SCAN
+  KDASH_SAMPLE_EVERY KDASH_SESSION_KEEP KDASH_SESSION_MAX_MB
+  KDASH_COLUMNS KDASH_LINES   NO_COLOR disables colour.
+
+AUDIT  (every run is logged; see the disclaimer at the top)
+      --about            author, disclaimer, where this run is audited
+      --audit [N]        last N audit events (default 40)
+      --audit-all        ... including the central log (/var/log/kdash)
+      --audit-grep RE    ... only events matching RE (user, namespace, event)
+      --audit-verify     check the hash chain of every audit file (edits /
+                         deletions break it)
+      --audit-report [DIR]  audit log as HTML + CSV
+      --accept-disclaimer   accept the disclaimer for this user (automation;
+                         also KDASH_ACCEPT_DISCLAIMER=1)
+  Logged: start / end (user, sudo user, uid, host, SSH client, tty, context,
+  namespace, arguments), every action in the live dashboard, namespace
+  switches (allowed / denied), alerts, every report written (path + sha256),
+  kubectl calls (counted per command shape) and failures. kubectl verbs that
+  could change the cluster are refused. Files: KDASH_AUDIT_DIR (default
+  ~/kdash_reports/audit), KDASH_AUDIT_CENTRAL (default /var/log/kdash when
+  writable), syslog (logger -t kdash, KDASH_AUDIT_SYSLOG=0 turns it off).
+  KDASH_AUDIT_REQUIRED=1 refuses to run when no audit file can be written.
+
+EXIT CODES
+  0 success   1 runtime error   2 usage error   3 no pods matched
+  5 disclaimer not accepted   6 audit required but not writable
+
+EXAMPLES
+  kdash                                  every pod, live
+  kdash -v nodes                         node pools for the namespace, live
+  kdash -v workloads '^order-svc-1-'  where those pods run, HA spread
+  kdash -v ip --once                     IP pool snapshot
+  kdash -v mem -i 5                      memory dashboard, 5 s poll
+  kdash -v all --once > snapshot.txt     every view as plain text
+  kdash -v nodes --once -o csv           node pool table as CSV
+  kdash --snapshot                       one HTML, all tabs (+ history if live)
+  kdash --session-report latest          all tabs + history of the last live run
+  kdash -v nodes --snapshot current      node pools only, one HTML
+  kdash --snapshot all                   five HTML reports, one per view
+  kdash --snapshot 25                    node pools + memory, one HTML each
+  kdash --report                         combined HTML + TSV evidence bundle
+KDASH_HELP_EOF
+}
+
+_kdash_completion() {
+  command cat <<'EOF'
+# bash completion for kdash - source this file, or drop it in
+# /etc/bash_completion.d/kdash
+_kdash_complete() {
+  local cur prev opts
+  cur="${COMP_WORDS[COMP_CWORD]}"; prev="${COMP_WORDS[COMP_CWORD-1]}"
+  opts="-n --namespace -A --all-namespaces -c --context -k --kubeconfig
+        -i --interval -R --spec-ttl -1 --once -v --view -o --output --report --snapshot --session-report
+        --top --pool-label --no-node-metrics --no-cluster --hosting-nodes --all-nodes
+        --theme --glyphs --pick-ns -s --sort --reverse --flat -P --pods-only --window --no-zoom --compare
+        --no-io --prom-url --prom-svc --io-wait
+        -C --containers -D --no-detail --ascii -N --no-color -S --no-altscreen
+        --install --completion -V --version -h --help"
+  case "$prev" in
+    -n|--namespace)
+      COMPREPLY=( $(compgen -W "$(kubectl get ns -o name 2>/dev/null | sed 's|namespace/||')" -- "$cur") ); return ;;
+    -c|--context)
+      COMPREPLY=( $(compgen -W "$(kubectl config get-contexts -o name 2>/dev/null)" -- "$cur") ); return ;;
+    -s|--sort)
+      COMPREPLY=( $(compgen -W "cpu mem cpupct mempct name restarts" -- "$cur") ); return ;;
+    -v|--view)
+      COMPREPLY=( $(compgen -W "pods nodes workloads ip mem io all" -- "$cur") ); return ;;
+    -o|--output)
+      COMPREPLY=( $(compgen -W "text tsv csv" -- "$cur") ); return ;;
+    --snapshot)
+      COMPREPLY=( $(compgen -W "current all pods nodes workloads ip mem io" -- "$cur") ); return ;;
+    --theme)
+      COMPREPLY=( $(compgen -W "safe dark light mono" -- "$cur") ); return ;;
+    --glyphs)
+      COMPREPLY=( $(compgen -W "safe full ascii" -- "$cur") ); return ;;
+    --window)
+      COMPREPLY=( $(compgen -W "15m 1h 6h 24h all" -- "$cur") ); return ;;
+    --session-report)
+      COMPREPLY=( $(compgen -W "latest $(ls -1 "${KDASH_REPORT_DIR:-$HOME/kdash_reports}/sessions" 2>/dev/null)" -- "$cur") ); return ;;
+    -k|--kubeconfig|--report)
+      COMPREPLY=( $(compgen -f -- "$cur") ); return ;;
+  esac
+  [[ "$cur" == -* ]] && COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+}
+complete -F _kdash_complete kdash
+EOF
+}
+
+die()  { audit USAGE_ERROR "$* | argv: $AUDIT_ARGV"; printf 'kdash: %s\n' "$*" >&2; exit 2; }   # usage error
+fail() { audit FAIL "$*"; printf 'kdash: %s\n' "$*" >&2; exit 1; }   # runtime error
+
+norm_view() {
+  case "$1" in
+    1|pod|pods) echo pods ;;
+    2|node|nodes|pool|pools|nodepool|nodepools) echo nodes ;;
+    3|wl|workload|workloads|spread) echo workloads ;;
+    4|ip|ips|ippool|network) echo ip ;;
+    5|mem|memory|ram) echo mem ;;
+    6|io|net|disk|traffic) echo io ;;
+    7|alert|alerts|crit|critical|summary) echo alerts ;;
+    all) echo all ;;
+    *) return 1 ;;
+  esac
+}
+
+need_arg() { [ $# -ge 2 ] && [ -n "$2" ] || die "option $1 needs a value"; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -n|--namespace)    if [ $# -lt 2 ] || [ -z "$2" ] || [ "$2" = "?" ] || [ "${2#-}" != "$2" ]; then
+                         PICK_NS=1; NS=""; shift; [ "${1:-}" = "?" ] && shift
+                       else NS="$2"; shift 2; fi ;;
+    --namespace=*)     NS="${1#--namespace=}"; shift ;;
+    --pick-ns)         PICK_NS=1; NS=""; shift ;;
+    --theme)           need_arg "$@"; THEME="$2"; shift 2 ;;
+    --no-cluster)      CLUSTER=0; shift ;;
+    --no-io)           KDASH_IO=0; shift ;;
+    --prom-url)        need_arg "$@"; KDASH_PROM_URL="$2"; shift 2 ;;
+    --prom-svc)        need_arg "$@"; KDASH_PROM_SVC="$2"; shift 2 ;;
+    --io-wait)         need_arg "$@"; IO_WAIT="$2"; shift 2 ;;
+    --hosting-nodes)   ALL_NODES=0; shift ;;
+    --all-nodes)       ALL_NODES=1; shift ;;
+    -f|--filter)       need_arg "$@"; FILTER="$2"; shift 2 ;;
+    -c|--context)      need_arg "$@"; CTX="$2"; CTX_EXPLICIT=1; shift 2 ;;
+    -k|--kubeconfig)   need_arg "$@"; KUBECONF="$2"; shift 2 ;;
+    -i|--interval)     need_arg "$@"; INTERVAL="$2"; shift 2 ;;
+    -R|--spec-ttl)     need_arg "$@"; SPEC_TTL="$2"; shift 2 ;;
+    -s|--sort)         need_arg "$@"; SORT="$2"; shift 2 ;;
+    --reverse)         SORT_REV=1; shift ;;
+    --window)          need_arg "$@"; TWIN="$2"; shift 2 ;;
+    --bell)            KDASH_BELL=1; shift ;;
+    --no-zoom)         ZOOM=0; shift ;;
+    --compare)         need_arg "$@"; COMPARE_NS="$2"; shift 2 ;;
+    --flat)            GROUP=0; shift ;;
+    -v|--view)         need_arg "$@"; VIEW="$2"; shift 2 ;;
+    -o|--output)       need_arg "$@"; OUTFMT="$2"; shift 2 ;;
+    --top)             need_arg "$@"; TOPN="$2"; shift 2 ;;
+    --pool-label)      need_arg "$@"; POOL_LABEL="$2"; shift 2 ;;
+    --no-node-metrics) NODE_METRICS=0; shift ;;
+    --snapshot)        DO_SNAP=1; shift
+                       if [ $# -gt 0 ] && [[ "$1" =~ ^(all|current|c|a|report|ns|n|[0-9]+|[0-9]-[0-9]|(pods?|nodes?|pools?|workloads?|wl|ip|ips|ippool|mem|memory|io|net|alerts?)(,(pods?|nodes?|pools?|workloads?|wl|ip|ips|ippool|mem|memory|io|net|alerts?))*)$ ]]; then
+                         SNAP_SEL="$1"; shift; fi ;;
+    --snapshot=*)      DO_SNAP=1; SNAP_SEL="${1#--snapshot=}"; shift ;;
+    --session-report)  DO_SREP=1; shift
+                       if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then SREP_ARG="$1"; shift; fi ;;
+    --session-report=*) DO_SREP=1; SREP_ARG="${1#--session-report=}"; shift ;;
+    --report)          DO_REPORT=1; shift
+                       if [ $# -gt 0 ] && [ "${1#-}" = "$1" ] && { [ -d "$1" ] || [ "${1#*/}" != "$1" ]; }; then
+                         REPORT_DIR="$1"; shift; fi ;;
+    -1|--once)         ONCE=1; shift ;;
+    -P|--pods-only)    PODS_ONLY=1; shift ;;
+    -C|--containers)   PODS_ONLY=0; shift ;;
+    -D|--no-detail)    DETAIL=0; shift ;;
+    -A|--all-namespaces) ALL_NS=1; shift ;;
+    --ascii)           BARCHR="ascii"; shift ;;
+    --glyphs)          need_arg "$@"; BARCHR="$2"; shift 2 ;;
+    -N|--no-color)     COLOR=0; shift ;;
+    -S|--no-altscreen) ALTSCR=0; shift ;;
+    --install)         INSTALL_DIR="${2:-}"; shift; [ $# -gt 0 ] && [ "${1#-}" = "$1" ] && shift; DO_INSTALL=1 ;;
+    --completion)      _kdash_completion; exit 0 ;;
+    -V|--version)      printf 'kdash %s\n' "$KDASH_VERSION"; exit 0 ;;
+    --about)           kdash_about; exit 0 ;;
+    --audit)           AUDIT_CMD="show"; shift; if [ $# -gt 0 ] && [[ "$1" =~ ^[0-9]+$ ]]; then AUDIT_N="$1"; shift; fi ;;
+    --audit-all)       AUDIT_ALL=1; AUDIT_CMD="${AUDIT_CMD:-show}"; shift ;;
+    --audit-grep)      need_arg "$@"; AUDIT_GREP="$2"; AUDIT_CMD="${AUDIT_CMD:-show}"; shift 2 ;;
+    --audit-verify)    AUDIT_CMD="verify"; shift ;;
+    --audit-report)    AUDIT_CMD="export"; shift; if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then AUDIT_OUT="$1"; shift; fi ;;
+    --accept-disclaimer) KDASH_ACCEPT_DISCLAIMER=1; shift ;;
+    -h|--help)         _kdash_help; exit 0 ;;
+    -*) die "unknown option '$1' (try --help)" ;;
+    *)  FILTER="$1"; shift ;;
+  esac
+done
+
+VIEW="$(norm_view "$VIEW")" || die "unknown view (use pods | nodes | workloads | ip | mem | io | all)"
+case "$OUTFMT" in text|tsv|csv) ;; *) die "unknown output format '$OUTFMT' (text | tsv | csv)" ;; esac
+case "$SORT" in cpu|mem|cpupct|mempct|name|restarts) ;; *) die "unknown sort key '$SORT' (cpu | mem | cpupct | mempct | name | restarts)" ;; esac
+case "$BARCHR" in safe|unicode) BARCHR=unicode ;; full|ascii) ;; *) die "unknown glyph set '$BARCHR' (safe | full | ascii)" ;; esac
+case "$THEME" in safe|dark|light|mono) ;; *) die "unknown theme '$THEME' (safe | dark | light | mono)" ;; esac
+case "$CLUSTER" in 0|1) ;; *) CLUSTER=1 ;; esac
+case "$ALL_NODES" in 0|1) ;; *) ALL_NODES=1 ;; esac
+case "$ZOOM" in 0|off|no) ZOOM=0 ;; *) ZOOM=1 ;; esac
+# chart window: 15m 1h 6h 24h all, or any NNs / NNm / NNh / NNd
+win_secs() {
+  case "$1" in
+    all|0|'') echo 0 ;;
+    *[0-9]s) echo "${1%s}" ;; *[0-9]m) echo $(( ${1%m} * 60 )) ;; *[0-9]h) echo $(( ${1%h} * 3600 )) ;; *[0-9]d) echo $(( ${1%d} * 86400 )) ;;
+    *) return 1 ;;
+  esac
+}
+case "$TWIN" in all|[0-9]*[smhd]) ;; *) die "unknown --window '$TWIN' (15m | 1h | 6h | 24h | all)" ;; esac
+case "${TWIN%[smhd]}" in all|*[!0-9]*) [ "$TWIN" = all ] || die "unknown --window '$TWIN' (15m | 1h | 6h | 24h | all)" ;; esac
+WIN_S="$(win_secs "$TWIN")"
+case "$FC_WIN" in ''|*[!0-9]*) FC_WIN=1800 ;; esac; [ "$FC_WIN" -lt 120 ] && FC_WIN=120
+# host clock: epoch, UTC offset in seconds and zone name, read once per frame so
+# every time printed (header, chart axes, events, forecasts, HTML) uses one clock
+host_clock() {
+  local z h m
+  read -r NOW_S z TZ_NAME < <(date '+%s %z %Z') || { NOW_S=$(date +%s); z=+0000; TZ_NAME=UTC; }
+  case "$z" in [+-][0-9][0-9][0-9][0-9]) h=${z:1:2}; m=${z:3:2}; TZ_OFF=$(( (10#$h * 3600 + 10#$m * 60) * (${z:0:1}1) )) ;; *) TZ_OFF=0 ;; esac
+  TZ_Z="$z"; [ -n "${TZ_NAME:-}" ] || TZ_NAME="UTC$z"
+  # TZ names a zone this host has no data for: the C library silently uses UTC
+  case "${TZ:-}" in ''|:*|*[0-9]*) ;; */*) [ -e "/usr/share/zoneinfo/$TZ" ] || TZ_NAME="UTC" ;; esac
+}
+host_clock
+# interactive picker only where someone can answer it
+INTERACTIVE=0; [ -t 0 ] && [ -t 1 ] && [ "$ONCE" = 0 ] && [ "$DO_SNAP" = 0 ] && [ "$DO_REPORT" = 0 ] && [ "${DO_SREP:-0}" = 0 ] && INTERACTIVE=1
+[ "$PICK_NS" = 1 ] && [ "$INTERACTIVE" = 0 ] && [ "${DO_SREP:-0}" = 0 ] && die "-n needs a namespace here (the namespace picker needs a terminal)"
+IO_WAIT="${IO_WAIT:-0}"
+for _n in "$INTERVAL" "$SPEC_TTL" "$TOPN" "$HIST_N" "$IO_WAIT"; do
+  case "$_n" in ''|*[!0-9.]*) die "numeric option expected, got '$_n'" ;; esac
+done
+unset _n
+printf '%s' "" | grep -E -- "$FILTER" >/dev/null 2>&1; [ $? -le 1 ] || die "invalid pod regex: $FILTER"
+
+# audit commands: read the log and exit
+case "${AUDIT_CMD:-}" in
+  show)   audit AUDIT_VIEW "n=${AUDIT_N:-40} all=${AUDIT_ALL:-0} grep=${AUDIT_GREP:-}"; audit_show "${AUDIT_N:-40}"; exit 0 ;;
+  verify) audit_verify; exit $? ;;
+  export) audit_export "${AUDIT_OUT:-}"; exit $? ;;
+esac
+if [ "${DO_INSTALL:-0}" = 1 ]; then AUDIT_MODE=install
+elif [ "${DO_SREP:-0}" = 1 ]; then AUDIT_MODE=session-report
+elif [ "$DO_SNAP" = 1 ]; then AUDIT_MODE=snapshot
+elif [ "$DO_REPORT" = 1 ]; then AUDIT_MODE=report
+elif [ "$ONCE" = 1 ]; then AUDIT_MODE=once
+fi
+disclaimer_gate
+
+if [ "${DO_INSTALL:-0}" = 1 ]; then
+  audit INSTALL "dir=${INSTALL_DIR:-default} argv=$AUDIT_ARGV"
+  if [ -n "${INSTALL_DIR:-}" ]; then dir="$INSTALL_DIR"
+  elif [ "$(id -u)" -eq 0 ]; then dir="/usr/local/bin"
+  else dir="$HOME/.local/bin"; fi
+  mkdir -p "$dir" 2>/dev/null || die "cannot create $dir"
+  [ -w "$dir" ] || die "$dir is not writable (try: sudo install -m755 \"$SELF\" $dir/kdash)"
+  install -m 755 "$SELF" "$dir/kdash" || die "install failed"
+  printf 'installed: %s/kdash (v%s)\n' "$dir" "$KDASH_VERSION"
+  if [ "$(id -u)" -eq 0 ] && [ -d /etc/bash_completion.d ]; then
+    "$dir/kdash" --completion bash > /etc/bash_completion.d/kdash 2>/dev/null &&
+      printf 'installed: /etc/bash_completion.d/kdash\n'
+  else
+    printf 'completion: kdash --completion bash > ~/.kdash-completion.bash\n'
+  fi
+  command -v restorecon >/dev/null 2>&1 && restorecon -F "$dir/kdash" 2>/dev/null
+  case ":$PATH:" in
+    *":$dir:"*) printf 'ready: kdash --help\n' ;;
+    *) printf 'add to ~/.bashrc:  export PATH="%s:$PATH"\n' "$dir" ;;
+  esac
+  exit 0
+fi
+
+read -r -a KC <<< "${KDASH_KUBECTL:-kubectl}"
+[ "$DO_SREP" = 1 ] || command -v "${KC[0]}" >/dev/null 2>&1 || fail "${KC[0]} not found in PATH"
+[ -t 1 ] || { COLOR=0; ALTSCR=0; }
+
+if [ -n "$KUBECONF" ]; then
+  [ -r "$KUBECONF" ] || fail "kubeconfig not readable: $KUBECONF"
+  export KUBECONFIG="$KUBECONF"
+fi
+KUBECONF_SHOWN="${KUBECONFIG:-$HOME/.kube/config}"
+
+if [ -n "$CTX" ] && [ "${CTX_EXPLICIT:-0}" = 1 ]; then
+  if ! "${KC[@]}" config get-contexts -o name 2>/dev/null | grep -qx -- "$CTX"; then
+    matches="$("${KC[@]}" config get-contexts -o name 2>/dev/null | grep -F -- "$CTX")"
+    count="$(printf '%s\n' "$matches" | grep -c .)"
+    [ "$count" -eq 1 ] || die "context '$CTX' matched $count contexts:
+$matches"
+    CTX="$matches"
+  fi
+  KC+=(--context "$CTX")
+elif [ -n "$CTX" ]; then
+  KC+=(--context "$CTX")
+fi
+if [ -z "$NS" ] && [ "$ALL_NS" = 0 ] && [ "$DO_SREP" = 0 ]; then
+  if [ -n "$CTX" ]; then
+    NS="$("${KC[@]}" config view -o jsonpath="{.contexts[?(@.name==\"$CTX\")].context.namespace}" 2>/dev/null)"
+  else
+    NS="$("${KC[@]}" config view --minify -o jsonpath='{..namespace}' 2>/dev/null)"
+  fi
+  if [ -z "$NS" ] && [ -n "${KDASH_NS_MAP:-}" ]; then
+    _cur="${CTX:-$("${KC[@]}" config current-context 2>/dev/null)}"
+    for _pair in $KDASH_NS_MAP; do
+      case "$_pair" in "$_cur="*) NS="${_pair#*=}"; break ;; esac
+    done
+    unset _pair _cur
+  fi
+  if [ -z "$NS" ]; then
+    if [ "$INTERACTIVE" = 1 ]; then PICK_NS=1          # ask instead of guessing "default"
+    else NS="default"; NS_FALLBACK=1; fi
+  fi
+fi
+[ "$ALL_NS" = 1 ] && PICK_NS=0
+if [ "$ALL_NS" = 1 ]; then SCOPE=(--all-namespaces); NS="(all namespaces)"; else SCOPE=(-n "${NS:-default}"); fi
+if [ "$DO_SREP" = 1 ]; then CTX_NAME="${CTX:-n/a}"; else CTX_NAME="${CTX:-$("${KC[@]}" config current-context 2>/dev/null || echo n/a)}"; fi
+
+TMPD="$(mktemp -d "${TMPDIR:-/tmp}/kdash.XXXXXX")" || fail "mktemp failed"
+chmod 700 "$TMPD"
+audit_wrap_kubectl
+AUDIT_STARTED=1
+audit START "mode=$AUDIT_MODE view=$VIEW filter=$FILTER kubeconfig=$KUBECONF_SHOWN term=${TERM:-?} ${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo ?)}x${KDASH_LINES:-$(tput lines 2>/dev/null || echo ?)} argv=$AUDIT_ARGV"
+SPEC="$TMPD/spec"; TOPC="$TMPD/top"; TOPP="$TMPD/topprev"
+NODES="$TMPD/nodes"; TOPN_F="$TMPD/topnode"; SVC="$TMPD/svc"; CLUS="$TMPD/cluster"; WLS="$TMPD/workloads"
+MODEL="$TMPD/model"; HIST="$TMPD/hist.tsv"; NHIST="$TMPD/nodehist.tsv"
+HDRF="$TMPD/hdr"; BODYF="$TMPD/body"; FTRF="$TMPD/ftr"
+mkdir -p "$MODEL"
+: > "$SPEC"; : > "$TOPC"; : > "$TOPP"; : > "$NODES"; : > "$TOPN_F"; : > "$SVC"; : > "$CLUS"; : > "$WLS"; : > "$HIST"; : > "$NHIST"
+LOOPED=0
+ERRLOG="$TMPD/stderr"
+cleanup() {
+  local rc=$?
+  [ "${AUDIT_STARTED:-0}" = 1 ] && audit_end "$rc"
+  if [ "$LOOPED" = 1 ]; then
+    LOOPED=0
+    exec 2>&3 3>&- || true
+    [ "$ALTSCR" = 1 ] && printf '\033[?1049l'
+    printf '\033[?25h'
+    [ -s "$ERRLOG" ] && { printf 'kdash: errors during run:\n' >&2; cat "$ERRLOG" >&2; }
+    if [ "${SESSION_ON:-0}" = 1 ]; then
+      session_close
+      printf 'kdash: session history kept in %s\n       namespace report with all tabs + history:  kdash --session-report latest\n' "$SDIR"
+    fi
+  fi
+  [ "${SESSION_ON:-0}" = 1 ] && session_close
+  [ -n "${IO_PID:-}" ] && kill "$IO_PID" 2>/dev/null
+  rm -rf "$TMPD"
+}
+trap 'AUDIT_SIG=INT; cleanup; exit 0' INT
+trap 'AUDIT_SIG=TERM; cleanup; exit 0' TERM
+trap 'AUDIT_SIG=HUP; cleanup; exit 0' HUP
+trap cleanup EXIT
+
+#-- data collection ------------------------------------------------------------
+# Pipe-delimited jsonpath: a missing key stays an empty field, so values never
+# shift onto the wrong container (custom-columns drops missing fields).
+SPEC_TPL='{range .items[*]}P|{.metadata.name}|{.status.phase}|{.spec.nodeName}|{.status.qosClass}|{.metadata.namespace}|{.status.podIP}|{.status.hostIP}|{.metadata.ownerReferences[*].kind}|{.metadata.ownerReferences[*].name}|{.spec.hostNetwork}|{.metadata.deletionTimestamp}|{.status.reason}
+{range .spec.containers[*]}C|{.name}|{.resources.requests.cpu}|{.resources.limits.cpu}|{.resources.requests.memory}|{.resources.limits.memory}
+{end}{range .status.containerStatuses[*]}S|{.name}|{.ready}|{.restartCount}|{.lastState.terminated.reason}|{.state.waiting.reason}
+{end}{end}'
+NODE_TPL='{range .items[*]}N|{.metadata.name}|{.status.allocatable.cpu}|{.status.allocatable.memory}|{.status.capacity.cpu}|{.status.capacity.memory}|{.spec.podCIDR}|{.status.addresses[?(@.type=="InternalIP")].address}|{.status.conditions[?(@.type=="Ready")].status}|{.spec.unschedulable}|{.spec.taints[*].effect}|{.status.allocatable.pods}|{.metadata.labels}
+{end}'
+SVC_TPL='{range .items[*]}V|{.metadata.namespace}|{.metadata.name}|{.spec.type}|{.spec.clusterIP}|{.spec.externalIPs[*]}|{.status.loadBalancer.ingress[*].ip}{.status.loadBalancer.ingress[*].hostname}|{range .spec.ports[*]}{.port}/{.protocol}{" "}{end}
+{end}'
+
+# whole cluster (every namespace): node name, phase and requests / limits only
+CLUSTER_TPL='{range .items[*]}Q|{.metadata.namespace}|{.spec.nodeName}|{.status.phase}|{range .spec.containers[*]}{.resources.requests.cpu},{.resources.requests.memory},{.resources.limits.cpu},{.resources.limits.memory};{end}|{.metadata.ownerReferences[*].kind}|{.metadata.ownerReferences[*].name}|{.status.containerStatuses[*].ready}|{.metadata.name}
+{end}'
+
+SPEC_AT=0; SPEC_OK=0; TOP_OK=1; TOPN_OK=0; NODES_STATE="unread"; SVC_STATE="unread"; TOPN_STATE="off"
+CLUSTER_STATE="off"; [ "$CLUSTER" = 1 ] && CLUSTER_STATE="unread"; WL_STATE="unread"; WL_KINDS="deployments,statefulsets,daemonsets,cronjobs"
+# workload objects: desired / ready / updated replicas, rollout generation, images, cron schedule
+WL_TPL='{range .items[*]}W|{.kind}|{.metadata.namespace}|{.metadata.name}|{.spec.replicas}|{.status.readyReplicas}|{.status.updatedReplicas}|{.status.availableReplicas}|{.status.desiredNumberScheduled}|{.status.numberReady}|{.status.updatedNumberScheduled}|{.metadata.generation}|{.status.observedGeneration}|{.spec.schedule}|{.spec.suspend}|{.status.lastScheduleTime}|{.spec.template.spec.containers[*].image}{.spec.jobTemplate.spec.template.spec.containers[*].image}
+{end}'
+
+# classify a kubectl failure from its stderr
+_klass() {
+  if grep -qiE 'forbidden|cannot (list|get)' "$1" 2>/dev/null; then echo forbidden
+  elif grep -qiE 'metrics not available|the server could not find the requested resource|metrics.k8s.io' "$1" 2>/dev/null; then echo no-metrics
+  else echo error; fi
+}
+
+refresh_spec() {
+  local tmp="$TMPD/spec.new" err="$TMPD/spec.err"
+  if "${KC[@]}" "${SCOPE[@]}" get pods -o jsonpath="$SPEC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
+    SPEC_OK=1
+    # an empty answer replaces the spec only when the namespace really is empty
+    # (first read, or every pod gone); a transient blank never blanks the frame
+    if [ -s "$tmp" ] || [ "$SPEC_AT" = 0 ] || [ ! -s "$SPEC" ]; then mv -f "$tmp" "$SPEC"; SPEC_AT=$(date +%s); else rm -f "$tmp"; fi
+  else rm -f "$tmp"; fi            # keep last good spec
+  tmp="$TMPD/nodes.new"; err="$TMPD/nodes.err"
+  if "${KC[@]}" get nodes -o jsonpath="$NODE_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp" && [ -s "$tmp" ]; then
+    mv -f "$tmp" "$NODES"; NODES_STATE="ok"
+  else rm -f "$tmp"; [ -s "$NODES" ] || NODES_STATE="$(_klass "$err")"; fi
+  refresh_cluster
+  refresh_workloads
+  tmp="$TMPD/svc.new"; err="$TMPD/svc.err"
+  if "${KC[@]}" "${SCOPE[@]}" get services -o jsonpath="$SVC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
+    mv -f "$tmp" "$SVC"; SVC_STATE="ok"
+  else rm -f "$tmp"; [ -s "$SVC" ] || SVC_STATE="$(_klass "$err")"; fi
+}
+refresh_workloads() {    # namespace scope; a kind the server or RBAC refuses is dropped
+  [ "$WL_STATE" = forbidden ] && return 0
+  local tmp="$TMPD/wl.new" err="$TMPD/wl.err"
+  "${KC[@]}" "${SCOPE[@]}" get "$WL_KINDS" --request-timeout=20s -o jsonpath="$WL_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"
+  if [ -s "$tmp" ]; then mv -f "$tmp" "$WLS"; WL_STATE="ok"
+    grep -qiE 'forbidden|cannot (list|get)' "$err" 2>/dev/null && WL_STATE="partial"
+    return 0
+  fi
+  if grep -qiE "doesn.t have a resource type|the server could not find" "$err" 2>/dev/null && [ "$WL_KINDS" != "deployments,statefulsets,daemonsets" ]; then
+    WL_KINDS="deployments,statefulsets,daemonsets"; refresh_workloads; return 0
+  fi
+  if [ ! -s "$err" ]; then : > "$WLS"; WL_STATE="ok"; rm -f "$tmp"; return 0; fi   # namespace has none
+  rm -f "$tmp"; [ -s "$WLS" ] || WL_STATE="$(_klass "$err")"
+}
+
+refresh_cluster() {      # every namespace, or - without cluster rights - every namespace you can read
+  [ "$CLUSTER" = 1 ] || { CLUSTER_STATE="off"; return 0; }
+  local tmp="$TMPD/cluster.new" err="$TMPD/cluster.err" now
+  # --compare: exactly the namespaces asked for, read one by one
+  if [ -n "$COMPARE_NS" ]; then
+    now=$(date +%s); [ $((now - ${NS_SCAN_AT:-0})) -lt "$NS_SCAN_EVERY" ] && [ -s "$CLUS" ] && return 0
+    NS_SCAN_AT=$now; scan_namespaces; return 0
+  fi
+  if [ "$CLUSTER_STATE" != forbidden ] && [ "$CLUSTER_STATE" != partial ]; then
+    if "${KC[@]}" get pods --all-namespaces --request-timeout=20s -o jsonpath="$CLUSTER_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp" && [ -s "$tmp" ]; then
+      # usage of every namespace (pods.metrics.k8s.io, all namespaces) for the comparison
+      if [ "${TOPA_STATE:-}" != forbidden ] && [ "${TOP_OK:-0}" = 1 ]; then
+        if "${KC[@]}" top pod --all-namespaces --no-headers --request-timeout=20s 2>"$err.top" | awk 'NF >= 4 { print "U|" $1 "|" $2 "|" $3 "|" $4 }' >> "$tmp"; then TOPA_STATE=ok
+        else TOPA_STATE="$(_klass "$err.top")"; fi
+      fi
+      mv -f "$tmp" "$CLUS"; CLUSTER_STATE="ok"; return 0
+    fi
+    rm -f "$tmp"; [ -s "$CLUS" ] && return 0
+    CLUSTER_STATE="$(_klass "$err")"
+    [ "$CLUSTER_STATE" = forbidden ] || return 0
+  fi
+  # namespace-level rights only: read each namespace you may read (scan_namespaces)
+  now=$(date +%s)
+  [ $((now - ${NS_SCAN_AT:-0})) -lt "$NS_SCAN_EVERY" ] && [ -s "$CLUS" ] && return 0
+  NS_SCAN_AT=$now
+  scan_namespaces
+}
+
+# namespace-level fallback for the cluster view: pods and pod usage of every namespace
+# you can read (kubectl auth can-i list pods), current first, then recently used, then
+# the rest of the list - at most KDASH_NS_SCAN (30). Reads run in parallel. Namespaces
+# that refuse are remembered for 10 minutes and skipped. --compare names the set.
+NS_SCAN_MAX="${KDASH_NS_SCAN:-30}"; case "$NS_SCAN_MAX" in ''|*[!0-9]*) NS_SCAN_MAX=30 ;; esac
+NS_SCAN_EVERY=60; NS_SCAN_AT=0; NS_READ_LIST=""; NS_DENY_FILE=""
+scan_namespaces() {
+  local tmp="$TMPD/cluster.scan" d="$TMPD/scan" n=0 ns_ ok=0 tried=0 now list cand=() pick=() j
+  NS_DENY_FILE="$TMPD/ns_deny"; [ -f "$NS_DENY_FILE" ] || : > "$NS_DENY_FILE"
+  now=$(date +%s)
+  awk -F'\t' -v t="$now" '$2 + 600 > t' "$NS_DENY_FILE" > "$NS_DENY_FILE.t" 2>/dev/null && mv -f "$NS_DENY_FILE.t" "$NS_DENY_FILE"
+  if [ -n "$COMPARE_NS" ]; then
+    list="$( { [ "$ALL_NS" = 0 ] && printf '%s\n' "$NS"; printf '%s\n' "$COMPARE_NS" | tr ', ' '\n\n'; } | awk 'NF && !s[$0]++')"
+  else
+    if [ ! -s "$TMPD/nscand" ] || [ $((now - ${NS_CAND_AT:-0})) -ge 300 ]; then
+      list_namespaces > "$TMPD/nscand" 2>/dev/null; NS_CAND_AT=$now
+    fi
+    list="$( { [ "$ALL_NS" = 0 ] && printf '%s\n' "$NS"; recent_ns; cat "$TMPD/nscand"; } | awk 'NF && !s[$0]++')"
+  fi
+  mapfile -t cand <<< "$list"; NS_NOACC=""
+  # ask the API which ones you may read before reading them (cheap self-reviews)
+  if [ "${KDASH_NS_PROBE:-1}" = 1 ] && declare -F ns_access_probe > /dev/null; then
+    ns_access_probe "${cand[@]:0:${KDASH_NS_PROBE_MAX:-80}}"
+  fi
+  for ns_ in ${cand[@]+"${cand[@]}"}; do
+    [ -n "$ns_" ] || continue
+    [ "${#pick[@]}" -ge "$NS_SCAN_MAX" ] && break
+    grep -q "^${ns_}	" "$NS_DENY_FILE" 2>/dev/null && continue
+    if [ "${NSACC[$ns_]:-?}" = no ]; then [ -n "$COMPARE_NS" ] && NS_NOACC="${NS_NOACC}${NS_NOACC:+ }$ns_"; continue; fi
+    pick+=("$ns_")
+  done
+  rm -rf "$d"; mkdir -p "$d"; NS_READ_LIST=""
+  for ns_ in ${pick[@]+"${pick[@]}"}; do
+    ( if "${KC[@]}" -n "$ns_" get pods --request-timeout=8s -o jsonpath="$CLUSTER_TPL" 2>/dev/null | sed 's/^[[:space:]]*//' > "$d/$ns_.pods"; then
+        "${KC[@]}" -n "$ns_" top pod --no-headers --request-timeout=8s 2>/dev/null | awk -v n="$ns_" 'NF >= 3 { print "U|" n "|" $1 "|" $2 "|" $3 }' > "$d/$ns_.top"
+      else rm -f "$d/$ns_.pods"; fi ) &
+    n=$((n + 1)); [ $((n % 8)) = 0 ] && wait
+  done
+  wait
+  : > "$tmp"
+  for ns_ in ${pick[@]+"${pick[@]}"}; do
+    tried=$((tried + 1))
+    if [ -f "$d/$ns_.pods" ]; then cat "$d/$ns_.pods" >> "$tmp"; ok=$((ok + 1)); NS_READ_LIST="${NS_READ_LIST}${NS_READ_LIST:+ }$ns_"
+    else printf '%s\t%s\n' "$ns_" "$now" >> "$NS_DENY_FILE"; fi
+  done
+  NS_READ_LIST="$(printf '%s' "$NS_READ_LIST" | tr ' ' '\n' | awk 'NF && !s[$0]++' | paste -sd' ' -)"
+  for ns_ in ${pick[@]+"${pick[@]}"}; do [ -f "$d/$ns_.pods" ] && [ -f "$d/$ns_.top" ] && cat "$d/$ns_.top" >> "$tmp"; done
+  NS_SCAN_TRIED=$tried
+  if [ "$ok" -gt 0 ]; then mv -f "$tmp" "$CLUS"; CLUSTER_STATE="partial"; NS_READ_N=$ok
+  else rm -f "$tmp"; CLUSTER_STATE="forbidden"; fi
+}
+
+# namespaces for the picker, one per line. The API list when "get namespaces" is
+# allowed; otherwise everything kdash can infer: cluster pod read, kubeconfig
+# contexts, KDASH_NS_MAP, recently used namespaces and the current one.
+RECENT_NS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/kdash/recent_ns"
+list_namespaces() {
+  local out err="$TMPD/ns.err" p
+  NSLIST_STATE="unread"
+  if out="$("${KC[@]}" get namespaces --request-timeout=10s -o jsonpath='{range .items[*]}{.metadata.name}
+{end}' 2>"$err")" && [ -n "$out" ]; then
+    NSLIST_STATE="ok"; printf '%s\n' "$out" | sed 's/^[[:space:]]*//' | grep -v '^$' | sort -u; return 0
+  fi
+  NSLIST_STATE="$(_klass "$err")"
+  {
+    [ -s "$MODEL/cluster_ns.tsv" ] && awk -F'\t' 'NR > 1 { print $1 }' "$MODEL/cluster_ns.tsv"
+    "${KC[@]}" config view -o jsonpath='{range .contexts[*]}{.context.namespace}
+{end}' 2>/dev/null
+    for p in ${KDASH_NS_MAP:-}; do printf '%s\n' "${p#*=}"; done
+    [ -r "$RECENT_NS_FILE" ] && awk -F'\t' '{ print $2 }' "$RECENT_NS_FILE"
+    [ -n "${NS:-}" ] && [ "$ALL_NS" = 0 ] && printf '%s\n' "$NS"
+  } 2>/dev/null | sed 's/^[[:space:]]*//' | grep -E '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$' | sort -u
+}
+remember_ns() {          # newest first, per context, 30 kept
+  local d; d="$(dirname "$RECENT_NS_FILE")"; mkdir -p "$d" 2>/dev/null || return 0
+  { printf '%s\t%s\n' "$CTX_NAME" "$1"
+    if [ -r "$RECENT_NS_FILE" ]; then awk -F'\t' -v c="$CTX_NAME" -v n="$1" '!($1 == c && $2 == n)' "$RECENT_NS_FILE"; fi
+  } | head -30 > "$RECENT_NS_FILE.tmp" 2>/dev/null; mv -f "$RECENT_NS_FILE.tmp" "$RECENT_NS_FILE" 2>/dev/null; return 0
+}
+recent_ns() { [ -r "$RECENT_NS_FILE" ] && awk -F'\t' -v c="$CTX_NAME" '$1 == c { print $2 }' "$RECENT_NS_FILE"; return 0; }
+
+refresh_top() {
+  local tmp="$TMPD/top.new" err="$TMPD/top.err"
+  if "${KC[@]}" "${SCOPE[@]}" top pod --containers --no-headers > "$tmp" 2>"$err"; then
+    cp -f "$TOPC" "$TOPP"; mv -f "$tmp" "$TOPC"; TOP_OK=1; TOP_AT=$(date +%s)
+  else rm -f "$tmp"; TOP_OK=0; fi
+  if [ "$NODE_METRICS" = 1 ] && [ "$TOPN_STATE" != forbidden ]; then
+    tmp="$TMPD/topn.new"; err="$TMPD/topn.err"
+    if "${KC[@]}" top node --no-headers > "$tmp" 2>"$err" && [ -s "$tmp" ]; then
+      mv -f "$tmp" "$TOPN_F"; TOPN_OK=1; TOPN_STATE="ok"
+    else rm -f "$tmp"; TOPN_OK=0; TOPN_STATE="$(_klass "$err")"; fi
+  fi
+}
+TOP_AT=0; FETCH_AT=0; FETCH_MS=0; PAUSED=0; PAUSED_AT=0
+_ms() { local t="${EPOCHREALTIME:-}"; if [ -n "$t" ]; then t="${t/[.,]/}"; printf '%s' "${t:0:${#t}-3}"; else printf '%s000' "$(date +%s)"; fi; }
+fetch() {
+  local now t0; now=$(date +%s); t0=$(_ms)
+  [ $((now - SPEC_AT)) -ge "$SPEC_TTL" ] && refresh_spec
+  refresh_top
+  io_tick
+  build_model
+  session_tick
+  FETCH_AT=$now; FETCH_MS=$(( $(_ms) - t0 ))
+}
+
+#-- shared awk helpers (portable: gawk, mawk, busybox awk) ----------------------
+AWKLIB='
+function nv(x)     { return (x == "-" || x == "") ? -1 : x + 0 }
+function cpu2m(s,   n) {
+  if (s == "" || s == "<none>" || s == "<unknown>") return -1
+  if (s ~ /n$/) { n = substr(s, 1, length(s) - 1) + 0; return n / 1000000 }
+  if (s ~ /u$/) { n = substr(s, 1, length(s) - 1) + 0; return n / 1000 }
+  if (s ~ /m$/) { n = substr(s, 1, length(s) - 1) + 0; return n }
+  return (s + 0) * 1000
+}
+function mem2mi(s,   n) {
+  if (s == "" || s == "<none>" || s == "<unknown>") return -1
+  if (s ~ /Ki$/) { n = substr(s, 1, length(s) - 2) + 0; return n / 1024 }
+  if (s ~ /Mi$/) { n = substr(s, 1, length(s) - 2) + 0; return n }
+  if (s ~ /Gi$/) { n = substr(s, 1, length(s) - 2) + 0; return n * 1024 }
+  if (s ~ /Ti$/) { n = substr(s, 1, length(s) - 2) + 0; return n * 1048576 }
+  if (s ~ /[Kk]$/) { n = substr(s, 1, length(s) - 1) + 0; return n * 1000 / 1048576 }
+  if (s ~ /M$/)  { n = substr(s, 1, length(s) - 1) + 0; return n * 1000000 / 1048576 }
+  if (s ~ /G$/)  { n = substr(s, 1, length(s) - 1) + 0; return n * 1000000000 / 1048576 }
+  if (s ~ /T$/)  { n = substr(s, 1, length(s) - 1) + 0; return n * 1000000000000 / 1048576 }
+  return (s + 0) / 1048576
+}
+function glyphs() {
+  if (bar == "ascii") {
+    FILL = "#"; EMPTY = "."; MID = "+"; OTH = "="; REQ = "+"; UPA = "^"; DNA = "v"; FLAT = "-"
+    TEE = "|- "; ELL = "`- "; VB = "|"; ARW = ">"; HR = "-"; DHR = "="
+    SPK = " .:-=+*#%@"; NSPK = 10
+  } else {
+    # default: only glyphs every common terminal font has (the CP437 / WGL4 set of
+    # Courier New, Lucida Console, Consolas, DejaVu): full and shaded blocks, box
+    # lines, triangles. "full" adds the eighth blocks for finer sparklines.
+    FILL = "\342\226\210"; EMPTY = "\342\226\221"; MID = "\342\226\222"
+    OTH = "\342\226\223"; REQ = "\342\226\222"
+    UPA = "\342\226\262"; DNA = "\342\226\274"; FLAT = "\302\267"
+    TEE = "\342\224\234\342\224\200 "; ELL = "\342\224\224\342\224\200 "
+    VB = "\342\224\202"; ARW = "\342\226\272"; HR = "\342\224\200"; DHR = "\342\225\220"
+    if (bar == "full") {
+      ARW = "\342\226\270"; NSPK = 8
+      SPKC[1] = "\342\226\201"; SPKC[2] = "\342\226\202"; SPKC[3] = "\342\226\203"; SPKC[4] = "\342\226\204"
+      SPKC[5] = "\342\226\205"; SPKC[6] = "\342\226\206"; SPKC[7] = "\342\226\207"; SPKC[8] = "\342\226\210"
+    } else {                                   # trend as a shade strip: light = low, solid = high
+      NSPK = 5; SPKC[1] = "_"; SPKC[2] = "\342\226\221"; SPKC[3] = "\342\226\222"; SPKC[4] = "\342\226\223"; SPKC[5] = "\342\226\210"
+    }
+  }
+  if (bar == "ascii") for (i_ = 1; i_ <= NSPK; i_++) SPKC[i_] = substr(SPK, i_, 1)
+}
+# colours: views ask for a role code, the theme maps it. No yellow anywhere, and the
+# default "safe" theme reads on black AND white terminals (MobaXterm, PuTTY, xterm).
+#   32 ok / this namespace      94 info / other namespaces      35 warning / requested
+#   1;31 critical               90 secondary text / free        1;35 titles   1 emphasis
+function palinit() {
+  PALOK = 1
+  if (theme == "dark") {          # brighter variants for black backgrounds
+    PAL["35"] = "95"; PAL["1;35"] = "1;95"; PAL["94"] = "96"; PAL["1;94"] = "1;96"; PAL["32"] = "92"
+  } else if (theme == "light") {  # darker variants for white backgrounds
+    PAL["94"] = "34"; PAL["1;94"] = "1;34"
+  } else if (theme == "mono") MONO = 1
+}
+function C(k, s) {
+  if (!color) return s
+  if (!PALOK) palinit()
+  if (MONO) { if (k == "7;1") k = "7"; else if (k ~ /^1;/ || k == "1") k = "1"; else return s }
+  else if (k in PAL) k = PAL[k]
+  return sprintf("\033[%sm%s\033[0m", k, s)
+}
+function heat(p)    { if (p < 0) return "90"; if (p >= 90) return "1;31"; if (p >= 75) return "35"; if (p >= 50) return "94"; return "32" }
+# ---- sorting shared by every view: fill IX[1..n] with ids and SV[id] with the
+# key, then ixsort(n). Numbers sort high-to-low, names (sortkey "name") A-Z;
+# sortrev = 1 flips either. Stable bottom-up merge sort (fast on -A clusters).
+function sbefore(x, y) {
+  if (sortkey == "name") return sortrev ? (SV[x] "" > SV[y] "") : (SV[x] "" < SV[y] "")
+  return sortrev ? (SV[x] + 0 < SV[y] + 0) : (SV[x] + 0 > SV[y] + 0)
+}
+function ixsort(n,   w, lo, mid, hi, i, j, k) {
+  for (w = 1; w < n; w *= 2)
+    for (lo = 1; lo <= n - w; lo += 2 * w) {
+      mid = lo + w - 1; hi = lo + 2 * w - 1; if (hi > n) hi = n
+      i = lo; j = mid + 1; k = lo
+      while (i <= mid && j <= hi) { if (sbefore(IX[j], IX[i])) MT[k++] = IX[j++]; else MT[k++] = IX[i++] }
+      while (i <= mid) MT[k++] = IX[i++]
+      while (j <= hi) MT[k++] = IX[j++]
+      for (k = lo; k <= hi; k++) IX[k] = MT[k]
+    }
+}
+# the sort value of a row: used, % of limit, name or restarts
+function skey(name, cu, cl, mu, ml, rs) {
+  if (sortkey == "name") return name
+  if (sortkey == "mem") return mu
+  if (sortkey == "cpupct") return pct(cu, cl)
+  if (sortkey == "mempct") return pct(mu, ml)
+  if (sortkey == "restarts") return rs + 0
+  return cu
+}
+function sortlabel() { return "sort " sortkey (sortkey == "name" ? (sortrev ? " Z-A" : " A-Z") : (sortrev ? " " UPA " low first" : " " DNA " high first")) }
+function pct(u, c)  { return (c > 0 && u >= 0) ? u * 100 / c : -1 }
+function fpct(p, w) { if (w == "") w = 5; return p < 0 ? C("90", sprintf("%" (w) "s" "", "-")) : C(heat(p), sprintf("%" (w) ".1f" "", p)) }
+function fnum(v, w) { return v < 0 ? sprintf("%" (w) "s" "", "-") : sprintf("%" (w) "d" "", v + 0.5) }
+function fgi(mi, w) { return mi < 0 ? sprintf("%" (w) "s" "", "-") : sprintf("%" (w) ".1f" "", mi / 1024) }
+function hmem(mi)   { if (mi < 0) return "-"; if (mi >= 10240) return sprintf("%.1fGi", mi / 1024); return sprintf("%dMi", mi + 0.5) }
+function hcpu(m)    { if (m < 0) return "-"; if (m >= 10000) return sprintf("%.1fc", m / 1000); return sprintf("%dm", m + 0.5) }
+function z(v)       { return v > 0 ? v : -1 }
+function rule(ch, w,   i, s) { s = ""; for (i = 0; i < w; i++) s = s ch; return s }
+function clip(s, w) { if (w < 2) return substr(s, 1, w); return length(s) <= w ? s : substr(s, 1, w - 1) "~" }
+function padr(s, w) { return sprintf("%-" (w) "s" "", clip(s, w)) }
+function padl(s, w) { return sprintf("%" (w) "s" "", clip(s, w)) }
+function ctr(s, w,   l, p) { l = length(s); if (l >= w) return substr(s, 1, w); p = int((w - l) / 2)
+                             return sprintf("%" (p) "s" "%s%" (w - l - p) "s" "", "", s, "") }
+function mkbar(p, w,   n, i, s) {
+  if (w < 1) return ""
+  if (p < 0) return C("90", sprintf("%-" (w) "s" "", "n/a"))
+  n = int(p / 100 * w + 0.5); if (n > w) n = w; if (n < 0) n = 0
+  s = ""; for (i = 0; i < n; i++) s = s FILL; for (i = n; i < w; i++) s = s EMPTY
+  return C(heat(p), s)
+}
+# composite node bar:  this namespace | other namespaces | free
+#   bk "used": other = whole-node usage minus this namespace (node metrics)   OTH, colour 94
+#   bk "req":  other = requests of the other namespaces (cluster pod read)     REQ, colour 35
+function cbar(a, b, tot, w, bk,   na, nb, i, s1, s2, s3) {
+  if (w < 1) return ""
+  if (tot <= 0) return C("90", sprintf("%-" (w) "s" "", "n/a"))
+  if (a < 0) a = 0                                    # nothing of this namespace on the node
+  na = int(a / tot * w + 0.5); if (na > w) na = w; if (a > 0 && na == 0) na = 1
+  nb = (b > 0) ? int((a + b) / tot * w + 0.5) - na : 0
+  if (nb < 0) nb = 0; if (b > 0 && nb == 0 && na < w) nb = 1; if (na + nb > w) nb = w - na
+  s1 = ""; s2 = ""; s3 = ""
+  for (i = 0; i < na; i++) s1 = s1 FILL
+  for (i = 0; i < nb; i++) s2 = s2 (bk == "req" ? REQ : OTH)
+  for (i = na + nb; i < w; i++) s3 = s3 EMPTY
+  return C(pct(a, tot) / (CBZ > 1 ? CBZ : 1) >= 90 ? "1;31" : "32", s1) C(bk == "req" ? "35" : "94", s2) C("90", s3)
+}
+# graph bar: used | requested beyond used | free, of a capacity; ucol colours "used"
+function gbar(u, r, tot, w, ucol,   nu, nr, i, s1, s2, s3) {
+  if (w < 1) return ""
+  if (tot <= 0) return C("90", sprintf("%-" (w) "s" "", "n/a"))
+  nu = (u > 0) ? int(u / tot * w + 0.5) : 0; if (u > 0 && nu == 0) nu = 1; if (nu > w) nu = w
+  nr = (r > u && r > 0) ? int(r / tot * w + 0.5) - nu : 0; if (r > 0 && r > u && nr <= 0 && nu < w) nr = 1
+  if (nr < 0) nr = 0; if (nu + nr > w) nr = w - nu
+  s1 = ""; s2 = ""; s3 = ""
+  for (i = 0; i < nu; i++) s1 = s1 FILL
+  for (i = 0; i < nr; i++) s2 = s2 REQ
+  for (i = nu + nr; i < w; i++) s3 = s3 EMPTY
+  return C(ucol, s1) C("35", s2) C("90", s3)
+}
+# auto zoom: the largest of x2 x5 x10 x20 x50 x100 that keeps share mx (0..1) under
+# 95% of a bar, so a namespace using 1% of a big pool still shows movement
+function zoomf(mx,   i, Z_) {
+  if (!zoom || mx <= 0 || mx >= 0.45) return 1
+  split("100 50 20 10 5 2", Z_, " ")
+  for (i = 1; i <= 6; i++) if (mx * Z_[i] <= 0.95) return Z_[i] + 0
+  return 1
+}
+# sparkline of a space separated series, newest last, at most w points
+function spark(list, w,   n, v, i, mn, mx, s, k, st) {
+  n = split(list, v, " "); if (n == 0) return ""
+  st = (n > w) ? n - w + 1 : 1
+  mn = -1; mx = -1
+  for (i = st; i <= n; i++) { if (v[i] < 0) continue; if (mn < 0 || v[i] < mn) mn = v[i]; if (v[i] > mx) mx = v[i] }
+  s = ""
+  for (i = st; i <= n; i++) {
+    if (v[i] < 0) { s = s " "; continue }
+    k = (mx > mn) ? int((v[i] - mn) / (mx - mn) * (NSPK - 1) + 1.5) : int(NSPK / 2)
+    if (k < 1) k = 1; if (k > NSPK) k = NSPK
+    s = s SPKC[k]
+  }
+  return s
+}
+function trend(cur, old) {
+  if (cur < 0 || old < 0) return C("90", FLAT)
+  if (cur > old * 1.02) return C("35", UPA)
+  if (cur < old * 0.98) return C("94", DNA)
+  return C("90", FLAT)
+}
+function tabs(v,   names, keys, i, s, t) {
+  split("pods nodes workloads ip mem io alerts", keys, " ")
+  split((termw + 0 > 0 && termw + 0 < 130) ? "PODS|NODES|WLOADS|IP|MEM|IO|ALERTS" : "PODS|NODE POOLS|WORKLOADS|IP POOL|MEMORY|NET & DISK IO|ALERTS", names, "|")
+  s = ""
+  for (i = 1; i <= 7; i++) {
+    t = " " i " " names[i] " "
+    s = s ((keys[i] == v) ? C("7;1", t) : C("90", t)) " "
+  }
+  return s
+}
+# visible width (ANSI stripped, UTF-8 aware on byte- and char-oriented awks)
+function vlen(s,   t) { if (VLM == "") { VLM = (length("\342\226\210") == 1) ? "c" : "b"; VLR = "[" sprintf("%c", 128) "-" sprintf("%c", 191) "]" }
+  t = s; gsub(/\033\[[0-9;]*[A-Za-z]/, "", t); if (VLM == "b") gsub(VLR, "", t); return length(t) }
+# print segments (separated by SG) packed into lines of width w, continuation lines indented
+function pack(s, w, f,   n, a, i, ln, lw, sw) {
+  if (w + 0 <= 0) w = 160
+  n = split(s, a, SG); ln = ""; lw = 0
+  for (i = 1; i <= n; i++) { if (a[i] == "") continue; sw = vlen(a[i])
+    if (lw > 0 && lw + sw > w) { print ln > f; ln = "   "; lw = 3; sub(/^ +/, "", a[i]); a[i] = " " a[i]; sw = vlen(a[i]) }
+    ln = ln a[i]; lw += sw }
+  if (lw > 0) print ln > f
+}
+function header(title, w) {
+  SG = "\037"; NAR = (termw + 0 > 0 && termw + 0 < 110)
+  print C("1", rule(DHR, w)) > hdrf
+  pack(" " C("1;94", "KDASH " ver) "  " SG tabs(view) SG " " C("1", (now > 0) ? ((termw + 0 < 100) ? thms(now) : tymd(now) " " thms(now)) : ts) C("90", (now > 0) ? " " tzname : "") ((termw + 0 >= 150 && author != "") ? SG C("90", "    by " author "  " VB " AUDITED") : ""), termw, hdrf)
+  pack(" " C("90", "ctx") " " ctxn SG "   " C("90", "ns") " " ns SG "   " C("90", "match") " " filt SG (NAR ? "" : "   " C("90", sprintf("poll %ss  spec %ss/%ss", iv, specage, ttl))) \
+       SG ((sstart > 0 && now > 0 && !NAR) ? C("90", "  session ") thms(sstart) C("90", " up ") tdur(now - sstart) : "") SG "   " C("1;94", view == "ip" ? "sorted by IP address" : sortlabel()), termw, hdrf)
+  if (M["pods"] + 0 > 0) healthline()
+  if (nswarn)  print C("35", " ! your context binds no namespace - showing \"default\". Use: kdash -n <namespace>") > hdrf
+  if (!topok)  print C("35", " ! kubectl top unavailable - live usage shows \"-\", requests / limits still live") > hdrf
+  printf " %s\n", C("1;35", title) > hdrf
+}
+# one line of health for every view: readiness, restarts, memory risks, CPU / memory
+# against limits, workloads and critical / warning events of the last 15 minutes
+function healthline(   ph, np, s, eb, ew, ln, a, cm, cc, d) {
+  np = M["pods"] + 0; ph = M["pods_healthy"] + 0
+  s = C("90", NAR ? " " : " health ") C(ph < np ? "1;31" : "32", (ph < np ? "! " : "") "pods " ph "/" np " ready")
+  s = s SG C("90", (NAR ? " rst " : "  restarts ")) C(M["restarts"] + 0 > 0 ? "35" : "32", M["restarts"] + 0)
+  s = s SG C("90", (NAR ? " oom " : "  OOM risk ")) C(M["pods_mem_ge90_limit"] + 0 > 0 ? "1;31" : "32", M["pods_mem_ge90_limit"] + 0)
+  s = s SG C("90", (NAR ? " oomk " : "  OOMKilled ")) C(M["pods_oomkilled"] + 0 > 0 ? "1;31" : "32", M["pods_oomkilled"] + 0)
+  s = s SG C("90", (NAR ? " nolim " : "  no-limit ")) C(M["pods_no_mem_limit"] + 0 > 0 ? "35" : "32", M["pods_no_mem_limit"] + 0)
+  cc = pct(nv(M["cpu_used"]), nv(M["cpu_lim"])); cm = pct(nv(M["mem_used"]), nv(M["mem_lim"]))
+  s = s SG C("90", (NAR ? " cpu " : "  " VB " cpu ")) hcpu(nv(M["cpu_used"])) " " (NAR ? "" : mkbar(cc, 6) " ") (cc < 0 ? C("90", "-") : C(heat(cc), sprintf("%.0f%%", cc))) C("90", " lim")
+  s = s SG C("90", (NAR ? " mem " : "  mem ")) hmem(nv(M["mem_used"])) " " (NAR ? "" : mkbar(cm, 6) " ") (cm < 0 ? C("90", "-") : C(heat(cm), sprintf("%.0f%%", cm))) C("90", " lim")
+  if (M["workloads"] != "" && M["workloads"] != "-") {
+    d = M["workloads_degraded"] + 0
+    s = s SG C("90", (NAR ? " wl " : "  " VB " workloads ")) M["workloads"] (d > 0 || M["workloads_rolling"] + 0 > 0 ? C("90", " (") : "") (d > 0 ? C("1;31", d " degraded") : "") \
+      (d > 0 && M["workloads_rolling"] + 0 > 0 ? C("90", ", ") : "") (M["workloads_rolling"] + 0 > 0 ? C("35", M["workloads_rolling"] " rolling") : "") (d > 0 || M["workloads_rolling"] + 0 > 0 ? C("90", ")") : "") }
+  if (evf != "") { eb = 0; ew = 0
+    while ((getline ln < evf) > 0) { split(ln, a, "\t"); if (a[1] !~ /^[0-9]+$/ || a[1] + 0 < now - 900) continue; if (a[2] == "bad") eb++; else if (a[2] == "warn") ew++ }
+    close(evf)
+    s = s SG C("90", (NAR ? " ev15m " : "  " VB " events 15m ")) C(eb ? "1;31" : "32", "! " eb) " " C(ew ? "35" : "32", "^ " ew) }
+  pack(s, termw, hdrf)
+}
+function note(s) { print C("90", " " s) > hdrf }
+function sect(s, w) { printf "%s %s %s\n", C("1;94", ARW), C("1", s), C("90", rule(HR, w - length(s) - 4)) > bodyf }
+function ipnet(ip,   a, n) {
+  if (ip == "" || ip == "-") return "-"
+  if (index(ip, ":")) { n = split(ip, a, ":"); return a[1] ":" a[2] ":" a[3] ":" a[4] "::/64" }
+  n = split(ip, a, "."); if (n != 4) return "-"
+  return a[1] "." a[2] "." a[3] ".0/24"
+}
+function ipblock(ip,   a, n) {
+  if (ip == "" || ip == "-") return "-"
+  if (index(ip, ":")) return ipnet(ip)
+  n = split(ip, a, "."); if (n != 4) return "-"
+  return a[1] "." a[2] "." a[3] "." (int(a[4] / 64) * 64) "/26"
+}
+function ipkey(ip,   a, n) {
+  if (index(ip, ":")) return ip
+  n = split(ip, a, "."); return sprintf("%03d%03d%03d%03d", a[1], a[2], a[3], a[4])
+}
+# ---- host clock without strftime (mawk / busybox have none): epoch -> civil date
+# in the zone of this host. tzoff (seconds east of UTC) and tzname come from date.
+function tciv(e,   dz, era, doe, yoe, doy, mp) {
+  e = int(e) + tzoff; dz = int(e / 86400); if (dz * 86400 > e) dz--
+  TSEC = e - dz * 86400; dz += 719468
+  era = int(dz / 146097); doe = dz - era * 146097
+  yoe = int((doe - int(doe / 1460) + int(doe / 36524) - int(doe / 146096)) / 365)
+  doy = doe - (365 * yoe + int(yoe / 4) - int(yoe / 100))
+  mp = int((5 * doy + 2) / 153)
+  TDAY = doy - int((153 * mp + 2) / 5) + 1; TMON = (mp < 10) ? mp + 3 : mp - 9
+  TYR = yoe + era * 400; if (TMON <= 2) TYR++
+}
+function thms(e) { if (e + 0 <= 0) return "--:--:--"; tciv(e); return sprintf("%02d:%02d:%02d", int(TSEC / 3600), int(TSEC % 3600 / 60), TSEC % 60) }
+function thm(e)  { if (e + 0 <= 0) return "--:--"; tciv(e); return sprintf("%02d:%02d", int(TSEC / 3600), int(TSEC % 3600 / 60)) }
+function tymd(e) { if (e + 0 <= 0) return "----------"; tciv(e); return sprintf("%04d-%02d-%02d", TYR, TMON, TDAY) }
+function tmd(e)  { tciv(e); return sprintf("%02d-%02d", TMON, TDAY) }
+function tfull(e) { return tymd(e) " " thms(e) " " tzname }
+# time of day, with the date when it is not today (host clock)
+function tday(e)  { return (tymd(e) == tymd(now)) ? thms(e) : tmd(e) " " thms(e) }
+function tzlabel(  a) { a = tzoff < 0 ? -tzoff : tzoff; return tzname " (UTC" (tzoff < 0 ? "-" : "+") sprintf("%02d:%02d", int(a / 3600), int(a % 3600 / 60)) ")" }
+function tdur(s) {
+  s = int(s); if (s < 0) s = 0
+  if (s < 60) return s "s"
+  if (s < 3600) return int(s / 60) "m" ((s % 60) ? sprintf("%02d", s % 60) "s" : "")
+  if (s < 86400) return int(s / 3600) "h" ((s % 3600) ? sprintf("%02d", int(s % 3600 / 60)) "m" : "")
+  return int(s / 86400) "d" sprintf("%02d", int(s % 86400 / 3600)) "h"
+}
+function hrate(v) { if (v < 0) return "-"; if (v >= 1024000000) return sprintf("%.1fG/s", v / 1073741824); if (v >= 1024000) return sprintf("%.1fM/s", v / 1048576); if (v >= 1000) return sprintf("%.1fK/s", v / 1024); return sprintf("%dB/s", v + 0.5) }
+function tval(v, kind) { return (kind == "mem") ? hmem(v) : ((kind == "cpu") ? hcpu(v) : hrate(v)) }
+function tvax(v, kind,   s) { s = tval(v, kind); sub(/\/s$/, "", s); return s }
+
+# ---- time series: TC_T[1..n] epoch, TC_V[1..n] value (-1 = none) ----------------
+# tsload(file, col, from): rows of a TSV whose first field is an epoch, from >= from
+function tsload(f, col, from,   ln, a, n) {
+  n = 0; if (f == "") return 0
+  while ((getline ln < f) > 0) {
+    split(ln, a, "\t"); if (a[1] !~ /^[0-9]+$/ || a[1] + 0 < from) continue
+    n++; TC_T[n] = a[1] + 0; TC_V[n] = (a[col] ~ /^[0-9.]+$/) ? a[col] + 0 : -1
+  }
+  close(f); return n
+}
+# the newest value is the live one: append it at "now" so the chart ends at the clock
+function tsnow(n, v) { if (v + 0 < 0 || v == "" || v == "-") return n; if (n > 0 && TC_T[n] >= now - 1) { TC_V[n] = v + 0; return n } n++; TC_T[n] = now; TC_V[n] = v + 0; return n }
+# events of the session (bad / warn) for the marker row and the event list
+function evload(f, from,   ln, a) {
+  EVN = 0; if (f == "") return 0
+  while ((getline ln < f) > 0) {
+    split(ln, a, "\t"); if (a[1] !~ /^[0-9]+$/ || a[1] + 0 < from) continue
+    EVN++; EVT[EVN] = a[1] + 0; EVS[EVN] = a[2]; EVK[EVN] = a[3]; EVO[EVN] = a[4]; EVM[EVN] = a[5]
+  }
+  close(f); return EVN
+}
+function tcharsinit() {
+  if (TCI) return; TCI = 1
+  if (bar == "ascii") { TC_HALF = "."; TC_BL = "+"; TC_TK = "+"; TC_YT = "+"; TC_LIM = "="; TC_REQ = "-"; TC_FULL = "#"; TC_GRID = ":" }
+  else { TC_HALF = "\342\226\204"; TC_BL = "\342\224\224"; TC_TK = "\342\224\264"; TC_YT = "\342\224\244"; TC_LIM = DHR; TC_REQ = HR; TC_FULL = FILL; TC_GRID = "\302\267" }
+}
+function tput_(s, p, lab) { return substr(s, 1, p - 1) lab substr(s, p + length(lab)) }
+# tchart(slot, title, n, t0, t1, w, h, req, lim, kind, ucol): a bar-per-column time
+# chart, x = host clock t0..t1, written to TL[slot, 1..TLN[slot]] - every line is
+# exactly w columns wide so two charts can sit side by side.
+#   bars: coloured by % of lim (green < 50, blue < 75, magenta < 90, red >= 90) or ucol
+#   lines: lim "=" (double line, red) and req "-" (magenta) when inside the scale
+#   marker row: ! critical event, ^ warning (session events in the window)
+function tchart(slot, title, n, t0, t1, w, h, req, lim, kind, ucol,
+                YL, PW, c, i, r, top, vmin, vmax, vsum, vn, vlast, tpk, span, bw, B, cur, curt, avgdt, gap,
+                lr, rr, hh, ch, cc, rc, rt, s, lab, p2, l1, l2, l3, M_, MC, sp, cp, k, base, nf, lo, pad, zoom, rg) {
+  tcharsinit(); TLN[slot] = 0; TLW[slot] = w
+  YL = 7; PW = w - YL; if (PW < 10) PW = 10
+  span = t1 - t0; if (span < 1) span = 1; bw = span / PW
+  vmin = -1; vmax = -1; vsum = 0; vn = 0; vlast = -1; tpk = 0; nf = 0
+  for (i = 1; i <= n; i++) { if (TC_T[i] < t0 || TC_T[i] > t1 || TC_V[i] < 0) continue
+    if (!nf) nf = TC_T[i]
+    if (vmin < 0 || TC_V[i] < vmin) vmin = TC_V[i]; if (TC_V[i] >= vmax) { vmax = TC_V[i]; tpk = TC_T[i] }
+    vsum += TC_V[i]; vn++; vlast = TC_V[i] }
+  if (vn < 2) {
+    TL[slot, ++TLN[slot]] = C("1", padr(title, w))
+    TL[slot, ++TLN[slot]] = C("90", padr(sprintf("%" YL "s%s", "", (vn == 0 ? "no data in this time window" : "one sample so far - the chart starts with the 2nd (run kdash live)")), w))
+    TLW[slot] = w; return
+  }
+  # scale: from 0 with the request / limit lines in view, or zoomed in on a flat
+  # series (0.5% to 30% variation, not near its limit) so its movement shows
+  lo = 0; zoom = 0
+  if (vmax > 0 && vmax - vmin < 0.3 * vmax && vmax - vmin >= 0.005 * vmax && !(lim > 0 && vmax >= 0.75 * lim)) {
+    pad = (vmax - vmin) * 0.3; if (pad < vmax * 0.02) pad = vmax * 0.02
+    lo = vmin - pad; if (lo < 0) lo = 0; top = vmax + pad; zoom = 1
+  } else {
+    base = (vmax > 0) ? vmax : 1; top = base * 1.15
+    if (req > 0 && req <= base * 2.5 && req * 1.05 > top) top = req * 1.05
+    if (lim > 0 && lim <= base * 2.5 && lim * 1.05 > top) top = lim * 1.05
+  }
+  rg = top - lo; if (rg <= 0) rg = 1
+  q1_ = int(PW / 4); q2_ = int((PW + 1) / 2); q3_ = int(PW * 3 / 4)       # faint time guides
+  TL[slot, ++TLN[slot]] = C("1", padr(title, w - 24)) C("90", sprintf("%24s", zoom ? "zoomed: from " tvax(lo, kind) : ""))
+  lr = (lim > 0 && lim <= top && lim >= lo) ? int((lim - lo) / rg * h) + 1 : 0; if (lr > h) lr = h
+  rr = (req > 0 && req <= top && req >= lo) ? int((req - lo) / rg * h) + 1 : 0; if (rr > h) rr = h
+  for (c = 1; c <= PW; c++) B[c] = -1
+  for (i = 1; i <= n; i++) { if (TC_T[i] < t0 || TC_T[i] > t1 || TC_V[i] < 0) continue
+    c = int((TC_T[i] - t0) / bw) + 1; if (c > PW) c = PW; if (c < 1) c = 1
+    if (TC_V[i] > B[c]) B[c] = TC_V[i] }
+  # hold a value until the next sample, but leave real gaps (kdash not running) empty
+  avgdt = (vn > 1) ? (TC_T[n] - nf) / (vn - 1) : bw; gap = 3 * avgdt + bw
+  cur = -1; curt = 0
+  for (c = 1; c <= PW; c++) {
+    if (B[c] >= 0) { cur = B[c]; curt = t0 + c * bw }
+    else if (cur >= 0 && t0 + (c - 1) * bw - curt <= gap && t0 + (c - 1) * bw <= TC_T[n]) B[c] = cur
+  }
+  for (r = h; r >= 1; r--) {
+    lab = (r == h) ? tvax(top, kind) : ((r == int((h + 1) / 2)) ? tvax(lo + rg * r / h, kind) : "")
+    s = C("90", sprintf("%6s", lab) (lab != "" ? TC_YT : VB)); rc = ""; rt = ""
+    for (c = 1; c <= PW; c++) {
+      ch = " "; cc = ""
+      if (B[c] >= 0) { hh = int((B[c] - lo) / rg * h * 2 + 0.5); if (B[c] > 0 && hh == 0 && r == 1) hh = 1
+        if (hh >= 2 * r) ch = TC_FULL; else if (hh == 2 * r - 1) ch = TC_HALF
+        if (ch != " ") cc = (lim > 0) ? heat(B[c] * 100 / lim) : ucol }
+      if (ch == " ") { if (r == lr) { ch = TC_LIM; cc = "1;31" } else if (r == rr) { ch = TC_REQ; cc = "35" }
+        else if (c == q1_ || c == q2_ || c == q3_) { ch = TC_GRID; cc = "90" } }
+      if (cc != rc) { if (rt != "") s = s ((rc == "") ? rt : C(rc, rt)); rt = ""; rc = cc }
+      rt = rt ch
+    }
+    if (rt != "") s = s ((rc == "") ? rt : C(rc, rt))
+    TL[slot, ++TLN[slot]] = s
+  }
+  # time axis: ticks and labels at start, middle and end (host clock)
+  p2 = int((PW + 1) / 2)
+  s = ""; for (c = 1; c <= PW; c++) s = s ((c == 1 || c == p2 || c == PW || c == q1_ || c == q3_) ? TC_TK : HR)
+  TL[slot, ++TLN[slot]] = C("90", sprintf("%6s", clip(tvax(lo, kind), 6)) TC_BL s)
+  l1 = (span > 21600 || tymd(t0) != tymd(t1)) ? tmd(t0) " " thm(t0) : thms(t0)
+  l3 = (span > 21600 || tymd(t0) != tymd(t1)) ? tmd(t1) " " thm(t1) : thms(t1)
+  l2 = (span > 21600 || tymd(t0) != tymd(t1)) ? thm(t0 + span / 2) : thms(t0 + span / 2)
+  s = sprintf("%" PW "s", ""); s = tput_(s, 1, l1)
+  if (PW - length(l3) + 1 > length(l1) + 1) s = tput_(s, PW - length(l3) + 1, l3)
+  k = p2 - int(length(l2) / 2); if (k > length(l1) + 2 && k + length(l2) < PW - length(l3)) s = tput_(s, k, l2)
+  TL[slot, ++TLN[slot]] = C("90", sprintf("%" YL "s", "") s)
+  # event markers
+  split("", M_); for (i = 1; i <= EVN; i++) { if (EVT[i] < t0 || EVT[i] > t1) continue
+    if (EVS[i] != "bad" && EVS[i] != "warn") continue
+    c = int((EVT[i] - t0) / bw) + 1; if (c > PW) c = PW; if (c < 1) c = 1
+    if (EVS[i] == "bad") M_[c] = "!"; else if (M_[c] != "!") M_[c] = "^" }
+  s = C("90", sprintf("%6s ", "events")); rc = ""; rt = ""
+  for (c = 1; c <= PW; c++) { ch = (c in M_) ? M_[c] : " "; cc = (ch == "!") ? "1;31" : ((ch == "^") ? "35" : "")
+    if (cc != rc) { if (rt != "") s = s ((rc == "") ? rt : C(rc, rt)); rt = ""; rc = cc }
+    rt = rt ch }
+  if (rt != "") s = s ((rc == "") ? rt : C(rc, rt))
+  TL[slot, ++TLN[slot]] = s
+  # stats: now / min / avg / max (with the time of the peak) and the reference lines
+  sp = sprintf("now %s  min %s  avg %s  max %s @ %s", tval(vlast, kind), tval(vmin, kind), tval(vsum / vn, kind), tval(vmax, kind), tday(tpk))
+  cp = C("90", "now ") C("1;94", tval(vlast, kind)) C("90", "  min ") tval(vmin, kind) C("90", "  avg ") tval(vsum / vn, kind) C("90", "  max ") C("1", tval(vmax, kind)) C("90", " @ " tday(tpk))
+  if (length(sp) > w) { sp = sprintf("now %s  max %s @ %s", tval(vlast, kind), tval(vmax, kind), thms(tpk)); cp = C("90", "now ") C("1;94", tval(vlast, kind)) C("90", "  max ") C("1", tval(vmax, kind)) C("90", " @ " thms(tpk)) }
+  TL[slot, ++TLN[slot]] = cp sprintf("%" (w - length(sp) > 0 ? w - length(sp) : 0) "s", "")
+  sp = ""; cp = ""
+  if (req > 0) { sp = sp "request " tval(req, kind) (rr ? " -" : (req > top ? " (above)" : " (below)")) "  "; cp = cp C("90", "request ") tval(req, kind) (rr ? " " C("35", TC_REQ) : C("90", req > top ? " (above)" : " (below)")) "  " }
+  if (lim > 0) { sp = sp "limit " tval(lim, kind) (lr ? " =" : (lim > top ? " (above)" : " (below)")) "  "; cp = cp C("90", "limit ") tval(lim, kind) (lr ? " " C("1;31", TC_LIM) : C("90", lim > top ? " (above)" : " (below)")) "  " }
+  if (lim > 0 && vlast >= 0) { sp = sp sprintf("%.0f", vlast * 100 / lim) "% of limit"; cp = cp C(heat(vlast * 100 / lim), sprintf("%.0f", vlast * 100 / lim) "%") C("90", " of limit") }
+  if (sp == "") { sp = vn " samples in the window, per second rates"; cp = C("90", sp) }
+  if (length(sp) > w) { sp = substr(sp, 1, w); cp = C("90", sp) }
+  TL[slot, ++TLN[slot]] = cp sprintf("%" (w - length(sp) > 0 ? w - length(sp) : 0) "s", "")
+}
+# print one chart, or two side by side
+function tshow(a, b,   i, m) {
+  m = TLN[a]; if (b != "" && TLN[b] > m) m = TLN[b]
+  for (i = 1; i <= m; i++) printf "  %s%s\n", (i <= TLN[a] ? TL[a, i] : sprintf("%" TLW[a] "s", "")), (b != "" && i <= TLN[b] ? "    " TL[b, i] : "") > bodyf
+}
+# the window of the time charts: t0..now, clamped to the first sample
+function twindow(first) { TW0 = (win > 0) ? now - win : ((sstart > 0) ? sstart : first); if (first > TW0) TW0 = first; if (TW0 >= now) TW0 = now - 1; return TW0 }
+function twinlabel() { return (win > 0) ? "last " tdur(win) ((now - TW0 < win - 5) ? " (have " tdur(now - TW0) ")" : "") : "all since kdash started" }
+'
+
+#-- model: join pods, containers, usage, nodes and services into TSV tables -----
+# Every view and every export reads these files; nothing below calls the API.
+#   pods.tsv  containers.tsv  nodes.tsv  pools.tsv  wl_node.tsv  workloads.tsv
+#   ip.tsv  subnets.tsv  ipblocks.tsv  services.tsv  cluster_ns.tsv  meta.tsv
+# nodes.tsv lists every readable node (NS_PODS 0 = node hosts nothing of this
+# namespace). CL_* columns are the whole cluster (every namespace), read with
+# "get pods --all-namespaces" when RBAC allows it; otherwise "-".
+# Unknown or not-permitted values are written as "-".
+MODEL_AWK='
+function D(v)  { return (v < 0) ? "-" : sprintf("%d", v + 0.5) }
+function S(s)  { return (s == "") ? "-" : s }
+function addv(arr, k, v) { if (v >= 0) { arr[k] += v; arr[k "#"]++ } }
+function getv(arr, k)    { return ((k "#") in arr) ? arr[k] : -1 }
+function workload(kind, name, pod,   r, suf) {
+  if (kind == "") { WK = "Pod"; return pod }
+  if (kind == "ReplicaSet") {
+    WK = "Deployment"
+    if (match(name, /-[a-z0-9]+$/)) { suf = substr(name, RSTART + 1); if (length(suf) >= 5 && length(suf) <= 10) return substr(name, 1, RSTART - 1) }
+    WK = "ReplicaSet"; return name
+  }
+  if (kind == "Job") {
+    if (match(name, /-[0-9]+$/) && RLENGTH >= 9) { WK = "CronJob"; return substr(name, 1, RSTART - 1) }
+    WK = "Job"; return name
+  }
+  WK = kind; return name
+}
+function labels(s, nd,   kv, k, v, p, n, i, a) {
+  if (s ~ /^map\[/) {                        # kubectl < 1.19 prints Go maps
+    s = substr(s, 5, length(s) - 5); n = split(s, a, " ")
+    for (i = 1; i <= n; i++) { p = index(a[i], ":"); if (p) LBL[nd, substr(a[i], 1, p - 1)] = substr(a[i], p + 1); LK[nd] = LK[nd] " " substr(a[i], 1, p - 1) }
+    return
+  }
+  while (match(s, /"[^"]*":"[^"]*"/)) {
+    kv = substr(s, RSTART + 1, RLENGTH - 2); s = substr(s, RSTART + RLENGTH)
+    p = index(kv, "\":\""); k = substr(kv, 1, p - 1); v = substr(kv, p + 3)
+    LBL[nd, k] = v; LK[nd] = LK[nd] " " k
+  }
+}
+function poolof(nd,   n, a, i, k, pref, roles) {
+  POOLKEY = ""
+  if (poollabel != "") { POOLKEY = poollabel; return ((nd, poollabel) in LBL) ? LBL[nd, poollabel] : "-" }
+  n = split("agentpool kubernetes.azure.com/agentpool cloud.google.com/gke-nodepool eks.amazonaws.com/nodegroup karpenter.sh/nodepool node.kubernetes.io/pool nodepool node-pool pool", pref, " ")
+  for (i = 1; i <= n; i++) if ((nd, pref[i]) in LBL && LBL[nd, pref[i]] != "") { POOLKEY = pref[i]; return LBL[nd, pref[i]] }
+  n = split(LK[nd], a, " ")
+  for (i = 1; i <= n; i++) if (tolower(a[i]) ~ /pool/ && LBL[nd, a[i]] != "") { POOLKEY = a[i]; return LBL[nd, a[i]] }
+  roles = ""
+  for (i = 1; i <= n; i++) if (a[i] ~ /^node-role\.kubernetes\.io\//) roles = roles (roles == "" ? "" : ",") substr(a[i], 25)
+  if (roles != "") { POOLKEY = "node-role"; return "role:" roles }
+  return "default"
+}
+function pkbest(   k, b, bn) { b = "-"; bn = 0; for (k in PKC) if (PKC[k] > bn) { bn = PKC[k]; b = k }; return b }
+function rolesof(nd,   n, a, i, r) {
+  n = split(LK[nd], a, " "); r = ""
+  for (i = 1; i <= n; i++) if (a[i] ~ /^node-role\.kubernetes\.io\//) r = r (r == "" ? "" : ",") substr(a[i], 25)
+  return r == "" ? "worker" : r
+}
+function isort(arr, n,   i, j, v) {             # insertion sort of strings
+  for (i = 2; i <= n; i++) { v = arr[i]; j = i - 1; while (j > 0 && arr[j] > v) { arr[j + 1] = arr[j]; j-- } arr[j + 1] = v }
+}
+
+function SN_nd_own(nd,   v) { v = getv(A_um, nd); return (v > 0) ? v : 0 }
+BEGIN { FS = "|"; sec = ""; clok = (clstate == "ok" || clstate == "partial"); allfilt = (filt == "" || filt == ".*")
+  # type node arrays up front: with nodes unreadable they are never assigned, and
+  # gawk 5.2 can return a wrong value for an element of a never-typed array
+  split("", nac); split("", nam); split("", ncc); split("", ncm); split("", ncidr); split("", nip)
+  split("", nrdy); split("", nunsch); split("", ntaint); split("", npods); split("", npool); split("", npk)
+  split("", nroles); split("", nuc); split("", num); split("", nseen) }
+/^@@/ { sec = substr($0, 3); FS = (sec ~ /^TOP/) ? " " : "|"; next }
+
+sec == "SPEC" && $1 == "P" {
+  if ($2 !~ filt) { cur = ""; next }
+  p = allns ? ($6 "/" $2) : $2; cur = p
+  if (!(p in seen)) { seen[p] = 1; ord[++np] = p }
+  pname[p] = $2; phase[p] = $3; node[p] = $4; qos[p] = $5; pns[p] = $6
+  pip[p] = $7; hip[p] = $8; split($9, ow, " "); okind[p] = ow[1]; split($10, ow, " "); oname[p] = ow[1]
+  hnet[p] = ($11 == "true"); pdel[p] = ($12 != ""); prsn[p] = $13; next
+}
+sec == "SPEC" && $1 == "C" && cur != "" {
+  k = cur "/" $2; clist[cur] = clist[cur] (clist[cur] == "" ? "" : "\036") $2
+  rq[k] = cpu2m($3); lc[k] = cpu2m($4); rmm[k] = mem2mi($5); lm[k] = mem2mi($6); next
+}
+sec == "SPEC" && $1 == "S" && cur != "" {
+  k = cur "/" $2; rdy[k] = ($3 == "true" ? "Y" : "N"); rst[k] = $4 + 0; ltr[k] = $5; wtr[k] = $6; next
+}
+sec == "TOP" {
+  if (allns) { if (NF >= 5) { k = $1 "/" $2 "/" $3; uc[k] = cpu2m($4); um[k] = mem2mi($5); ntop++ } }
+  else if (NF >= 4) { k = $1 "/" $2; uc[k] = cpu2m($3); um[k] = mem2mi($4); ntop++ }
+  next
+}
+sec == "TOPPREV" {
+  if (allns) { if (NF >= 5) { k = $1 "/" $2 "/" $3; pc[k] = cpu2m($4); pm[k] = mem2mi($5) } }
+  else if (NF >= 4) { k = $1 "/" $2; pc[k] = cpu2m($3); pm[k] = mem2mi($4) }
+  next
+}
+sec == "NODES" && $1 == "N" {
+  nd = $2; if (!(nd in nseen)) { nseen[nd] = 1; nall[++nn] = nd }
+  nac[nd] = cpu2m($3); nam[nd] = mem2mi($4); ncc[nd] = cpu2m($5); ncm[nd] = mem2mi($6)
+  ncidr[nd] = $7; nip[nd] = $8; nrdy[nd] = $9; nunsch[nd] = ($10 == "true"); ntaint[nd] = $11; npods[nd] = $12
+  lab = $13; for (i = 14; i <= NF; i++) lab = lab "|" $i
+  labels(lab, nd); npool[nd] = poolof(nd); npk[nd] = POOLKEY; nroles[nd] = rolesof(nd); next
+}
+sec == "TOPN" && NF >= 5 { nuc[$1] = cpu2m($2); num[$1] = mem2mi($4); ntopn++; next }
+sec == "CLUSTER" && $1 == "Q" {           # Q|namespace|node|phase|cpuReq,memReq,cpuLim,memLim;...
+  if ($4 == "Succeeded" || $4 == "Failed") next
+  cnd = ($3 == "") ? "(unscheduled)" : $3; cns = $2; ncl++
+  n_ = split($5, cc, ";"); qrc = 0; qrm = 0; qlm = 0
+  for (j = 1; j <= n_; j++) { if (cc[j] == "") continue; split(cc[j], cv, ",")
+    v = cpu2m(cv[1]); if (v > 0) qrc += v; v = mem2mi(cv[2]); if (v > 0) qrm += v; v = mem2mi(cv[4]); if (v > 0) qlm += v }
+  CL_n[cnd]++; CL_rc[cnd] += qrc; CL_rm[cnd] += qrm; CL_lm[cnd] += qlm
+  if (!((cnd, cns) in CLnn)) { CLnn[cnd, cns] = 1; CL_nsc[cnd]++ }
+  if (!(cns in CNS)) { CNS[cns] = 1; cnsord[++ncns] = cns }
+  CN_n[cns]++; CN_rc[cns] += qrc; CN_rm[cns] += qrm; CN_lm[cns] += qlm
+  split($6, ow, " "); split($7, on, " "); qw = workload(ow[1], on[1], $9); qk = cns "\034" WK "\034" qw
+  if (!(qk in CNW)) { CNW[qk] = 1; CN_w[cns]++ }
+  qr = ($8 != "" && $8 !~ /false/) ? 1 : 0; if ($4 == "Running" && qr) CN_ok[cns]++
+  if (cnd != "(unscheduled)" && !((cns, cnd) in CNnd)) { CNnd[cns, cnd] = 1; CN_nodes[cns]++ }
+  TC_n++; TC_rc += qrc; TC_rm += qrm; TC_lm += qlm
+  if ($9 != "") QP[cns, $9] = cnd
+  next
+}
+sec == "CLUSTER" && $1 == "U" {           # U|namespace|pod|cpu|memory   (kubectl top pod, every namespace in scope)
+  if (!(($2, $3) in QP)) next
+  qn = QP[$2, $3]; uc_ = cpu2m($4); um_ = mem2mi($5); if (uc_ < 0) uc_ = 0; if (um_ < 0) um_ = 0
+  SU_c[qn] += uc_; SU_m[qn] += um_; SN_c[$2] += uc_; SN_m[$2] += um_; SN_h[$2] = 1; ST_c += uc_; ST_m += um_; SUany = 1
+  next
+}
+sec == "WL" && $1 == "W" {                # workload objects from the API
+  wn = $4; if (wn !~ filt && !allfilt) next
+  if (allns) wn = $3 "/" wn
+  wkey = $2 "\034" wn; WS[wkey] = 1
+  if ($2 == "DaemonSet") { WS_des[wkey] = $9; WS_rdy[wkey] = $10; WS_upd[wkey] = $11; WS_av[wkey] = $10 }
+  else { WS_des[wkey] = ($5 == "" && $2 != "CronJob") ? 1 : $5; WS_rdy[wkey] = $6 + 0; WS_upd[wkey] = $7 + 0; WS_av[wkey] = $8 + 0 }
+  WS_gen[wkey] = $12; WS_ogen[wkey] = $13; WS_sch[wkey] = $14; WS_sus[wkey] = $15; WS_last[wkey] = $16
+  im = $17; gsub(/ +/, " ", im); WS_img[wkey] = im
+  if (!(wkey in wseen)) { wseen[wkey] = 1; word[++nw] = wkey }
+  next
+}
+sec == "SVC" && $1 == "V" { ns_ = $2; sv = ++nsv; s_ns[sv] = $2; s_nm[sv] = $3; s_ty[sv] = $4; s_ip[sv] = $5; s_ex[sv] = $6; s_lb[sv] = $7; s_po[sv] = $8; next }
+
+END {
+  # ---------------------------------------------------------------- pods
+  print "KEY\tNAMESPACE\tPOD\tSTATUS\tREADY\tRESTARTS\tNODE\tPOOL\tPOD_IP\tHOST_IP\tQOS\tKIND\tWORKLOAD\tCPU_USED_m\tCPU_REQ_m\tCPU_LIM_m\tMEM_USED_Mi\tMEM_REQ_Mi\tMEM_LIM_Mi\tCPU_PREV_m\tMEM_PREV_Mi\tLAST_TERMINATION\tCONTAINERS\tHOST_NETWORK" > (md "/pods.tsv")
+  print "KEY\tPOD\tCONTAINER\tREADY\tRESTARTS\tCPU_USED_m\tCPU_REQ_m\tCPU_LIM_m\tMEM_USED_Mi\tMEM_REQ_Mi\tMEM_LIM_Mi\tCPU_PREV_m\tMEM_PREV_Mi\tLAST_TERMINATION\tWAITING" > (md "/containers.tsv")
+  for (i = 1; i <= np; i++) {
+    p = ord[i]; n = split(clist[p], cs, "\036")
+    puc = 0; prc = 0; plc = 0; pum = 0; prm = 0; plm = 0; ppc = 0; ppm = 0; prst = 0; nr = 0
+    huc = 0; hum = 0; hrc = 0; hlc = 0; hrm = 0; hlm = 0; hpc = 0; hpm = 0; lt = ""; wt = ""
+    for (j = 1; j <= n; j++) {
+      k = p "/" cs[j]
+      cu = (k in uc) ? uc[k] : -1; cm = (k in um) ? um[k] : -1
+      cpc = (k in pc) ? pc[k] : -1; cpm = (k in pm) ? pm[k] : -1
+      if (cu >= 0) { puc += cu; huc++ }   if (cm >= 0) { pum += cm; hum++ }
+      if (cpc >= 0) { ppc += cpc; hpc++ } if (cpm >= 0) { ppm += cpm; hpm++ }
+      if (rq[k] >= 0) { prc += rq[k]; hrc++ } if (lc[k] >= 0) { plc += lc[k]; hlc++ }
+      if (rmm[k] >= 0) { prm += rmm[k]; hrm++ } if (lm[k] >= 0) { plm += lm[k]; hlm++ }
+      prst += rst[k]; if (rdy[k] == "Y") nr++
+      if (ltr[k] != "" && (lt == "" || ltr[k] == "OOMKilled")) lt = ltr[k]
+      if (wtr[k] != "" && wt == "") wt = wtr[k]
+      printf "%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", p, pname[p], cs[j], S(rdy[k]), rst[k],
+        D(cu), D(rq[k]), D(lc[k]), D(cm), D(rmm[k]), D(lm[k]), D(cpc), D(cpm), S(ltr[k]), S(wtr[k]) > (md "/containers.tsv")
+    }
+    if (!huc) puc = -1; if (!hum) pum = -1; if (!hpc) ppc = -1; if (!hpm) ppm = -1
+    if (!hrc) prc = -1; if (hlc < n || n == 0) plc = -1
+    if (!hrm) prm = -1; if (hlm < n || n == 0) plm = -1
+    st = phase[p]
+    if (pdel[p]) st = "Terminating"; else if (prsn[p] != "") st = prsn[p]; else if (wt != "") st = wt
+    else if (st == "Running" && nr < n) st = "NotReady"
+    wn = workload(okind[p], oname[p], pname[p]); wk = WK; if (allns) wn = pns[p] "/" wn
+    nd = (node[p] == "") ? "(unscheduled)" : node[p]
+    if (!(nd in nseen)) { nseen[nd] = 1; nall[++nn] = nd; npool[nd] = (nd == "(unscheduled)") ? "(none)" : "(unknown)"; nroles[nd] = "-"; nac[nd] = -1; nam[nd] = -1; nophost[nd] = 1 }
+    P_uc[p] = puc; P_um[p] = pum; P_rc[p] = prc; P_rm[p] = prm; P_lc[p] = plc; P_lm[p] = plm
+    P_st[p] = st; P_nd[p] = nd; P_wl[p] = wk "/" wn; P_n[p] = n; P_rdy[p] = nr; P_rst[p] = prst; P_lt[p] = lt
+    printf "%s\t%s\t%s\t%s\t%d/%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\n",
+      p, S(pns[p]), pname[p], S(st), nr, n, prst, nd, S(npool[nd]), S(pip[p]), S(hip[p]), S(qos[p]), wk, wn,
+      D(puc), D(prc), D(plc), D(pum), D(prm), D(plm), D(ppc), D(ppm), S(lt), n, (hnet[p] ? "true" : "false") > (md "/pods.tsv")
+    # namespace totals
+    if (puc >= 0) T_uc += puc; if (pum >= 0) T_um += pum; if (prc >= 0) T_rc += prc; if (prm >= 0) T_rm += prm
+    if (plc >= 0) T_lc += plc; if (plm >= 0) T_lm += plm; T_rst += prst; T_ctr += n
+    pok = ((st == "Running" && nr == n) || st == "Succeeded" || st == "Completed")
+    if (pok) T_ok++
+    if (plm < 0 && phase[p] !~ /^(Succeeded|Failed)$/) T_nolim++
+    if (pum >= 0 && plm > 0 && pum * 100 / plm >= 90) T_oom++
+    if (lt == "OOMKilled") T_oomk++
+    # node aggregates
+    nc[nd]++; if (pok) nok[nd]++; if (npk[nd] != "") PKC[npk[nd]]++; nrs[nd] += prst
+    addv(A_uc, nd, puc); addv(A_rc, nd, prc); addv(A_lc, nd, plc); addv(A_um, nd, pum); addv(A_rm, nd, prm); addv(A_lm, nd, plm)
+    if (pip[p] != "") { nipc[nd]++; if (hnet[p]) nhn[nd]++; else { b = ipblock(pip[p]); if (!((nd, b) in nblk)) { nblk[nd, b] = 1; nblks[nd] = nblks[nd] (nblks[nd] == "" ? "" : " ") b } } }
+    # workload x node
+    wkey = wk "\034" wn
+    if (!(wkey in wseen)) { wseen[wkey] = 1; word[++nw] = wkey }
+    W_n[wkey]++; if (pok) W_ok[wkey]++; if (nd == "(unscheduled)") W_un[wkey]++
+    addv(W_uc, wkey, puc); addv(W_um, wkey, pum); addv(W_rm, wkey, prm); addv(W_lm, wkey, plm); addv(W_rc, wkey, prc); W_rs[wkey] += prst
+    wnk = nd "\034" wkey
+    if (!(wnk in wnseen)) { wnseen[wnk] = 1; wnord[++nwn] = wnk; if (nd != "(unscheduled)") { W_nodes[wkey]++; W_dist[wkey] = W_dist[wkey] } }
+    WN_n[wnk]++; if (pok) WN_ok[wnk]++; WN_rs[wnk] += prst
+    addv(WN_uc, wnk, puc); addv(WN_um, wnk, pum); addv(WN_rm, wnk, prm)
+    WN_pods[wnk] = WN_pods[wnk] (WN_pods[wnk] == "" ? "" : ",") pname[p]
+    # ip
+    if (pip[p] != "") { IPc[pip[p]]++; if (!hnet[p]) { nt = ipnet(pip[p]); if (!(nt in SNs)) { SNs[nt] = 1; sord[++nsn] = nt }; SN_n[nt]++; if (!((nt, nd) in SNnd)) { SNnd[nt, nd] = 1; SN_nodes[nt] = SN_nodes[nt] (SN_nodes[nt] == "" ? "" : " ") nd } } }
+  }
+  close(md "/pods.tsv"); close(md "/containers.tsv")
+
+  # ---------------------------------------------------------------- nodes / pools
+  print "POOL\tNODE\tSTATUS\tROLES\tNS_PODS\tNS_PODS_READY\tNS_RESTARTS\tNS_CPU_USED_m\tNS_CPU_REQ_m\tNS_CPU_LIM_m\tNODE_CPU_ALLOC_m\tNODE_CPU_USED_m\tNS_MEM_USED_Mi\tNS_MEM_REQ_Mi\tNS_MEM_LIM_Mi\tNODE_MEM_ALLOC_Mi\tNODE_MEM_USED_Mi\tNS_MEM_PCT_ALLOC\tNODE_MEM_PCT\tINTERNAL_IP\tPOD_CIDR\tNS_POD_IPS\tIP_BLOCKS\tTAINTS\tCL_PODS\tCL_CPU_REQ_m\tCL_MEM_REQ_Mi\tCL_MEM_LIM_Mi\tOTHER_NS_MEM_REQ_Mi\tOTHER_NS_MEM_USED_Mi\tCL_MEM_REQ_PCT\tCL_CPU_REQ_PCT\tCL_NAMESPACES" > (md "/nodes.tsv")
+  m = 0
+  for (i = 1; i <= nn; i++) { nd = nall[i]
+    if (npool[nd] == "") npool[nd] = "-"; PT_all[npool[nd]]++; srt[++m] = (nd == "(unscheduled)" ? "~~" : "") npool[nd] "\001" nd }
+  isort(srt, m)
+  for (i = 1; i <= m; i++) {
+    split(srt[i], a, "\001"); pl = a[1]; sub(/^~~/, "", pl); nd = a[2]
+    if (nd in nophost) status = "-"
+    else { status = (nrdy[nd] == "True") ? "Ready" : "NotReady"; if (nunsch[nd]) status = status ",SchedulingDisabled" }
+    nu = (nd in num) ? num[nd] : -1; ncu = (nd in nuc) ? nuc[nd] : -1
+    nmu = getv(A_um, nd); nmr = getv(A_rm, nd)
+    if (clok) { clp = CL_n[nd] + 0; clrc = CL_rc[nd] + 0; clrm = CL_rm[nd] + 0; cllm = CL_lm[nd] + 0; oreq = clrm - (nmr > 0 ? nmr : 0); if (oreq < 0) oreq = 0 }
+    else { clp = -1; clrc = -1; clrm = -1; cllm = -1; oreq = -1 }
+    ouse = (nu >= 0) ? nu - (nmu > 0 ? nmu : 0) : -1; if (nu >= 0 && ouse < 0) ouse = 0
+    # no node metrics: other namespaces = their pod usage (namespaces you can read / all)
+    if (nu < 0 && SUany && nd in SU_m) { ouse = SU_m[nd] - SN_nd_own(nd); if (ouse < 0) ouse = 0 }
+    CLX = sprintf("\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", (clok ? clp : "-"), D(clrc), D(clrm), D(cllm), D(oreq), D(ouse),
+      ((clok && nam[nd] > 0) ? sprintf("%.1f", clrm * 100 / nam[nd]) : "-"), ((clok && nac[nd] > 0) ? sprintf("%.1f", clrc * 100 / nac[nd]) : "-"), (clok ? CL_nsc[nd] + 0 : "-"))
+    printf "%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s%s\n",
+      pl, nd, status, S(nroles[nd]), nc[nd], nok[nd], nrs[nd], D(getv(A_uc, nd)), D(getv(A_rc, nd)), D(getv(A_lc, nd)),
+      D(nac[nd]), D(ncu), D(getv(A_um, nd)), D(getv(A_rm, nd)), D(getv(A_lm, nd)), D(nam[nd]), D(nu),
+      ((getv(A_um, nd) >= 0 && nam[nd] > 0) ? sprintf("%.1f", getv(A_um, nd) * 100 / nam[nd]) : "-"),
+      ((nu >= 0 && nam[nd] > 0) ? sprintf("%.1f", nu * 100 / nam[nd]) : "-"),
+      S(nip[nd]), S(ncidr[nd]), nipc[nd], S(nblks[nd]), S(ntaint[nd]), CLX > (md "/nodes.tsv")
+    if (!(pl in PT_seen)) { PT_seen[pl] = 1; pord[++npl] = pl }
+    if (nd != "(unscheduled)" && nc[nd] > 0) PT_nodes[pl]++; if (nd != "(unscheduled)") PT_cnt[pl]++; PT_pods[pl] += nc[nd]; PT_ok[pl] += nok[nd]
+    if (clok) { PT_cp[pl] += clp; PT_crc[pl] += clrc; PT_crm[pl] += clrm; PT_clm[pl] += cllm }
+    if (ncu >= 0) { PT_ncu[pl] += ncu; PT_ncuh[pl]++ }
+    if (nd != "(unscheduled)" && !(nd in nophost)) { C_nodes++; if (nac[nd] > 0) C_ac += nac[nd]; if (nam[nd] > 0) C_am += nam[nd]
+      if (nu >= 0) { C_nu += nu; C_nuh++ } if (ncu >= 0) { C_ncu += ncu; C_ncuh++ } }
+    if (getv(A_uc, nd) >= 0) { PT_uc[pl] += getv(A_uc, nd); PT_uch[pl]++ } if (getv(A_rc, nd) >= 0) { PT_rc[pl] += getv(A_rc, nd); PT_rch[pl]++ }
+    if (getv(A_um, nd) >= 0) { PT_um[pl] += getv(A_um, nd); PT_umh[pl]++ } if (getv(A_rm, nd) >= 0) { PT_rm[pl] += getv(A_rm, nd); PT_rmh[pl]++ }
+    if (getv(A_lm, nd) >= 0) { PT_lm[pl] += getv(A_lm, nd); PT_lmh[pl]++ }
+    if (getv(A_lc, nd) >= 0) { PT_lc[pl] += getv(A_lc, nd); PT_lch[pl]++ }
+    if (nac[nd] > 0) PT_ac[pl] += nac[nd]; if (nam[nd] > 0) PT_am[pl] += nam[nd]
+    if (nu >= 0) { PT_nu[pl] += nu; PT_nuh[pl]++ }
+    if (SUany) { PT_sm[pl] += SU_m[nd] + 0; PT_sc[pl] += SU_c[nd] + 0 }
+    if (nd != "(unscheduled)" && !(nd in nophost) && nc[nd] > 0) { H_am += (nam[nd] > 0 ? nam[nd] : 0); H_ac += (nac[nd] > 0 ? nac[nd] : 0); if (nu >= 0) { H_nu += nu; H_nuh++ } }
+    if (nd != "(unscheduled)" && nc[nd] > 0) NH++
+  }
+  close(md "/nodes.tsv")
+  print "POOL\tNODES_HOSTING\tNODES_IN_POOL\tNS_PODS\tNS_PODS_READY\tNS_CPU_USED_m\tNS_CPU_REQ_m\tPOOL_CPU_ALLOC_m\tNS_MEM_USED_Mi\tNS_MEM_REQ_Mi\tNS_MEM_LIM_Mi\tPOOL_MEM_ALLOC_Mi\tPOOL_MEM_USED_Mi\tNS_MEM_PCT_ALLOC\tCL_PODS\tCL_CPU_REQ_m\tCL_MEM_REQ_Mi\tCL_MEM_LIM_Mi\tPOOL_CPU_USED_m\tNS_CPU_LIM_m\tPOOL_METRICS_NODES\tSCOPE_MEM_USED_Mi\tSCOPE_CPU_USED_m" > (md "/pools.tsv")
+  for (i = 1; i <= npl; i++) {
+    pl = pord[i]
+    printf "%s\t%d\t%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", pl, PT_nodes[pl] + 0, ((pl in PT_all && nodesok && pl != "(none)") ? PT_all[pl] : "-"),
+      PT_pods[pl], PT_ok[pl], (PT_uch[pl] ? D(PT_uc[pl]) : "-"), (PT_rch[pl] ? D(PT_rc[pl]) : "-"), (PT_ac[pl] > 0 ? D(PT_ac[pl]) : "-"),
+      (PT_umh[pl] ? D(PT_um[pl]) : "-"), (PT_rmh[pl] ? D(PT_rm[pl]) : "-"), (PT_lmh[pl] ? D(PT_lm[pl]) : "-"), (PT_am[pl] > 0 ? D(PT_am[pl]) : "-"),
+      (PT_nuh[pl] > 0 ? D(PT_nu[pl]) : "-"),
+      ((PT_am[pl] > 0 && PT_umh[pl]) ? sprintf("%.1f", PT_um[pl] * 100 / PT_am[pl]) : "-"),
+      (clok ? PT_cp[pl] + 0 : "-"), (clok ? D(PT_crc[pl]) : "-"), (clok ? D(PT_crm[pl]) : "-"), (clok ? D(PT_clm[pl]) : "-"),
+      (PT_ncuh[pl] > 0 ? D(PT_ncu[pl]) : "-"), (PT_lch[pl] ? D(PT_lc[pl]) : "-"), (PT_nuh[pl] + 0) "/" (PT_cnt[pl] + 0), (SUany ? D(PT_sm[pl]) : "-"), (SUany ? D(PT_sc[pl]) : "-") > (md "/pools.tsv")
+  }
+  close(md "/pools.tsv")
+  # every namespace in the cluster (namespace picker, comparison)
+  print "NAMESPACE\tPODS\tNODES\tCPU_REQ_m\tMEM_REQ_Mi\tMEM_LIM_Mi\tPODS_READY\tWORKLOADS\tMEM_REQ_PCT_CLUSTER\tCPU_USED_m\tMEM_USED_Mi\tMEM_USED_PCT_SCOPE\tCPU_USED_PCT_SCOPE" > (md "/cluster_ns.tsv")
+  if (clok) { isort(cnsord, ncns); for (i = 1; i <= ncns; i++) { c_ = cnsord[i]
+    printf "%s\t%d\t%d\t%s\t%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\n", c_, CN_n[c_], CN_nodes[c_] + 0, D(CN_rc[c_]), D(CN_rm[c_]), D(CN_lm[c_]), CN_ok[c_] + 0, CN_w[c_] + 0,
+      (C_am > 0 ? sprintf("%.2f", CN_rm[c_] * 100 / C_am) : "-"), ((c_ in SN_h) ? D(SN_c[c_]) : "-"), ((c_ in SN_h) ? D(SN_m[c_]) : "-"),
+      ((c_ in SN_h && ST_m > 0) ? sprintf("%.1f", SN_m[c_] * 100 / ST_m) : "-"), ((c_ in SN_h && ST_c > 0) ? sprintf("%.1f", SN_c[c_] * 100 / ST_c) : "-") > (md "/cluster_ns.tsv") } }
+  close(md "/cluster_ns.tsv")
+
+  # ---------------------------------------------------------------- workloads
+  print "NODE\tPOOL\tKIND\tWORKLOAD\tPODS\tPODS_READY\tRESTARTS\tCPU_USED_m\tMEM_USED_Mi\tMEM_REQ_Mi\tPOD_NAMES" > (md "/wl_node.tsv")
+  m = 0
+  for (i = 1; i <= nwn; i++) { split(wnord[i], a, "\034"); srt2[++m] = (a[1] == "(unscheduled)" ? "~~" : "") S(npool[a[1]]) "\001" a[1] "\001" a[2] "\001" a[3] "\001" wnord[i] }
+  isort(srt2, m)
+  for (i = 1; i <= m; i++) {
+    split(srt2[i], a, "\001"); sub(/^~~/, "", a[1]); wnk = a[5]
+    printf "%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\t%s\t%s\t%s\n", a[2], a[1], a[3], a[4], WN_n[wnk], WN_ok[wnk], WN_rs[wnk],
+      D(getv(WN_uc, wnk)), D(getv(WN_um, wnk)), D(getv(WN_rm, wnk)), WN_pods[wnk] > (md "/wl_node.tsv")
+    wkey = a[3] "\034" a[4]
+    if (a[2] != "(unscheduled)") { W_dist[wkey] = W_dist[wkey] (W_dist[wkey] == "" ? "" : " ") a[2] ":" WN_n[wnk]; if (WN_n[wnk] > W_max[wkey]) W_max[wkey] = WN_n[wnk] }
+  }
+  close(md "/wl_node.tsv")
+  print "KIND\tWORKLOAD\tPODS\tPODS_READY\tUNSCHEDULED\tNODES\tMAX_PER_NODE\tVERDICT\tCPU_USED_m\tMEM_USED_Mi\tMEM_REQ_Mi\tMEM_LIM_Mi\tDISTRIBUTION\tDESIRED\tREADY_REPLICAS\tUPDATED\tAVAILABLE\tROLLOUT\tCPU_REQ_m\tRESTARTS\tIMAGES\tSCHEDULE\tLAST_SCHEDULE" > (md "/workloads.tsv")
+  m = 0
+  for (i = 1; i <= nw; i++) srt3[++m] = word[i]
+  isort(srt3, m)
+  for (i = 1; i <= m; i++) {
+    wkey = srt3[i]; split(wkey, a, "\034"); r = W_n[wkey]; nds = W_nodes[wkey] + 0; mx = W_max[wkey] + 0
+    rr = r - W_un[wkey]; vd = ""
+    if (a[1] == "Job" || a[1] == "CronJob" || a[1] == "Pod") vd = "N/A"
+    else if (a[1] == "DaemonSet") vd = "PER_NODE"
+    else if (rr >= 2 && nds == 1) { vd = "HA_RISK"; T_ha++ }
+    else if (nds > 0 && rr >= 2) { mm = (NH < rr) ? NH : rr; lim = int((rr + mm - 1) / mm); if (mx > lim) { vd = "SKEWED"; T_skew++ } }
+    else if (r == 1) vd = "SINGLE"
+    if (W_un[wkey] > 0) { vd = vd (vd == "" ? "" : "+") "UNSCHEDULED"; T_unw++ }
+    if (W_ok[wkey] + 0 < r && vd != "N/A") vd = vd (vd == "" ? "" : "+") "NOT_READY"
+    # what the API says the workload should be
+    ro = "-"; des = "-"
+    if (wkey in WS) {
+      des = WS_des[wkey]; ro = "complete"
+      if (a[1] == "CronJob") { ro = (WS_sus[wkey] == "true") ? "suspended" : "scheduled"; if (WS_sus[wkey] == "true") vd = vd (vd == "" ? "" : "+") "SUSPENDED" }
+      else {
+        if (WS_ogen[wkey] != "" && WS_gen[wkey] + 0 > WS_ogen[wkey] + 0) ro = "pending"
+        else if (WS_upd[wkey] + 0 < des + 0) ro = "rolling"
+        if (des + 0 == 0) { vd = "SCALED_TO_0"; ro = "scaled to 0" }
+        else if (WS_rdy[wkey] + 0 < des + 0) vd = vd (vd == "" ? "" : "+") "DEGRADED"
+        if (ro == "rolling" || ro == "pending") vd = vd (vd == "" ? "" : "+") "ROLLING"
+        if (r == 1 && des + 0 == 1 && vd == "SINGLE") vd = "SINGLE"
+      }
+    }
+    if (vd == "") vd = "OK"
+    sub(/^SINGLE\+/, "", vd); if (vd ~ /DEGRADED/) T_deg++; if (vd ~ /ROLLING/) T_roll++
+    printf "%s\t%s\t%d\t%d\t%d\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s\n", a[1], a[2], r, W_ok[wkey], W_un[wkey], nds, mx, vd,
+      D(getv(W_uc, wkey)), D(getv(W_um, wkey)), D(getv(W_rm, wkey)), D(getv(W_lm, wkey)), S(W_dist[wkey]),
+      S(des), ((wkey in WS) && a[1] != "CronJob" ? WS_rdy[wkey] + 0 : "-"), ((wkey in WS) && a[1] != "CronJob" ? WS_upd[wkey] + 0 : "-"), ((wkey in WS) && a[1] != "CronJob" ? WS_av[wkey] + 0 : "-"), ro,
+      D(getv(W_rc, wkey)), W_rs[wkey] + 0, S(WS_img[wkey]), S(WS_sch[wkey]), S(WS_last[wkey]) > (md "/workloads.tsv")
+  }
+  close(md "/workloads.tsv")
+
+  # ---------------------------------------------------------------- IP pool
+  print "POD\tPOD_IP\tNODE\tPOOL\tHOST_IP\tKIND\tWORKLOAD\tSTATUS\tNOTE" > (md "/ip.tsv")
+  m = 0
+  for (i = 1; i <= np; i++) { p = ord[i]; srt4[++m] = ((pip[p] == "") ? "~" : ipkey(pip[p])) "\001" p }
+  isort(srt4, m)
+  for (i = 1; i <= m; i++) {
+    split(srt4[i], a, "\001"); p = a[2]; nt = ""
+    if (pip[p] == "") { nt = "NO_IP"; T_noip++ }
+    else if (hnet[p]) { nt = "HOST_NETWORK"; T_hn++ }
+    else if (IPc[pip[p]] > 1) { nt = "DUPLICATE"; T_dup++ }
+    else T_ip++
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", pname[p], S(pip[p]), P_nd[p], S(npool[P_nd[p]]), S(hip[p]),
+      substr(P_wl[p], 1, index(P_wl[p], "/") - 1), substr(P_wl[p], index(P_wl[p], "/") + 1), P_st[p], S(nt) > (md "/ip.tsv")
+  }
+  close(md "/ip.tsv")
+  print "SUBNET\tPODS\tNODES" > (md "/subnets.tsv")
+  isort(sord, nsn)
+  for (i = 1; i <= nsn; i++) printf "%s\t%d\t%s\n", sord[i], SN_n[sord[i]], SN_nodes[sord[i]] > (md "/subnets.tsv")
+  close(md "/subnets.tsv")
+  print "NODE\tPOOL\tINTERNAL_IP\tPOD_CIDR\tCIDR_ADDRESSES\tNS_PODS_WITH_IP\tHOST_NETWORK_PODS\tIP_BLOCKS_OBSERVED" > (md "/ipblocks.tsv")
+  m = 0
+  for (i = 1; i <= nn; i++) { nd = nall[i]; if ((nd in nc) && nd != "(unscheduled)") srt5[++m] = nd }
+  isort(srt5, m)
+  for (i = 1; i <= m; i++) { nd = srt5[i]; cap = "-"
+    # copy to a scalar first: gawk 5.x mis-evaluates S(arr[k]) in a redirected printf
+    # after arr[k] (never assigned) was regex-matched (it printed the file name)
+    cidr = ((nd in ncidr) ? ncidr[nd] : "")
+    if (cidr ~ /^[0-9.]+\/[0-9]+$/) { pf = substr(cidr, index(cidr, "/") + 1) + 0; cap = 1; for (q = 0; q < 32 - pf; q++) cap *= 2; cap = sprintf("%d", (cap > 2) ? cap - 2 : cap) }
+    printf "%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\n", nd, S(npool[nd]), S(nip[nd]), S(cidr), cap, nipc[nd] - nhn[nd], nhn[nd], S(nblks[nd]) > (md "/ipblocks.tsv") }
+  close(md "/ipblocks.tsv")
+  print "NAMESPACE\tSERVICE\tTYPE\tCLUSTER_IP\tEXTERNAL_IPS\tLB_INGRESS\tPORTS" > (md "/services.tsv")
+  for (i = 1; i <= nsv; i++) {
+    t = s_ty[i]; if (s_ip[i] == "None") { t = t "/Headless"; T_hl++ } else if (s_ip[i] != "") T_cip++
+    if (s_ty[i] == "LoadBalancer") T_lb++; if (s_ty[i] == "NodePort") T_np++
+    if (s_ex[i] != "" || s_lb[i] != "") T_ext++
+    po = s_po[i]; sub(/ +$/, "", po)
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", s_ns[i], s_nm[i], S(t), S(s_ip[i]), S(s_ex[i]), S(s_lb[i]), S(po) > (md "/services.tsv")
+  }
+  close(md "/services.tsv")
+
+  # ---------------------------------------------------------------- memory risk
+  print "POD\tNODE\tPOOL\tKIND\tWORKLOAD\tMEM_USED_Mi\tMEM_REQ_Mi\tMEM_LIM_Mi\tPCT_OF_REQ\tPCT_OF_LIM\tRESTARTS\tLAST_TERMINATION\tRISK" > (md "/memory.tsv")
+  m = 0
+  for (i = 1; i <= np; i++) { p = ord[i]; srt6[++m] = sprintf("%012d", 999999999 - (P_um[p] < 0 ? -1 : int(P_um[p]))) "\001" p }
+  isort(srt6, m)
+  for (i = 1; i <= m; i++) {
+    split(srt6[i], a, "\001"); p = a[2]; u = P_um[p]; rk = ""
+    if (u >= 0 && P_lm[p] > 0 && u * 100 / P_lm[p] >= 90) rk = rk "OOM_RISK "
+    if (P_lm[p] < 0 && phase[p] !~ /^(Succeeded|Failed)$/) rk = rk "NO_LIMIT "
+    if (u >= 0 && P_rm[p] > 0 && u > P_rm[p]) rk = rk "OVER_REQUEST "
+    if (P_lt[p] == "OOMKilled") rk = rk "OOMKILLED_BEFORE "
+    sub(/ $/, "", rk)
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\n", pname[p], P_nd[p], S(npool[P_nd[p]]),
+      substr(P_wl[p], 1, index(P_wl[p], "/") - 1), substr(P_wl[p], index(P_wl[p], "/") + 1),
+      D(u), D(P_rm[p]), D(P_lm[p]),
+      ((u >= 0 && P_rm[p] > 0) ? sprintf("%.1f", u * 100 / P_rm[p]) : "-"),
+      ((u >= 0 && P_lm[p] > 0) ? sprintf("%.1f", u * 100 / P_lm[p]) : "-"), P_rst[p], S(P_lt[p]), S(rk) > (md "/memory.tsv")
+    if (rk ~ /OVER_REQUEST/) T_over++
+  }
+  close(md "/memory.tsv")
+
+  # ---------------------------------------------------------------- meta
+  mf = md "/meta.tsv"
+  printf "pods_over_mem_request\t%d\n", T_over > mf
+  printf "pods\t%d\ncontainers\t%d\npods_healthy\t%d\nrestarts\t%d\n", np, T_ctr, T_ok, T_rst > mf
+  printf "cpu_used\t%s\ncpu_req\t%s\ncpu_lim\t%s\nmem_used\t%s\nmem_req\t%s\nmem_lim\t%s\n", (ntop ? D(T_uc) : "-"), D(z(T_rc)), D(z(T_lc)), (ntop ? D(T_um) : "-"), D(z(T_rm)), D(z(T_lm)) > mf
+  printf "pods_no_mem_limit\t%d\npods_mem_ge90_limit\t%d\npods_oomkilled\t%d\n", T_nolim, T_oom, T_oomk > mf
+  printf "nodes_hosting\t%d\nnodes_total\t%s\npools\t%d\npool_key\t%s\n", NH, (nodesok ? nn - (("(unscheduled)" in nseen) ? 1 : 0) : "-"), npl, pkbest() > mf
+  printf "hosting_mem_alloc\t%s\nhosting_cpu_alloc\t%s\nhosting_mem_used\t%s\n", (H_am > 0 ? D(H_am) : "-"), (H_ac > 0 ? D(H_ac) : "-"), (H_nuh > 0 ? D(H_nu) : "-") > mf
+  printf "workloads\t%d\nha_risk\t%d\nskewed\t%d\nunscheduled_workloads\t%d\n", nw, T_ha, T_skew, T_unw > mf
+  printf "workloads_degraded\t%d\nworkloads_rolling\t%d\nworkload_state\t%s\n", T_deg, T_roll, S(wlstate) > mf
+  for (i = 1; i <= nw; i++) { split(word[i], a, "\034"); WKC[a[1]]++ }
+  x = ""; nk_ = split("Deployment StatefulSet DaemonSet CronJob Job ReplicaSet Pod", KO, " ")
+  for (i = 1; i <= nk_; i++) if (KO[i] in WKC) { x = x (x == "" ? "" : "  ") KO[i] " " WKC[KO[i]]; delete WKC[KO[i]] }
+  m = 0; for (k in WKC) KR[++m] = k; isort(KR, m); for (i = 1; i <= m; i++) x = x (x == "" ? "" : "  ") KR[i] " " WKC[KR[i]]
+  printf "workload_kinds\t%s\n", S(x) > mf
+  printf "pod_ips\t%d\nno_ip\t%d\nhost_network\t%d\nduplicate_ip_pods\t%d\nsubnets\t%d\n", T_ip + T_dup, T_noip, T_hn, T_dup, nsn > mf
+  printf "services\t%d\ncluster_ips\t%d\nheadless\t%d\nloadbalancers\t%d\nnodeports\t%d\nexternal_addressed\t%d\n", nsv, T_cip, T_hl, T_lb, T_np, T_ext > mf
+  printf "top_rows\t%d\nnode_top_rows\t%d\n", ntop, ntopn > mf
+  # whole cluster: capacity from nodes, usage from node metrics, requests from all pods
+  printf "cluster_scope\t%s\ncluster_ns_read\t%s\ncluster_ns_tried\t%s\n", (clstate == "partial" ? (compare != "" ? "selected" : "readable") : (clstate == "ok" ? "all" : "-")), S(nsread), S(nstried) > mf
+  # usage of every namespace in scope (pod metrics), the current one included
+  printf "scope_no_access\t%s\n", S(noacc) > mf
+  printf "scope_mem_used\t%s\nscope_cpu_used\t%s\nscope_usage\t%s\n", (SUany ? D(ST_m) : "-"), (SUany ? D(ST_c) : "-"), (SUany ? "ok" : "none") > mf
+  printf "cluster_state\t%s\ncluster_nodes\t%s\ncluster_cpu_alloc\t%s\ncluster_mem_alloc\t%s\n", S(clstate), (nodesok ? C_nodes + 0 : "-"), (C_ac > 0 ? D(C_ac) : "-"), (C_am > 0 ? D(C_am) : "-") > mf
+  # node metrics often miss NotReady / unreachable nodes: sum the nodes that report
+  # (cluster_metrics_nodes of cluster_metrics_total) instead of blanking the total
+  printf "cluster_mem_used\t%s\ncluster_cpu_used\t%s\ncluster_metrics_nodes\t%d\ncluster_metrics_total\t%d\n", (C_nuh > 0 ? D(C_nu) : "-"), (C_ncuh > 0 ? D(C_ncu) : "-"), C_nuh, C_nodes > mf
+  printf "cluster_pods\t%s\ncluster_cpu_req\t%s\ncluster_mem_req\t%s\ncluster_mem_lim\t%s\ncluster_namespaces\t%s\n", (clok ? TC_n + 0 : "-"), (clok ? D(TC_rc) : "-"), (clok ? D(TC_rm) : "-"), (clok ? D(TC_lm) : "-"), (clok ? ncns + 0 : "-") > mf
+  close(mf)
+}
+'
+
+build_model() {
+  local tp; [ -s "$TOPP" ] && tp="$TOPP" || tp="$TOPC"
+  { printf '@@SPEC\n'; cat "$SPEC"
+    printf '@@TOP\n'; cat "$TOPC"
+    printf '@@TOPPREV\n'; cat "$tp"
+    printf '@@NODES\n'; cat "$NODES"
+    printf '@@TOPN\n'; [ "$TOPN_OK" = 1 ] && cat "$TOPN_F"
+    printf '@@SVC\n'; cat "$SVC"
+    printf '@@WL\n'; cat "$WLS"
+    printf '@@CLUSTER\n'; if [ "$CLUSTER_STATE" = ok ] || [ "$CLUSTER_STATE" = partial ]; then cat "$CLUS"; fi
+  } | awk -v filt="$FILTER" -v allns="$ALL_NS" -v md="$MODEL" -v poollabel="$POOL_LABEL" -v clstate="$CLUSTER_STATE" -v wlstate="$WL_STATE" -v nsread="$NS_READ_LIST" -v nstried="${NS_SCAN_TRIED:-}" -v compare="$COMPARE_NS" -v noacc="${NS_NOACC:-}" \
+          -v nodesok="$([ "$NODES_STATE" = ok ] && echo 1 || echo 0)" "$AWKLIB$MODEL_AWK" || return 1
+  [ "${IO:-0}" = 1 ] && io_merge
+  # live history for the memory view (namespace totals and per node)
+  if [ "$TOP_OK" = 1 ]; then
+    local now; now=$(date +%s)
+    awk -F'\t' -v t="$now" '$1=="mem_used"{m=$2} $1=="cpu_used"{c=$2} END{if(m!="-") printf "%s\t%s\t%s\n", t, m, c}' "$MODEL/meta.tsv" >> "$HIST"
+    awk -F'\t' -v t="$now" 'NR>1 && $2!="(unscheduled)" && $5 > 0 {printf "%s\t%s\t%s\t%s\n", t, $2, $13, $17}' "$MODEL/nodes.tsv" >> "$NHIST"
+    tail -n "$HIST_N" "$HIST" > "$HIST.t" && mv -f "$HIST.t" "$HIST"
+    tail -n $(( HIST_N * 64 )) "$NHIST" > "$NHIST.t" && mv -f "$NHIST.t" "$NHIST"
+  fi
+}
+
+#-- views: render model tables into header / body / footer -----------------------
+VIEW_COMMON='
+# sparkline series written by the session recorder (pods and "@W:" workloads)
+function sparkload(   ln, a, t) { SPW = 16; if (sparkf == "") return
+  while ((getline ln < sparkf) > 0) { split(ln, a, "\t"); SPC[a[1]] = a[2]; SPM[a[1]] = a[3]; SPN[a[1]] = split(a[2], t, " ") } close(sparkf) }
+function spk(l,   k, t, s) { k = split(l, t, " "); if (k > SPW) k = SPW; s = spark(l, SPW); for (; k < SPW; k++) s = s " "; return s }
+# pod memory heatmap (heatf, built from the session every sample): one row per pod,
+# one column per time slice of the chart window, shade + colour = % of memory limit,
+# ! = the pod restarted in that slice
+function hcell(v) { if (v < 0) return " "; if (v >= 90) return C("1;31", FILL); if (v >= 75) return C("35", OTH); if (v >= 50) return C("94", MID); return C("32", EMPTY) }
+function heatmap(LW,   ln, a, n, i, j, k, R, ht0, ht1, nb, nol, NW_, CW_, cv, cc, b0, b1, mx, rb, RBX, s, p2_, l1, l2, l3, sp, nshow, nrs) {
+  n = 0; nb = 0
+  while ((getline ln < heatf) > 0) { split(ln, a, "\t")
+    if (a[1] == "#HEAT") { ht0 = a[2] + 0; ht1 = a[3] + 0; nb = a[4] + 0; continue }
+    if (a[1] == "#NOLIMIT") { nol = a[2] + 0; continue }
+    R[++n] = ln }
+  close(heatf)
+  sect("POD MEMORY HEATMAP  % of each pod memory limit over time (" (nb ? tday(ht0) " -> " thms(ht1) " " tzname : "live sessions") ")", LW)
+  if (!nb || n == 0) { printf "  %s\n", C("90", "builds from the session samples while kdash runs live (" (nol ? nol " pod(s) without a memory limit" : "no samples yet") ")") > bodyf; return }
+  split("", SV); split("", IX)
+  for (i = 1; i <= n; i++) { split(R[i], a, "\t"); IX[i] = i; SV[i] = (sortkey == "name") ? a[1] : ((sortkey == "restarts") ? a[4] + 0 : a[3] + 0) }
+  sk_ = sortkey; if (sortkey != "name" && sortkey != "restarts") sortkey = "mem"; ixsort(n); sortkey = sk_
+  NW_ = 24; for (i = 1; i <= n; i++) { split(R[i], a, "\t"); if (length(a[1]) > NW_) NW_ = length(a[1]) } if (NW_ > 46) NW_ = 46
+  CW_ = LW - 2 - NW_ - 1 - 1 - 24; if (CW_ > 120) CW_ = 120; if (CW_ < 20) CW_ = 20
+  nshow = (n > topn) ? topn : n
+  for (k = 1; k <= nshow; k++) { split(R[IX[k]], a, "\t"); split(a[5], cv, " ")
+    split("", RBX); if (a[6] != "-") { nrs = split(a[6], rb, ","); for (j = 1; j <= nrs; j++) RBX[rb[j] + 0] = 1 }
+    s = ""
+    for (j = 1; j <= CW_; j++) {
+      b0 = int((j - 1) * nb / CW_); b1 = int(j * nb / CW_) - 1; if (b1 < b0) b1 = b0
+      mx = -1; cc = 0; for (i = b0; i <= b1; i++) { if (cv[i + 1] + 0 > mx && cv[i + 1] != "") mx = cv[i + 1] + 0; if (i in RBX) cc = 1 }
+      s = s (cc ? C("1;31", "!") : hcell(mx))
+    }
+    printf "  %s %s%s %s %s\n", padr(a[1], NW_), C("90", VB), s, C("90", VB), fpct(a[3] + 0, 5) C("90", " now") (a[4] + 0 > 0 ? C("1;31", sprintf(" %3d", a[4])) C("90", " rst") : "") > bodyf
+  }
+  # time axis under the cells (host clock)
+  sp = ht1 - ht0; p2_ = int((CW_ + 1) / 2)
+  l1 = (sp > 21600) ? tmd(ht0) " " thm(ht0) : thms(ht0); l3 = (sp > 21600) ? tmd(ht1) " " thm(ht1) : thms(ht1); l2 = (sp > 21600) ? thm(ht0 + sp / 2) : thms(ht0 + sp / 2)
+  s = sprintf("%" CW_ "s", ""); s = tput_(s, 1, l1); if (CW_ - length(l3) + 1 > length(l1) + 1) s = tput_(s, CW_ - length(l3) + 1, l3)
+  j = p2_ - int(length(l2) / 2); if (j > length(l1) + 2 && j + length(l2) < CW_ - length(l3)) s = tput_(s, j, l2)
+  printf "  %s  %s\n", sprintf("%" NW_ "s", ""), C("90", s) > bodyf
+  printf "  %s  %s %s  %s %s  %s %s  %s %s  %s %s%s\n", sprintf("%" NW_ "s", ""), C("32", EMPTY), C("90", "< 50%"), C("94", MID), C("90", "< 75%"), C("35", OTH), C("90", "< 90%"), C("1;31", FILL), C("90", ">= 90% of limit"),
+    C("1;31", "!"), C("90", "restart"), C("90", (n > nshow ? "   " (n - nshow) " more pod(s) (--top N)" : "") (nol ? "   " nol " pod(s) without memory limit not shown" : "")) > bodyf
+}
+# newest session events in the chart window (EVT.. from evload), host clock
+function evlist(k,   i, c, nb, nw, s, sv) {
+  nb = 0; nw = 0; for (i = 1; i <= EVN; i++) { if (EVS[i] == "bad") nb++; else if (EVS[i] == "warn") nw++ }
+  if (evf == "") { printf "  %s\n", C("90", "events: recorded in live mode (session history)") > bodyf; return }
+  printf "  %s %s   %s %s   %s %s%s\n", C("1", "EVENTS"), C("90", EVN " in window"), C(nb ? "1;31" : "32", "! " nb), C("90", "critical"),
+    C(nw ? "35" : "32", "^ " nw), C("90", "warning"), C("90", (EVN > k) ? "   newest " k " - the HTML report (x) has all" : "") > bodyf
+  c = 0
+  for (i = EVN; i >= 1 && c < k; i--) { c++
+    sv = EVS[i]; s = (sv == "bad") ? C("1;31", "!") : ((sv == "warn") ? C("35", "^") : ((sv == "ok") ? C("32", "+") : C("90", "-")))
+    printf "  %s %s %s %-40s %s\n", C("90", sprintf("%-14s", tday(EVT[i]))), s, C(sv == "bad" ? "1;31" : (sv == "warn" ? "35" : "90"), sprintf("%-16s", clip(EVK[i], 16))),
+      clip(EVO[i], 40), C("90", clip(EVM[i], W - 80 > 20 ? W - 80 : 20)) > bodyf }
+}
+# memory growth forecast (fcf, built from the session every sample)
+function forecast(LW, PW,   ln, a, n, i, ev, from, F, E, eta, at, col, fw) {
+  n = 0; ev = -1
+  while ((getline ln < fcf) > 0) { split(ln, a, "\t"); if (a[1] == "#EVAL") { ev = a[2]; from = a[3]; continue } n++; F[n] = ln }
+  close(fcf)
+  sect("MEMORY GROWTH FORECAST  (linear trend of the last " tdur(fcwin) ", a restart starts the trend again)", LW)
+  if (ev < 0) { printf "  %s\n", C("90", "needs a live session with " tdur(fcwin / 2 < 120 ? fcwin / 2 : 120) " of samples (every " smp "s) - the forecast appears here") > bodyf; return }
+  if (n == 0) { printf "  %s\n", C("32", "no pod memory is growing  (" ev " pod(s) with enough samples since " tday(from) ")") > bodyf; return }
+  split("", SV); split("", IX)
+  for (i = 1; i <= n; i++) { split(F[i], a, "\t"); IX[i] = i; SV[i] = (a[7] == "-") ? 1e12 - a[6] : a[7] + 0 }
+  sortkey_ = sortkey; sortrev_ = sortrev; sortkey = "eta"; sortrev = 1; ixsort(n); sortkey = sortkey_; sortrev = sortrev_
+  fw = PW; if (fw > 48) fw = 48
+  printf "  %-" fw "s %-24s %8s %8s %10s %5s  %-12s %-20s %s\n", "POD", "NODE", "NOW", "LIMIT", "GROWTH/h", "%LIM", "LIMIT IN", "REACHES LIMIT AT", "TREND" > bodyf
+  for (i = 1; i <= n && i <= topn; i++) { split(F[IX[i]], a, "\t")
+    eta = a[7]; col = (eta == "-") ? "90" : (eta + 0 < 3600 ? "1;31" : (eta + 0 < 21600 ? "35" : "94"))
+    at = (eta == "-") ? "no limit" : tday(a[11])
+    printf "  %-" fw "s %-24s %8s %8s %10s %s  %s %s %s\n", clip(a[1], fw), clip(a[2], 24), hmem(a[4] + 0), (a[5] == "-" ? "-" : hmem(a[5] + 0)),
+      "+" hmem(a[6] + 0), (a[5] == "-" ? "    -" : fpct(a[4] * 100 / a[5])), C(col, sprintf("%-12s", eta == "-" ? "-" : (eta + 0 == 0 ? "now" : tdur(eta)))),
+      C(col, sprintf("%-20s", at)), C("90", (a[10] + 0 >= 0.6 ? "steady" : "noisy") " (r2 " a[10] ", " a[9] " samples)") > bodyf }
+  if (n > topn) printf "  %s\n", C("90", (n - topn) " more growing pod(s)") > bodyf
+}
+function loadmeta(   ln, a) {
+  while ((getline ln < (md "/meta.tsv")) > 0) { split(ln, a, "\t"); M[a[1]] = a[2] }
+  close(md "/meta.tsv"); metadefaults()
+}
+function metadefaults(   k, n, K) {     # reports from older sessions lack newer keys
+  n = split("cluster_state cluster_scope cluster_ns_read cluster_ns_tried cluster_nodes cluster_cpu_alloc cluster_mem_alloc cluster_mem_used cluster_cpu_used cluster_metrics_nodes cluster_metrics_total scope_mem_used scope_cpu_used scope_usage scope_no_access cluster_pods cluster_cpu_req cluster_mem_req cluster_mem_lim cluster_namespaces workloads_degraded workloads_rolling workload_state workload_kinds io_state io_source io_reason io_age io_every io_pods_with_data ns_net_rx ns_net_tx ns_disk_r ns_disk_w ns_riops ns_wiops", K, " ")
+  for (k = 1; k <= n; k++) if (!(K[k] in M)) M[K[k]] = (K[k] ~ /^workloads_/) ? 0 : "-"
+}
+
+function readtab(f, pre,   ln, n) {               # TSV -> pre_r[row,col], pre_n
+  n = 0
+  while ((getline ln < (md "/" f)) > 0) { if (n++ == 0) continue; T_cnt[pre] = n - 1; T_row[pre, n - 1] = ln }
+  close(md "/" f)
+  if (n <= 1) T_cnt[pre] = 0          # missing or header-only file
+  return T_cnt[pre] + 0
+}
+function fld(pre, r, c,   a) { split(T_row[pre, r], a, "\t"); return a[c] }
+function vrd(s) {                                  # verdict / status colouring
+  if (s ~ /HA_RISK|OOM_RISK|DUPLICATE|NotReady|CrashLoop|Error|OOMKilled|Evicted|Failed|UNSCHEDULED|NO_IP/) return C("1;31", s)
+  if (s ~ /DEGRADED/) return C("1;31", s)
+  if (s ~ /SKEWED|NOT_READY|Pending|Terminating|NO_LIMIT|OVER_REQUEST|ContainerCreating|SchedulingDisabled|HOST_NETWORK|ROLLING|SCALED_TO_0|SUSPENDED|Cordoned/) return C("35", s)
+  if (s ~ /^(OK|Running|Ready|Succeeded|Completed)$/) return C("32", s)
+  return C("90", s)
+}
+function fpp(p) { return fpct(p, 6) (p < 0 ? " " : "%") }
+function vpad(s, w) { return vrd(sprintf("%-" (w) "s" "", clip(s, w))) }
+BEGIN {
+  glyphs(); loadmeta()
+  W = termw + 0; if (W < 80) W = 80
+}
+'
+
+#---- 1 PODS -----------------------------------------------------------------------
+VIEW_PODS='
+function podrow(r, ind,   f, rr, ok, stc, p, n, j, c, cn, mk, nm, vis, pad, q, cl) {
+  split(T_row["P", r], f, "\t"); p = f[1]
+  split(f[5], rr, "/"); ok = (rr[1] == rr[2])
+  stc = (f[4] == "Running" && ok) ? "32" : (f[4] ~ /Succeeded|Completed/ ? "90" : "1;31")
+  row(C(stc, sprintf("%-" (WNAME) "s" "", clip(ind p, WNAME))), f[5], ok, f[6],
+      nv(f[14]), nv(f[15]), nv(f[16]), nv(f[17]), nv(f[18]), nv(f[19]), nv(f[20]), nv(f[21]), bodyf)
+  if (detail)
+    printf "%s    %s%s\n", ind, pspark(p, nv(f[14]), nv(f[17]), nv(f[19])), C("90", sprintf("node %s   pool %s   ip %s%s   qos %s   status %s%s", f[7], f[8], f[9],
+           (group ? "" : "   " f[12] " " f[13]), f[11], f[4], (f[22] != "-" ? "   last-exit " f[22] : ""))) > bodyf
+  if (!podsonly) {
+    n = split(kc[p], cl, "\036")
+    for (j = 1; j <= n; j++) {
+      split(T_row["K", cl[j]], c, "\t")
+      cn = clip(c[3], WNAME - 5 - length(ind)); mk = (j == n) ? ELL : TEE
+      nm = sprintf("%s  %s%s", ind, mk, cn); vis = length(ind) + 5 + length(cn); pad = ""; for (q = vis; q < WNAME; q++) pad = pad " "
+      row((c[4] == "Y" ? nm pad : C("1;31", nm pad)), c[4], (c[4] == "Y"), c[5],
+          nv(c[6]), nv(c[7]), nv(c[8]), nv(c[9]), nv(c[10]), nv(c[11]), nv(c[12]), nv(c[13]), bodyf)
+      if (c[15] != "-" || c[14] != "-")
+        printf "%s      %s\n", ind, C("35", (c[15] != "-" ? "waiting " c[15] "   " : "") (c[14] != "-" ? "last-exit " c[14] : "")) > bodyf
+    }
+  }
+}
+# CPU and memory sparkline of one pod: session samples + the live value; memory coloured by % of limit
+function pspark(p, uc, um, lm,   lc, lmm, s, n, a, i, mx) {
+  if (!(p in SPC)) return ""
+  lc = SPC[p] (uc >= 0 ? " " uc : ""); lmm = SPM[p] (um >= 0 ? " " um : "")
+  n = split(lmm, a, " "); mx = -1; for (i = 1; i <= n; i++) if (a[i] + 0 > mx) mx = a[i] + 0
+  s = C("90", "cpu ") C("32", spk(lc)) C("90", "  mem ") C(lm > 0 ? heat(pct(um, lm)) : "94", spk(lmm))
+  return s C("90", sprintf("  %-7s ", (mx >= 0 ? "pk " hmem(mx) : ""))) "  "
+}
+END {
+  np = readtab("pods.tsv", "P"); readtab("containers.tsv", "K")
+  sparkload()
+  WACT = 6 + 1 + 1 + 1 + 7 + 1 + 1; WASG = 6 + 1 + 6 + 1 + 7 + 1 + 7; BW = 8
+  WUTLB = 5 + 1 + 5 + 1 + BW + 2 + 5 + 1 + 5 + 1 + BW; WUTLN = 5 + 1 + 5 + 2 + 5 + 1 + 5
+  # name column: as wide as the longest pod name the terminal allows (no more "~" cut-offs)
+  longest = 36; for (r = 1; r <= np; r++) { split(T_row["P", r], f, "\t"); x = length(f[1]) + (group ? 2 : 0); if (x > longest) longest = x
+    x = group ? length(f[12]) + length(f[13]) + 15 : 0; if (x > longest) longest = x }
+  REST = 8 + 3 + WACT + 3 + WASG + 3
+  showbar = (W - REST - WUTLB >= 36); WUTL = showbar ? WUTLB : WUTLN
+  WNAME = longest; if (WNAME > W - REST - WUTL) WNAME = W - REST - WUTL; if (WNAME > 70) WNAME = 70; if (WNAME < 30) WNAME = 30
+  WID = WNAME + 1 + 3 + 1 + 3
+  LINEW = WID + 3 + WACT + 3 + WASG + 3 + WUTL; if (LINEW > W) LINEW = W
+  header("POD / CONTAINER RESOURCES   actual usage vs requests and limits" (group ? ", grouped by workload (w = flat list)" : "   (w = group by workload)"), LINEW)
+  printf "%s %s %s %s %s %s %s\n", sprintf("%-" (WID) "s" "", ""), C("90", VB), C("1;94", ctr("ACTUAL (live)", WACT)),
+    C("90", VB), C("1;35", ctr("ASSIGNED (req / limit)", WASG)), C("90", VB), C("1;35", ctr("UTILISATION (used vs req / lim)", WUTL)) > hdrf
+  printf "%s %s %s %s %s %s %s\n",
+    sprintf("%-" (WNAME) "s" " %-3s %3s", (group ? "WORKLOAD / " : "") (allns ? "NAMESPACE / POD / CONTAINER" : "POD / CONTAINER"), "RDY", "RST"), C("90", VB),
+    sprintf("%6s %s %7s %s", "CPUm", "T", "MEM Mi", "T"), C("90", VB),
+    sprintf("%6s %6s %7s %7s", "CPUreq", "CPUlim", "MEMreq", "MEMlim"), C("90", VB),
+    (showbar ? sprintf("%5s %5s %-" (BW) "s" " %5s %5s %-" (BW) "s" "", "c%REQ", "c%LIM", "CPU/LIM", "m%REQ", "m%LIM", "MEM/LIM") : sprintf("%5s %5s  %5s %5s", "c%REQ", "c%LIM", "m%REQ", "m%LIM")) > hdrf
+  print C("90", rule(HR, LINEW)) > hdrf
+  close(hdrf)
+
+  for (r = 1; r <= T_cnt["K"]; r++) { k = fld("K", r, 1); kc[k] = kc[k] (kc[k] == "" ? "" : "\036") r }
+  if (graphs && np > 0) {
+    n = tsload(sesf, 8, 0); if (n < 2) n = tsload(histf, 2, 0)
+    if (n >= 2) {
+      twindow(TC_T[1]); evload(evf, TW0)
+      GW = (LINEW >= 130) ? int((LINEW - 2 - 4) / 2) : LINEW - 2; if (GW > 110) GW = 110; GH = (LINEW >= 130) ? 6 : 4
+      sect("TIMELINE  " tday(TW0) " -> " thms(now) " " tzname "  (" twinlabel() ", z window, c hides graphs)", LINEW)
+      n = tsload(sesf, 5, TW0); if (n < 2) n = tsload(histf, 3, TW0); n = tsnow(n, M["cpu_used"])
+      tchart("c", "CPU used - namespace", n, TW0, now, GW, GH, nv(M["cpu_req"]), nv(M["cpu_lim"]), "cpu", "32")
+      n = tsload(sesf, 8, TW0); if (n < 2) n = tsload(histf, 2, TW0); n = tsnow(n, M["mem_used"])
+      tchart("m", "MEMORY used - namespace", n, TW0, now, GW, GH, nv(M["mem_req"]), nv(M["mem_lim"]), "mem", "94")
+      if (LINEW >= 130) tshow("c", "m"); else { tshow("c", ""); tshow("m", "") }
+      print "" > bodyf
+      sect("PODS", LINEW)
+    }
+  }
+  if (np == 0) {
+    print C("1;31", " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf)
+    print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit
+  }
+  for (r = 1; r <= np; r++) {
+    split(T_row["P", r], f, "\t")
+    uc = nv(f[14]); um = nv(f[17]); lcv = nv(f[16]); lmv = nv(f[19])
+    PSV[r] = skey(f[1], uc, lcv, um, lmv, f[6])
+    if (uc > 0) Tuc += uc; if (nv(f[15]) > 0) Trc += f[15]; if (lcv > 0) Tlc += lcv
+    if (um > 0) Tum += um; if (nv(f[18]) > 0) Trm += f[18]; if (lmv > 0) Tlm += lmv; Trs += f[6]
+    g = f[12] "\034" f[13]
+    if (!(g in GI)) { GI[g] = ++ng; GN[ng] = g }
+    k = GI[g]; GM[k] = GM[k] (GM[k] == "" ? "" : " ") r; GP[k]++
+    split(f[5], rr, "/"); if (rr[1] == rr[2] && f[4] == "Running") GR[k]++
+    GRS[k] += f[6]; if (uc >= 0) { GUC[k] += uc; GHC[k]++ } if (um >= 0) { GUM[k] += um; GHM[k]++ }
+    if (nv(f[15]) > 0) GRC[k] += f[15]; if (lcv > 0) GLC[k] += lcv; if (nv(f[18]) > 0) GRM[k] += f[18]; if (lmv > 0) GLM[k] += lmv
+  }
+  split("", SV); split("", IX)
+  if (group) {
+    for (k = 1; k <= ng; k++) { split(GN[k], a, "\034"); IX[k] = k
+      SV[k] = skey(a[2], (GHC[k] ? GUC[k] : -1), GLC[k], (GHM[k] ? GUM[k] : -1), GLM[k], GRS[k]) }
+    ixsort(ng)
+    for (gi = 1; gi <= ng; gi++) { GO[gi] = IX[gi] }
+    for (gi = 1; gi <= ng; gi++) {
+      k = GO[gi]; split(GN[k], a, "\034")
+      row(C("1;35", sprintf("%-" (WNAME) "s" "", clip(ARW " " a[1] " " a[2] "  (" GP[k] " pod" (GP[k] == 1 ? "" : "s") ")", WNAME))), GR[k] + 0 "/" GP[k], (GR[k] + 0 == GP[k]), GRS[k],
+          (GHC[k] ? GUC[k] : -1), z(GRC[k]), z(GLC[k]), (GHM[k] ? GUM[k] : -1), z(GRM[k]), z(GLM[k]), -1, -1, bodyf)
+      n = split(GM[k], mem, " "); split("", SV); split("", IX)
+      for (j = 1; j <= n; j++) { IX[j] = mem[j] + 0; SV[mem[j] + 0] = PSV[mem[j] + 0] }
+      ixsort(n)
+      for (j = 1; j <= n; j++) podrow(IX[j], "  ")
+      if (gi < ng) print C("90", rule(".", LINEW)) > bodyf
+    }
+  } else {
+    for (r = 1; r <= np; r++) { IX[r] = r; SV[r] = PSV[r] }
+    ixsort(np)
+    for (i = 1; i <= np; i++) { podrow(IX[i], ""); if (i < np) print C("90", rule(".", LINEW)) > bodyf }
+  }
+  close(bodyf)
+  print C("90", rule(HR, LINEW)) > ftrf
+  row(C("1", sprintf("%-" (WNAME) "s" "", "TOTAL (" np " pods" (group ? ", " ng " workloads" : "") ")")), "", 1, Trs, z(Tuc), z(Trc), z(Tlc), z(Tum), z(Trm), z(Tlm), -1, -1, ftrf)
+  printf " %s cpu millicores, mem MiB.  T: %s up  %s down  %s flat since last poll.  >=90%%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.\n",
+         C("90", "legend"), UPA, DNA, FLAT > ftrf
+  close(ftrf)
+}
+function row(nm, rdstr, ok, rs, uc, urc, ulc, um, urm, ulm, ppc, ppm, out) {
+  printf "%s %-3s %s %s %s %s %s %s %s %s\n", nm,
+    (rdstr == "" ? "   " : C(ok ? "32" : "1;31", sprintf("%-3s", rdstr))),
+    C(rs + 0 > 0 ? "35" : "90", sprintf("%3s", rs == "" ? "-" : rs)), C("90", VB),
+    sprintf("%s %s %s %s", fnum(uc, 6), trend(uc, ppc), fnum(um, 7), trend(um, ppm)), C("90", VB),
+    sprintf("%s %s %s %s", fnum(urc, 6), fnum(ulc, 6), fnum(urm, 7), fnum(ulm, 7)), C("90", VB),
+    sprintf("%s %s%s", fpct(pct(uc, urc)), fpct(pct(uc, ulc)), (showbar ? " " mkbar(pct(uc, ulc), BW) : "")),
+    sprintf("%s %s%s", fpct(pct(um, urm)), fpct(pct(um, ulm)), (showbar ? " " mkbar(pct(um, ulm), BW) : "")) > out
+}
+'
+
+#---- 2 NODE POOLS -----------------------------------------------------------------
+VIEW_NODES='
+function hbn(v) { if (v < 0) return "-"; if (v >= 1024000) return sprintf("%.1fMiB/s", v / 1048576); if (v >= 1000) return sprintf("%.1fKiB/s", v / 1024); return sprintf("%dB/s", v + 0.5) }
+function hsz(mi) { if (mi < 0) return "-"; if (mi >= 1048576) return sprintf("%.2fTi", mi / 1048576); if (mi >= 10240) return sprintf("%.1fGi", mi / 1024); return sprintf("%dMi", mi + 0.5) }
+function pp(p)   { return p < 0 ? "n/a" : sprintf("%.1f%%", p) }
+function p2(a, b) { return fpct(a) C("90", (a < 0 ? "  /" : "% /")) fpct(b) C("90", (b < 0 ? " " : "%")) }
+# one comparison line: label | capacity | this namespace graph | whole cluster graph
+# with cluster data the right graph is the whole cluster (or your namespaces); without
+# it (ALT) the right graph is this namespace against its own limits, so it still moves
+function cmpline(lbl, kind, cap, nu, nr, cu, cr, out, lim,   capx, rp) {
+  capx = (kind == "mem") ? hsz(cap) : hcpu(cap)
+  if (cl) rp = " " C("90", VB) " " gbar(cu, cr, cap, GW, "94") " " p2(pct(cu, cap), pct(cr, cap))
+  else if (ALT) rp = " " C("90", VB) " " ((lim > 0) ? gbar(nu, nr, lim, GW, (pct(nu, lim) >= 90 ? "1;31" : "94")) " " p2(pct(nu, lim), pct(nr, lim)) : C("90", padr("no " kind " limits set on these pods", GW + 15)))
+  else rp = ""
+  printf "%s %s %9s %s %s %s%s\n", lbl, C("90", kind), capx, C("90", VB),
+    gbar((nu > 0 ? nu * ZF : nu), (nr > 0 ? nr * ZF : nr), cap, GW, "32"), p2(pct(nu, cap), pct(nr, cap)), rp > out
+}
+function nrow(nm, st, pods, cu, cr, ca, mu, mr, ml, ma, nu, clp, oth, bk, clq, out,   pd) {
+  pd = (clp != "" && clp != "-") ? pods "/" clp : pods
+  printf "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s%s\n", nm, vpad(st, 9), sprintf("%11s", pd), C("90", VB),
+    fnum(cu, 6), fnum(cr, 6), fnum(ca, 6), fpct(pct(cu, ca)), C("90", VB),
+    fgi(mu, 7), fgi(mr, 7), fgi(ml, 7), fgi(ma, 7), fpct(pct(mu, ma)), fpct(pct(nu, ma)), fpct(clq, 6),
+    (BWN > 0 ? " " C("90", VB) " " cbar((mu > 0 ? mu * CBZ : mu), oth, ma, BWN, bk) : "") > out
+}
+END {
+  npl = readtab("pools.tsv", "L"); nn = readtab("nodes.tsv", "N"); ncn = readtab("cluster_ns.tsv", "Z")
+  cl = (M["cluster_state"] == "ok" || M["cluster_state"] == "partial"); part = (M["cluster_state"] == "partial"); nm_ok = (topnstate == "ok"); ALT = !cl
+  nread = (M["cluster_ns_read"] == "-") ? 0 : split(M["cluster_ns_read"], tmp_, " ")
+  sel = (M["cluster_scope"] == "selected"); sco = (M["scope_usage"] == "ok")
+  # right graph "used": pod metrics of the namespaces in scope when it is a subset (your
+  # namespaces / --compare) or when node metrics are missing; whole-node metrics otherwise
+  SCU = sco && (part || !nm_ok)
+  CLW = part ? (sel ? "SELECTED NAMESPACES  " nread : "YOUR NAMESPACES  " nread " readable") : "WHOLE CLUSTER  all namespaces"
+  CLS = part ? "readable" : "cluster"
+  # widths: node name column fits the longest name the terminal can afford
+  NW = 24; for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); if (length(f[2]) + 2 > NW) NW = length(f[2]) + 2 }
+  for (i = 1; i <= npl; i++) { split(T_row["L", i], g, "\t"); x = length(g[1]) + length(g[2]) + length(g[3]) + 6; if (x > NW) NW = x }
+  FIX0 = 1 + 9 + 1 + 11 + 3 + 26 + 3 + 46 + 6
+  if (NW > W - FIX0 - 12) NW = W - FIX0 - 12; if (NW > 50) NW = 50; if (NW < 22) NW = 22
+  FIX = NW + FIX0
+  BWN = W - FIX - 3; if (BWN > 40) BWN = 40; if (BWN < 10) BWN = 0
+  LINEW = FIX + (BWN > 0 ? BWN + 3 : 0); if (LINEW > W) LINEW = W; if (LINEW < 100) LINEW = (W < 100 ? W : 100)
+  PW = 14; for (i = 1; i <= npl; i++) { split(T_row["L", i], g, "\t"); if (length(g[1]) + 9 > PW) PW = length(g[1]) + 9 } if (PW > 30) PW = 30
+  GW = int((LINEW - PW - 1 - 3 - 1 - 9 - 3 - 15 - 3 - 15) / 2); if (GW > 44) GW = 44; if (GW < 8) GW = 8
+  # zoom for the namespace graph: biggest share of any pool (or the cluster) decides
+  zmx = 0; for (i = 1; i <= npl; i++) { split(T_row["L", i], g, "\t"); if (g[1] == "(none)") continue
+    if (nv(g[12]) > 0) { x = (nv(g[9]) > nv(g[10]) ? nv(g[9]) : nv(g[10])) / nv(g[12]); if (x > zmx) zmx = x }
+    if (nv(g[8]) > 0) { x = (nv(g[6]) > nv(g[7]) ? nv(g[6]) : nv(g[7])) / nv(g[8]); if (x > zmx) zmx = x } }
+  ZF = zoomf(zmx)
+
+  header("NODE POOLS   " (cl ? "this namespace vs " (part ? (sel ? "the selected namespaces (--compare)" : "every namespace you can read") : "the whole cluster") : "where this namespace runs") ", per pool and worker node", LINEW)
+  printf " %s %s pods on %s of %s nodes   mem used %s  req %s  lim %s   cpu used %s  req %s  lim %s\n",
+    C("1;32", padr(ns == "(all namespaces)" ? "scope" : "namespace", 10)), M["pods"], M["nodes_hosting"], M["nodes_total"],
+    hsz(nv(M["mem_used"])), hsz(nv(M["mem_req"])), hsz(nv(M["mem_lim"])), hcpu(nv(M["cpu_used"])), hcpu(nv(M["cpu_req"])), hcpu(nv(M["cpu_lim"])) > hdrf
+  x = sprintf("%s nodes  %s pools   alloc mem %s  cpu %s", M["cluster_nodes"], M["pools"], hsz(nv(M["cluster_mem_alloc"])), hcpu(nv(M["cluster_cpu_alloc"])))
+  if (nv(M["cluster_mem_used"]) >= 0) x = x sprintf("   used mem %s (%s)  cpu %s (%s)", hsz(nv(M["cluster_mem_used"])), pp(pct(nv(M["cluster_mem_used"]), nv(M["cluster_mem_alloc"]))), hcpu(nv(M["cluster_cpu_used"])), pp(pct(nv(M["cluster_cpu_used"]), nv(M["cluster_cpu_alloc"]))))
+  printf " %s %s\n", C("1;94", padr("cluster", 10)), x > hdrf
+  if (cl) printf " %s %s pods in %s namespace%s   requested mem %s (%s of cluster)  cpu %s (%s)%s%s\n", C("1;94", padr(part ? (sel ? "selected" : "readable") : "requests", 10)), M["cluster_pods"], M["cluster_namespaces"], (M["cluster_namespaces"] == 1 ? "" : "s"),
+      hsz(nv(M["cluster_mem_req"])), pp(pct(nv(M["cluster_mem_req"]), nv(M["cluster_mem_alloc"]))), hcpu(nv(M["cluster_cpu_req"])), pp(pct(nv(M["cluster_cpu_req"]), nv(M["cluster_cpu_alloc"]))),
+      (sco ? sprintf("   used mem %s  cpu %s (pod metrics)", hsz(nv(M["scope_mem_used"])), hcpu(nv(M["scope_cpu_used"]))) : ""),
+      (part ? C("90", "   (" M["cluster_ns_read"] ")") : "") > hdrf
+  # the comparison that matters with namespace rights: this namespace vs all you can read
+  if (cl && part) printf " %s %s   mem used %s  req %s   cpu used %s  req %s   pods %s\n", C("90", padr("", 10)), C("1", "namespace share of " (sel ? "the selected namespaces" : "all " nread " namespaces you can read") (M["cluster_namespaces"] + 0 < nread ? " (" M["cluster_namespaces"] " with pods)" : "")),
+      fpp(pct(nv(M["mem_used"]), nv(M["scope_mem_used"]))), fpp(pct(nv(M["mem_req"]), nv(M["cluster_mem_req"]))),
+      fpp(pct(nv(M["cpu_used"]), nv(M["scope_cpu_used"]))), fpp(pct(nv(M["cpu_req"]), nv(M["cluster_cpu_req"]))), fpp(pct(M["pods"] + 0, M["cluster_pods"] + 0)) > hdrf
+  printf " %s namespace share of cluster   mem used %s  req %s   cpu used %s  req %s   pool label %s\n", C("90", padr("", 10)),
+    pp(pct(nv(M["mem_used"]), nv(M["cluster_mem_alloc"]))), pp(pct(nv(M["mem_req"]), nv(M["cluster_mem_alloc"]))),
+    pp(pct(nv(M["cpu_used"]), nv(M["cluster_cpu_alloc"]))), pp(pct(nv(M["cpu_req"]), nv(M["cluster_cpu_alloc"]))),
+    (M["pool_key"] == "-" ? "n/a" : M["pool_key"]) > hdrf
+  if (nodestate != "ok") print C("35", " ! node read " nodestate " - pools and allocatable unknown; nodes taken from pod placement (needs get/list nodes)") > hdrf
+  if (!nm_ok) print C("35", " ! node metrics " (topnstate == "off" ? "disabled" : topnstate) " - whole-node usage unavailable (needs nodes.metrics.k8s.io)") > hdrf
+  if (nv(M["cluster_metrics_total"]) > 0 && nv(M["cluster_metrics_nodes"]) > 0 && M["cluster_metrics_nodes"] + 0 < M["cluster_metrics_total"] + 0)
+    print C("94", sprintf(" i node metrics for %d of %d nodes (NotReady / unreachable nodes report none) - cluster and pool \"used\" cover the measured nodes", M["cluster_metrics_nodes"], M["cluster_metrics_total"])) > hdrf
+  if (part && sel) print C("94", " i comparing with the namespaces given by --compare / KDASH_COMPARE_NS (" nread " readable)") (M["scope_no_access"] != "-" && M["scope_no_access"] != "" ? C("35", "   no access, left out: " M["scope_no_access"]) : "") > hdrf
+  else if (part) print C("94", " i namespace rights only - comparing with the " nread " namespace(s) you can read (kubectl auth can-i list pods), not the whole cluster" (sco ? "; usage = their pod metrics" : "")) > hdrf
+  else if (!cl) print C("35", " ! cluster pod read " (M["cluster_state"] == "-" ? "off" : M["cluster_state"]) " and no other namespace readable - right graph: this namespace against its own limits" (M["cluster_state"] == "off" ? " (--no-cluster)" : "")) > hdrf
+  print C("90", rule(HR, LINEW)) > hdrf
+  close(hdrf)
+
+  if (nn == 0) { print C("1;31", " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
+
+  # ---- pool order (sort key), unscheduled last
+  split("", SV); split("", IX); npo = 0
+  for (i = 1; i <= npl; i++) { split(T_row["L", i], g, "\t"); prow[g[1]] = i; if (g[1] == "(none)") continue
+    IX[++npo] = i; SV[i] = skey(g[1], nv(g[6]), nv(g[8]), nv(g[9]), nv(g[12]), 0) }
+  ixsort(npo); for (i = 1; i <= npo; i++) PO[i] = IX[i]
+
+  # ---- graphs: this namespace | whole cluster (or your namespaces), per pool, memory and CPU
+  printf "%s %s %s%s\n", C("1;94", ARW), C("1", cl ? "NAMESPACE vs " (part ? (sel ? "SELECTED NAMESPACES" : "YOUR NAMESPACES") : "CLUSTER") : "NAMESPACE vs ITS LIMITS") C("90", "  share of pool allocatable:  "), \
+    C("32", FILL) C("90", " used   ") C("35", REQ) C("90", " requested, not used   ") C("90", EMPTY " free"),
+    (ZF > 1 ? "   " C("7;1", " zoom x" ZF " ") C("90", " left bars magnified, % values true - Z: true scale") : (zoom ? "" : C("90", "   zoom off - Z: auto zoom"))) > bodyf
+  printf "%s %3s %9s %s %s %s%s\n", padr("POOL [ns nodes/all]", PW), "", "ALLOC", C("90", VB),
+    C("1;32", padr("THIS NAMESPACE  " ns, GW)) " " C("90", sprintf("%14s", "used / req")),
+    " " C("90", VB) " ", (cl ? C("1;94", padr(CLW, GW)) " " C("90", sprintf("%14s", "used / req")) : C("1;94", padr("THIS NAMESPACE vs ITS LIMITS", GW)) " " C("90", sprintf("%14s", "of limit"))) > bodyf
+  nempty = 0; elist = ""; eam = 0; eac = 0
+  for (o = 1; o <= npo; o++) {
+    split(T_row["L", PO[o]], g, "\t")
+    if (!cl && g[2] + 0 == 0) { nempty++; elist = elist (elist == "" ? "" : " ") g[1]; eam += (nv(g[12]) > 0 ? nv(g[12]) : 0); eac += (nv(g[8]) > 0 ? nv(g[8]) : 0); continue }
+    lbl = padr(g[1] " [" g[2] "/" g[3] "]", PW)
+    cmpline(C(g[2] + 0 > 0 ? "1;35" : "90", lbl), "mem", nv(g[12]), nv(g[9]), nv(g[10]), (SCU ? nv(g[22]) : nv(g[13])), nv(g[17]), bodyf, nv(g[11]))
+    cmpline(padr("", PW), "cpu", nv(g[8]), nv(g[6]), nv(g[7]), (SCU ? nv(g[23]) : nv(g[19])), nv(g[16]), bodyf, nv(g[20]))
+  }
+  if (nempty) printf "%s\n", C("90", sprintf("%s %d pool(s) without pods of this namespace (mem %s, cpu %s allocatable): %s", padr("", 1), nempty, hsz(eam), hcpu(eac), elist)) > bodyf
+  print C("90", rule(HR, LINEW)) > bodyf
+  cmpline(C("1", padr("CLUSTER TOTAL", PW)), "mem", nv(M["cluster_mem_alloc"]), nv(M["mem_used"]), nv(M["mem_req"]), (SCU ? nv(M["scope_mem_used"]) : nv(M["cluster_mem_used"])), nv(M["cluster_mem_req"]), bodyf, nv(M["mem_lim"]))
+  cmpline(padr("", PW), "cpu", nv(M["cluster_cpu_alloc"]), nv(M["cpu_used"]), nv(M["cpu_req"]), (SCU ? nv(M["scope_cpu_used"]) : nv(M["cluster_cpu_used"])), nv(M["cluster_cpu_req"]), bodyf, nv(M["cpu_lim"]))
+  print "" > bodyf
+
+  # ---- worker nodes running this namespace, by pool
+  # node bars: without other-namespace data only this namespace is drawn - zoom it too
+  CBZ = 1
+  if (!nm_ok && !cl) { zmx = 0; for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); if (nv(f[16]) > 0 && nv(f[13]) > 0 && nv(f[13]) / nv(f[16]) > zmx) zmx = nv(f[13]) / nv(f[16]) } CBZ = zoomf(zmx) }
+  oleg = nm_ok ? C("94", OTH) " other ns used" : (SCU ? C("94", OTH) " other " (part ? "readable " : "") "ns used" : (cl ? C("35", REQ) " other ns requested" : C("90", "other ns: no RBAC") (CBZ > 1 ? " " C("7;1", " x" CBZ " ") : "")))
+  printf "%s %s\n", C("1;94", ARW), C("1", "WORKER NODES RUNNING THIS NAMESPACE") C("90", "  grouped by pool") > bodyf
+  printf "%-" (NW) "s" " %-9s %11s %s %s %s %s\n", "", "", "", C("90", VB), C("1;94", ctr("CPU millicores", 26)), C("90", VB),
+    C("1;35", ctr("MEMORY GiB", 46)) (BWN > 0 ? " " C("90", VB) " " C("1", ctr("node memory", BWN)) : "") > bodyf
+  printf "%s %-9s %11s %s %6s %6s %6s %5s %s %7s %7s %7s %7s %5s %5s %6s%s\n", padr("POOL [ns nodes/all] / NODE", NW), "STATUS", "PODS ns/all", C("90", VB),
+    "nsUsed", "nsReq", "alloc", "%al", C("90", VB), "nsUsed", "nsReq", "nsLim", "alloc", "%al", "node%", "clReq%",
+    (BWN > 0 ? " " C("90", VB) " " C("32", FILL) " ns " oleg " " C("90", EMPTY " free") : "") > bodyf
+  print C("90", rule(HR, LINEW)) > bodyf
+  nio = readtab("io_nodes.tsv", "J"); for (i = 1; i <= nio; i++) { split(T_row["J", i], f, "\t"); IOD[f[1]] = (f[10] != "-" || f[4] != "-") ? sprintf("   net ns in %s out %s / node in %s out %s", hbn(nv(f[10])), hbn(nv(f[11])), hbn(nv(f[4])), hbn(nv(f[5]))) : "" }
+  for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); PN[f[1]] = PN[f[1]] (PN[f[1]] == "" ? "" : " ") i
+    if (f[5] + 0 == 0 && f[2] != "(unscheduled)") { ZN[++nz] = i } }
+  PO[npo + 1] = prow["(none)"]; npo2 = npo + (("(none)" in prow) ? 1 : 0); firstp = 1
+  for (o = 1; o <= npo2; o++) {
+    split(T_row["L", PO[o]], g, "\t"); if (g[2] + 0 == 0 && g[1] != "(none)") continue
+    n = split(PN[g[1]], mem, " "); split("", SV); split("", IX); m = 0
+    for (j = 1; j <= n; j++) { split(T_row["N", mem[j]], f, "\t"); if (f[5] + 0 == 0 && f[2] != "(unscheduled)") continue
+      IX[++m] = mem[j] + 0; SV[mem[j] + 0] = skey(f[2], nv(f[8]), nv(f[11]), nv(f[13]), nv(f[16]), f[7]) }
+    if (m == 0) continue
+    ixsort(m)
+    if (!firstp) print "" > bodyf; firstp = 0
+    lbl = g[1] " [" g[2] "/" g[3] "]"; if (g[1] == "(none)") lbl = "unscheduled pods"
+    po = (cl ? nv(g[17]) - (nv(g[10]) > 0 ? nv(g[10]) : 0) : -1)
+    nrow(C("1;35", ARW " " padr(lbl, NW - 2)), "", g[4], nv(g[6]), nv(g[7]), nv(g[8]), nv(g[9]), nv(g[10]), nv(g[11]), nv(g[12]), nv(g[13]),
+      g[15], (nm_ok && nv(g[13]) >= 0 ? nv(g[13]) - (nv(g[9]) > 0 ? nv(g[9]) : 0) : (SCU && nv(g[22]) >= 0 ? nv(g[22]) - (nv(g[9]) > 0 ? nv(g[9]) : 0) : po)), ((nm_ok && nv(g[13]) >= 0) || (SCU && nv(g[22]) >= 0) ? "used" : "req"), pct(nv(g[17]), nv(g[12])), bodyf)
+    for (j = 1; j <= m; j++) {
+      split(T_row["N", IX[j]], f, "\t")
+      st = f[3]; if (st ~ /,SchedulingDisabled/) st = "Cordoned"
+      oth = (nv(f[30]) >= 0) ? nv(f[30]) : nv(f[29]); bk = (nv(f[30]) >= 0) ? "used" : "req"
+      nrow(sprintf("  %s", padr(f[2], NW - 2)), st, f[5], nv(f[8]), nv(f[9]), nv(f[11]), nv(f[13]), nv(f[14]), nv(f[15]), nv(f[16]), nv(f[17]), f[25], oth, bk, nv(f[31]), bodyf)
+      if (detail) {
+        x = sprintf("ip %s   podCIDR %s   roles %s   ns-ready %s/%s   ns-restarts %s", f[20], f[21], f[4], f[6], f[5], f[7])
+        if (f[33] != "-" && f[33] != "") x = x sprintf("   namespaces %s", f[33])
+        if (nv(f[27]) >= 0) x = x sprintf("   %s-req mem %s cpu %s", CLS, hsz(nv(f[27])), hcpu(nv(f[26])))
+        if (nv(f[12]) >= 0) x = x sprintf("   node-cpu %s (%.0f%%)", hcpu(nv(f[12])), pct(nv(f[12]), nv(f[11])))
+        if (nv(f[17]) >= 0) x = x sprintf("   node-mem %s of %s", hsz(nv(f[17])), hsz(nv(f[16])))
+        if (f[24] != "-") x = x "   taints " f[24]
+        if (IOD[f[2]] != "") x = x IOD[f[2]]
+        printf "      %s\n", C("90", x) > bodyf
+      }
+    }
+  }
+
+  # ---- every other node, one line each
+  if (nz > 0) {
+    print "" > bodyf
+    if (!allnodes) printf "%s %s\n", C("1;94", ARW), C("90", nz " node(s) run no pods of this namespace - press a to list them") > bodyf
+    else {
+      printf "%s %s\n", C("1;94", ARW), C("1", "OTHER NODES") C("90", "  no pods of this namespace (a hides this list)") > bodyf
+      printf "  %s %-9s %-16s %9s %9s %8s %6s %6s %s\n", padr("NODE", NW - 2), "STATUS", "POOL", "CPU alloc", "MEM alloc", "pods all", "node%", "clReq%", (BWN > 0 ? C("90", VB) " node memory" : "") > bodyf
+      split("", SV); split("", IX)
+      for (k = 1; k <= nz; k++) { split(T_row["N", ZN[k]], f, "\t"); IX[k] = ZN[k]; SV[ZN[k]] = (sortkey == "name") ? f[2] : (nv(f[27]) >= 0 ? nv(f[27]) : nv(f[17])) }
+      ixsort(nz)
+      for (k = 1; k <= nz; k++) {
+        split(T_row["N", IX[k]], f, "\t"); st = f[3]; if (st ~ /,SchedulingDisabled/) st = "Cordoned"
+        oth = (nm_ok && nv(f[30]) >= 0) ? nv(f[30]) : nv(f[29]); bk = (nm_ok && nv(f[30]) >= 0) ? "used" : "req"
+        printf "  %s %s %-16s %9s %9s %8s %s %s %s\n", padr(f[2], NW - 2), vpad(st, 9), clip(f[1], 16), hcpu(nv(f[11])), hsz(nv(f[16])), f[25],
+          fpct(nv(f[19]), 6), fpct(nv(f[31]), 6), (BWN > 0 ? C("90", VB) " " cbar(0, oth, nv(f[16]), BWN, bk) : "") > bodyf
+      }
+    }
+  }
+
+  # ---- namespace by namespace (whole cluster, or the namespaces you can read)
+  if (cl && ncn > 0) {
+    print "" > bodyf
+    printf "%s %s\n", C("1;94", ARW), C("1", part ? (sel ? "SELECTED NAMESPACES" : "YOUR NAMESPACES") : "NAMESPACES") C("90", "  " (sco ? "usage and requests" : "requests") " of each namespace " (part ? (sel ? "compared" : "you can read") : "in the cluster") (part ? "" : " (top 20 by sort key)") (sco ? " - bar: share of the memory used by all of them" : " - bar: share of cluster memory")) > bodyf
+    printf "  %-34s %9s %5s %5s %9s %9s %9s %9s %9s %7s %7s %s\n", "NAMESPACE", "PODS rdy", "WKLD", "NODES", "CPU used", "CPU req", "MEM used", "MEM req", "MEM lim", "%used", "%clMem", C("90", VB) (sco ? " share of memory used" : " share of cluster memory") > bodyf
+    split("", SV); split("", IX)
+    for (k = 1; k <= ncn; k++) { split(T_row["Z", k], f, "\t"); IX[k] = k
+      SV[k] = (sortkey == "name") ? f[1] : (sortkey == "cpu") ? (sco ? nv(f[10]) : nv(f[4])) : (sortkey == "cpupct") ? nv(f[4]) : (sortkey == "restarts") ? f[2] + 0 : (sortkey == "mem" && sco) ? nv(f[11]) : nv(f[5]) }
+    ixsort(ncn); lim = part ? ncn : (ncn > 20 ? 20 : ncn)
+    for (k = 1; k <= lim; k++) {
+      split(T_row["Z", IX[k]], f, "\t"); me = (f[1] == ns)
+      printf "  %s %s %5s %5s %9s %9s %9s %9s %9s %s %s %s %s\n", (me ? C("1;32", sprintf("%-34s", clip(ARW " " f[1], 34))) : sprintf("%-34s", clip(f[1], 34))),
+        C(f[7] + 0 < f[2] + 0 ? "35" : "0", sprintf("%9s", f[7] "/" f[2])), f[8], f[3], hcpu(nv(f[10])), hcpu(nv(f[4])), hsz(nv(f[11])), hsz(nv(f[5])), hsz(nv(f[6])),
+        fpct(nv(f[12]), 7), fpct(nv(f[9]), 7), C("90", VB),
+        (sco ? gbar(nv(f[11]), -1, nv(M["scope_mem_used"]), 30, me ? "32" : "94") : gbar(-1, nv(f[5]), nv(M["cluster_mem_alloc"]), 30, "32")) > bodyf
+    }
+    if (ncn > lim) printf "  %s\n", C("90", (ncn - lim) " more namespace(s) - CSV / HTML report lists all (cluster_ns table)") > bodyf
+  }
+  close(bodyf)
+  print C("90", rule(HR, LINEW)) > ftrf
+  nrow(C("1", padr("NAMESPACE (" M["nodes_hosting"] " nodes)", NW)), "", M["pods"],
+       nv(M["cpu_used"]), nv(M["cpu_req"]), nv(M["hosting_cpu_alloc"]), nv(M["mem_used"]), nv(M["mem_req"]), nv(M["mem_lim"]),
+       nv(M["hosting_mem_alloc"]), nv(M["hosting_mem_used"]), "", -1, "used", -1, ftrf)
+  printf " %s nsUsed/nsReq/nsLim = this namespace.  alloc = allocatable.  %%al = namespace share.  node%% = whole node used.  clReq%% = requested by %s.\n",
+         C("90", "legend"), (part ? "the namespaces you can read" : "all namespaces") > ftrf
+  close(ftrf)
+}
+'
+
+#---- 3 WORKLOADS ------------------------------------------------------------------
+VIEW_WL='
+function hm2(mi) { return (mi < 0) ? "-" : hmem(mi) }
+END {
+  sparkload()
+  LINEW = W; if (LINEW > 220) LINEW = 220
+  nw = readtab("workloads.tsv", "Y"); np = readtab("pods.tsv", "P"); nn = readtab("nodes.tsv", "N")
+  header("WORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes", LINEW)
+  printf " %s %s   pods %s (%s ready)   %s degraded  %s rolling out  %s HA risk  %s skewed  %s unscheduled\n", C("1", "workloads " M["workloads"] ":"),
+    (M["workload_kinds"] == "-" ? "" : M["workload_kinds"]), M["pods"], M["pods_healthy"],
+    C(M["workloads_degraded"] > 0 ? "1;31" : "32", M["workloads_degraded"] + 0), C(M["workloads_rolling"] > 0 ? "35" : "32", M["workloads_rolling"] + 0),
+    C(M["ha_risk"] > 0 ? "1;31" : "32", M["ha_risk"] + 0), C(M["skewed"] > 0 ? "35" : "32", M["skewed"] + 0), C(M["unscheduled_workloads"] > 0 ? "1;31" : "32", M["unscheduled_workloads"] + 0) > hdrf
+  if (M["workload_state"] != "ok") print C("35", " ! workload read " M["workload_state"] " - desired replicas and rollout unknown, workloads derived from pod owners (needs get deployments / statefulsets / daemonsets)") > hdrf
+  print C("90", rule(HR, LINEW)) > hdrf
+  close(hdrf)
+  if (nw == 0) { print C("1;31", " no workloads or pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
+
+  # pods of each workload
+  for (r = 1; r <= np; r++) { split(T_row["P", r], f, "\t"); g = f[12] "\034" f[13]; WP[g] = WP[g] (WP[g] == "" ? "" : " ") r
+    PSV[r] = skey(f[1], nv(f[14]), nv(f[16]), nv(f[17]), nv(f[19]), f[6]) }
+  WN = 24; for (i = 1; i <= nw; i++) { split(T_row["Y", i], f, "\t"); if (length(f[2]) > WN) WN = length(f[2]) }
+  PWN = 30; for (r = 1; r <= np; r++) { split(T_row["P", r], f, "\t"); if (length(f[1]) > PWN) PWN = length(f[1]) }
+  FIXW = 2 + 11 + 1 + 1 + 7 + 1 + 4 + 1 + 5 + 1 + 5 + 1 + 15 + 1 + 26 + 1 + 4 + 1 + 18
+  if (WN > LINEW - FIXW) WN = LINEW - FIXW; if (WN < 20) WN = 20; if (WN > 60) WN = 60
+  if (PWN > LINEW - 6 - 3 - 19 - 6 - 29 - 40) PWN = LINEW - 6 - 3 - 19 - 6 - 29 - 40; if (PWN < 24) PWN = 24; if (PWN > 70) PWN = 70
+  split("", SV); split("", IX)
+  for (i = 1; i <= nw; i++) { split(T_row["Y", i], f, "\t"); IX[i] = i; SV[i] = skey(f[2], nv(f[9]), nv(f[19]), nv(f[10]), nv(f[12]), f[20]) }
+  ixsort(nw); for (i = 1; i <= nw; i++) WO[i] = IX[i]
+
+  printf "%s %s\n", C("1;94", ARW), C("1", "WORKLOADS") C("90", "   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec") > bodyf
+  printf "  %-11s %-" (WN) "s" " %7s %4s %5s %5s %15s %26s %4s %s\n", "KIND", "WORKLOAD", "READY", "UPD", "PODS", "NODES", "CPU used / req", "MEM used / req / lim", "RST", "STATUS" > bodyf
+  for (o = 1; o <= nw; o++) {
+    split(T_row["Y", WO[o]], f, "\t")
+    des = f[14]; rd = (des != "-" && f[1] != "CronJob") ? f[15] "/" des : f[4] "/" f[3]
+    split(rd, q, "/"); rok = (q[1] + 0 >= q[2] + 0)
+    printf "  %-11s %s %s %4s %5s %5s %15s %26s %s %s\n", clip(f[1], 11), C("1", sprintf("%-" (WN) "s" "", clip(f[2], WN))),
+      C(rok ? "32" : "1;31", sprintf("%7s", rd)), (f[16] == "-" ? "-" : f[16]), f[3], f[6],
+      sprintf("%6s / %-6s", hcpu(nv(f[9])), hcpu(nv(f[19]))), sprintf("%7s / %7s / %-7s", hm2(nv(f[10])), hm2(nv(f[11])), hm2(nv(f[12]))),
+      C(f[20] + 0 > 0 ? "35" : "90", sprintf("%4s", f[20])), vrd(f[8]) (f[18] != "-" && f[18] != "complete" ? C("90", "  rollout " f[18]) : "") > bodyf
+    if (!detail) continue
+    if (("@W:" f[1] "/" f[2]) in SPC) { SPW = 16
+      printf "      %s%s\n", C("90", TEE), C("90", "cpu ") C("32", spk(SPC["@W:" f[1] "/" f[2]])) C("90", "  mem ") C("94", spk(SPM["@W:" f[1] "/" f[2]])) C("90", "  last " (SPN["@W:" f[1] "/" f[2]]) " samples, sum of its pods") > bodyf }
+    g = f[1] "\034" f[2]; n = split(WP[g], mem, " ")
+    split("", SV); split("", IX); for (j = 1; j <= n; j++) { IX[j] = mem[j] + 0; SV[mem[j] + 0] = PSV[mem[j] + 0] }
+    ixsort(n)
+    for (j = 1; j <= n; j++) {
+      split(T_row["P", IX[j]], p, "\t"); split(p[5], rr, "/")
+      okp = (rr[1] == rr[2] && p[4] == "Running") || p[4] ~ /Succeeded|Completed/
+      printf "      %s%s %s %s %s cpu %6s  mem %7s  rst %s  %s\n", C("90", (j == n && f[21] == "-" && f[22] == "-") ? ELL : TEE),
+        C(okp ? "0" : "1;31", sprintf("%-" (PWN) "s" "", clip(p[1], PWN))), vpad(p[4], 18), C(okp ? "32" : "1;31", sprintf("%5s", p[5])),
+        sprintf("%-28s", clip(p[7], 28)), hcpu(nv(p[14])), hm2(nv(p[17])), C(p[6] + 0 > 0 ? "35" : "90", p[6]), C("90", p[9]) > bodyf
+    }
+    if (n == 0) printf "      %s%s\n", C("90", (f[21] == "-" && f[22] == "-") ? ELL : TEE), C("90", "no pods" (filt != ".*" ? " matching \"" filt "\"" : "")) > bodyf
+    if (f[22] != "-") printf "      %s%s\n", C("90", (f[21] == "-") ? ELL : TEE), C("90", "schedule " f[22] "   last run " f[23]) > bodyf
+    if (f[21] != "-") printf "      %s%s\n", C("90", ELL), C("90", "image " f[21]) > bodyf
+  }
+
+  # ---- matrix: pods of each workload on each worker node
+  print "" > bodyf
+  nh = 0; for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); if (f[5] + 0 > 0) { HN[++nh] = f[2]; HP[f[2]] = f[1]; HC[f[2]] = f[5] } }
+  CW = 4; maxc = int((LINEW - 2 - 11 - 1 - WN - 2 - 20) / CW); if (maxc < 1) maxc = 1; shown = (nh > maxc) ? maxc : nh
+  printf "%s %s\n", C("1;94", ARW), C("1", "SPREAD OVER WORKER NODES") C("90", "   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node") > bodyf
+  x = sprintf("  %-11s %-" (WN) "s" " ", "KIND", "WORKLOAD"); for (c = 1; c <= shown; c++) x = x sprintf("%" (CW) "s" "", "N" c); print x "  VERDICT" > bodyf
+  for (i = 1; i <= np; i++) { split(T_row["P", i], f, "\t"); MX[f[12] "\034" f[13] "\034" f[7]]++ }
+  for (o = 1; o <= nw; o++) {
+    split(T_row["Y", WO[o]], f, "\t"); g = f[1] "\034" f[2]; x = sprintf("  %-11s %-" (WN) "s" " ", clip(f[1], 11), clip(f[2], WN))
+    for (c = 1; c <= shown; c++) { v = MX[g "\034" HN[c]] + 0; x = x (v ? C(v >= 2 && f[1] != "DaemonSet" && f[6] + 0 == 1 ? "1;31" : "1", sprintf("%" (CW) "s" "", v)) : C("90", sprintf("%" (CW) "s" "", "."))) }
+    print x "  " vrd(f[8]) > bodyf
+  }
+  x = sprintf("  %-11s %-" (WN) "s" " ", "", "pods on node"); for (c = 1; c <= shown; c++) x = x C("1;94", sprintf("%" (CW) "s" "", HC[HN[c]])); print x > bodyf
+  if (nh > shown) printf "  %s\n", C("35", (nh - shown) " more node(s) not shown - widen the terminal or use the HTML report") > bodyf
+  for (c = 1; c <= nh; c++) printf "  %s %s %s\n", C("1;94", sprintf("%-4s", "N" c)), sprintf("%-40s", HN[c]), C("90", "pool " HP[HN[c]] "   pods " HC[HN[c]]) > bodyf
+  close(bodyf)
+  print C("90", rule(HR, LINEW)) > ftrf
+  printf " %s DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hide pods.\n", C("90", "legend") > ftrf
+  close(ftrf)
+}
+'
+
+#---- 4 IP POOL --------------------------------------------------------------------
+VIEW_IP='
+END {
+  LINEW = W; if (LINEW > 200) LINEW = 200
+  header("IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses", LINEW)
+  printf " %s %s %s   %s %s   %s %s   %s %s   %s %s\n", C("90", "pod IPs"), C("1", M["pod_ips"]), C("90", "in use"),
+    C("90", "no IP"), (M["no_ip"] > 0 ? C("35", M["no_ip"]) : M["no_ip"]), C("90", "host-network"), M["host_network"],
+    C("90", "duplicate"), (M["duplicate_ip_pods"] > 0 ? C("1;31", M["duplicate_ip_pods"]) : C("32", "0")), C("90", "subnets"), M["subnets"] > hdrf
+  printf " %s %s   %s %s   %s %s   %s %s   %s %s   %s %s\n", C("90", "services"), M["services"], C("90", "ClusterIP"), M["cluster_ips"],
+    C("90", "headless"), M["headless"], C("90", "NodePort"), M["nodeports"], C("90", "LoadBalancer"), M["loadbalancers"],
+    C("90", "external addresses"), M["external_addressed"] > hdrf
+  if (svcstate != "ok") print C("35", " ! services read " svcstate) > hdrf
+  if (nodestate != "ok") print C("35", " ! node read " nodestate " - node IPs and podCIDR unknown; IP blocks inferred from pod IPs") > hdrf
+  print C("90", rule(HR, LINEW)) > hdrf
+  close(hdrf)
+  nsn = readtab("subnets.tsv", "S"); nb = readtab("ipblocks.tsv", "B"); nsv = readtab("services.tsv", "V"); nip = readtab("ip.tsv", "I")
+  if (nip == 0) { print C("1;31", " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
+
+  sect("POD SUBNETS (observed, /24)", LINEW)
+  printf "  %-20s %6s  %s\n", "SUBNET", "PODS", "NODES" > bodyf
+  for (i = 1; i <= nsn; i++) { split(T_row["S", i], f, "\t"); printf "  %-20s %6s  %s\n", f[1], f[2], C("90", f[3]) > bodyf }
+  print "" > bodyf
+  sect("NODE IP BLOCKS (per worker node)", LINEW)
+  NW = 30
+  printf "  %-" (NW) "s" " %-14s %-16s %-18s %6s %5s %5s %s  %s\n", "NODE", "POOL", "NODE IP", "POD CIDR", "CIDR#", "NSIPS", "HOST", sprintf("%-10s", "CIDR USE"), "IP BLOCKS (observed /26)" > bodyf
+  for (i = 1; i <= nb; i++) { split(T_row["B", i], f, "\t")
+    printf "  %-" (NW) "s" " %-14s %-16s %-18s %6s %5s %5s %s  %s\n", clip(f[1], NW), clip(f[2], 14), clip(f[3], 16), clip(f[4], 18), f[5], f[6], f[7],
+      mkbar(pct(nv(f[6]), nv(f[5])), 10), C("94", f[8]) > bodyf }
+  print "" > bodyf
+  sect("SERVICES", LINEW)
+  SW = 36
+  printf "  %-" (SW) "s" " %-22s %-16s %-24s %s\n", "SERVICE", "TYPE", "CLUSTER IP", "EXTERNAL / LB", "PORTS" > bodyf
+  for (i = 1; i <= nsv; i++) { split(T_row["V", i], f, "\t")
+    ext = (f[5] != "-") ? f[5] : ""; if (f[6] != "-") ext = ext (ext == "" ? "" : " ") f[6]; if (ext == "") ext = "-"
+    printf "  %-" (SW) "s" " %-22s %-16s %s %s\n", clip((allns ? f[1] "/" : "") f[2], SW), clip(f[3], 22), clip(f[4], 16),
+      (ext != "-" ? C("1;35", sprintf("%-24s", clip(ext, 24))) : sprintf("%-24s", "-")), C("90", f[7]) > bodyf }
+  if (nsv == 0) printf "  %s\n", C("90", "no services") > bodyf
+  print "" > bodyf
+  sect("POD IP ASSIGNMENTS", LINEW)
+  PW = 44
+  printf "  %-16s %-" (PW) "s" " %-26s %-16s %-28s %s\n", "POD IP", "POD", "NODE", "HOST IP", "WORKLOAD", "NOTE" > bodyf
+  for (i = 1; i <= nip; i++) { split(T_row["I", i], f, "\t")
+    printf "  %-16s %-" (PW) "s" " %-26s %-16s %-28s %s\n", f[2], clip(f[1], PW), clip(f[3], 26), clip(f[5], 16), clip(f[7], 28),
+      (f[9] != "-" ? vrd(f[9]) : (f[8] != "Running" ? vrd(f[8]) : "")) > bodyf }
+  close(bodyf)
+  print C("90", rule(HR, LINEW)) > ftrf
+  printf " %s IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the node IP.  DUPLICATE = same IP on 2+ pods.\n", C("90", "legend") > ftrf
+  close(ftrf)
+}
+'
+
+#---- 5 MEMORY ---------------------------------------------------------------------
+VIEW_MEM='
+END {
+  # the memory dashboard sorts by memory: cpu -> mem, cpupct -> mempct
+  if (sortkey == "cpu") sortkey = "mem"; if (sortkey == "cpupct") sortkey = "mempct"
+  LINEW = W; if (LINEW > 200) LINEW = 200
+  # history: namespace totals and per-node namespace usage
+  while ((getline ln < histf) > 0) { split(ln, a, "\t"); hm = hm (hm == "" ? "" : " ") a[2]; hc = hc (hc == "" ? "" : " ") a[3]; hn++; hlast = a[2] }
+  close(histf)
+  while ((getline ln < nhistf) > 0) { split(ln, a, "\t"); NH[a[2]] = NH[a[2]] (NH[a[2]] == "" ? "" : " ") nv(a[3]); NHN[a[2]] = NHN[a[2]] (NHN[a[2]] == "" ? "" : " ") nv(a[4]) }
+  close(nhistf)
+  mu = nv(M["mem_used"]); mr = nv(M["mem_req"]); ml = nv(M["mem_lim"]); cu = nv(M["cpu_used"]); cr = nv(M["cpu_req"]); cl = nv(M["cpu_lim"])
+  SPW = LINEW - 60; if (SPW > 60) SPW = 60; if (SPW < 10) SPW = 10
+  header("MEMORY   live namespace memory dashboard", LINEW)
+  printf " %s used %s  req %s  lim %s   used/req %s  used/lim %s  %s\n", C("1", "MEMORY"), C("1;94", sprintf("%8s", hmem(mu))),
+    sprintf("%8s", hmem(mr)), sprintf("%8s", hmem(ml)), fpp(pct(mu, mr)), fpp(pct(mu, ml)), mkbar(pct(mu, ml), 24) > hdrf
+  # time charts: session samples (ns.tsv) since kdash started, else the poll history
+  nmh = tsload(sesf, 8, 0); src = "session"; if (nmh < 2) { nmh = tsload(histf, 2, 0); src = "poll" }
+  twindow(nmh > 0 ? TC_T[1] : now); first_ = (nmh > 0) ? TC_T[1] : now
+  for (i = 1; i <= nmh; i++) if (TC_T[i] >= TW0) wn_++
+  printf " %s %s %s %s %s   %s   %s   %s\n", C("90", "window"), C("1", tday(TW0)), C("90", "->"), C("1", thms(now)), C("90", tzlabel()),
+    tdur(now - TW0) C("90", ", " twinlabel()), C("90", "samples ") (wn_ + 0) C("90", (src == "session") ? " every " smp "s" : " (polls)"),
+    C("90", "z: 15m 1h 6h 24h all") > hdrf
+  printf " %s used %s  req %s  lim %s   used/req %s  used/lim %s  %s\n", C("1", "CPU   "), C("1;94", sprintf("%8s", hcpu(cu))),
+    sprintf("%8s", hcpu(cr)), sprintf("%8s", hcpu(cl)), fpp(pct(cu, cr)), fpp(pct(cu, cl)), C("94", spark(hc, 24)) > hdrf
+  printf " %s %s   %s %s   %s %s   %s %s   %s %s\n", C("90", "risk  >=90% of limit"), (M["pods_mem_ge90_limit"] > 0 ? C("1;31", M["pods_mem_ge90_limit"]) : C("32", "0")),
+    C("90", "no limit"), (M["pods_no_mem_limit"] > 0 ? C("35", M["pods_no_mem_limit"]) : C("32", "0")),
+    C("90", "over request"), M["pods_over_mem_request"], C("90", "OOMKilled before"), (M["pods_oomkilled"] > 0 ? C("1;31", M["pods_oomkilled"]) : C("32", "0")),
+    C("90", "restarts"), M["restarts"] > hdrf
+  if (topnstate != "ok") print C("35", " ! node metrics " (topnstate == "off" ? "disabled" : topnstate) " - node bars show this namespace vs allocatable only") > hdrf
+  print C("90", rule(HR, LINEW)) > hdrf
+  close(hdrf)
+
+  nn = readtab("nodes.tsv", "N"); nm = readtab("memory.tsv", "R"); nw = readtab("workloads.tsv", "Y")
+  if (nm == 0) { print C("1;31", " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
+  evload(evf, TW0)
+  sect("TIMELINE  " tday(TW0) " -> " thms(now) " " tzname "  (" twinlabel() ", host clock)", LINEW)
+  CW = (LINEW >= 130) ? int((LINEW - 2 - 4) / 2) : LINEW - 2; if (CW > 110) CW = 110
+  n = tsload(sesf, 8, TW0); if (n < 2) n = tsload(histf, 2, TW0); n = tsnow(n, M["mem_used"])
+  tchart("m", "MEMORY used - namespace", n, TW0, now, CW, 8, mr, ml, "mem", "94")
+  n = tsload(sesf, 5, TW0); if (n < 2) n = tsload(histf, 3, TW0); n = tsnow(n, M["cpu_used"])
+  tchart("c", "CPU used - namespace", n, TW0, now, CW, 8, cr, cl, "cpu", "94")
+  if (LINEW >= 130) tshow("m", "c"); else { tshow("m", ""); print "" > bodyf; tshow("c", "") }
+  evlist(8)
+  print "" > bodyf
+  heatmap(LINEW)
+  print "" > bodyf
+  NW = 28; BWM = LINEW - NW - 14 - 8 - 8 - 6 - 6 - 22 - 8; if (BWM > 36) BWM = 36; if (BWM < 10) BWM = 10
+  sect("MEMORY BY WORKER NODE", LINEW)
+  printf "  %-" (NW) "s" " %-12s %8s %8s %5s %5s  %-" (BWM) "s" "  %s\n", "NODE", "POOL", "NS USED", "ALLOC", "NS%", "NODE%", "node memory", "ns trend" > bodyf
+  # worker nodes in sort-key order (memory view: cpu -> mem, cpupct -> mempct)
+  split("", SV); split("", IX); m_ = 0
+  for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); if (f[2] == "(unscheduled)" || f[5] + 0 == 0) continue
+    IX[++m_] = i; SV[i] = skey(f[2], nv(f[8]), nv(f[10]), nv(f[13]), nv(f[15]), f[7]) }
+  ixsort(m_)
+  for (j_ = 1; j_ <= m_; j_++) { i = IX[j_]; split(T_row["N", i], f, "\t"); u = nv(f[13]); a_ = nv(f[16]); nu = nv(f[17])
+    printf "  %-" (NW) "s" " %-12s %8s %8s %s %s  %s  %s\n", clip(f[2], NW), clip(f[1], 12), hmem(u), hmem(a_), fpct(pct(u, a_)), fpct(pct(nu, a_)),
+      cbar(u, (nv(f[30]) >= 0) ? nv(f[30]) : nv(f[29]), a_, BWM, (nv(f[30]) >= 0) ? "used" : "req"), C("94", spark(NH[f[2]], 20)) > bodyf }
+  print "" > bodyf
+  sect("PODS BY " toupper(sortkey == "mempct" ? "% of memory limit" : (sortkey == "mem" ? "memory used" : sortkey)) (nm > topn ? "  (top " topn ", --top N)" : ""), LINEW)
+  PW = 24; for (i = 1; i <= nm; i++) { split(T_row["R", i], f, "\t"); if (length(f[1]) > PW) PW = length(f[1]) }
+  x = LINEW - 26 - 9 - 9 - 9 - 6 - 6 - 10 - 4 - 18 - 4; if (PW > x) PW = x; if (PW > 64) PW = 64; if (PW < 24) PW = 24
+  split("", SV); split("", IX); for (i = 1; i <= nm; i++) { split(T_row["R", i], f, "\t"); IX[i] = i; SV[i] = skey(f[1], -1, -1, nv(f[6]), nv(f[8]), f[11]) }
+  ixsort(nm)
+  printf "  %-" (PW) "s" " %-26s %8s %8s %8s %5s %5s %-8s %3s  %s\n", "POD", "NODE", "USED", "REQ", "LIM", "%REQ", "%LIM", "MEM/LIM", "RST", "RISK" > bodyf
+  for (i = 1; i <= nm && i <= topn; i++) { split(T_row["R", IX[i]], f, "\t")
+    printf "  %-" (PW) "s" " %-26s %8s %8s %8s %s %s %s %s  %s\n", clip(f[1], PW), clip(f[2], 26), hmem(nv(f[6])), hmem(nv(f[7])), hmem(nv(f[8])),
+      fpct(nv(f[9])), fpct(nv(f[10])), mkbar(nv(f[10]), 8), C(f[11] + 0 > 0 ? "35" : "90", sprintf("%3s", f[11])), (f[13] != "-" ? vrd(f[13]) : "") > bodyf }
+  print "" > bodyf
+  sect("OOM RISK  (>= 90% of memory limit)", LINEW); c = 0
+  for (i = 1; i <= nm; i++) { split(T_row["R", i], f, "\t"); if (f[13] ~ /OOM_RISK/) { c++; printf "  %s  %s on %s   %s of %s limit (%s%%)\n", C("1;31", "!"), f[1], f[2], hmem(nv(f[6])), hmem(nv(f[8])), f[10] > bodyf } }
+  if (!c) printf "  %s\n", C("32", "none") > bodyf
+  print "" > bodyf
+  forecast(LINEW, PW)
+  print "" > bodyf
+  sect("RECENT OOMKilled  (last container termination)", LINEW); c = 0
+  for (i = 1; i <= nm; i++) { split(T_row["R", i], f, "\t"); if (f[12] == "OOMKilled") { c++; printf "  %s  %s on %s   restarts %s   now %s / limit %s\n", C("1;31", "x"), f[1], f[2], f[11], hmem(nv(f[6])), hmem(nv(f[8])) > bodyf } }
+  if (!c) printf "  %s\n", C("32", "none") > bodyf
+  print "" > bodyf
+  sect("NO MEMORY LIMIT  (unbounded containers)", LINEW); c = 0; s = ""
+  for (i = 1; i <= nm; i++) { split(T_row["R", i], f, "\t"); if (f[13] ~ /NO_LIMIT/) { c++
+      if (length(s) + length(f[1]) + 2 > LINEW - 6) { printf "  %s\n", C("35", s) > bodyf; s = "" }
+      s = s (s == "" ? "" : "  ") f[1] } }
+  if (s != "") printf "  %s\n", C("35", s) > bodyf
+  if (!c) printf "  %s\n", C("32", "none") > bodyf
+  print "" > bodyf
+  sect("MEMORY BY WORKLOAD", LINEW)
+  WW = PW + 14
+  printf "  %-11s %-" (WW - 12) "s" " %5s %8s %8s %8s %5s %-8s\n", "KIND", "WORKLOAD", "PODS", "USED", "REQ", "LIM", "%LIM", "MEM/LIM" > bodyf
+  split("", SV); split("", IX); for (i = 1; i <= nw; i++) { split(T_row["Y", i], f, "\t"); IX[i] = i; SV[i] = skey(f[2], -1, -1, nv(f[10]), nv(f[12]), f[20]) }
+  ixsort(nw)
+  for (i = 1; i <= nw && i <= topn; i++) { split(T_row["Y", IX[i]], f, "\t")
+    printf "  %-11s %-" (WW - 12) "s" " %5s %8s %8s %8s %s %s\n", clip(f[1], 11), clip(f[2], WW - 12), f[3], hmem(nv(f[10])), hmem(nv(f[11])), hmem(nv(f[12])),
+      fpct(pct(nv(f[10]), nv(f[12]))), mkbar(pct(nv(f[10]), nv(f[12])), 8) > bodyf }
+  close(bodyf)
+  print C("90", rule(HR, LINEW)) > ftrf
+  printf " %s node bar: %s this namespace  %s other ns used  %s other ns requested  %s free allocatable.  trend: last %s polls.  metrics refresh about every 15 s.\n",
+    C("90", "legend"), C("32", FILL), C("94", OTH), C("35", REQ), C("90", EMPTY), hn > ftrf
+  close(ftrf)
+}
+'
+
+#---- 6 NETWORK & DISK IO ------------------------------------------------------------
+VIEW_IO='
+function hb(v) { if (v < 0) return "-"; if (v >= 1024000000) return sprintf("%.1fG", v / 1073741824); if (v >= 1024000) return sprintf("%.1fM", v / 1048576); if (v >= 1000) return sprintf("%.1fK", v / 1024); return sprintf("%dB", v + 0.5) }
+function hio(v) { return v < 0 ? "-" : (v >= 1000 ? sprintf("%.1fk", v / 1000) : sprintf("%.0f", v)) }
+function sum2(a, b) { return (a < 0 && b < 0) ? -1 : (a > 0 ? a : 0) + (b > 0 ? b : 0) }
+END {
+  LINEW = W; if (LINEW > 200) LINEW = 200
+  st = M["io_state"]; okd = (st == "prom-url" || st == "prom-svc" || st == "kubelet")
+  # the IO view sorts by traffic: cpu -> network in+out, mem -> disk read+write, cpupct -> in, mempct -> out, restarts -> IOPS
+  header("NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod", LINEW)
+  if (okd) printf " %s %s   %s\n", C("90", "source"), M["io_source"], C("90", "sampled every " M["io_every"] "s, last " M["io_age"] "s ago, rates between the last two samples") > hdrf
+  else if (st == "warming-up") printf " %s %s   %s\n", C("90", "source"), M["io_source"], C("35", "first rates after the second sample (about " M["io_every"] "s)") > hdrf
+  else if (st == "not-sampled") print C("35", " ! IO is sampled in live mode (or with --io-wait SEC in one-shot modes) - rates need two samples") > hdrf
+  else if (st == "off") print C("90", " IO collection disabled (--no-io / KDASH_IO=0)") > hdrf
+  else {
+    print C("35", " ! no IO source readable with your rights - metrics-server only has CPU and memory") > hdrf
+    if (M["io_reason"] != "-") print C("90", "   tried: " M["io_reason"]) > hdrf
+    print C("90", "   to enable: --prom-url http://<prometheus>:9090 (curl from this host)  |  --prom-svc [ns/]<prometheus-service>:<port> (needs services/proxy)  |  nodes/proxy (kubelet)") > hdrf
+  }
+  if (okd || st == "warming-up")
+    printf " %s in %s/s  out %s/s   disk read %s/s  write %s/s   IOPS read %s  write %s   %s\n", C("1;32", padr("namespace", 10)),
+      hb(nv(M["ns_net_rx"])), hb(nv(M["ns_net_tx"])), hb(nv(M["ns_disk_r"])), hb(nv(M["ns_disk_w"])), hio(nv(M["ns_riops"])), hio(nv(M["ns_wiops"])),
+      C("94", spark(IOH, 40)) > hdrf
+  print C("90", rule(HR, LINEW)) > hdrf
+  close(hdrf)
+  nio = readtab("io_nodes.tsv", "I"); nip = readtab("io_pods.tsv", "Q")
+  if (!okd) { print C("90", " nothing to show yet") > bodyf; close(bodyf); print C("90", rule(HR, LINEW)) > ftrf; close(ftrf); exit }
+
+  # ---- time charts (host clock): namespace network in / out, disk read / write
+  n = tsload(sesf, 25, 0); if (n < 2) n = tsload(iohistf, 2, 0)
+  twindow(n > 0 ? TC_T[1] : now); evload(evf, TW0)
+  sect("TIMELINE  " tday(TW0) " -> " thms(now) " " tzname "  (" twinlabel() ", host clock, z cycles)", LINEW)
+  CW = (LINEW >= 130) ? int((LINEW - 2 - 4) / 2) : LINEW - 2; if (CW > 110) CW = 110
+  n = tsload(sesf, 25, TW0); if (n < 2) n = tsload(iohistf, 2, TW0); n = tsnow(n, M["ns_net_rx"])
+  tchart("i", "NETWORK in (ingress) - namespace", n, TW0, now, CW, 6, -1, -1, "B", "32")
+  n = tsload(sesf, 26, TW0); if (n < 2) n = tsload(iohistf, 3, TW0); n = tsnow(n, M["ns_net_tx"])
+  tchart("o", "NETWORK out (egress) - namespace", n, TW0, now, CW, 6, -1, -1, "B", "94")
+  if (LINEW >= 130) tshow("i", "o"); else { tshow("i", ""); tshow("o", "") }
+  n = tsload(sesf, 27, TW0); n = tsnow(n, M["ns_disk_r"])
+  tchart("r", "DISK read - namespace", n, TW0, now, CW, 4, -1, -1, "B", "32")
+  n = tsload(sesf, 28, TW0); n = tsnow(n, M["ns_disk_w"])
+  tchart("w", "DISK write - namespace", n, TW0, now, CW, 4, -1, -1, "B", "35")
+  if (LINEW >= 130) tshow("r", "w"); else { tshow("r", ""); tshow("w", "") }
+  print "" > bodyf
+
+  # ---- worker nodes: whole node and this namespace on it
+  NW = 24; for (i = 1; i <= nio; i++) { split(T_row["I", i], f, "\t"); if (length(f[1]) > NW) NW = length(f[1]) } if (NW > 44) NW = 44
+  printf "%s %s\n", C("1;94", ARW), C("1", "WORKER NODES") C("90", "   whole node (all namespaces) and this namespace on it, bytes per second") > bodyf
+  printf "  %-" (NW) "s" " %-14s %4s %s %8s %8s %8s %8s %6s %6s %s %8s %8s %6s %s\n", "NODE", "POOL", "PODS", C("90", VB), "node in", "node out", "disk rd", "disk wr", "r-IOPS", "w-IOPS", C("90", VB), "ns in", "ns out", "ns%", C("90", VB) " ns share of node traffic" > bodyf
+  split("", SV); split("", IX)
+  for (i = 1; i <= nio; i++) { split(T_row["I", i], f, "\t"); IX[i] = i
+    SV[i] = (sortkey == "name") ? f[1] : (sortkey == "mem") ? sum2(nv(f[6]), nv(f[7])) : (sortkey == "cpupct") ? nv(f[4]) : (sortkey == "mempct") ? nv(f[5]) : (sortkey == "restarts") ? sum2(nv(f[8]), nv(f[9])) : sum2(nv(f[4]), nv(f[5])) }
+  ixsort(nio)
+  for (i = 1; i <= nio; i++) { split(T_row["I", IX[i]], f, "\t")
+    tot = sum2(nv(f[4]), nv(f[5])); nst = sum2(nv(f[10]), nv(f[11]))
+    printf "  %-" (NW) "s" " %-14s %4s %s %8s %8s %8s %8s %6s %6s %s %8s %8s %s %s %s\n", clip(f[1], NW), clip(f[2], 14), f[3], C("90", VB),
+      hb(nv(f[4])), hb(nv(f[5])), hb(nv(f[6])), hb(nv(f[7])), hio(nv(f[8])), hio(nv(f[9])), C("90", VB),
+      hb(nv(f[10])), hb(nv(f[11])), fpct(pct(nst, tot), 6), C("90", VB), cbar(nst, tot - (nst > 0 ? nst : 0), tot, 24, "used") > bodyf }
+  if (nio == 0) print C("90", "  no node-level series") > bodyf
+
+  # ---- pods
+  print "" > bodyf
+  PWD_ = 30; for (i = 1; i <= nip; i++) { split(T_row["Q", i], f, "\t"); if (length(f[1]) > PWD_) PWD_ = length(f[1]) }
+  x = LINEW - 2 - 28 - 9 * 4 - 7 * 2 - 30; if (PWD_ > x) PWD_ = x; if (PWD_ > 64) PWD_ = 64; if (PWD_ < 24) PWD_ = 24
+  printf "%s %s\n", C("1;94", ARW), C("1", "PODS") C("90", "   bytes per second   (" sortlabel() " - s cycles: cpu = network, mem = disk, cpupct = in, mempct = out, restarts = IOPS)") > bodyf
+  printf "  %-" (PWD_) "s" " %-26s %8s %8s %8s %8s %6s %6s %s\n", "POD", "NODE", "in", "out", "disk rd", "disk wr", "r-IOPS", "w-IOPS", C("90", VB) " share of namespace traffic" > bodyf
+  split("", SV); split("", IX); nst = sum2(nv(M["ns_net_rx"]), nv(M["ns_net_tx"]))
+  for (i = 1; i <= nip; i++) { split(T_row["Q", i], f, "\t"); IX[i] = i
+    SV[i] = (sortkey == "name") ? f[1] : (sortkey == "mem") ? sum2(nv(f[6]), nv(f[7])) : (sortkey == "cpupct") ? nv(f[4]) : (sortkey == "mempct") ? nv(f[5]) : (sortkey == "restarts") ? sum2(nv(f[8]), nv(f[9])) : sum2(nv(f[4]), nv(f[5])) }
+  ixsort(nip)
+  for (i = 1; i <= nip && i <= topn * 2; i++) { split(T_row["Q", IX[i]], f, "\t"); t = sum2(nv(f[4]), nv(f[5]))
+    printf "  %-" (PWD_) "s" " %-26s %8s %8s %8s %8s %6s %6s %s %s\n", clip(f[1], PWD_), clip(f[2], 26), hb(nv(f[4])), hb(nv(f[5])), hb(nv(f[6])), hb(nv(f[7])),
+      hio(nv(f[8])), hio(nv(f[9])), C("90", VB), gbar(t, -1, nst, 24, "94") > bodyf }
+  if (nip > topn * 2) printf "  %s\n", C("90", (nip - topn * 2) " more pod(s) - --top N shows more, the HTML report lists all") > bodyf
+  close(bodyf)
+  print C("90", rule(HR, LINEW)) > ftrf
+  printf " %s in = received (ingress), out = sent (egress), per second.  disk = container filesystem reads / writes.  IOPS = operations per second.  ns%% = this namespace share of the node.\n", C("90", "legend") > ftrf
+  close(ftrf)
+}
+BEGIN { while ((getline ln < iohistf) > 0) { split(ln, a, "\t"); IOH = IOH (IOH == "" ? "" : " ") (a[2] + a[3]) } close(iohistf) }
+'
+
+render() {
+  local cols age prog
+  cols="${KDASH_COLUMNS:-$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )}"
+  [ "${RENDER_COLS:-}" ] && cols="$RENDER_COLS"
+  host_clock; age=$(( NOW_S - SPEC_AT ))
+  case "$VIEW" in
+    pods) prog="$VIEW_PODS" ;; nodes) prog="$VIEW_NODES" ;; workloads) prog="$VIEW_WL" ;;
+    ip) prog="$VIEW_IP" ;; mem) prog="$VIEW_MEM" ;; io) prog="$VIEW_IO" ;; alerts) prog="$VIEW_ALERTS" ;; *) prog="$VIEW_PODS" ;;
+  esac
+  awk -v md="$MODEL" -v ns="$NS" -v ctxn="$CTX_NAME" -v filt="$FILTER" -v color="$COLOR" -v bar="$BARCHR" -v theme="$THEME" -v allnodes="$ALL_NODES" -v zoom="${ZOOM:-1}" \
+      -v podsonly="$PODS_ONLY" -v detail="$DETAIL" -v sortkey="$SORT" -v sortrev="$SORT_REV" -v group="$GROUP" -v termw="$cols" -v topok="$TOP_OK" \
+      -v iv="$INTERVAL" -v ttl="$SPEC_TTL" -v specage="$age" -v allns="$ALL_NS" -v nswarn="${NS_FALLBACK:-0}" \
+      -v ts="$(date '+%Y-%m-%d %H:%M:%S')" -v ver="$KDASH_VERSION" -v view="$VIEW" -v topn="$TOPN" \
+      -v nodestate="$NODES_STATE" -v topnstate="$TOPN_STATE" -v svcstate="$SVC_STATE" \
+      -v histf="$HIST" -v nhistf="$NHIST" -v iohistf="$TMPD/iohist" \
+      -v now="$NOW_S" -v tzoff="$TZ_OFF" -v tzname="$TZ_NAME" -v win="$WIN_S" -v sstart="${SESSION_T0:-0}" -v smp="${SAMPLE_EVERY:-15}" \
+      -v sesf="$([ "${SESSION_ON:-0}" = 1 ] && printf '%s' "$SDIR/ns.tsv")" -v evf="$([ "${SESSION_ON:-0}" = 1 ] && printf '%s' "$SDIR/events.tsv")" \
+      -v fcf="$TMPD/forecast.tsv" -v fcwin="${FC_WIN:-1800}" -v heatf="$TMPD/heat.tsv" -v graphs="${POD_GRAPHS:-1}" -v author="$KDASH_AUTHOR" -v alstate="${ALERT_STATE:-}" -v tsvout="${ALERT_TSV:-}" -v thr_mem="${KDASH_ALERT_MEM:-}" -v thr_net="${KDASH_ALERT_NET_MBPS:-}" -v thr_iops="${KDASH_ALERT_IOPS:-}" -v sparkf="$([ -s "$TMPD/podspark.tsv" ] && printf '%s' "$TMPD/podspark.tsv")" \
+      -v hdrf="$HDRF" -v bodyf="$BODYF" -v ftrf="$FTRF" "$AWKLIB$VIEW_COMMON$prog" < /dev/null
+}
+
+#---- 7 ALERTS: one live page of every critical / warning signal with its action ----
+# Rules run on the live model every frame: pods (crash, pending, not ready, restarts
+# in the last 5 min, CPU throttling), memory (% of limit, forecast ETA, no limit),
+# worker nodes (NotReady, cordoned, memory / CPU pressure, pod CIDR use), workloads
+# (degraded, unscheduled, HA risk, rollout), IP pool (no IP, duplicates) and live
+# traffic (node NIC load, disk IOPS, pod hot-spots and spikes). alstate keeps the
+# first-seen time of every alert across frames, so the page shows NEW, the age of
+# each alert and what cleared in the last 5 minutes.
+VIEW_ALERTS='
+function nsf() { return (ns == "(all namespaces)") ? "" : "-n " ns " " }
+function podns(p,   a) { if (index(p, "/") && ns == "(all namespaces)") { split(p, a, "/"); return "-n " a[1] " " } return nsf() }
+function podnm(p) { if (index(p, "/") && ns == "(all namespaces)") return substr(p, index(p, "/") + 1); return p }
+function wkind(k) { return (k == "Deployment") ? "deploy" : (k == "StatefulSet") ? "sts" : (k == "DaemonSet") ? "ds" : (k == "CronJob") ? "cronjob" : tolower(k) }
+# add one alert: severity C / W, section, object, signal, live value, action, trend list
+function al(sv, sec, obj, sig, val, act, tr,   k) {
+  k = sec "|" obj "|" sig; if (k in AK) return; AK[k] = ++AN
+  AS[AN] = sv; ASEC[AN] = sec; AOBJ[AN] = obj; ASIG[AN] = sig; AVAL[AN] = val; AACT[AN] = act; ATR[AN] = tr; AKEY[AN] = k
+  if (sv == "C") NC++; else NW++; SECC[sec, sv]++
+}
+# hysteresis: an active alert clears only when the value drops d points below its threshold
+function hy(sec, obj, sig, base, d) { return ((sec "|" obj "|" sig) in PLINE) ? base - d : base }
+function cidrcap(c,   a, p, n) { if (split(c, a, "/") != 2) return -1; p = a[2] + 0; if (p < 16 || p > 30) return -1; n = 1; while (p++ < 32) n = n * 2; return n - 2 }
+function sevord(i) { return (AS[i] == "C" ? 0 : 1) * 100000 + (alstate != "" && FIRST[AKEY[i]] >= now - 30 ? 0 : 1) * 10000 + SORD[ASEC[i]] * 100 + i }
+function dot(sec) { return SECC[sec, "C"] ? C("1;31", "\342\227\217") : (SECC[sec, "W"] ? C("35", "\342\227\217") : C("32", "\342\227\217")) }
+function dotasc(sec) { return SECC[sec, "C"] ? C("1;31", "!") : (SECC[sec, "W"] ? C("35", "^") : C("32", "+")) }
+function cell(sec, txt, w,   d) { d = (bar == "ascii") ? dotasc(sec) : dot(sec); return d " " C("1", sprintf("%-10s", sec)) " " txt }
+function age(t,   d) { d = now - t; if (d < 0) d = 0; return (d < 60) ? d "s" : (d < 3600 ? int(d / 60) "m" : int(d / 3600) "h" int((d % 3600) / 60) "m") }
+END {
+  LINEW = W; if (LINEW > 220) LINEW = 220
+  split("PODS MEMORY NODES WORKLOADS IP TRAFFIC NAMESPACE", so, " "); for (i = 1; i <= 7; i++) SORD[so[i]] = i
+  np = readtab("pods.tsv", "P"); nk = readtab("containers.tsv", "K"); nm = readtab("memory.tsv", "R"); nn = readtab("nodes.tsv", "N")
+  nw = readtab("workloads.tsv", "Y"); ni = readtab("ip.tsv", "I"); no = readtab("io_nodes.tsv", "O"); nq = readtab("io_pods.tsv", "Q")
+  sparkload(); SPW = 10
+  memc = (thr_mem + 0 > 0) ? thr_mem + 0 : 90; netw = (thr_net + 0 > 0) ? thr_net * 1048576 : 100 * 1048576; iopsw = (thr_iops + 0 > 0) ? thr_iops + 0 : 3000
+  # previous frame: first-seen times, cleared alerts, last traffic rates
+  while (alstate != "" && (getline ln < alstate) > 0) { split(ln, a, "\t")
+    if (a[1] == "A") { FIRST[a[2]] = a[3] + 0; PSEV[a[2]] = a[4]; PLINE[a[2]] = ln }
+    else if (a[1] == "X") { if (now - a[3] <= 300) { XN++; XK[XN] = a[2]; XL[XN] = ln } }
+    else if (a[1] == "T") { TPREV[a[2]] = a[3] + 0; TCUR[a[2]] = a[4] + 0 } }
+  if (alstate != "") close(alstate)
+  # ---- PODS: container waiting reasons
+  for (r = 1; r <= nk; r++) { split(T_row["K", r], kk, "\t"); if (kk[15] != "-" && kk[15] != "") WAITR[kk[1]] = kk[15] }
+  for (r = 1; r <= np; r++) { split(T_row["P", r], f, "\t"); p = f[1]; split(f[5], rr, "/"); st = f[4]; w = (p in WAITR) ? WAITR[p] : ""
+    if (w ~ /CrashLoop|Error/ || st ~ /CrashLoop|Error/) al("C", "PODS", p, (w != "" ? w : st), "restarts " f[6] ", ready " f[5], "kubectl " podns(p) "logs " podnm(p) " --previous --all-containers --tail=100", SPM[p])
+    else if (w ~ /ImagePull|ErrImage|CreateContainer|InvalidImage/) al("C", "PODS", p, w, "image / config error", "kubectl " podns(p) "describe pod " podnm(p))
+    else if (st == "Pending" || w == "ContainerCreating") al("W", "PODS", p, (st == "Pending" ? "Pending" : w), "node " f[7], "kubectl " podns(p) "get events --field-selector involvedObject.name=" podnm(p))
+    else if (st ~ /Evicted|Failed|Unknown/) al("C", "PODS", p, st, "node " f[7], "kubectl " podns(p) "describe pod " podnm(p))
+    else if (st == "Running" && rr[1] != rr[2]) al("W", "PODS", p, "NOT_READY", "ready " f[5], "kubectl " podns(p) "describe pod " podnm(p) "   (readiness probe)")
+    cu = nv(f[14]); cl = nv(f[16]); if (cu >= 0 && cl > 0 && cu * 100 / cl >= hy("PODS", p, "CPU_THROTTLE", 90, 5)) al("W", "PODS", p, "CPU_THROTTLE", sprintf("cpu %s = %.0f%% of limit %s", hcpu(cu), cu * 100 / cl, hcpu(cl)), "kubectl " podns(p) "top pod " podnm(p) " --containers", SPC[p]) }
+  # restarts / OOM kills in the last 5 minutes (session events)
+  evload(evf, now - 300)
+  for (i = 1; i <= EVN; i++) if (EVK[i] == "OOMKILLED" || EVK[i] == "RESTART") { RC5[EVO[i]]++; if (EVK[i] == "OOMKILLED") RO5[EVO[i]] = 1; RL5[EVO[i]] = EVM[i]; RT5[EVO[i]] = EVT[i] }
+  for (p in RC5) al((RO5[p] || RC5[p] >= 3) ? "C" : "W", "PODS", p, (RO5[p] ? "OOMKILLED_NOW" : "RESTARTING"), RC5[p] " in 5 min, last " age(RT5[p]) " ago", "kubectl " podns(p) "logs " podnm(p) " --previous --tail=100", SPM[p])
+  # ---- MEMORY
+  nolim = 0
+  for (r = 1; r <= nm; r++) { split(T_row["R", r], f, "\t"); pc = nv(f[10]); p = f[1]
+    if (pc >= hy("MEMORY", p, "OOM_RISK", memc, 3)) al("C", "MEMORY", p, "OOM_RISK", sprintf("%s = %.1f%% of limit %s", hmem(nv(f[6])), pc, hmem(nv(f[8]))), "kubectl " podns(p) "top pod " podnm(p) " --containers   (raise limit or find the growth)", SPM[p])
+    else if (pc >= hy("MEMORY", p, "MEM_HIGH", 80, 3)) al("W", "MEMORY", p, "MEM_HIGH", sprintf("%s = %.1f%% of limit %s", hmem(nv(f[6])), pc, hmem(nv(f[8]))), "kubectl " podns(p) "top pod " podnm(p) " --containers", SPM[p])
+    if (nv(f[8]) <= 0) nolim++ }
+  if (M["pods_no_mem_limit"] + 0 > 0) nolim = M["pods_no_mem_limit"] + 0; else nolim = 0
+  if (nolim) al("W", "MEMORY", nolim " pod(s)", "NO_MEM_LIMIT", "can grow until the node runs out", "kubectl " nsf() "get pods -o custom-columns=POD:.metadata.name,LIM:.spec.containers[*].resources.limits.memory")
+  if (fcf != "") { while ((getline ln < fcf) > 0) { split(ln, a, "\t"); if (a[1] == "#EVAL" || a[7] == "-" || a[7] == "") continue; eta = a[7] + 0
+      if (eta < 21600) al(eta < 3600 ? "C" : "W", "MEMORY", a[1], "LIMIT_ETA", sprintf("+%s/h, limit in %s", hmem(a[6] + 0), (eta < 60 ? "<1m" : tdur(eta))), "kubectl " podns(a[1]) "top pod " podnm(a[1]) " --containers   (leak?)", SPM[a[1]]) } close(fcf) }
+  mu = nv(M["mem_used"]); ml = nv(M["mem_lim"]); if (mu >= 0 && ml > 0 && mu * 100 / ml >= 90) al("C", "NAMESPACE", ns, "NS_MEM_90", sprintf("%s = %.0f%% of all limits", hmem(mu), mu * 100 / ml), "kubectl " nsf() "describe resourcequota")
+  cu = nv(M["cpu_used"]); cl = nv(M["cpu_lim"]); if (cu >= 0 && cl > 0 && cu * 100 / cl >= 90) al("W", "NAMESPACE", ns, "NS_CPU_90", sprintf("%s = %.0f%% of all limits", hcpu(cu), cu * 100 / cl), "kubectl " nsf() "top pod --sort-by=cpu")
+  # ---- NODES running this namespace
+  for (r = 1; r <= nn; r++) { split(T_row["N", r], f, "\t"); nd = f[2]; if (f[5] + 0 == 0 || nd == "(unscheduled)") continue
+    if (f[3] ~ /NotReady|Unknown/) al("C", "NODES", nd, "NODE_NOT_READY", f[5] " ns pods on it", "kubectl describe node " nd "   (conditions, kubelet)")
+    else if (f[3] ~ /SchedulingDisabled/) al("W", "NODES", nd, "CORDONED", f[5] " ns pods on it", "kubectl get node " nd " -o wide")
+    pm = nv(f[19]); if (pm >= hy("NODES", nd, "NODE_MEM_PRESSURE", 90, 3)) al("C", "NODES", nd, "NODE_MEM_PRESSURE", sprintf("node memory %.0f%% used", pm), "kubectl describe node " nd " | grep -A8 Allocated")
+    else if (pm >= hy("NODES", nd, "NODE_MEM_HIGH", 80, 3)) al("W", "NODES", nd, "NODE_MEM_HIGH", sprintf("node memory %.0f%% used", pm), "kubectl describe node " nd " | grep -A8 Allocated")
+    nc_ = nv(f[12]); na_ = nv(f[11]); if (nc_ >= 0 && na_ > 0 && nc_ * 100 / na_ >= hy("NODES", nd, "NODE_CPU_HIGH", 90, 5)) al("W", "NODES", nd, "NODE_CPU_HIGH", sprintf("node CPU %.0f%% used", nc_ * 100 / na_), "kubectl top node " nd)
+    cap = cidrcap(f[21]); cp_ = nv(f[25]); if (cap > 0 && cp_ >= 0 && cp_ * 100 / cap >= 90) al(cp_ * 100 / cap >= 97 ? "C" : "W", "IP", nd, "POD_CIDR_FULL", sprintf("%d of %d pod IPs in %s", cp_, cap, f[21]), "kubectl describe node " nd " | grep -i -A3 podcidr") }
+  # ---- WORKLOADS
+  for (r = 1; r <= nw; r++) { split(T_row["Y", r], f, "\t"); o = f[1] "/" f[2]; v = f[8]; rd = (f[14] != "-" && f[14] != "") ? f[15] + 0 "/" f[14] : f[4] "/" f[3]
+    if (v ~ /UNSCHEDULED/) al("C", "WORKLOADS", o, "UNSCHEDULED", f[5] " pod(s) not placed", "kubectl " nsf() "get events --field-selector reason=FailedScheduling")
+    else if (v ~ /DEGRADED/) al("C", "WORKLOADS", o, "DEGRADED", "ready " rd, "kubectl " nsf() "rollout status " wkind(f[1]) "/" f[2] " --timeout=5s")
+    if (v ~ /HA_RISK/) al("W", "WORKLOADS", o, "HA_RISK", f[3] " replicas on 1 node", "kubectl " nsf() "get pods -o wide | grep " f[2] "   (topologySpreadConstraints)")
+    if (f[18] ~ /rolling|progress/) al("W", "WORKLOADS", o, "ROLLING", "updated " f[16] "/" f[14], "kubectl " nsf() "rollout status " wkind(f[1]) "/" f[2] " --timeout=5s") }
+  # ---- IP pool
+  for (r = 1; r <= ni; r++) { split(T_row["I", r], f, "\t")
+    if (f[9] ~ /DUPLICATE/) al("C", "IP", f[1], "DUPLICATE_IP", f[2] " on " f[3], "kubectl get pods -A -o wide | grep -w " f[2])
+    else if (f[9] ~ /NO_IP/ && f[8] !~ /Succeeded|Completed/) al("W", "IP", f[1], "NO_IP", "status " f[8], "kubectl " podns(f[1]) "describe pod " podnm(f[1])) }
+  # ---- live traffic
+  totq = 0; for (r = 1; r <= nq; r++) { split(T_row["Q", r], f, "\t"); x = nv(f[4]) + nv(f[5]); if (nv(f[4]) >= 0) totq += x }
+  for (r = 1; r <= no; r++) { split(T_row["O", r], f, "\t"); nd = f[1]; t = nv(f[4]) + nv(f[5])
+    if (nv(f[4]) >= 0 && t >= netw) al(t >= 5 * netw ? "C" : "W", "TRAFFIC", nd, "NODE_NET_HIGH", "node in " hrate(nv(f[4])) " out " hrate(nv(f[5])), "kubectl describe node " nd "   (NIC saturation, who talks)")
+    io_ = nv(f[8]) + nv(f[9]); if (nv(f[8]) >= 0 && io_ >= iopsw) al("W", "TRAFFIC", nd, "NODE_IOPS_HIGH", sprintf("%d IOPS (r %d w %d)", io_, nv(f[8]), nv(f[9])), "kubectl describe node " nd) }
+  for (r = 1; r <= nq; r++) { split(T_row["Q", r], f, "\t"); p = f[1]; if (nv(f[4]) < 0) continue; x = nv(f[4]) + nv(f[5]); TNOW[p] = x
+    if (totq > 0 && nq > 2 && x >= 1048576 && x * 100 / totq >= 50) al("W", "TRAFFIC", p, "TRAFFIC_HOTSPOT", sprintf("%s = %.0f%% of namespace traffic", hrate(x), x * 100 / totq), "kubectl " podns(p) "top pod " podnm(p) "   (client load, retries, cache)")
+    pv = (p in TCUR && TCUR[p] != x) ? TCUR[p] : ((p in TPREV) ? TPREV[p] : -1)
+    if (pv > 0 && x >= 1048576 && x >= 3 * pv) al("W", "TRAFFIC", p, "TRAFFIC_SPIKE", sprintf("%s, x%.1f vs previous sample", hrate(x), x / pv), "kubectl " podns(p) "logs " podnm(p) " --since=5m | tail -50") }
+  # ---- state for the next frame: first seen, cleared, traffic
+  for (i = 1; i <= AN; i++) { k = AKEY[i]; if (!(k in FIRST)) { FIRST[k] = now; if (alstate != "") NEWN++ } }
+  for (k in PLINE) if (!(k in AK)) { split(PLINE[k], a, "\t"); XN++; XK[XN] = k; XL[XN] = "X\t" k "\t" now "\t" a[3] "\t" a[4]; CLRN++ }
+  if (alstate != "") {
+    for (i = 1; i <= AN; i++) printf "A\t%s\t%d\t%s\n", AKEY[i], FIRST[AKEY[i]], AS[i] > alstate
+    for (i = 1; i <= XN; i++) if (!(XK[i] in AK)) printf "%s\n", XL[i] > alstate
+    for (p in TNOW) printf "T\t%s\t%s\t%s\n", p, ((p in TCUR && TCUR[p] != TNOW[p]) ? TCUR[p] : ((p in TPREV) ? TPREV[p] : -1)), TNOW[p] > alstate
+    close(alstate) }
+  if (tsvout != "") { print "SEVERITY\tSECTION\tOBJECT\tSIGNAL\tVALUE\tFIRST_SEEN\tACTION" > tsvout
+    for (i = 1; i <= AN; i++) printf "%s\t%s\t%s\t%s\t%s\t%d\t%s\n", (AS[i] == "C" ? "CRITICAL" : "WARNING"), ASEC[i], AOBJ[i], ASIG[i], AVAL[i], FIRST[AKEY[i]], AACT[i] > tsvout
+    close(tsvout) }
+
+  # ---- header: verdict
+  header("ALERTS   live critical summary of every section, with the action for each signal", LINEW)
+  vd = NC ? C("7;1;31", "  CRITICAL  ") : (NW ? C("7;1;35", "  WARNING  ") : C("7;1;32", "  HEALTHY  "))
+  printf " %s  %s %s   %s %s   %s %s   %s %s   %s\n", vd, C(NC ? "1;31" : "32", NC + 0), C("90", "critical"), C(NW ? "1;35" : "32", NW + 0), C("90", "warning"),
+    C(NEWN ? "1;31" : "90", NEWN + 0), C("90", "new"), C(XCNT() ? "32" : "90", XCNT()), C("90", "cleared in 5 min"),
+    C("90", "rules run every refresh (" iv "s) on live data  " VB "  thresholds mem " memc "%  net " int(netw / 1048576) "MiB/s  iops " iopsw) > hdrf
+  print C("90", rule(HR, LINEW)) > hdrf
+  close(hdrf)
+
+  # ---- section health grid
+  sect("SECTIONS", LINEW)
+  ph = M["pods_healthy"] + 0; pn = M["pods"] + 0
+  G[1] = cell("PODS", (ph < pn ? C("1;31", ph "/" pn) : C("32", ph "/" pn)) " ready  rst " M["restarts"] "  " C(SECC["PODS", "C"] ? "1;31" : "90", SECC["PODS", "C"] + 0 " crit") " " C(SECC["PODS", "W"] ? "35" : "90", SECC["PODS", "W"] + 0 " warn"))
+  G[2] = cell("MEMORY", sprintf("%s / %s lim ", hmem(mu), hmem(ml)) fpct(pct(mu, ml), 4) "%  " C(nv(M["pods_mem_ge90_limit"]) > 0 ? "1;31" : "90", M["pods_mem_ge90_limit"] + 0 " >=" memc "%") "  " C(nolim ? "35" : "90", nolim " no-limit") "  " C("94", spark(hm_, 12)))
+  mxn = -1; nr_ = 0; for (r = 1; r <= nn; r++) { split(T_row["N", r], f, "\t"); if (f[5] + 0 == 0) continue; if (nv(f[19]) > mxn) { mxn = nv(f[19]); mxnn = f[2] } if (f[3] ~ /NotReady/) nr_++ }
+  G[3] = cell("NODES", M["nodes_hosting"] " hosting  " C(nr_ ? "1;31" : "32", nr_ " NotReady") "  max node mem " (mxn >= 0 ? fpct(mxn, 4) "% " clip(mxnn, 14) : C("90", "n/a")))
+  G[4] = cell("WORKLOADS", M["workloads"] "  " C(M["workloads_degraded"] + 0 ? "1;31" : "32", M["workloads_degraded"] + 0 " degraded") "  " C(M["ha_risk"] + 0 ? "35" : "90", M["ha_risk"] + 0 " HA risk") "  " C(M["workloads_rolling"] + 0 ? "35" : "90", M["workloads_rolling"] + 0 " rolling"))
+  G[5] = cell("IP", M["pod_ips"] " pod IPs  " C(M["no_ip"] + 0 ? "35" : "90", M["no_ip"] + 0 " no IP") "  " C(M["duplicate_ip_pods"] + 0 ? "1;31" : "90", M["duplicate_ip_pods"] + 0 " duplicate") "  " M["services"] " svc")
+  G[6] = cell("TRAFFIC", (nv(M["ns_net_rx"]) >= 0 ? "in " C("1", hrate(nv(M["ns_net_rx"]))) " out " C("1", hrate(nv(M["ns_net_tx"]))) "  disk r " hrate(nv(M["ns_disk_r"])) " w " hrate(nv(M["ns_disk_w"])) "  " C("32", spark(IOH, 12)) : C("90", "no IO source (" M["io_state"] ")")))
+  cw = (LINEW >= 180) ? int((LINEW - 4) / 3) : ((LINEW >= 120) ? int((LINEW - 4) / 2) : LINEW - 2); per = (LINEW >= 180) ? 3 : ((LINEW >= 120) ? 2 : 1)
+  for (i = 1; i <= 6; i += per) { s = ""; for (j = i; j < i + per && j <= 6; j++) s = s "  " G[j] spad(G[j], cw - 2); print s > bodyf }
+  print "" > bodyf
+
+  # ---- alerts, critical first, new first
+  for (i = 1; i <= AN; i++) { IX[i] = i; SV[i] = sevord(i) }
+  for (i = 2; i <= AN; i++) { v = IX[i]; j = i - 1; while (j > 0 && SV[IX[j]] > SV[v]) { IX[j + 1] = IX[j]; j-- } IX[j + 1] = v }
+  sect("ACTIVE ALERTS  " AN " (" NC + 0 " critical, " NW + 0 " warning)   critical first, NEW first, action under each", LINEW)
+  OW = 30; for (i = 1; i <= AN; i++) if (length(AOBJ[i]) > OW) OW = length(AOBJ[i]); if (OW > 52) OW = 52; if (LINEW < 130 && OW > 32) OW = 32
+  VW = LINEW - 2 - 2 - 7 - 10 - OW - 1 - 19 - (LINEW >= 130 ? 11 : 0); if (VW > 36) VW = 36; if (VW < 16) VW = 16
+  if (AN == 0) printf "  %s\n", C("32", "no critical or warning signal right now - every rule passed on the live data") > bodyf
+  else printf "  %s %-6s %-9s %-" OW "s %-18s %-" VW "s %s\n", " ", "AGE", "SECTION", "OBJECT", "SIGNAL", "LIVE VALUE", (LINEW >= 130 ? "TREND" : "") > bodyf
+  for (j = 1; j <= AN; j++) { i = IX[j]; k = AKEY[i]; nw_ = (alstate != "" && FIRST[k] >= now - 30)
+    sc_ = (AS[i] == "C") ? "1;31" : "35"
+    printf "  %s %s %-9s %s %s %s %s\n", C(sc_, AS[i] == "C" ? "!" : "^"), (nw_ ? C("7;1;31", sprintf("%-5s", "NEW")) " " : C("90", sprintf("%-6s", alstate != "" ? age(FIRST[k]) : "-"))), ASEC[i],
+      C("1", sprintf("%-" OW "s", clip(AOBJ[i], OW))), C(sc_, sprintf("%-18s", clip(ASIG[i], 18))), sprintf("%-" VW "s", clip(AVAL[i], VW)), C("94", (ATR[i] != "" && LINEW >= 130) ? spk(ATR[i]) : "") > bodyf
+    printf "  %s %s\n", sprintf("%" (9 + 1 + 6) "s", ""), C("90", "\342\206\263 ") C("36", AACT[i]) > bodyf }
+  print "" > bodyf
+
+  # ---- cleared in the last 5 minutes
+  ncx = 0; for (i = 1; i <= XN; i++) if (!(XK[i] in AK)) ncx++
+  if (ncx) { sect("CLEARED  last 5 minutes", LINEW)
+    for (i = XN; i >= 1; i--) { if (XK[i] in AK) continue; split(XL[i], a, "\t"); split(a[2], b, "|")
+      printf "  %s %-14s %-9s %-" OW "s %-18s %s\n", C("32", "+"), C("90", tday(a[3] + 0)), b[1], clip(b[2], OW), C("32", clip(b[3], 18)), C("90", "was active " tdur(a[3] - a[4]) ", cleared " age(a[3] + 0) " ago") > bodyf }
+    print "" > bodyf }
+
+  # ---- live traffic and top consumers
+  sect("LIVE TOP CONSUMERS", LINEW)
+  for (r = 1; r <= nm; r++) { split(T_row["R", r], f, "\t"); TM[r] = nv(f[10]); TMN[r] = f[1] }
+  for (r = 1; r <= np; r++) { split(T_row["P", r], f, "\t"); cl = nv(f[16]); TC_[r] = (cl > 0 && nv(f[14]) >= 0) ? nv(f[14]) * 100 / cl : -1; TCN[r] = f[1]; TCU[r] = nv(f[14]) }
+  for (r = 1; r <= nq; r++) { split(T_row["Q", r], f, "\t"); TQ[r] = nv(f[4]) + nv(f[5]); if (nv(f[4]) < 0) TQ[r] = -1; TQN[r] = f[1] }
+  tw = (LINEW >= 150) ? int((LINEW - 6) / 3) : LINEW - 4; nl = 5
+  topk(TM, nm, TA); topk(TC_, np, TB); topk(TQ, nq, TD)
+  h1 = C("1", sprintf("%-" tw "s", "memory % of limit")); h2 = C("1", sprintf("%-" tw "s", "CPU % of limit")); h3 = C("1", "traffic in+out" (totq > 0 ? " (ns " hrate(totq) ")" : ""))
+  if (LINEW >= 150) printf "  %s  %s  %s\n", h1, h2, h3 > bodyf
+  for (q = 1; q <= nl; q++) {
+    c1 = (TA[q] ? sprintf("%s %s", fpct(TM[TA[q]], 5), clip(TMN[TA[q]], tw - 7)) : ""); c2 = (TB[q] ? sprintf("%s %s", fpct(TC_[TB[q]], 5), clip(TCN[TB[q]], tw - 7)) : "")
+    c3 = (TD[q] ? sprintf("%9s %s %s", hrate(TQ[TD[q]]), mkbar(totq > 0 ? TQ[TD[q]] * 100 / totq : 0, 8), clip(TQN[TD[q]], tw - 20)) : (q == 1 && nq == 0 ? C("90", "no per-pod IO (" M["io_state"] ")") : ""))
+    if (LINEW >= 150) printf "  %s%s  %s%s  %s\n", c1, spad(c1, tw), c2, spad(c2, tw), c3 > bodyf
+    else { if (q == 1) print "  " h1 > bodyf; if (c1 != "") print "  " c1 > bodyf } }
+  if (LINEW < 150) { print "  " h2 > bodyf; for (q = 1; q <= nl; q++) if (TB[q]) printf "  %s %s\n", fpct(TC_[TB[q]], 5), clip(TCN[TB[q]], tw - 7) > bodyf
+    print "  " h3 > bodyf; for (q = 1; q <= nl; q++) if (TD[q]) printf "  %9s %s\n", hrate(TQ[TD[q]]), clip(TQN[TD[q]], tw - 12) > bodyf }
+  print "" > bodyf
+  # ---- events
+  evload(evf, now - 3600); sect("EVENTS  last hour", LINEW); evlist(8)
+  close(bodyf)
+  print C("90", rule(HR, LINEW)) > ftrf
+  printf " %s ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  %s = action.  Thresholds: KDASH_ALERT_MEM (%%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS.  x = HTML report.\n", C("90", "legend"), "\342\206\263" > ftrf
+  close(ftrf)
+}
+function XCNT(   i, n) { n = 0; for (i = 1; i <= XN; i++) if (!(XK[i] in AK)) n++; return n }
+# visible padding for coloured cells
+function spad(s, w,   n, t) { n = w - vlen(s); t = ""; while (n-- > 0) t = t " "; return t }
+# indexes of the 5 largest values
+function topk(V, n, OUT,   i, j, k, b, bi) { split("", OUT); split("", USED_)
+  for (k = 1; k <= 5; k++) { b = -1; bi = 0; for (i = 1; i <= n; i++) if (!(i in USED_) && V[i] > b) { b = V[i]; bi = i } if (bi && b >= 0) { OUT[k] = bi; USED_[bi] = 1 } } }
+BEGIN { while (histf != "" && (getline ln < histf) > 0) { split(ln, a, "\t"); hm_ = hm_ (hm_ == "" ? "" : " ") a[2] } close(histf)
+        while (iohistf != "" && (getline ln < iohistf) > 0) { split(ln, a, "\t"); IOH = IOH (IOH == "" ? "" : " ") (a[2] + a[3]) } close(iohistf) }
+'
+
+#-- session recorder: everything kdash sees while it runs ------------------------
+# A live run writes a session folder that keeps growing until kdash exits:
+#   $KDASH_REPORT_DIR/sessions/kdash_<ctx>_<ns>_<start>/
+#     meta.env    context, namespace, filter, start time, kdash version
+#     ns.tsv      namespace totals per sample   (pods, health, CPU, memory, risks)
+#     nodes.tsv   per worker node per sample    (namespace + whole-node memory / CPU)
+#     pods.tsv    per pod per sample            (node, status, ready, restarts, CPU, memory)
+#     events.tsv  changes seen between polls    (added / removed / status / restarts /
+#                                                OOMKilled / rescheduled / OOM risk / node state)
+#     model/      latest model tables, so the report can be rebuilt after exit
+# The namespace report (x, --snapshot, --session-report) charts all of it.
+SESSION_ON=0; SDIR=""; LAST_SAMPLE=0
+SAMPLE_EVERY="${KDASH_SAMPLE_EVERY:-15}"; SESSION_KEEP="${KDASH_SESSION_KEEP:-30}"; SESSION_MAX_MB="${KDASH_SESSION_MAX_MB:-64}"
+case "$SAMPLE_EVERY" in ''|*[!0-9]*|0) SAMPLE_EVERY=15 ;; esac       # whole seconds >= 1
+case "$SESSION_KEEP" in ''|*[!0-9]*|0) SESSION_KEEP=30 ;; esac       # never prune the running session
+case "$SESSION_MAX_MB" in ''|*[!0-9]*|0) SESSION_MAX_MB=64 ;; esac
+
+session_start() {
+  local stamp
+  stamp="$(date '+%Y%m%d_%H%M%S')"
+  SDIR="$REPORT_DIR/sessions/kdash_$(safe_name "$CTX_NAME")_$(safe_name "$NS")_${stamp}"
+  mkdir -p "$REPORT_DIR/sessions" 2>/dev/null || { SESSION_ON=0; return 1; }
+  # two kdash started in the same second must not share a folder
+  mkdir "$SDIR" 2>/dev/null || { SDIR="${SDIR}_$$"; mkdir "$SDIR" 2>/dev/null; } || { SESSION_ON=0; return 1; }
+  mkdir "$SDIR/model" 2>/dev/null || { SESSION_ON=0; return 1; }
+  chmod 700 "$REPORT_DIR/sessions" "$SDIR" 2>/dev/null
+  {
+    printf 'S_CTX=%q\nS_NS=%q\nS_FILTER=%q\nS_ALLNS=%q\n' "$CTX_NAME" "$NS" "$FILTER" "$ALL_NS"
+    printf 'S_START=%q\nS_VERSION=%q\nS_OPERATOR=%q\nS_HOST=%q\n' "$(date +%s)" "$KDASH_VERSION" "$(id -un 2>/dev/null)" "$(hostname 2>/dev/null)"
+  } > "$SDIR/meta.env"
+  printf 'EPOCH\tPODS\tHEALTHY\tRESTARTS\tCPU_USED_m\tCPU_REQ_m\tCPU_LIM_m\tMEM_USED_Mi\tMEM_REQ_Mi\tMEM_LIM_Mi\tOOM_RISK\tOOMKILLED\tNO_LIMIT\tHA_RISK\tSKEWED\tNODES\tPOD_IPS\tNO_IP\tCL_MEM_REQ_Mi\tCL_MEM_USED_Mi\tCL_MEM_ALLOC_Mi\tCL_CPU_REQ_m\tCL_CPU_USED_m\tCL_CPU_ALLOC_m\tNET_RX_Bps\tNET_TX_Bps\tDISK_R_Bps\tDISK_W_Bps\n' > "$SDIR/ns.tsv"
+  printf 'EPOCH\tNODE\tPOOL\tSTATUS\tNS_PODS\tNS_CPU_m\tNS_MEM_Mi\tNODE_CPU_m\tNODE_MEM_Mi\tNODE_MEM_ALLOC_Mi\n' > "$SDIR/nodes.tsv"
+  printf 'EPOCH\tPOD\tNODE\tSTATUS\tREADY\tRESTARTS\tCPU_m\tMEM_Mi\tMEM_LIM_Mi\tWORKLOAD\n' > "$SDIR/pods.tsv"
+  printf 'EPOCH\tSEVERITY\tKIND\tOBJECT\tMESSAGE\n' > "$SDIR/events.tsv"
+  SESSION_ON=1; LAST_SAMPLE=0; SESSION_T0="$(awk -F= '$1=="S_START"{print $2}' "$SDIR/meta.env")"
+  session_event info SESSION "$NS" "kdash $KDASH_VERSION started on $(hostname 2>/dev/null || echo '?') by $(id -un 2>/dev/null) - filter $FILTER"
+  # keep the newest $SESSION_KEEP sessions
+  ls -1dt "$REPORT_DIR"/sessions/kdash_* 2>/dev/null | tail -n +$((SESSION_KEEP + 1)) | while IFS= read -r d; do rm -rf -- "$d"; done
+  return 0
+}
+
+session_event() {   # severity kind object message
+  [ "$SESSION_ON" = 1 ] || return 0
+  printf '%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" "$1" "$2" "$3" "$(printf '%s' "$4" | tr '\t\n' '  ')" >> "$SDIR/events.tsv"
+}
+
+# compare the new model with the previous poll and log what changed
+SESSION_EVENTS_AWK='
+BEGIN { FS = "\t"; OFS = "\t" }
+FNR == 1 { f++; next }
+f == 1 { PN[$2] = $3; PS[$2] = $4; PR[$2] = $5; PRS[$2] = $6; PL[$2] = $7; PK[$2] = $8; PRK[$2] = $9; if ($1 == "N") NS_[$2] = $4; seenp[$2] = ($1 == "P"); next }
+f == 2 { pod = $1; st = $4; rd = $5; rs = $6; nd = $7; lt = $22; wk = $12 "/" $13
+         # pods.tsv KEY is the pod (namespace/pod with -A). OOM risk = memory used vs
+         # limit, with hysteresis: raised at >= 90%, cleared below 85%
+         rp = ($17 ~ /^[0-9.]+$/ && $19 ~ /^[0-9.]+$/ && $19 > 0) ? sprintf("%.1f", $17 * 100 / $19) : "-"
+         rk = (rp != "-" && rp + 0 >= 90) ? 1 : 0
+         if (!rk && PRK[pod] && rp != "-" && rp + 0 >= 85) rk = 1
+         print "P", pod, nd, st, rd, rs, lt, wk, rk > newstate
+         CUR[pod] = 1
+         if (!hadprev) next
+         if (!(pod in seenp) || !seenp[pod]) { print t, "info", "POD_ADDED", pod, "added on " nd " (" wk ", " st ")"; next }
+         if (PS[pod] != st) print t, sevst(st), "STATUS", pod, PS[pod] " -> " st " on " nd
+         else if (PR[pod] != rd) print t, (rdok(rd) ? "ok" : "warn"), "READY", pod, "ready " PR[pod] " -> " rd
+         if (rs + 0 > PRS[pod] + 0) print t, (lt == "OOMKilled" ? "bad" : "warn"), (lt == "OOMKilled" ? "OOMKILLED" : "RESTART"), pod, "restarts +" (rs - PRS[pod]) " (now " rs ")" (lt != "-" ? ", last exit " lt : "")
+         if (PN[pod] != nd && PN[pod] != "") print t, "warn", "RESCHEDULED", pod, "moved " PN[pod] " -> " nd
+         if (rk && !PRK[pod]) print t, "bad", "OOM_RISK", pod, "memory reached " rp "% of limit"
+         if (!rk && PRK[pod]) print t, "ok", "OOM_RISK_CLEARED", pod, "memory back under 85% of limit (" rp "%)"
+         next }
+f == 3 { nd = $2; st = $3; if (nd == "(unscheduled)" || st == "-") next
+         print "N", nd, "-", st > newstate
+         if (hadprev && (nd in NS_) && NS_[nd] != st) print t, (st ~ /NotReady/ ? "bad" : (st ~ /Scheduling/ ? "warn" : "ok")), "NODE", nd, NS_[nd] " -> " st
+         next }
+END { if (hadprev) for (p in seenp) if (seenp[p] && !(p in CUR)) print t, "warn", "POD_REMOVED", p, "gone (was on " PN[p] ", " PS[p] ")" }
+function sevst(s) { if (s ~ /CrashLoop|Error|Failed|Evicted|OOMKilled|ImagePull|CreateContainer|NotReady/) return "bad"; if (s ~ /Pending|Terminating|ContainerCreating|NotReady/) return "warn"; return "ok" }
+function rdok(r,   a) { split(r, a, "/"); return a[1] == a[2] }
+'
+
+session_tick() {
+  [ "$SESSION_ON" = 1 ] || return 0
+  [ "$TOP_OK" = 1 ] || [ -s "$MODEL/pods.tsv" ] || return 0
+  local now prev="$SDIR/state.tsv" had=0
+  now=$(date +%s)
+  [ -s "$prev" ] && had=1 || : > "$prev"
+  awk -v t="$now" -v hadprev="$had" -v newstate="$SDIR/state.new" "$SESSION_EVENTS_AWK" \
+      <(printf 'H\n'; cat "$prev") "$MODEL/pods.tsv" "$MODEL/nodes.tsv" >> "$SDIR/events.tsv" 2>/dev/null
+  [ -f "$SDIR/state.new" ] && mv -f "$SDIR/state.new" "$prev"
+  if [ $((now - LAST_SAMPLE)) -ge "$SAMPLE_EVERY" ]; then
+    LAST_SAMPLE=$now
+    awk -F'\t' -v t="$now" '{M[$1] = $2} END {
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", t, M["pods"], M["pods_healthy"], M["restarts"],
+          M["cpu_used"], M["cpu_req"], M["cpu_lim"], M["mem_used"], M["mem_req"], M["mem_lim"], M["pods_mem_ge90_limit"], M["pods_oomkilled"],
+          M["pods_no_mem_limit"], M["ha_risk"], M["skewed"], M["nodes_hosting"], M["pod_ips"], M["no_ip"],
+          M["cluster_mem_req"], SC("mem"), M["cluster_mem_alloc"], M["cluster_cpu_req"], SC("cpu"), M["cluster_cpu_alloc"],
+          D(M["ns_net_rx"]), D(M["ns_net_tx"]), D(M["ns_disk_r"]), D(M["ns_disk_w"]) }
+        function D(v) { return (v == "") ? "-" : v }
+        # "cluster used" of a subset (your namespaces / --compare) is their pod usage
+        function SC(k) { if ((M["cluster_scope"] == "readable" || M["cluster_scope"] == "selected" || M["cluster_" k "_used"] == "-") && M["scope_" k "_used"] != "" && M["scope_" k "_used"] != "-") return M["scope_" k "_used"]; return D(M["cluster_" k "_used"]) }' "$MODEL/meta.tsv" >> "$SDIR/ns.tsv"
+    awk -F'\t' -v OFS='\t' -v t="$now" 'NR > 1 && $2 != "(unscheduled)" && $5 > 0 { print t, $2, $1, $3, $5, $8, $13, $12, $17, $16 }' "$MODEL/nodes.tsv" >> "$SDIR/nodes.tsv"
+    awk -F'\t' -v OFS='\t' -v t="$now" 'NR > 1 { print t, $1, $7, $4, $5, $6, $14, $17, $19, $12 "/" $13 }' "$MODEL/pods.tsv" >> "$SDIR/pods.tsv"
+    cp -f "$MODEL"/*.tsv "$SDIR/model/" 2>/dev/null
+    forecast_build "$SDIR" "$TMPD/forecast.tsv" "$now"
+    heat_build "$SDIR" "$TMPD/heat.tsv" "${WIN_S:-0}" "$now"
+    spark_build
+    session_compact
+    printf 'NODES_STATE=%q\nTOPN_STATE=%q\nSVC_STATE=%q\nTOP_OK=%q\n' "$NODES_STATE" "$TOPN_STATE" "$SVC_STATE" "$TOP_OK" > "$SDIR/model/state.env"
+  fi
+}
+
+# sparkline source for the PODS and WORKLOADS views: the last 40 session samples of CPU
+# and memory per pod (POD, cpu list, mem list; -1 = no metrics) and per workload
+# ("@W:" Kind/Name, the sums of its pods)
+spark_build() {
+  local np; np=$(wc -l < "$MODEL/pods.tsv" 2>/dev/null || echo 1)
+  tail -n $(( np * 40 + 1 )) "$SDIR/pods.tsv" 2>/dev/null | awk -F'\t' '$1 ~ /^[0-9]+$/ { k = $2
+      C[k] = C[k] " " (($7 == "-" || $7 == "") ? -1 : $7); M[k] = M[k] " " (($8 == "-" || $8 == "") ? -1 : $8)
+      w = $10; if (!(($1, w) in WT)) { WT[$1, w] = 1; WS[w] = WS[w] " " $1 }
+      if ($7 != "-" && $7 != "") WC[$1, w] += $7; if ($8 != "-" && $8 != "") WM[$1, w] += $8 }
+    END { for (k in C) printf "%s\t%s\t%s\n", k, substr(C[k], 2), substr(M[k], 2)
+          for (w in WS) { n = split(substr(WS[w], 2), t, " "); c = ""; m = ""
+            for (i = 1; i <= n; i++) { c = c " " (((t[i], w) in WC) ? WC[t[i], w] : -1); m = m " " (((t[i], w) in WM) ? WM[t[i], w] : -1) }
+            printf "@W:%s\t%s\t%s\n", w, substr(c, 2), substr(m, 2) } }' > "$TMPD/podspark.tsv.t" 2>/dev/null &&
+    mv -f "$TMPD/podspark.tsv.t" "$TMPD/podspark.tsv"
+}
+
+# memory growth forecast: least-squares slope of each pod's memory over the last
+# FC_WIN seconds of session samples. A restart resets the trend (memory starts
+# over). Rows: POD NODE WORKLOAD MEM_Mi LIM_Mi GROWTH_Mi_h ETA_s SPAN_s SAMPLES R2 AT_EPOCH,
+# plus "#EVAL <pods with enough samples> <window start>".
+FORECAST_AWK='
+BEGIN { FS = "\t"; OFS = "\t" }
+$1 !~ /^[0-9]+$/ || $1 + 0 < from || $8 !~ /^[0-9.]+$/ { next }
+{ p = $2; t = $1 + 0; m = $8 + 0; rs = $6 + 0
+  if ((p in PRS) && rs != PRS[p]) N[p] = 0
+  PRS[p] = rs
+  if (!N[p]) { SX[p] = 0; SY[p] = 0; SXX[p] = 0; SXY[p] = 0; SYY[p] = 0; T0[p] = t }
+  x = t - T0[p]; N[p]++; SX[p] += x; SY[p] += m; SXX[p] += x * x; SXY[p] += x * m; SYY[p] += m * m
+  LT[p] = t; LM[p] = m; LL[p] = $9; ND[p] = $3; WK[p] = $10 }
+END {
+  ev = 0; need = (win / 2 < 120) ? win / 2 : 120
+  for (p in N) {
+    n = N[p]; span = LT[p] - T0[p]; if (n < 4 || span < need) continue
+    ev++; d = n * SXX[p] - SX[p] * SX[p]; if (d <= 0) continue
+    b = (n * SXY[p] - SX[p] * SY[p]) / d; a = (SY[p] - b * SX[p]) / n; fit = a + b * span
+    lim = (LL[p] ~ /^[0-9.]+$/ && LL[p] + 0 > 0) ? LL[p] + 0 : -1
+    g = b * span; if (b <= 0 || g < 4 || (lim > 0 && g < lim * 0.02)) continue
+    e = n * SYY[p] - SY[p] * SY[p]; q = n * SXY[p] - SX[p] * SY[p]; r2 = (e > 0) ? q * q / (d * e) : 0
+    if (r2 < 0.25) continue                       # noise, not a trend
+    eta = -1; if (lim > 0) { eta = (lim - fit) / b; if (eta < 0) eta = 0 }
+    print p, ND[p], WK[p], LM[p], (lim > 0 ? lim : "-"), sprintf("%.1f", b * 3600), (eta < 0 ? "-" : int(eta)), int(span), n, sprintf("%.2f", r2), (eta < 0 ? "-" : int(LT[p] + eta))
+  }
+  print "#EVAL", ev, from
+}'
+forecast_build() {   # session-dir out-file [now]
+  local sd="$1" out="$2" t="${3:-$(date +%s)}" np rows per
+  [ -s "$sd/pods.tsv" ] || { rm -f "$out"; return 0; }
+  np=$(awk 'END { print NR }' "$sd/model/pods.tsv" 2>/dev/null); case "$np" in ''|*[!0-9]*) np=50 ;; esac
+  # sample period of this session (a rebuilt report may come from another setting)
+  per=$(tail -n $(( np * 3 + 3 )) "$sd/pods.tsv" 2>/dev/null | awk -F'\t' '$1 ~ /^[0-9]+$/ { if (l != "" && $1 != l) d = $1 - l; l = $1 } END { print (d > 0) ? d : 0 }')
+  case "$per" in ''|*[!0-9]*|0) per="$SAMPLE_EVERY" ;; esac
+  rows=$(( (np + 1) * (FC_WIN / per + 4) ))
+  tail -n "$rows" "$sd/pods.tsv" 2>/dev/null | awk -v from=$(( t - FC_WIN )) -v win="$FC_WIN" "$FORECAST_AWK" > "$out.t" 2>/dev/null && mv -f "$out.t" "$out"
+}
+
+# pod memory heatmap: % of the memory limit per pod in NB time buckets over the chart
+# window (max per bucket), plus the buckets in which the pod restarted.
+# Rows: POD LIM_Mi LAST_PCT RESTARTS_IN_WINDOW CELLS(space separated, -1 = no sample) RESTART_BUCKETS(comma)
+HEAT_AWK='
+BEGIN { FS = "\t"; OFS = "\t" }
+$1 !~ /^[0-9]+$/ || $1 + 0 < t0 { next }
+{ p = $2; t = $1 + 0; if (lt_ != "" && t > lt_ && (per_ == "" || t - lt_ < per_)) per_ = t - lt_; lt_ = t
+  if (!(p in L)) { L[p] = "-"; ord[++np] = p }
+  if ($9 ~ /^[0-9.]+$/ && $9 + 0 > 0) L[p] = $9 + 0
+  b = int((t - t0) / (t1 - t0 + 1) * nb); if (b >= nb) b = nb - 1; if (b < 0) b = 0
+  if ($8 ~ /^[0-9.]+$/ && L[p] != "-") { v = $8 * 100 / L[p]; if (!((p, b) in V) || v > V[p, b]) V[p, b] = v; LP[p] = v }
+  rs = $6 + 0; if ((p in PR) && rs > PR[p]) { RB[p] = RB[p] (RB[p] == "" ? "" : ",") b; RN[p] += rs - PR[p] } PR[p] = rs }
+END {
+  print "#HEAT", t0, t1, nb
+  # buckets narrower than the sample period: hold the last value up to two periods
+  bw = (t1 - t0 + 1) / nb; gb = (per_ > 0) ? int(2 * per_ / bw) + 1 : 1
+  for (i = 1; i <= np; i++) { p = ord[i]; if (L[p] == "-") { nolim++; continue }
+    c = ""; lb = -999; lv = -1
+    for (b = 0; b < nb; b++) {
+      if ((p, b) in V) { v = V[p, b]; lb = b; lv = v } else if (lb >= 0 && b - lb <= gb) v = lv; else v = -1
+      c = c (b ? " " : "") (v < 0 ? -1 : sprintf("%.0f", v)) }
+    print p, L[p], sprintf("%.0f", LP[p]), RN[p] + 0, c, (RB[p] == "" ? "-" : RB[p]) }
+  print "#NOLIMIT", nolim + 0
+}'
+heat_build() {   # session-dir out-file window-seconds [now]
+  local sd="$1" out="$2" win="${3:-0}" t="${4:-$(date +%s)}" t0 np per rows
+  [ -s "$sd/pods.tsv" ] || { rm -f "$out"; return 0; }
+  t0=$(awk -F= '$1 == "S_START" { print $2 }' "$sd/meta.env" 2>/dev/null); case "$t0" in ''|*[!0-9]*) t0=0 ;; esac
+  [ "$win" -gt 0 ] && [ $(( t - win )) -gt "$t0" ] && t0=$(( t - win ))
+  if [ "$win" -gt 0 ]; then
+    np=$(awk 'END { print NR }' "$sd/model/pods.tsv" 2>/dev/null); case "$np" in ''|*[!0-9]*) np=50 ;; esac
+    per=$(tail -n $(( np * 3 + 3 )) "$sd/pods.tsv" 2>/dev/null | awk -F'\t' '$1 ~ /^[0-9]+$/ { if (l != "" && $1 != l) d = $1 - l; l = $1 } END { print (d > 0) ? d : 0 }')
+    case "$per" in ''|*[!0-9]*|0) per="$SAMPLE_EVERY" ;; esac
+    rows=$(( (np + 1) * (win / per + 4) ))
+    tail -n "$rows" "$sd/pods.tsv" 2>/dev/null | awk -v t0="$t0" -v t1="$t" -v nb=120 "$HEAT_AWK" > "$out.t" 2>/dev/null && mv -f "$out.t" "$out"
+  else
+    awk -v t0="$t0" -v t1="$t" -v nb=120 "$HEAT_AWK" "$sd/pods.tsv" > "$out.t" 2>/dev/null && mv -f "$out.t" "$out"
+  fi
+}
+
+# keep a long run bounded: when pods.tsv passes KDASH_SESSION_MAX_MB, drop every
+# second sample time from pods.tsv and nodes.tsv (the newest sample always stays).
+# Old history gets coarser, recent history keeps full resolution; ns.tsv and
+# events.tsv are small and are never thinned.
+SESSION_CHECK=0
+session_compact() {
+  SESSION_CHECK=$((SESSION_CHECK + 1)); [ $((SESSION_CHECK % 20)) = 1 ] || return 0
+  local sz f
+  sz=$(wc -c < "$SDIR/pods.tsv" 2>/dev/null || echo 0)
+  [ "$sz" -gt $((SESSION_MAX_MB * 1048576)) ] || return 0
+  for f in pods nodes; do
+    # streaming, two passes: count sample times, then keep odd ones + the newest 240
+    awk -F'\t' 'NR == FNR { if (FNR > 1 && $1 != l) { n++; l = $1 } next }
+        FNR == 1 { print; next } { if ($1 != l2) { e++; l2 = $1 } if (e % 2 == 1 || e > n - 240) print }' \
+        "$SDIR/$f.tsv" "$SDIR/$f.tsv" > "$SDIR/$f.tsv.new" &&
+      mv -f "$SDIR/$f.tsv.new" "$SDIR/$f.tsv"
+  done
+  session_event info COMPACT "$NS" "session history over ${SESSION_MAX_MB} MiB - older samples thinned to half resolution"
+}
+
+session_reset_state() {   # after a filter change: no spurious added / removed events
+  [ "$SESSION_ON" = 1 ] || return 0
+  rm -f "$SDIR/state.tsv"
+  session_event info FILTER "$NS" "pod filter changed to $FILTER"
+}
+
+session_close() {
+  [ "$SESSION_ON" = 1 ] || return 0
+  session_event info SESSION "$NS" "kdash stopped after $(( $(date +%s) - $(awk -F= '$1=="S_START"{print $2}' "$SDIR/meta.env") ))s"
+  SESSION_ON=0
+}
+
+# newest session folder for the current context / namespace (or any)
+session_latest() {
+  local d
+  d="$(ls -1dt "$REPORT_DIR"/sessions/kdash_"$(safe_name "${1:-}")"* 2>/dev/null | head -1)"
+  [ -n "$d" ] || d="$(ls -1dt "$REPORT_DIR"/sessions/kdash_* 2>/dev/null | head -1)"
+  printf '%s' "$d"
+}
+
+#-- network and disk IO: ingress / egress and read / write per worker node and pod -----
+# metrics-server has CPU and memory only, so IO comes from one of (first that works):
+#   1. Prometheus: --prom-url URL (read directly with curl), --prom-svc [ns/]svc:port
+#      (through the API service proxy), or a Prometheus-like service found in the
+#      namespace (prometheus, victoria-metrics, thanos-query).
+#      Read with /federate (plain text, no JSON parser needed); needs services/proxy.
+#   2. kubelet cAdvisor of the nodes that run the namespace (needs nodes/proxy).
+# Counters are sampled every KDASH_IO_EVERY seconds in the background and turned into
+# rates between two samples, so the first rates appear after the second sample.
+IO="${KDASH_IO:-1}"; IO_EVERY="${KDASH_IO_EVERY:-15}"; IO_NODES_MAX="${KDASH_IO_NODES:-10}"
+PROM_URL="${KDASH_PROM_URL:-}"; PROM_SVC="${KDASH_PROM_SVC:-}"
+case "$IO_EVERY" in ''|*[!0-9]*|0) IO_EVERY=15 ;; esac
+case "$IO_NODES_MAX" in ''|*[!0-9]*|0) IO_NODES_MAX=10 ;; esac
+IO_STATE="off"; IO_SRC=""; IO_REASON=""; IO_PID=""; IO_LAST=0; IO_DETECT_AT=0; IO_SAMPLE_AT=0
+IO_METRICS='container_network_receive_bytes_total|container_network_transmit_bytes_total|container_fs_reads_bytes_total|container_fs_writes_bytes_total|container_fs_reads_total|container_fs_writes_total'
+
+_urlenc() { printf '%s' "$1" | awk 'BEGIN { for (i = 0; i < 256; i++) H[sprintf("%c", i)] = sprintf("%%%02X", i) }
+  { s = ""; n = length($0); for (i = 1; i <= n; i++) { c = substr($0, i, 1); s = s ((c ~ /[A-Za-z0-9_.-]/) ? c : H[c]) } printf "%s", s }'; }
+
+# federate query string for this namespace (pods) and the node root cgroups
+_io_query() {
+  local sel
+  if [ "$ALL_NS" = 1 ]; then sel='namespace!=""'; else sel="namespace=\"$NS\""; fi
+  printf 'match[]=%s&match[]=%s' "$(_urlenc "{__name__=~\"$IO_METRICS\",$sel}")" "$(_urlenc "{__name__=~\"$IO_METRICS\",id=\"/\"}")"
+}
+_io_svc_path() {          # [ns/][scheme:]name:port -> API proxy path prefix
+  local s="$1" n="$NS"
+  case "$s" in */*) n="${s%%/*}"; s="${s#*/}" ;; esac
+  printf '/api/v1/namespaces/%s/services/%s/proxy' "$n" "$s"
+}
+_io_get() {               # fetch federate text from the detected source -> stdout
+  case "$IO_STATE" in
+    prom-url) curl -sk --max-time 20 "${PROM_URL%/}/federate?$(_io_query)" ;;
+    prom-svc) "${KC[@]}" get --raw "$IO_SRC_PATH/federate?$(_io_query)" --request-timeout=20s ;;
+  esac
+}
+
+io_detect() {
+  [ "$IO" = 1 ] || { IO_STATE="off"; return 0; }
+  local cand p tried="" path err="$TMPD/io.err" nd
+  IO_DETECT_AT=$(date +%s); IO_REASON=""
+  if [ -n "$PROM_URL" ]; then
+    command -v curl >/dev/null 2>&1 && curl -sk --max-time 8 "${PROM_URL%/}/federate?match[]=$(_urlenc 'up')" > "$TMPD/io.probe" 2>/dev/null
+    if grep -q '^up{' "$TMPD/io.probe" 2>/dev/null; then
+      IO_STATE="prom-url"; IO_SRC="Prometheus ${PROM_URL}"; return 0
+    fi
+    tried="$tried --prom-url (not reachable or not Prometheus)"
+  fi
+  # Prometheus-like services: the one given, then any in the namespace
+  cand="$PROM_SVC"
+  if [ -z "$cand" ] && [ -s "$SVC" ]; then
+    cand="$(awk -F'|' '$1 == "V" && $3 ~ /prometheus|pm-server|victoria-metrics|vmsingle|thanos-query/ && $3 !~ /alertmanager|pushgateway|operator|exporter|node-exporter|kube-state/ {
+        n = split($8, P, " "); for (i = 1; i <= n; i++) { split(P[i], q, "/"); if (q[1] ~ /^(9090|8428|10902|9089|80|8080|443)$/) print $2 "/" $3 ":" q[1] } }' "$SVC" | head -6)"
+  fi
+  for p in $cand; do
+    for path in "$(_io_svc_path "$p")" "$(_io_svc_path "$(printf '%s' "$p" | sed 's#^\(\([^/]*/\)\{0,1\}\)#\1https:#')")"; do
+      "${KC[@]}" get --raw "$path/federate?match[]=$(_urlenc 'up')" --request-timeout=8s > "$TMPD/io.probe" 2>"$err"
+      if grep -q '^up{' "$TMPD/io.probe" 2>/dev/null; then
+        IO_STATE="prom-svc"; IO_SRC_PATH="$path"; IO_SRC="Prometheus service ${p} (API service proxy)"; return 0
+      fi
+    done
+    tried="$tried ${p}: $(_klass "$err")"
+  done
+  [ -z "$cand" ] && tried="$tried no Prometheus service in the namespace"
+  # kubelet cAdvisor through the API node proxy
+  nd="$(awk -F'\t' 'NR > 1 && $5 > 0 && $2 != "(unscheduled)" { print $2; exit }' "$MODEL/nodes.tsv" 2>/dev/null)"
+  if [ -n "$nd" ]; then
+    { "${KC[@]}" get --raw "/api/v1/nodes/$nd/proxy/metrics/cadvisor" --request-timeout=10s 2>"$err" | head -c 400 > "$TMPD/io.probe"; } 2>/dev/null
+    if grep -q '^container_\|^# HELP' "$TMPD/io.probe" 2>/dev/null; then
+      IO_STATE="kubelet"; IO_SRC="kubelet cAdvisor of the worker nodes (API node proxy)"; return 0
+    fi
+    tried="$tried; kubelet cAdvisor: $(_klass "$err")"
+  fi
+  IO_STATE="unavailable"; IO_REASON="${tried# }"
+}
+
+_now_ms() { local t; t="$(date +%s%3N 2>/dev/null)"; case "$t" in *[!0-9]*|"") t="$(( $(date +%s) * 1000 ))" ;; esac; printf '%s' "$t"; }
+
+# one sample of raw counters -> $TMPD/io/raw.<epoch>; run in the background
+io_collect() {
+  local d="$TMPD/io" out t nd n=0
+  mkdir -p "$d"; t=$(date +%s); out="$d/raw.new"
+  {
+    printf '# T %s\n' "$t"
+    case "$IO_STATE" in
+      prom-url|prom-svc) _io_get 2>"$d/collect.err" ;;
+      kubelet)
+        awk -F'\t' 'NR > 1 && $5 > 0 && $2 != "(unscheduled)" { print $2 }' "$MODEL/nodes.tsv" | head -"$IO_NODES_MAX" | while IFS= read -r nd; do
+          printf '# TMS %s\n# NODE %s\n' "$(_now_ms)" "$nd"
+          "${KC[@]}" get --raw "/api/v1/nodes/$nd/proxy/metrics/cadvisor" --request-timeout=20s 2>>"$d/collect.err" |
+            grep -E "^($IO_METRICS)\{" | grep -E "namespace=\"$([ "$ALL_NS" = 1 ] && echo '[^"]+' || echo "$NS")\"|id=\"/\""
+        done ;;
+    esac
+  } > "$out" 2>/dev/null
+  mv -f "$out" "$d/raw.ready"
+}
+
+# raw exposition text -> per pod / per node counters with their sample time (ms)
+IO_PARSE_AWK='
+function lab(k,   p, r) { p = index(L, k "=\""); if (!p) return ""; r = substr(L, p + length(k) + 2); return substr(r, 1, index(r, "\"") - 1) }
+function phys(i) { return i !~ /^(lo|cali|veth|tunl|vxlan|flannel|cni|docker|kube-ipvs|cilium|lxc|weave|genev|br-|virbr|nodelocaldns|antrea)/ }
+FNR == 1 && FILENAME == nodesf { next }
+FILENAME == nodesf { NM[$2] = $2; if ($20 != "-") NM[$20] = $2; next }
+/^# T / { split($0, w, " "); T0 = w[3] * 1000; next }
+/^# TMS / { split($0, w, " "); T0 = w[3] + 0; next }
+/^# NODE / { split($0, w, " "); CURN = w[3]; next }
+/^#/ || length($0) < 3 { next }
+{
+  b = index($0, "{"); e = index($0, "} "); if (!b || !e) next
+  m = substr($0, 1, b - 1); L = substr($0, b + 1, e - b - 1); rest = substr($0, e + 2); split(rest, v, " ")
+  val = v[1] + 0; ts = (v[2] != "") ? v[2] + 0 : T0
+  f = (m ~ /receive_bytes/) ? "rx" : (m ~ /transmit_bytes/) ? "tx" : (m ~ /reads_bytes/) ? "rb" : (m ~ /writes_bytes/) ? "wb" : (m ~ /reads_total/) ? "ro" : "wo"
+  id = lab("id"); ns = lab("namespace"); pod = lab("pod"); if (pod == "") pod = lab("pod_name")
+  if (id == "/") {
+    nd = CURN; if (nd == "") { x = lab("node"); if (x == "") x = lab("kubernetes_io_hostname"); if (x == "") { x = lab("instance"); sub(/:[0-9]+$/, "", x) } nd = (x in NM) ? NM[x] : x }
+    if (nd == "") next
+    if (f == "rx" || f == "tx") { if (!phys(lab("interface"))) next; k = "N\t" nd "\t" f "\t" lab("interface") } else k = "N\t" nd "\t" f "\t" lab("device")
+  } else {
+    if (ns == "" || pod == "") next
+    c = lab("container"); if (c == "") c = lab("container_name")
+    if (f == "rx" || f == "tx") k = "P\t" ns "\t" pod "\t" f "\t" lab("interface")
+    else { if (c == "" || c == "POD") next; k = "P\t" ns "\t" pod "\t" f "\t" c "/" lab("device") }
+  }
+  if (!(k in V) || val > V[k]) { V[k] = val; TS[k] = ts }       # network reported once per pod sandbox
+}
+END { for (k in V) { split(k, a, "\t"); g = a[1] "\t" a[2] "\t" ((a[1] == "P") ? a[3] "\t" a[4] : a[3]); S[g] += V[k]; if (TS[k] > ST[g]) ST[g] = TS[k] }
+      for (g in S) printf "%s\t%.0f\t%.0f\n", g, S[g], ST[g] }
+'
+
+# two counter samples -> rates (per second); same sample time = keep the last rate
+IO_RATE_AWK='
+BEGIN { FS = OFS = "\t" }
+FILENAME == prevf { k = $1 FS $2 FS $3 FS (($1 == "P") ? $4 : ""); PV[k] = $(NF - 1); PT[k] = $NF; next }
+FILENAME == lastf { LR[$1 FS $2 FS $3] = $4; next }
+{ k = $1 FS $2 FS $3 FS (($1 == "P") ? $4 : ""); cur = $(NF - 1); t = $NF
+  key = ($1 == "P") ? $1 FS $2 "/" $3 FS $4 : $1 FS $2 FS $3
+  if ((k in PV) && t > PT[k] && cur >= PV[k]) print key, sprintf("%.2f", (cur - PV[k]) * 1000 / (t - PT[k]))
+  else if (key in LR) print key, LR[key] }
+'
+
+io_tick() {     # start a background sample when due; turn a finished one into rates
+  [ "$IO" = 1 ] || return 0
+  local d="$TMPD/io" now; now=$(date +%s); mkdir -p "$d"
+  if [ "$IO_STATE" = off ] || { [ "$IO_STATE" = unavailable ] && [ $((now - IO_DETECT_AT)) -ge 600 ]; }; then io_detect; fi
+  case "$IO_STATE" in prom-url|prom-svc|kubelet) ;; *) return 0 ;; esac
+  if [ -f "$d/raw.ready" ]; then
+    awk -v nodesf="$MODEL/nodes.tsv" -F'\t' "$IO_PARSE_AWK" "$MODEL/nodes.tsv" "$d/raw.ready" > "$d/cnt.new" 2>/dev/null
+    rm -f "$d/raw.ready"
+    if [ -s "$d/cnt.new" ]; then
+      [ -f "$d/cnt.prev" ] || : > "$d/cnt.prev"; [ -f "$d/rates" ] || : > "$d/rates"
+      awk -v prevf="$d/cnt.prev" -v lastf="$d/rates" "$IO_RATE_AWK" "$d/cnt.prev" "$d/rates" "$d/cnt.new" > "$d/rates.new" 2>/dev/null
+      mv -f "$d/rates.new" "$d/rates"; mv -f "$d/cnt.new" "$d/cnt.prev"; IO_SAMPLE_AT=$now
+    else
+      IO_REASON="last sample empty ($(head -c 160 "$d/collect.err" 2>/dev/null | tr '\n' ' '))"
+    fi
+  fi
+  if [ $((now - IO_LAST)) -ge "$IO_EVERY" ] && { [ -z "$IO_PID" ] || ! kill -0 "$IO_PID" 2>/dev/null; }; then
+    IO_LAST=$now; io_collect & IO_PID=$!
+  fi
+}
+# namespace switch: stop a running sample, forget the source (a Prometheus service is
+# looked up per namespace) and the rates / history of the old namespace
+io_reset() {
+  [ -n "${IO_PID:-}" ] && kill "$IO_PID" 2>/dev/null; wait "${IO_PID:-0}" 2>/dev/null
+  rm -rf "$TMPD/io" "$TMPD/iohist"; IO_STATE="off"; IO_LAST=0; IO_SAMPLE_AT=0; IO_PID=""; IO_DETECT_AT=0
+}
+io_wait_once() {          # one-shot modes: two samples SEC apart, in the foreground
+  [ "$IO" = 1 ] && [ "${IO_WAIT:-0}" -gt 0 ] || return 0
+  io_detect; case "$IO_STATE" in prom-url|prom-svc|kubelet) ;; *) return 0 ;; esac
+  io_collect; io_tick; IO_LAST=0; sleep "$IO_WAIT"; io_collect; io_tick
+}
+
+# rates -> io_pods.tsv / io_nodes.tsv in the model, plus io_* lines in meta.tsv
+IO_MERGE_AWK='
+BEGIN { FS = OFS = "\t" }
+FILENAME == ratef { R[$1 FS $2 FS $3] = $4; next }
+FILENAME == podsf { if (FNR == 1) next; key = allns ? $1 : $2 "/" $3; PK[++np] = key; PN[key] = $1; PND[key] = $7; PW[key] = $12 "/" $13; next }
+FILENAME == nodesf { if (FNR == 1) next; ND[++nn] = $2; NP[$2] = $1; NC[$2] = $5; next }
+function r(k) { return (k in R) ? R[k] : "" }
+function fmt(v) { return v == "" ? "-" : sprintf("%.0f", v) }
+END {
+  split("rx tx rb wb ro wo", F, " ")
+  print "POD", "NODE", "WORKLOAD", "NET_RX_Bps", "NET_TX_Bps", "DISK_R_Bps", "DISK_W_Bps", "DISK_R_IOPS", "DISK_W_IOPS" > (md "/io_pods.tsv")
+  for (i = 1; i <= np; i++) { k = PK[i]; line = PN[k] OFS PND[k] OFS PW[k]; any = 0
+    for (j = 1; j <= 6; j++) { v = r("P" FS k FS F[j]); line = line OFS fmt(v); if (v != "") { any = 1; NS_[F[j]] += v; NSH[F[j]] = 1; NN[PND[k] FS F[j]] += v; NNH[PND[k] FS F[j]] = 1 } }
+    if (any) npw++
+    print line > (md "/io_pods.tsv") }
+  close(md "/io_pods.tsv")
+  print "NODE", "POOL", "NS_PODS", "NODE_RX_Bps", "NODE_TX_Bps", "NODE_DISK_R_Bps", "NODE_DISK_W_Bps", "NODE_R_IOPS", "NODE_W_IOPS", "NS_RX_Bps", "NS_TX_Bps", "NS_DISK_R_Bps", "NS_DISK_W_Bps", "NS_R_IOPS", "NS_W_IOPS" > (md "/io_nodes.tsv")
+  for (i = 1; i <= nn; i++) { n = ND[i]; if (NC[n] + 0 == 0 && !(("N" FS n FS "rx") in R)) continue
+    line = n OFS NP[n] OFS NC[n]
+    for (j = 1; j <= 6; j++) line = line OFS fmt(r("N" FS n FS F[j]))
+    for (j = 1; j <= 6; j++) line = line OFS ((n FS F[j]) in NNH ? fmt(NN[n FS F[j]]) : "-")
+    print line > (md "/io_nodes.tsv") }
+  close(md "/io_nodes.tsv")
+  printf "io_state\t%s\nio_source\t%s\nio_reason\t%s\nio_age\t%s\nio_every\t%s\nio_pods_with_data\t%d\n", st, (src == "" ? "-" : src), (why == "" ? "-" : why), age, every, npw + 0 >> (md "/meta.tsv")
+  printf "ns_net_rx\t%s\nns_net_tx\t%s\nns_disk_r\t%s\nns_disk_w\t%s\nns_riops\t%s\nns_wiops\t%s\n", (("rx" in NSH) ? fmt(NS_["rx"]) : "-"), (("tx" in NSH) ? fmt(NS_["tx"]) : "-"),
+    (("rb" in NSH) ? fmt(NS_["rb"]) : "-"), (("wb" in NSH) ? fmt(NS_["wb"]) : "-"), (("ro" in NSH) ? fmt(NS_["ro"]) : "-"), (("wo" in NSH) ? fmt(NS_["wo"]) : "-") >> (md "/meta.tsv")
+  close(md "/meta.tsv")
+}
+'
+io_merge() {
+  local d="$TMPD/io" st="$IO_STATE" age="-"
+  [ -f "$d/rates" ] || { mkdir -p "$d"; : > "$d/rates"; }
+  [ "$IO_SAMPLE_AT" -gt 0 ] && age=$(( $(date +%s) - IO_SAMPLE_AT ))
+  case "$st" in prom-url|prom-svc|kubelet) [ -s "$d/rates" ] || st="warming-up" ;; off) [ "$IO" = 1 ] && st="not-sampled" ;; esac
+  awk -v ratef="$d/rates" -v podsf="$MODEL/pods.tsv" -v nodesf="$MODEL/nodes.tsv" -v md="$MODEL" -v allns="$ALL_NS" \
+      -v st="$st" -v src="$IO_SRC" -v why="$IO_REASON" -v age="$age" -v every="$IO_EVERY" \
+      "$IO_MERGE_AWK" "$d/rates" "$MODEL/pods.tsv" "$MODEL/nodes.tsv" 2>/dev/null
+  # namespace in/out history for the trend line
+  awk -F'\t' -v t="$(date +%s)" '$1 == "ns_net_rx" { r = $2 } $1 == "ns_net_tx" { x = $2 } END { if (r != "-" && r != "") print t "\t" r "\t" x }' "$MODEL/meta.tsv" >> "$TMPD/iohist" 2>/dev/null
+  tail -n "$HIST_N" "$TMPD/iohist" > "$TMPD/iohist.t" 2>/dev/null && mv -f "$TMPD/iohist.t" "$TMPD/iohist"
+}
+
+#-- per-view HTML snapshots (report layout) -------------------
+# One self-contained HTML file per view:
+#   <report>_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html  in $KDASH_REPORT_DIR
+# header, meta chips, clickable metric cards that filter the primary table,
+# Action Required table, one searchable / sortable / CSV-exportable section per
+# table, collection notes, and the original text view for traceability.
+snap_slug() {
+  case "$1" in
+    pods) echo kdash_pod_container_resources ;; nodes) echo kdash_node_pools_worker_nodes ;;
+    workloads) echo kdash_workloads_per_worker_node ;; ip) echo kdash_namespace_ip_pool ;;
+    mem) echo kdash_memory_dashboard ;; io) echo kdash_network_disk_io ;;
+  esac
+}
+snap_title() {
+  case "$1" in
+    pods) echo "Pod / Container Resources" ;; nodes) echo "Node Pools - Namespace Usage per Worker Node" ;;
+    workloads) echo "Workloads per Worker Node and HA Spread" ;; ip) echo "Namespace IP Pool" ;;
+    mem) echo "Memory Dashboard" ;; io) echo "Network and Disk IO" ;;
+  esac
+}
+# file|title|description|status column   (first entry = primary table)
+snap_tables() {
+  case "$1" in
+    pods) printf '%s\n' \
+      "pods.tsv|Pods|Every pod with live usage, requests and limits (CPU millicores, memory MiB).|STATUS" \
+      "containers.tsv|Containers|Per container usage, requests, limits, readiness, waiting reason and last termination.|WAITING" ;;
+    nodes) printf '%s\n' \
+      "nodes.tsv|Worker Nodes|Per worker node hosting this namespace: namespace pods, CPU and memory used / requested / limited against node allocatable.|STATUS" \
+      "pools.tsv|Node Pools|Namespace usage per node pool against the allocatable capacity of the nodes that host it.|-" \
+      "cluster_ns.tsv|Namespaces|Requests per namespace (whole cluster, or the namespaces you can read).|-" ;;
+    workloads) printf '%s\n' \
+      "workloads.tsv|Workload Spread and HA|Replica placement per workload. HA_RISK = 2+ replicas on one node; SKEWED = uneven spread.|VERDICT" \
+      "wl_node.tsv|Pods per Worker Node|Which workloads run on which worker node, with pod names.|-" ;;
+    ip) printf '%s\n' \
+      "ip.tsv|Pod IP Assignments|Pod IPs, node, host IP and notes (HOST_NETWORK, DUPLICATE, NO_IP).|NOTE" \
+      "ipblocks.tsv|Node IP Blocks|Per node: node IP, podCIDR, addresses used by this namespace and observed /26 blocks.|-" \
+      "subnets.tsv|Pod Subnets|Observed /24 pod subnets and the nodes that use them.|-" \
+      "services.tsv|Services|ClusterIP, external IPs, load-balancer ingress and ports.|TYPE" ;;
+    mem) printf '%s\n' \
+      "memory.tsv|Memory and OOM Risk|Every pod by memory used with request / limit percentages and risk flags.|RISK" \
+      "nodes.tsv|Memory by Worker Node|Namespace memory per worker node against node allocatable.|-" \
+      "workloads.tsv|Memory by Workload|Memory used / requested / limited per workload.|-" ;;
+    io) printf '%s\n' \
+      "io_pods.tsv|Pod Network and Disk IO|Bytes per second received (in) and sent (out), disk read / write bytes and operations per second.|-" \
+      "io_nodes.tsv|Worker Node Network and Disk IO|Whole node and this namespace on the node.|-" ;;
+  esac
+}
+
+# HTML renderer: CLI-faithful console layout (dark / light, print-ready)
+SNAP_UI_AWK='
+function metadefaults(   k, n, K) {     # reports from older sessions lack newer keys
+  n = split("cluster_state cluster_scope cluster_ns_read cluster_ns_tried cluster_nodes cluster_cpu_alloc cluster_mem_alloc cluster_mem_used cluster_cpu_used cluster_metrics_nodes cluster_metrics_total scope_mem_used scope_cpu_used scope_usage scope_no_access cluster_pods cluster_cpu_req cluster_mem_req cluster_mem_lim cluster_namespaces workloads_degraded workloads_rolling workload_state workload_kinds io_state io_source io_reason io_age io_every io_pods_with_data ns_net_rx ns_net_tx ns_disk_r ns_disk_w ns_riops ns_wiops", K, " ")
+  for (k = 1; k <= n; k++) if (!(K[k] in M)) M[K[k]] = (K[k] ~ /^workloads_/) ? 0 : "-"
+}
+# ---- host clock (no strftime in mawk / busybox): every time on the page is
+# written in the time zone of the host that ran kdash (tzoff / tzname from date);
+# the page can switch to browser time or UTC (kdTz)
+function tciv(e,   dz, era, doe, yoe, doy, mp) {
+  e = int(e) + tzoff; dz = int(e / 86400); if (dz * 86400 > e) dz--
+  TSEC = e - dz * 86400; dz += 719468
+  era = int(dz / 146097); doe = dz - era * 146097
+  yoe = int((doe - int(doe / 1460) + int(doe / 36524) - int(doe / 146096)) / 365)
+  doy = doe - (365 * yoe + int(yoe / 4) - int(yoe / 100))
+  mp = int((5 * doy + 2) / 153)
+  TDAY = doy - int((153 * mp + 2) / 5) + 1; TMON = (mp < 10) ? mp + 3 : mp - 9
+  TYR = yoe + era * 400; if (TMON <= 2) TYR++
+}
+function thms(e) { if (e + 0 <= 0) return "--:--:--"; tciv(e); return sprintf("%02d:%02d:%02d", int(TSEC / 3600), int(TSEC % 3600 / 60), TSEC % 60) }
+function tymd(e) { if (e + 0 <= 0) return "----------"; tciv(e); return sprintf("%04d-%02d-%02d", TYR, TMON, TDAY) }
+function tzlabel(  a) { a = tzoff < 0 ? -tzoff : tzoff; return tzname " (UTC" (tzoff < 0 ? "-" : "+") sprintf("%02d:%02d", int(a / 3600), int(a % 3600 / 60)) ")" }
+function tdur(s) {
+  s = int(s); if (s < 0) s = 0
+  if (s < 60) return s "s"
+  if (s < 3600) return int(s / 60) "m" ((s % 60) ? sprintf("%02d", s % 60) "s" : "")
+  if (s < 86400) return int(s / 3600) "h" ((s % 3600) ? sprintf("%02d", int(s % 3600 / 60)) "m" : "")
+  return int(s / 86400) "d" sprintf("%02d", int(s % 86400 / 3600)) "h"
+}
+function esc(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); gsub(/"/, "\\&quot;", s); return s }
+function nv(x) { return (x == "-" || x == "") ? -1 : x + 0 }
+function numeric(v) { return v ~ /^-?[0-9]+(\.[0-9]+)?$/ }
+function pct(u, c) { return (c > 0 && u >= 0) ? u * 100 / c : -1 }
+function hc(p) { if (p < 0) return 0; if (p >= 90) return 4; if (p >= 75) return 3; if (p >= 50) return 2; return 1 }
+function fnum(v) { return v < 0 ? "<span class=\"na\">-</span>" : sprintf("%d", v + 0.5) }
+function fgi(v) { return v < 0 ? "<span class=\"na\">-</span>" : sprintf("%.1f", v / 1024) }
+function fp(p) { return p < 0 ? "<span class=\"na\">-</span>" : sprintf("<span class=\"t%d\">%.1f</span>", hc(p), p) }
+function hmem(mi) { if (mi < 0) return "-"; if (mi >= 10240) return sprintf("%.1fGi", mi / 1024); return sprintf("%dMi", mi + 0.5) }
+function hcpu(m) { if (m < 0) return "-"; if (m >= 10000) return sprintf("%.1fc", m / 1000); return sprintf("%dm", m + 0.5) }
+function bar(p, cls,   w) { if (p < 0) return "<span class=\"bar " cls "\"></span>"; w = (p > 100) ? 100 : p; return sprintf("<span class=\"bar %s\" title=\"%.1f%%\"><i class=\"h%d\" style=\"width:%.1f%%\"></i></span>", cls, p, (cls ~ /rq/ ? 2 : (cls ~ /gd/ ? 1 : hc(p))), w) }
+function cbar(a, b, tot, cls, bk,   pa, pb) {
+  if (tot <= 0) return "<span class=\"bar " cls "\" title=\"n/a\"></span>"
+  if (a < 0) a = 0
+  pa = a * 100 / tot; if (pa > 100) pa = 100
+  pb = (b > 0) ? b * 100 / tot : 0; if (pa + pb > 100) pb = 100 - pa
+  return sprintf("<span class=\"bar %s\" title=\"this namespace %.1f%%%s of allocatable\"><i class=\"%s\" style=\"width:%.2f%%\"></i><i class=\"%s\" style=\"width:%.2f%%\"></i></span>", cls, pa,
+    (b > 0 ? sprintf(", other namespaces %s %.1f%%", (bk == "req" ? "requested" : "used"), pb) : ""), (pa >= 90 ? "h4" : "h1"), pa, (bk == "req" ? "req" : "oth"), pb)
+}
+# graph bar: used | requested beyond used | free
+function gbar(u, r, tot, ucls,   pu, pr) {
+  if (tot <= 0) return "<span class=\"bar g\" title=\"n/a\"></span>"
+  pu = (u > 0) ? u * 100 / tot : 0; if (pu > 100) pu = 100
+  pr = (r > u && r > 0) ? r * 100 / tot - pu : 0; if (pu + pr > 100) pr = 100 - pu
+  return sprintf("<span class=\"bar g\" title=\"used %s%% &middot; requested %s%% of allocatable\"><i class=\"%s\" style=\"width:%.2f%%\"></i><i class=\"req\" style=\"width:%.2f%%\"></i></span>", (u >= 0 ? sprintf("%.1f", u * 100 / tot) : "n/a"), (r >= 0 ? sprintf("%.1f", r * 100 / tot) : "n/a"), ucls, pu, pr)
+}
+# right graph: the cluster (or your namespaces) - or, without cluster data, this
+# namespace against its own limits; left bars zoomed by ZF when the share is small
+function cmprow(lbl, nodes, kind, cap, nu, nr, cu, cr, cls, lim) {
+  printf "<tr class=\"%s\"><td class=\"l\">%s</td><td>%s</td><td class=\"k l\">%s</td><td>%s</td><td class=\"g l sep\">%s</td><td>%s</td><td>%s</td><td class=\"g l sep\">%s</td><td>%s</td><td>%s</td></tr>\n", cls, lbl, nodes, kind,
+    (kind == "mem" ? hmem(cap) : hcpu(cap)), gbar((nu > 0 ? nu * ZF : nu), (nr > 0 ? nr * ZF : nr), cap, "h1"), fp(pct(nu, cap)), fp(pct(nr, cap)),
+    (CMPCL ? gbar(cu, cr, cap, "cl") : (lim > 0 ? gbar(nu, nr, lim, "cl") : ((nu > 0 || nr > 0) ? "<span class=\"na\">no " kind " limits set</span>" : "<span class=\"na\">no pods here</span>"))),
+    fp(CMPCL ? pct(cu, cap) : pct(nu, lim)), fp(CMPCL ? pct(cr, cap) : pct(nr, lim))
+}
+function view_compare(   npl, i, nodes, cl, zmx, x, zs, k) {
+  npl = L("pools.tsv", "L"); cl = (M["cluster_state"] == "ok" || M["cluster_state"] == "partial"); CMPCL = cl
+  SCU = (M["scope_usage"] == "ok") && (M["cluster_state"] == "partial" || topnstate != "ok")
+  zmx = 0
+  for (i = 1; i <= npl; i++) { if (F("L", i, "POOL") == "(none)") continue
+    if (nv(F("L", i, "POOL_MEM_ALLOC_Mi")) > 0) { x = (nv(F("L", i, "NS_MEM_USED_Mi")) > nv(F("L", i, "NS_MEM_REQ_Mi")) ? nv(F("L", i, "NS_MEM_USED_Mi")) : nv(F("L", i, "NS_MEM_REQ_Mi"))) / nv(F("L", i, "POOL_MEM_ALLOC_Mi")); if (x > zmx) zmx = x }
+    if (nv(F("L", i, "POOL_CPU_ALLOC_m")) > 0) { x = (nv(F("L", i, "NS_CPU_USED_m")) > nv(F("L", i, "NS_CPU_REQ_m")) ? nv(F("L", i, "NS_CPU_USED_m")) : nv(F("L", i, "NS_CPU_REQ_m"))) / nv(F("L", i, "POOL_CPU_ALLOC_m")); if (x > zmx) zmx = x } }
+  ZF = 1; if (zmx > 0 && zmx < 0.45) { split("100 50 20 10 5 2", zs, " "); for (k = 1; k <= 6; k++) if (zmx * zs[k] <= 0.95) { ZF = zs[k] + 0; break } }
+  panel_open("compare", cl ? "Namespace vs cluster" : "Namespace vs its limits", "share of each pool allocatable &middot; left: this namespace (" esc(ns) ")" (ZF > 1 ? " <b class=\"zm\">zoom &times;" ZF "</b> (bars magnified, % values true)" : "") " &middot; right: " (cl ? (M["cluster_state"] == "partial" ? "the namespaces you can read (no cluster-wide rights)" : "every namespace in the cluster") : "this namespace against its own limits (cluster data " esc(M["cluster_state"]) ")") \
+    (topnstate == "ok" ? "" : " &middot; cluster usage unavailable (node metrics " esc(topnstate) ")") \
+    ((nv(M["cluster_metrics_total"]) > 0 && nv(M["cluster_metrics_nodes"]) > 0 && M["cluster_metrics_nodes"] + 0 < M["cluster_metrics_total"] + 0) ? " &middot; node metrics for " M["cluster_metrics_nodes"] " of " M["cluster_metrics_total"] " nodes" : ""), csvbtn("cmptable", "namespace_vs_cluster"), 0)
+  print "<div class=\"scroll\"><table class=\"cli cmp\" id=\"cmptable\"><thead><tr class=\"grp\"><th colspan=\"4\"></th><th colspan=\"3\" class=\"sep gn\">THIS NAMESPACE" (ZF > 1 ? " &middot; zoom &times;" ZF : "") "</th><th colspan=\"3\" class=\"sep gc\">" (cl ? (M["cluster_state"] == "partial" ? (M["cluster_scope"] == "selected" ? "SELECTED NAMESPACES (--compare)" : "YOUR NAMESPACES (all you can read)") : "WHOLE CLUSTER (all namespaces)") : "THIS NAMESPACE vs ITS LIMITS") "</th></tr>"
+  print "<tr><th class=\"l\">Pool</th><th>Nodes ns/all</th><th class=\"l\"></th><th>Alloc</th><th class=\"l sep\">used &#9608; requested &#9618; free</th><th>used%</th><th>req%</th><th class=\"l sep\">used &#9608; requested &#9618; free</th><th>" (cl ? "used%" : "used% of lim") "</th><th>" (cl ? "req%" : "req% of lim") "</th></tr></thead><tbody>"
+  for (i = 1; i <= npl; i++) {
+    if (F("L", i, "POOL") == "(none)") continue
+    nodes = F("L", i, "NODES_HOSTING") "/" F("L", i, "NODES_IN_POOL")
+    cmprow("<b class=\"pl\">" esc(F("L", i, "POOL")) "</b>", nodes, "mem", nv(F("L", i, "POOL_MEM_ALLOC_Mi")), nv(F("L", i, "NS_MEM_USED_Mi")), nv(F("L", i, "NS_MEM_REQ_Mi")), nv(F("L", i, SCU ? "SCOPE_MEM_USED_Mi" : "POOL_MEM_USED_Mi")), nv(F("L", i, "CL_MEM_REQ_Mi")), "", nv(F("L", i, "NS_MEM_LIM_Mi")))
+    cmprow("", "", "cpu", nv(F("L", i, "POOL_CPU_ALLOC_m")), nv(F("L", i, "NS_CPU_USED_m")), nv(F("L", i, "NS_CPU_REQ_m")), nv(F("L", i, SCU ? "SCOPE_CPU_USED_m" : "POOL_CPU_USED_m")), nv(F("L", i, "CL_CPU_REQ_m")), "", nv(F("L", i, "NS_CPU_LIM_m")))
+  }
+  print "</tbody><tfoot>"
+  cmprow("CLUSTER TOTAL", M["nodes_hosting"] "/" M["cluster_nodes"], "mem", nv(M["cluster_mem_alloc"]), nv(M["mem_used"]), nv(M["mem_req"]), nv(M[SCU ? "scope_mem_used" : "cluster_mem_used"]), nv(M["cluster_mem_req"]), "tot", nv(M["mem_lim"]))
+  cmprow("", "", "cpu", nv(M["cluster_cpu_alloc"]), nv(M["cpu_used"]), nv(M["cpu_req"]), nv(M[SCU ? "scope_cpu_used" : "cluster_cpu_used"]), nv(M["cluster_cpu_req"]), "tot", nv(M["cpu_lim"]))
+  print "</tfoot></table></div><div class=\"legend\"><span><i class=\"h1\"></i>this namespace used</span><span><i class=\"cl\"></i>" (cl ? "cluster used" : "used of its limit") "</span><span><i class=\"req\"></i>requested, not used</span><span><i style=\"background:var(--free)\"></i>free allocatable</span></div></section>"
+}
+function trend(cur, old) { if (cur < 0 || old < 0) return "<span class=\"fl\">&middot;</span>"; if (cur > old * 1.02) return "<span class=\"up\">&#9650;</span>"; if (cur < old * 0.98) return "<span class=\"dn\">&#9660;</span>"; return "<span class=\"fl\">&middot;</span>" }
+function sevof(v) {
+  if (v ~ /HA_RISK|OOM_RISK|DUPLICATE|NotReady|CrashLoop|Error|OOMKilled|OOMKILLED|Evicted|Failed|UNSCHEDULED|NO_IP|ImagePull|CreateContainer|DEGRADED/) return "bad"
+  if (v ~ /SKEWED|NOT_READY|Pending|Terminating|NO_LIMIT|ContainerCreating|Cordoned|SchedulingDisabled|HOST_NETWORK|SINGLE|ROLLING|SCALED_TO_0|SUSPENDED/) return "warn"
+  if (v ~ /^(OK|Running|Ready|Succeeded|Completed|PER_NODE)$/) return "ok"
+  if (v ~ /OVER_REQUEST|LoadBalancer|NodePort/) return "info"
+  return "neu"
+}
+function badges(v,   n, t, k, s) { if (v == "" || v == "-") return "<span class=\"na\">-</span>"; n = split(v, t, /[ +]/); s = ""; for (k = 1; k <= n; k++) if (t[k] != "") s = s "<span class=\"b " sevof(t[k]) "\">" esc(t[k]) "</span>"; return s }
+function rowsev(v,   n, t, k, s, w) { if (v == "" || v == "-") return "neu"; n = split(v, t, /[ +]/); w = "ok"; for (k = 1; k <= n; k++) { s = sevof(t[k]); if (s == "bad") return "bad"; if (s == "warn") w = "warn" } return w }
+function spark(list, W, H, cls, labels,   n, v, i, mn, mx, x, y, pts, area, s, dx) {
+  n = split(list, v, " "); if (n == 0) return "<span class=\"na\">no samples</span>"
+  mn = -1; mx = -1; for (i = 1; i <= n; i++) { if (v[i] < 0) continue; if (mn < 0 || v[i] < mn) mn = v[i]; if (v[i] > mx) mx = v[i] }
+  if (mn < 0) return "<span class=\"na\">no samples</span>"
+  if (mx == mn) { mx = mn + 1; mn = mn - 1 }
+  dx = (n > 1) ? (W - 4) / (n - 1) : 0; pts = ""
+  for (i = 1; i <= n; i++) { x = 2 + (i - 1) * dx; y = H - 4 - (v[i] - mn) / (mx - mn) * (H - 8 - (labels ? 12 : 0)); pts = pts sprintf("%.1f,%.1f ", x, y) }
+  if (n == 1) pts = pts sprintf("%.1f,%.1f", W - 2, y)
+  s = sprintf("<svg class=\"%s\" viewBox=\"0 0 %d %d\" preserveAspectRatio=\"none\">", cls, W, H)
+  if (labels) s = s sprintf("<line class=\"gd\" x1=\"0\" y1=\"%d\" x2=\"%d\" y2=\"%d\"/><text x=\"4\" y=\"11\">max %s</text><text x=\"4\" y=\"%d\">min %s</text>", H - 4, W, H - 4, hmem(mx == mn + 2 ? mn + 1 : mx), H - 7, hmem(mx == mn + 2 ? mn + 1 : mn))
+  if (labels) s = s sprintf("<polygon class=\"ar\" points=\"2,%d %s %.1f,%d\"/>", H - 4, pts, (n > 1 ? W - 2 : W - 2), H - 4)
+  return s sprintf("<polyline class=\"ln\" points=\"%s\"/></svg>", pts)
+}
+# ---------------------------------------------------------------- table loader
+function L(f, p,   ln, n, a, c) {
+  n = 0
+  while ((getline ln < (md "/" f)) > 0) {
+    if (n == 0) { NCOL[p] = split(ln, a, "\t"); for (c = 1; c <= NCOL[p]; c++) { HX[p, a[c]] = c; HN[p, c] = a[c] } }
+    else RW[p, n] = ln
+    n++
+  }
+  close(md "/" f); NROW[p] = (n > 0) ? n - 1 : 0; return NROW[p]
+}
+function R(p, r) { if (CURK != p SUBSEP r) { split(RW[p, r], RA, "\t"); CURK = p SUBSEP r } }
+function F(p, r, name) { R(p, r); return ((p, name) in HX) ? RA[HX[p, name]] : "" }
+function kpi(cls, label, val, subtxt, barh, click) {
+  printf "<div class=\"kpi %s%s\"%s><div class=\"l\">%s</div><div class=\"v\">%s</div><div class=\"s\">%s</div>%s</div>\n", cls, (click != "" ? " click" : ""),
+    (click != "" ? " onclick=\"kdPick(&quot;" esc(click) "&quot;)\" title=\"show only " esc(click) "\"" : ""), esc(label), esc(val), subtxt, barh
+}
+function panel_open(id, ptitle, subtxt, tools, primary) {
+  printf "<section class=\"panel\" id=\"%s\"%s><div class=\"ph\"><h2>%s</h2><p>%s</p><div class=\"tools\">%s</div></div>\n", id, (primary ? " data-primary" : ""), esc(ptitle), subtxt, tools
+}
+function csvbtn(tid, name) { return "<button class=\"btn\" onclick=\"kdCSV(&quot;" tid "&quot;,&quot;" name "&quot;)\">CSV</button>" }
+function cnt(id) { return "<span class=\"count\" data-count=\"" id "\"></span>" }
+
+# ================================================================ PODS
+function view_pods(   np, nc, r, k, i, j, key, uc, um, rc, lc, rm, lm, st, cls, rdy, q, s, n, v, cl, ix, sv, KC, KN, T_uc, T_um, T_rc, T_lc, T_rm, T_lm, T_rs) {
+  np = L("pods.tsv", "P"); nc = L("containers.tsv", "K")
+  for (r = 1; r <= nc; r++) { k = F("K", r, "KEY"); KC[k] = KC[k] (KC[k] == "" ? "" : " ") r; KN[k] = KN[k] " " F("K", r, "CONTAINER") }
+  for (r = 1; r <= np; r++) { ix[r] = r; sv[r] = nv(F("P", r, "CPU_USED_m")) }
+  for (i = 2; i <= np; i++) { v = ix[i]; j = i - 1; while (j > 0 && sv[ix[j]] < sv[v]) { ix[j + 1] = ix[j]; j-- } ix[j + 1] = v }
+  print "<div class=\"grid2 podcharts sesch\"><section class=\"panel\"><div class=\"ph\"><h2>Namespace CPU</h2><p>used / request / limit (millicores) &middot; <span data-win></span> &middot; drag to zoom</p></div><div class=\"chart\" data-chart=\"ns_cpu\" data-h=\"200\"></div></section>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Namespace memory</h2><p>used / request / limit (MiB) &middot; <span data-win></span></p></div><div class=\"chart\" data-chart=\"ns_mem\" data-h=\"200\"></div></section></div>"
+  print "<section class=\"panel podcharts\" id=\"podsel\"><div class=\"ph\"><h2>Pod <span id=\"podselname\" class=\"mono\">-</span></h2><p>CPU and memory of the selected pod against its limits &middot; click any pod row or its sparkline</p></div><div class=\"grid2 in\"><div class=\"chart\" data-chart=\"pod_cpu\" data-h=\"180\"></div><div class=\"chart\" data-chart=\"pod_mem\" data-h=\"180\"></div></div></section>"
+  panel_open("pods", "Pod / container resources", "actual usage vs requests and limits &middot; sorted like the CLI &middot; sparkline = CPU (green) and memory (blue) over the session",
+    cnt("podtable") "<select onchange=\"kdSortPods(this.value)\"><option value=\"cpu\">sort: CPU used</option><option value=\"mem\">sort: memory used</option><option value=\"cpupct\">sort: CPU % of limit</option><option value=\"mempct\">sort: memory % of limit</option><option value=\"rst\">sort: restarts</option><option value=\"name\">sort: name</option></select>" \
+    "<button class=\"btn\" onclick=\"kdToggle(&quot;podtable&quot;,&quot;hide-ctr&quot;)\">containers</button><button class=\"btn\" onclick=\"kdToggle(&quot;podtable&quot;,&quot;hide-det&quot;)\">details</button>" csvbtn("podtable", "pods"), 1)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"podtable\"><thead><tr class=\"grp\"><th colspan=\"3\"></th><th colspan=\"4\" class=\"g-act sep\">ACTUAL (LIVE)</th><th colspan=\"4\" class=\"g-asg sep\">ASSIGNED (REQ / LIMIT)</th><th colspan=\"6\" class=\"g-utl sep\">UTILISATION (USED VS REQ / LIM)</th></tr>"
+  print "<tr><th class=\"l\">Pod / container</th><th>RDY</th><th>RST</th><th class=\"sep\">CPUm</th><th>T</th><th>MEM Mi</th><th>T</th><th class=\"sep\">CPUreq</th><th>CPUlim</th><th>MEMreq</th><th>MEMlim</th><th class=\"sep\">c%REQ</th><th>c%LIM</th><th class=\"l\">CPU/LIM</th><th>m%REQ</th><th>m%LIM</th><th class=\"l\">MEM/LIM</th></tr></thead>"
+  for (i = 1; i <= np; i++) {
+    r = ix[i]; key = F("P", r, "KEY")
+    uc = nv(F("P", r, "CPU_USED_m")); um = nv(F("P", r, "MEM_USED_Mi")); rc = nv(F("P", r, "CPU_REQ_m")); lc = nv(F("P", r, "CPU_LIM_m"))
+    rm = nv(F("P", r, "MEM_REQ_Mi")); lm = nv(F("P", r, "MEM_LIM_Mi")); st = F("P", r, "STATUS"); rdy = F("P", r, "READY")
+    split(rdy, q, "/"); cls = (st == "Running" && q[1] == q[2]) ? "" : (st ~ /Succeeded|Completed/ ? " done" : " bad")
+    T_uc += (uc > 0 ? uc : 0); T_um += (um > 0 ? um : 0); T_rc += (rc > 0 ? rc : 0); T_lc += (lc > 0 ? lc : 0); T_rm += (rm > 0 ? rm : 0); T_lm += (lm > 0 ? lm : 0); T_rs += F("P", r, "RESTARTS")
+    s = F("P", r, "POD") " " F("P", r, "NODE") " " F("P", r, "POOL") " " F("P", r, "WORKLOAD") " " F("P", r, "KIND") " " st " " F("P", r, "POD_IP") " " F("P", r, "LAST_TERMINATION") KN[key]
+    printf "<tbody class=\"pod\" data-s=\"%s\" data-name=\"%s\" data-cpu=\"%s\" data-mem=\"%s\" data-cpupct=\"%s\" data-mempct=\"%s\" data-rst=\"%s\" data-clim=\"%s\" data-mlim=\"%s\" data-creq=\"%s\" data-mreq=\"%s\">\n", esc(s), esc(F("P", r, "POD")), uc, um, pct(uc, lc), pct(um, lm), F("P", r, "RESTARTS"), lc, lm, rc, rm
+    crow("pod" cls, "<span class=\"name\">" esc(key) "</span><span class=\"pspk\" data-pod=\"" esc(key) "\"></span>", rdy, (q[1] == q[2]), F("P", r, "RESTARTS"), uc, nv(F("P", r, "CPU_PREV_m")), um, nv(F("P", r, "MEM_PREV_Mi")), rc, lc, rm, lm)
+    printf "<tr class=\"det\"><td colspan=\"17\">node <b>%s</b> &nbsp; pool %s &nbsp; ip %s &nbsp; %s %s &nbsp; qos %s &nbsp; status %s%s</td></tr>\n", esc(F("P", r, "NODE")), esc(F("P", r, "POOL")), esc(F("P", r, "POD_IP")),
+      esc(F("P", r, "KIND")), esc(F("P", r, "WORKLOAD")), esc(F("P", r, "QOS")), badges(st), (F("P", r, "LAST_TERMINATION") != "-" ? " &nbsp; last-exit " badges(F("P", r, "LAST_TERMINATION")) : "")
+    n = split(KC[key], cl, " ")
+    for (j = 1; j <= n; j++) {
+      k = cl[j]
+      crow("ctr", "<span class=\"tree\">" (j == n ? "&#9492;&#9472; " : "&#9500;&#9472; ") "</span>" esc(F("K", k, "CONTAINER")), F("K", k, "READY"), (F("K", k, "READY") == "Y"), F("K", k, "RESTARTS"),
+        nv(F("K", k, "CPU_USED_m")), nv(F("K", k, "CPU_PREV_m")), nv(F("K", k, "MEM_USED_Mi")), nv(F("K", k, "MEM_PREV_Mi")), nv(F("K", k, "CPU_REQ_m")), nv(F("K", k, "CPU_LIM_m")), nv(F("K", k, "MEM_REQ_Mi")), nv(F("K", k, "MEM_LIM_Mi")))
+      if (F("K", k, "WAITING") != "-" || F("K", k, "LAST_TERMINATION") != "-")
+        printf "<tr class=\"why ctr\"><td colspan=\"17\">&nbsp;&nbsp;&nbsp;&nbsp;%s%s</td></tr>\n", (F("K", k, "WAITING") != "-" ? "waiting " badges(F("K", k, "WAITING")) " " : ""), (F("K", k, "LAST_TERMINATION") != "-" ? "last-exit " badges(F("K", k, "LAST_TERMINATION")) : "")
+    }
+    print "</tbody>"
+  }
+  printf "<tfoot>"; crow("tot", "TOTAL (" np " pods)", "", 1, T_rs, (M["mem_used"] == "-" ? -1 : T_uc), -1, (M["mem_used"] == "-" ? -1 : T_um), -1, T_rc, T_lc, T_rm, T_lm); print "</tfoot></table></div>"
+  print "<div class=\"legend\"><span>CPU millicores &middot; memory MiB</span><span><span class=\"up\">&#9650;</span> up <span class=\"dn\">&#9660;</span> down <span class=\"fl\">&middot;</span> flat since previous poll</span><span><i class=\"h1\"></i>&lt;50%</span><span><i class=\"h2\"></i>50-75%</span><span><i class=\"h3\"></i>75-90%</span><span><i class=\"h4\"></i>&ge;90% of limit = throttle / OOMKill risk</span><span>%REQ above 100 is normal for Burstable pods</span></div></section>"
+}
+function crow(cls, name, rdy, ok, rs, uc, pcv, um, pmv, rc, lc, rm, lm) {
+  printf "<tr class=\"%s\"><td class=\"l name\">%s</td><td class=\"%s\">%s</td><td class=\"%s\">%s</td>", cls, name, (rdy == "" ? "" : (ok ? "t1" : "t4")), esc(rdy), (rs + 0 > 0 ? "t3" : "t0"), (rs == "" ? "-" : rs)
+  printf "<td class=\"sep\" data-v=\"%s\">%s</td><td>%s</td><td data-v=\"%s\">%s</td><td>%s</td>", uc, fnum(uc), trend(uc, pcv), um, fnum(um), trend(um, pmv)
+  printf "<td class=\"sep\">%s</td><td>%s</td><td>%s</td><td>%s</td>", fnum(rc), fnum(lc), fnum(rm), fnum(lm)
+  printf "<td class=\"sep\">%s</td><td>%s</td><td class=\"l\">%s</td><td>%s</td><td>%s</td><td class=\"l\">%s</td></tr>\n", fp(pct(uc, rc)), fp(pct(uc, lc)), bar(pct(uc, lc), ""), fp(pct(um, rm)), fp(pct(um, lm)), bar(pct(um, lm), "")
+}
+
+# ================================================================ NODE POOLS
+function view_namespaces(   n, r, me, part, sel, sco, ttl) {
+  n = L("cluster_ns.tsv", "Z"); if (n == 0) return
+  part = (M["cluster_state"] == "partial"); sel = (M["cluster_scope"] == "selected"); sco = (M["scope_usage"] == "ok")
+  ttl = part ? (sel ? "Selected namespaces" : "Your namespaces") : "Namespaces"
+  panel_open("namespaces", ttl, (sco ? "usage (pod metrics) and requests" : "requests") " per namespace " (part ? (sel ? "given by --compare: " : "you can read (namespace rights only): ") esc(M["cluster_ns_read"]) : "in the whole cluster") \
+    (sco ? " &middot; this namespace uses <b>" sprintf("%.1f", pct(nv(M["mem_used"]), nv(M["scope_mem_used"]))) "%</b> of their memory and <b>" sprintf("%.1f", pct(nv(M["cpu_used"]), nv(M["scope_cpu_used"]))) "%</b> of their CPU" : ""), cnt("nstable") csvbtn("nstable", "namespaces"), 0)
+  print "<div class=\"scroll\" style=\"max-height:520px\"><table class=\"cli\" id=\"nstable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Namespace</th><th onclick=\"kdSort(this)\">Pods</th><th onclick=\"kdSort(this)\">Ready</th><th onclick=\"kdSort(this)\">Workloads</th><th onclick=\"kdSort(this)\">Nodes</th><th onclick=\"kdSort(this)\">CPU used</th><th onclick=\"kdSort(this)\">CPU req</th><th onclick=\"kdSort(this)\">MEM used</th><th onclick=\"kdSort(this)\">MEM req</th><th onclick=\"kdSort(this)\">MEM lim</th><th onclick=\"kdSort(this)\">% of used</th><th onclick=\"kdSort(this)\">% cluster mem</th><th class=\"l\">" (sco ? "share of the memory used" : "share of cluster memory") "</th></tr></thead><tbody>"
+  for (r = 1; r <= n; r++) { me = (F("Z", r, "NAMESPACE") == ns)
+    printf "<tr data-s=\"%s\"%s><td class=\"l\">%s</td><td>%s</td><td class=\"%s\">%s</td><td>%s</td><td>%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td>%s</td><td class=\"l\">%s</td></tr>\n",
+      esc(F("Z", r, "NAMESPACE")), (me ? " class=\"picked\"" : ""), (me ? "<b>" esc(F("Z", r, "NAMESPACE")) "</b> <span class=\"b ok\">this</span>" : esc(F("Z", r, "NAMESPACE"))), F("Z", r, "PODS"),
+      (F("Z", r, "PODS_READY") + 0 < F("Z", r, "PODS") + 0 ? "t3" : "t1"), F("Z", r, "PODS_READY"), F("Z", r, "WORKLOADS"), F("Z", r, "NODES"),
+      nv(F("Z", r, "CPU_USED_m")), hcpu(nv(F("Z", r, "CPU_USED_m"))), nv(F("Z", r, "CPU_REQ_m")), hcpu(nv(F("Z", r, "CPU_REQ_m"))),
+      nv(F("Z", r, "MEM_USED_Mi")), hmem(nv(F("Z", r, "MEM_USED_Mi"))), nv(F("Z", r, "MEM_REQ_Mi")), hmem(nv(F("Z", r, "MEM_REQ_Mi"))), hmem(nv(F("Z", r, "MEM_LIM_Mi"))),
+      fp(nv(F("Z", r, "MEM_USED_PCT_SCOPE"))), fp(nv(F("Z", r, "MEM_REQ_PCT_CLUSTER"))),
+      (sco ? gbar(nv(F("Z", r, "MEM_USED_Mi")), -1, nv(M["scope_mem_used"]), (me ? "h1" : "cl")) : gbar(-1, nv(F("Z", r, "MEM_REQ_Mi")), nv(M["cluster_mem_alloc"]), "h1")) }
+  print "</tbody></table></div></section>"
+}
+function view_nodes(   npl, nn, i, r, pl, last, st, nu, ma, mu, PR, z, cp) {
+  view_compare(); view_namespaces()
+  npl = L("pools.tsv", "L"); nn = L("nodes.tsv", "N")
+  for (i = 1; i <= npl; i++) PR[F("L", i, "POOL")] = i
+  panel_open("nodes", "Node pools", "namespace usage per worker node vs node allocatable &middot; pool label " esc(M["pool_key"]),
+    cnt("nodetable") "<button class=\"btn\" onclick=\"kdToggle(&quot;nodetable&quot;,&quot;hide-det&quot;)\">details</button>" csvbtn("nodetable", "node_pools"), 1)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"nodetable\"><thead><tr class=\"grp\"><th colspan=\"3\"></th><th colspan=\"4\" class=\"g-act sep\">CPU MILLICORES</th><th colspan=\"7\" class=\"g-asg sep\">MEMORY GIB</th><th class=\"g-utl sep\">NODE MEMORY</th></tr>"
+  print "<tr><th class=\"l\">Pool [hosting/total] / node</th><th class=\"l\">Status</th><th>Pods ns/all</th><th class=\"sep\">nsUsed</th><th>nsReq</th><th>alloc</th><th>%al</th><th class=\"sep\">nsUsed</th><th>nsReq</th><th>nsLim</th><th>alloc</th><th>%al</th><th>node%</th><th>clReq%</th><th class=\"l sep\">this ns &middot; other ns &middot; free</th></tr></thead>"
+  last = ""
+  for (r = 1; r <= nn; r++) {
+    pl = F("N", r, "POOL")
+    if (pl != last) {
+      last = pl; i = PR[pl]
+      cp = F("L", i, "CL_PODS")
+      printf "<tbody><tr class=\"pool\"><td class=\"l\">&#9662; %s</td><td></td><td>%s</td>", (pl == "(none)" ? "unscheduled pods" : esc(pl) " [" F("L", i, "NODES_HOSTING") (F("L", i, "NODES_IN_POOL") != "-" ? "/" F("L", i, "NODES_IN_POOL") : "") "]"), F("L", i, "NS_PODS") (cp != "-" && cp != "" ? "/" cp : "")
+      nrow_cells(nv(F("L", i, "NS_CPU_USED_m")), nv(F("L", i, "NS_CPU_REQ_m")), nv(F("L", i, "POOL_CPU_ALLOC_m")), nv(F("L", i, "NS_MEM_USED_Mi")), nv(F("L", i, "NS_MEM_REQ_Mi")), nv(F("L", i, "NS_MEM_LIM_Mi")), nv(F("L", i, "POOL_MEM_ALLOC_Mi")), nv(F("L", i, "POOL_MEM_USED_Mi")), "w",
+        nv(F("L", i, "CL_MEM_REQ_Mi")) >= 0 ? nv(F("L", i, "CL_MEM_REQ_Mi")) - (nv(F("L", i, "NS_MEM_REQ_Mi")) > 0 ? nv(F("L", i, "NS_MEM_REQ_Mi")) : 0) : -1, pct(nv(F("L", i, "CL_MEM_REQ_Mi")), nv(F("L", i, "POOL_MEM_ALLOC_Mi"))))
+      print "</tr></tbody>"
+    }
+    st = F("N", r, "STATUS"); if (st ~ /SchedulingDisabled/) st = "Cordoned"
+    z = (F("N", r, "NS_PODS") + 0 == 0 && F("N", r, "NODE") != "(unscheduled)"); cp = F("N", r, "CL_PODS")
+    printf "<tbody data-s=\"%s\"><tr class=\"node%s\"><td class=\"l name\">%s</td><td class=\"l\">%s</td><td>%s</td>", esc(F("N", r, "NODE") " " pl " " st " " F("N", r, "INTERNAL_IP") " " F("N", r, "POD_CIDR") (z ? " no-ns-pods" : "")), (z ? " zero" : ""), esc(F("N", r, "NODE")), (st == "-" ? "<span class=\"na\">-</span>" : badges(st)), F("N", r, "NS_PODS") (cp != "-" && cp != "" ? "/" cp : "")
+    nrow_cells(nv(F("N", r, "NS_CPU_USED_m")), nv(F("N", r, "NS_CPU_REQ_m")), nv(F("N", r, "NODE_CPU_ALLOC_m")), nv(F("N", r, "NS_MEM_USED_Mi")), nv(F("N", r, "NS_MEM_REQ_Mi")), nv(F("N", r, "NS_MEM_LIM_Mi")), nv(F("N", r, "NODE_MEM_ALLOC_Mi")), nv(F("N", r, "NODE_MEM_USED_Mi")), "w",
+      nv(F("N", r, "OTHER_NS_MEM_REQ_Mi")), nv(F("N", r, "CL_MEM_REQ_PCT")))
+    printf "</tr><tr class=\"det\"><td colspan=\"15\">ip %s &nbsp; podCIDR %s &nbsp; roles %s &nbsp; ns-ready %s/%s &nbsp; ns-restarts %s%s%s%s</td></tr></tbody>\n", esc(F("N", r, "INTERNAL_IP")), esc(F("N", r, "POD_CIDR")), esc(F("N", r, "ROLES")),
+      F("N", r, "NS_PODS_READY"), F("N", r, "NS_PODS"), F("N", r, "NS_RESTARTS"),
+      (nv(F("N", r, "NODE_CPU_USED_m")) >= 0 ? sprintf(" &nbsp; node-cpu %s (%.0f%%)", hcpu(nv(F("N", r, "NODE_CPU_USED_m"))), pct(nv(F("N", r, "NODE_CPU_USED_m")), nv(F("N", r, "NODE_CPU_ALLOC_m")))) : ""),
+      (nv(F("N", r, "NODE_MEM_USED_Mi")) >= 0 ? " &nbsp; node-mem " hmem(nv(F("N", r, "NODE_MEM_USED_Mi"))) " of " hmem(nv(F("N", r, "NODE_MEM_ALLOC_Mi"))) : ""),
+      (F("N", r, "TAINTS") != "-" ? " &nbsp; taints " esc(F("N", r, "TAINTS")) : "")
+  }
+  printf "<tfoot><tr class=\"tot\"><td class=\"l\">NAMESPACE TOTAL (%s nodes)</td><td></td><td>%s</td>", M["nodes_hosting"], M["pods"]
+  nrow_cells(nv(M["cpu_used"]), nv(M["cpu_req"]), nv(M["hosting_cpu_alloc"]), nv(M["mem_used"]), nv(M["mem_req"]), nv(M["mem_lim"]), nv(M["hosting_mem_alloc"]), nv(M["hosting_mem_used"]), "w", -1, -1)
+  print "</tr></tfoot></table></div>"
+  print "<div class=\"legend\"><span>nsUsed / nsReq / nsLim = this namespace on the node</span><span>alloc = node allocatable</span><span>%al = namespace share of the node</span><span>node% = whole node used</span><span>clReq% = all namespaces requested</span><span><i class=\"h1\"></i>this namespace</span><span><i class=\"oth\"></i>other namespaces used</span><span><i class=\"req\"></i>other namespaces requested (no node metrics)</span><span><i style=\"background:var(--free)\"></i>free</span><span>grey rows: nodes without pods of this namespace</span></div></section>"
+}
+function nrow_cells(cu, cr, ca, mu, mr, ml, ma, nu, bw, oreq, clq) {
+  printf "<td class=\"sep\" data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td>%s</td>", cu, fnum(cu), fnum(cr), fnum(ca), fp(pct(cu, ca))
+  printf "<td class=\"sep\" data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td>", mu, fgi(mu), fgi(mr), fgi(ml), fgi(ma), fp(pct(mu, ma)), fp(pct(nu, ma)), fp(clq)
+  if (nu >= 0) printf "<td class=\"l sep\">%s</td>", cbar(mu, nu - (mu > 0 ? mu : 0), ma, bw, "used")
+  else printf "<td class=\"l sep\">%s</td>", cbar(mu, oreq, ma, bw, "req")
+}
+
+# ================================================================ WORKLOADS
+function view_workloads(   nn, nx, ny, r, nd, last, i, pn, n, j, s, g, d, dn, dd, mx, x, NI, np, WPD, k, rd, des, ok, pods, pl, st, x2, x3) {
+  nn = L("nodes.tsv", "N"); nx = L("wl_node.tsv", "X"); ny = L("workloads.tsv", "Y"); np = L("pods.tsv", "P")
+  for (r = 1; r <= nn; r++) NI[F("N", r, "NODE")] = r
+  for (r = 1; r <= np; r++) { k = F("P", r, "KIND") SUBSEP F("P", r, "WORKLOAD"); WPD[k] = WPD[k] (WPD[k] == "" ? "" : " ") r }
+  panel_open("spread", "Workloads", "every Deployment / StatefulSet / DaemonSet / CronJob with replicas vs desired, rollout and its pods &middot; HA_RISK = all replicas on one node &middot; DEGRADED = fewer ready than desired" \
+    (M["workload_state"] != "ok" ? " &middot; workload objects " esc(M["workload_state"]) ": desired unknown" : ""),
+    cnt("spreadtable") "<button class=\"btn\" onclick=\"kdToggle(&quot;spreadtable&quot;,&quot;hide-det&quot;)\">pods</button>" csvbtn("spreadtable", "workloads"), 1)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"spreadtable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Kind</th><th class=\"l\" onclick=\"kdSort(this)\">Workload</th><th onclick=\"kdSort(this)\">Ready / desired</th><th onclick=\"kdSort(this)\">Updated</th><th onclick=\"kdSort(this)\">Pods</th><th onclick=\"kdSort(this)\">Nodes</th><th onclick=\"kdSort(this)\">CPU used</th><th onclick=\"kdSort(this)\">CPU req</th><th onclick=\"kdSort(this)\">MEM used</th><th onclick=\"kdSort(this)\">MEM req</th><th onclick=\"kdSort(this)\">MEM lim</th><th onclick=\"kdSort(this)\">RST</th><th class=\"l\" onclick=\"kdSort(this)\">Status</th><th class=\"l\">Distribution (node : pods)</th></tr></thead>"
+  for (r = 1; r <= ny; r++) {
+    d = F("Y", r, "DISTRIBUTION"); dn = split(d, dd, " "); mx = F("Y", r, "MAX_PER_NODE"); g = ""
+    for (j = 1; j <= dn; j++) { x = dd[j]; i = index(x, ":"); if (!i) continue; g = g sprintf("<span class=\"chip\">%s <b class=\"%s\">%s</b></span>", esc(substr(x, 1, i - 1)), (substr(x, i + 1) == mx && mx > 1 ? "t3" : ""), substr(x, i + 1)) }
+    des = F("Y", r, "DESIRED"); rd = (des != "-" && F("Y", r, "KIND") != "CronJob") ? F("Y", r, "READY_REPLICAS") "/" des : F("Y", r, "PODS_READY") "/" F("Y", r, "PODS")
+    split(rd, x2, "/"); ok = (x2[1] + 0 >= x2[2] + 0)
+    st = badges(F("Y", r, "VERDICT")) (F("Y", r, "ROLLOUT") != "-" && F("Y", r, "ROLLOUT") != "complete" ? " <span class=\"na\">rollout " esc(F("Y", r, "ROLLOUT")) "</span>" : "")
+    printf "<tbody data-s=\"%s\"><tr class=\"sv-%s\"><td class=\"l\"><span class=\"b neu\">%s</span></td><td class=\"l\"><b>%s</b></td><td class=\"%s\" data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td>%s</td><td data-v=\"%s\">%s</td><td>%s</td><td data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td class=\"%s\">%s</td><td class=\"l\">%s</td><td class=\"l wrap\">%s</td></tr>\n",
+      esc(F("Y", r, "KIND") " " F("Y", r, "WORKLOAD") " " F("Y", r, "VERDICT") " " d " " F("Y", r, "IMAGES")), rowsev(F("Y", r, "VERDICT")), esc(F("Y", r, "KIND")), esc(F("Y", r, "WORKLOAD")),
+      (ok ? "t1" : "t4"), x2[1] + 0, rd, F("Y", r, "UPDATED"), F("Y", r, "PODS"), F("Y", r, "NODES"),
+      nv(F("Y", r, "CPU_USED_m")), hcpu(nv(F("Y", r, "CPU_USED_m"))), hcpu(nv(F("Y", r, "CPU_REQ_m"))), nv(F("Y", r, "MEM_USED_Mi")), hmem(nv(F("Y", r, "MEM_USED_Mi"))), hmem(nv(F("Y", r, "MEM_REQ_Mi"))), hmem(nv(F("Y", r, "MEM_LIM_Mi"))),
+      (F("Y", r, "RESTARTS") + 0 > 0 ? "t3" : "t0"), F("Y", r, "RESTARTS"), st, (g == "" ? "<span class=\"na\">not scheduled</span>" : g)
+    k = F("Y", r, "KIND") SUBSEP F("Y", r, "WORKLOAD"); n = split(WPD[k], pods, " "); pl = ""
+    for (j = 1; j <= n; j++) { R("P", pods[j] + 0)
+      pl = pl sprintf("<div class=\"wp\"><b>%s</b> %s <span class=\"%s\">%s</span> &middot; %s &middot; cpu %s &middot; mem %s &middot; rst %s &middot; %s</div>", esc(F("P", pods[j] + 0, "POD")), badges(F("P", pods[j] + 0, "STATUS")),
+        ((split(F("P", pods[j] + 0, "READY"), x3, "/") && x3[1] == x3[2]) ? "t1" : (F("P", pods[j] + 0, "STATUS") ~ /Succeeded|Completed/ ? "t0" : "t4")), F("P", pods[j] + 0, "READY"), esc(F("P", pods[j] + 0, "NODE")), hcpu(nv(F("P", pods[j] + 0, "CPU_USED_m"))), hmem(nv(F("P", pods[j] + 0, "MEM_USED_Mi"))), F("P", pods[j] + 0, "RESTARTS"), esc(F("P", pods[j] + 0, "POD_IP"))) }
+    if (n == 0) pl = "<div class=\"wp na\">no pods</div>"
+    if (F("Y", r, "SCHEDULE") != "-") pl = pl "<div class=\"wp na\">schedule " esc(F("Y", r, "SCHEDULE")) " &middot; last run " esc(F("Y", r, "LAST_SCHEDULE")) "</div>"
+    if (F("Y", r, "IMAGES") != "-") pl = pl "<div class=\"wp na\">image " esc(F("Y", r, "IMAGES")) "</div>"
+    printf "<tr class=\"det\"><td colspan=\"14\" class=\"wrap\">%s</td></tr></tbody>\n", pl
+  }
+  print "</table></div></section>"
+  panel_open("pernode", "Pods per worker node", "each worker node with the workloads it runs &middot; toggle pod names",
+    cnt("nodecards") "<button class=\"btn\" onclick=\"kdToggle(&quot;nodecards&quot;,&quot;hide-det&quot;)\">pod names</button>" csvbtn("nodecards", "pods_per_node"), 0)
+  print "<div class=\"nodes\" id=\"nodecards\">"
+  last = ""
+  for (r = 1; r <= nx; r++) {
+    nd = F("X", r, "NODE")
+    if (nd != last) {
+      if (last != "") print "</tbody></table></div>"
+      last = nd; i = NI[nd]; s = nd " " F("X", r, "POOL")
+      for (j = r; j <= nx && F("X", j, "NODE") == nd; j++) s = s " " F("X", j, "WORKLOAD") " " F("X", j, "POD_NAMES")
+      R("X", r)
+      printf "<div class=\"ncard\" data-s=\"%s\"><div class=\"nh\"><span class=\"nn\">%s</span><span class=\"chip\">pool <b>%s</b></span>%s</div>", esc(s), esc(nd), esc(F("X", r, "POOL")), (i ? badges(F("N", i, "STATUS") ~ /Scheduling/ ? "Cordoned" : F("N", i, "STATUS")) : "")
+      if (i) printf "<div class=\"ns\"><span>pods <b>%s</b> (ready %s)</span><span>cpu <b>%s</b></span><span>mem <b>%s</b> / req %s</span><span>%s %s of node</span></div>", F("N", i, "NS_PODS"), F("N", i, "NS_PODS_READY"), hcpu(nv(F("N", i, "NS_CPU_USED_m"))), hmem(nv(F("N", i, "NS_MEM_USED_Mi"))), hmem(nv(F("N", i, "NS_MEM_REQ_Mi"))), bar(pct(nv(F("N", i, "NS_MEM_USED_Mi")), nv(F("N", i, "NODE_MEM_ALLOC_Mi"))), "m"), (pct(nv(F("N", i, "NS_MEM_USED_Mi")), nv(F("N", i, "NODE_MEM_ALLOC_Mi"))) < 0 ? "-" : sprintf("%.1f%%", pct(nv(F("N", i, "NS_MEM_USED_Mi")), nv(F("N", i, "NODE_MEM_ALLOC_Mi")))))
+      print "<table class=\"cli\"><thead><tr><th class=\"l\">Kind</th><th class=\"l\">Workload</th><th>Pods</th><th>Ready</th><th>RST</th><th>CPUm</th><th>MEM Mi</th></tr></thead><tbody>"
+    }
+    R("X", r)
+    printf "<tr><td class=\"l\"><span class=\"b neu\">%s</span></td><td class=\"l\"><b>%s</b></td><td>%s</td><td class=\"%s\">%s/%s</td><td class=\"%s\">%s</td><td>%s</td><td>%s</td></tr>\n", esc(F("X", r, "KIND")), esc(F("X", r, "WORKLOAD")), F("X", r, "PODS"),
+      (F("X", r, "PODS_READY") + 0 == F("X", r, "PODS") + 0 ? "t1" : "t4"), F("X", r, "PODS_READY"), F("X", r, "PODS"), (F("X", r, "RESTARTS") + 0 > 0 ? "t3" : "t0"), F("X", r, "RESTARTS"), fnum(nv(F("X", r, "CPU_USED_m"))), fnum(nv(F("X", r, "MEM_USED_Mi")))
+    n = split(F("X", r, "POD_NAMES"), pn, ","); g = ""; for (j = 1; j <= n; j++) g = g "<span class=\"chip\">" esc(pn[j]) "</span>"
+    printf "<tr class=\"det\"><td colspan=\"7\" class=\"wrap\">%s</td></tr>\n", g
+  }
+  if (last != "") print "</tbody></table></div>"
+  print "</div><div class=\"legend\"><span>HA_RISK = 2+ replicas all on one node</span><span>SKEWED = a node holds more replicas than an even spread</span><span>SINGLE = one replica</span><span>PER_NODE = DaemonSet</span></div></section>"
+}
+
+# ================================================================ IP POOL
+function view_ip(   ni, ns_, nb, nv_, r, ext, nt) {
+  ni = L("ip.tsv", "I"); ns_ = L("subnets.tsv", "S"); nb = L("ipblocks.tsv", "B"); nv_ = L("services.tsv", "V")
+  panel_open("ipnodes", "Node IP blocks", "per worker node: node IP, pod CIDR, addresses this namespace holds and observed /26 blocks", csvbtn("ipnodetable", "node_ip_blocks"), 0)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"ipnodetable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Node</th><th class=\"l\" onclick=\"kdSort(this)\">Pool</th><th class=\"l\" onclick=\"kdSort(this)\">Node IP</th><th class=\"l\" onclick=\"kdSort(this)\">Pod CIDR</th><th onclick=\"kdSort(this)\">CIDR#</th><th onclick=\"kdSort(this)\">NS IPs</th><th onclick=\"kdSort(this)\">Host-net</th><th class=\"l\">CIDR use</th><th class=\"l\">IP blocks (observed /26)</th></tr></thead><tbody>"
+  for (r = 1; r <= nb; r++)
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td class=\"l\">%s</td><td class=\"l\">%s</td><td>%s</td><td>%s</td><td>%s</td><td class=\"l\">%s %s</td><td class=\"l wrap t2\">%s</td></tr>\n",
+      esc(F("B", r, "NODE") " " F("B", r, "POOL") " " F("B", r, "INTERNAL_IP") " " F("B", r, "POD_CIDR") " " F("B", r, "IP_BLOCKS_OBSERVED")), esc(F("B", r, "NODE")), esc(F("B", r, "POOL")), esc(F("B", r, "INTERNAL_IP")), esc(F("B", r, "POD_CIDR")),
+      F("B", r, "CIDR_ADDRESSES"), F("B", r, "NS_PODS_WITH_IP"), F("B", r, "HOST_NETWORK_PODS"), bar(pct(nv(F("B", r, "NS_PODS_WITH_IP")), nv(F("B", r, "CIDR_ADDRESSES"))), "m"), fp(pct(nv(F("B", r, "NS_PODS_WITH_IP")), nv(F("B", r, "CIDR_ADDRESSES")))), esc(F("B", r, "IP_BLOCKS_OBSERVED"))
+  print "</tbody></table></div></section>"
+  panel_open("subnets", "Pod subnets", "observed /24 subnets and the nodes using them", csvbtn("subnettable", "pod_subnets"), 0)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"subnettable\"><thead><tr><th class=\"l\">Subnet</th><th>Pods</th><th class=\"l\">Share of namespace pod IPs</th><th class=\"l\">Nodes</th></tr></thead><tbody>"
+  for (r = 1; r <= ns_; r++) printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td>%s</td><td class=\"l\">%s</td><td class=\"l wrap\">%s</td></tr>\n", esc(F("S", r, "SUBNET") " " F("S", r, "NODES")), esc(F("S", r, "SUBNET")), F("S", r, "PODS"), bar(pct(F("S", r, "PODS"), M["pod_ips"] - M["duplicate_ip_pods"] + M["duplicate_ip_pods"]), "m"), esc(F("S", r, "NODES"))
+  print "</tbody></table></div></section>"
+  panel_open("svc", "Services", "ClusterIP, external IPs, load-balancer ingress and ports", csvbtn("svctable", "services"), 0)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"svctable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Service</th><th class=\"l\" onclick=\"kdSort(this)\">Type</th><th class=\"l\" onclick=\"kdSort(this)\">Cluster IP</th><th class=\"l\">External / LB</th><th class=\"l\">Ports</th></tr></thead><tbody>"
+  for (r = 1; r <= nv_; r++) {
+    ext = ""; if (F("V", r, "EXTERNAL_IPS") != "-") ext = F("V", r, "EXTERNAL_IPS"); if (F("V", r, "LB_INGRESS") != "-") ext = ext (ext == "" ? "" : " ") F("V", r, "LB_INGRESS")
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td class=\"l\">%s</td><td class=\"l %s\">%s</td><td class=\"l wrap\">%s</td></tr>\n", esc(F("V", r, "SERVICE") " " F("V", r, "TYPE") " " F("V", r, "CLUSTER_IP") " " ext), esc((allns ? F("V", r, "NAMESPACE") "/" : "") F("V", r, "SERVICE")), badges(F("V", r, "TYPE")), esc(F("V", r, "CLUSTER_IP")), (ext == "" ? "na" : "t3"), (ext == "" ? "-" : esc(ext)), esc(F("V", r, "PORTS"))
+  }
+  if (nv_ == 0) print "<tr><td class=\"l na\" colspan=\"5\">no services</td></tr>"
+  print "</tbody></table></div></section>"
+  panel_open("pips", "Pod IP assignments", "every pod IP with node, host IP and workload &middot; notes flag host-network, duplicate and missing IPs", cnt("iptable") csvbtn("iptable", "pod_ips"), 1)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"iptable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Pod IP</th><th class=\"l\" onclick=\"kdSort(this)\">Pod</th><th class=\"l\" onclick=\"kdSort(this)\">Node</th><th class=\"l\" onclick=\"kdSort(this)\">Host IP</th><th class=\"l\" onclick=\"kdSort(this)\">Workload</th><th class=\"l\" onclick=\"kdSort(this)\">Status</th><th class=\"l\" onclick=\"kdSort(this)\">Note</th></tr></thead><tbody>"
+  for (r = 1; r <= ni; r++) {
+    nt = F("I", r, "NOTE")
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td class=\"l\">%s</td><td class=\"l\">%s</td><td class=\"l\">%s</td><td class=\"l\">%s</td><td class=\"l\">%s</td></tr>\n", esc(F("I", r, "POD") " " F("I", r, "POD_IP") " " F("I", r, "NODE") " " F("I", r, "WORKLOAD") " " F("I", r, "STATUS") " " nt),
+      esc(F("I", r, "POD_IP")), esc(F("I", r, "POD")), esc(F("I", r, "NODE")), esc(F("I", r, "HOST_IP")), esc(F("I", r, "WORKLOAD")), badges(F("I", r, "STATUS")), (nt == "-" ? "" : badges(nt))
+  }
+  print "</tbody></table></div><div class=\"legend\"><span>IP blocks are derived from live pod IPs (Calico-style /26 per node)</span><span>CIDR# = node podCIDR addresses, NS IPs = held by this namespace</span><span>HOST_NETWORK pods share the node IP</span></div></section>"
+}
+
+# ================================================================ MEMORY
+function view_mem(   nn, nm, ny, r, u, a_, nu, c, s, hm, hc_, hn, ln, aa, i, j, v, wi, wv, cl, cr, cu, ml, mr, mu, NHH) {
+  nn = L("nodes.tsv", "N"); nm = L("memory.tsv", "R"); ny = L("workloads.tsv", "Y")
+  while ((getline ln < histf) > 0) { split(ln, aa, "\t"); hm = hm (hm == "" ? "" : " ") aa[2]; hc_ = hc_ (hc_ == "" ? "" : " ") aa[3]; hn++; if (hn == 1) ht0 = aa[1]; ht1 = aa[1] } close(histf)
+  while ((getline ln < nhistf) > 0) { split(ln, aa, "\t"); NHH[aa[2]] = NHH[aa[2]] (NHH[aa[2]] == "" ? "" : " ") nv(aa[3]) } close(nhistf)
+  mu = nv(M["mem_used"]); mr = nv(M["mem_req"]); ml = nv(M["mem_lim"]); cu = nv(M["cpu_used"]); cr = nv(M["cpu_req"]); cl = nv(M["cpu_lim"])
+  print "<section class=\"panel\" id=\"memhero\"><div class=\"ph\"><h2>Namespace memory</h2><p>live totals for every matched pod &middot; trend from kdash polls</p></div><div class=\"hero\"><div>"
+  printf "<div class=\"big\">%s</div><div class=\"sub\">used &nbsp;&middot;&nbsp; request %s &nbsp;&middot;&nbsp; limit %s</div>\n", hmem(mu), hmem(mr), hmem(ml)
+  printf "<div class=\"mrow\"><span>used / request</span>%s<span>%s</span></div>\n", bar(pct(mu, mr), "rq"), (pct(mu, mr) < 0 ? "-" : sprintf("%.1f%%", pct(mu, mr)))
+  printf "<div class=\"mrow\"><span>used / limit</span>%s<span>%s</span></div>\n", bar(pct(mu, ml), ""), (pct(mu, ml) < 0 ? "-" : sprintf("%.1f%%", pct(mu, ml)))
+  printf "<div class=\"mrow\"><span>CPU used / lim</span>%s<span>%s</span></div>\n", bar(pct(cu, cl), ""), (pct(cu, cl) < 0 ? "-" : sprintf("%.1f%%", pct(cu, cl)))
+  printf "<div class=\"sub\" style=\"margin-top:10px\">CPU used %s &nbsp;&middot;&nbsp; request %s &nbsp;&middot;&nbsp; limit %s</div></div>\n", hcpu(cu), hcpu(cr), hcpu(cl)
+  printf "<div><div class=\"sub\">memory trend &nbsp;&middot;&nbsp; %s &rarr; %s %s &nbsp;&middot;&nbsp; %d sample(s)%s</div>%s</div></div>\n", tsx(ht0), tsx(ht1), tzs(), hn, (hn < 3 ? " &nbsp;&middot;&nbsp; press <b>x</b> in a running kdash for a longer trend" : ""), spark(hm, 600, 96, "spark", 1)
+  printf "<div class=\"risk\"><span class=\"b %s\">&ge;90%% of limit: %s</span><span class=\"b %s\">OOMKilled before: %s</span><span class=\"b %s\">no memory limit: %s</span><span class=\"b info\">over request: %s</span><span class=\"b neu\">restarts: %s</span></div></section>\n",
+    (M["pods_mem_ge90_limit"] > 0 ? "bad" : "ok"), M["pods_mem_ge90_limit"], (M["pods_oomkilled"] > 0 ? "bad" : "ok"), M["pods_oomkilled"], (M["pods_no_mem_limit"] > 0 ? "warn" : "ok"), M["pods_no_mem_limit"], M["pods_over_mem_request"], M["restarts"]
+  panel_open("memnodes", "Memory by worker node", "namespace memory per worker node against node allocatable", csvbtn("memnodetable", "memory_by_node"), 0)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"memnodetable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Node</th><th class=\"l\" onclick=\"kdSort(this)\">Pool</th><th onclick=\"kdSort(this)\">NS used</th><th onclick=\"kdSort(this)\">Alloc</th><th onclick=\"kdSort(this)\">NS%</th><th onclick=\"kdSort(this)\">Node%</th><th class=\"l\">Node memory: this ns &#9608; other &#9618; free &#9617;</th><th class=\"l\">NS trend</th></tr></thead><tbody>"
+  for (r = 1; r <= nn; r++) {
+    if (F("N", r, "NODE") == "(unscheduled)" || F("N", r, "NS_PODS") + 0 == 0) continue
+    u = nv(F("N", r, "NS_MEM_USED_Mi")); a_ = nv(F("N", r, "NODE_MEM_ALLOC_Mi")); nu = nv(F("N", r, "NODE_MEM_USED_Mi"))
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td class=\"l\">%s</td><td class=\"l\">%s</td></tr>\n", esc(F("N", r, "NODE") " " F("N", r, "POOL")), esc(F("N", r, "NODE")), esc(F("N", r, "POOL")),
+      u, hmem(u), a_, hmem(a_), fp(pct(u, a_)), fp(pct(nu, a_)), (nu >= 0 ? cbar(u, nu - (u > 0 ? u : 0), a_, "w", "used") : cbar(u, nv(F("N", r, "OTHER_NS_MEM_REQ_Mi")), a_, "w", "req")), spark(NHH[F("N", r, "NODE")], 150, 22, "mini", 0)
+  }
+  print "</tbody></table></div></section>"
+  panel_open("mempods", "Pods by memory", "every pod by memory used, with request / limit percentages and risk flags", cnt("mempodtable") csvbtn("mempodtable", "memory_by_pod"), 1)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"mempodtable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Pod</th><th class=\"l\" onclick=\"kdSort(this)\">Node</th><th onclick=\"kdSort(this)\">Used</th><th onclick=\"kdSort(this)\">Req</th><th onclick=\"kdSort(this)\">Lim</th><th onclick=\"kdSort(this)\">%REQ</th><th onclick=\"kdSort(this)\">%LIM</th><th class=\"l\">MEM/LIM</th><th onclick=\"kdSort(this)\">RST</th><th class=\"l\" onclick=\"kdSort(this)\">Risk</th></tr></thead><tbody>"
+  for (r = 1; r <= nm; r++)
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td class=\"l\">%s</td><td class=\"%s\">%s</td><td class=\"l\">%s</td></tr>\n",
+      esc(F("R", r, "POD") " " F("R", r, "NODE") " " F("R", r, "WORKLOAD") " " F("R", r, "RISK") " " F("R", r, "LAST_TERMINATION")), esc(F("R", r, "POD")), esc(F("R", r, "NODE")),
+      nv(F("R", r, "MEM_USED_Mi")), hmem(nv(F("R", r, "MEM_USED_Mi"))), nv(F("R", r, "MEM_REQ_Mi")), hmem(nv(F("R", r, "MEM_REQ_Mi"))), nv(F("R", r, "MEM_LIM_Mi")), hmem(nv(F("R", r, "MEM_LIM_Mi"))),
+      nv(F("R", r, "PCT_OF_REQ")), (nv(F("R", r, "PCT_OF_REQ")) < 0 ? "<span class=\"na\">-</span>" : F("R", r, "PCT_OF_REQ")), nv(F("R", r, "PCT_OF_LIM")), fp(nv(F("R", r, "PCT_OF_LIM"))), bar(nv(F("R", r, "PCT_OF_LIM")), ""),
+      (F("R", r, "RESTARTS") + 0 > 0 ? "t3" : "t0"), F("R", r, "RESTARTS"), (F("R", r, "RISK") == "-" ? "" : badges(F("R", r, "RISK")))
+  print "</tbody></table></div></section>"
+  forecast_panel()
+  print "<section class=\"panel\" id=\"memrisk\"><div class=\"ph\"><h2>OOM risk &middot; OOMKilled &middot; no limit</h2><p>what needs attention before the next restart</p></div><div class=\"hero\"><div><div class=\"sub\"><b>&ge; 90% of memory limit</b></div><div class=\"list\">"
+  c = 0; for (r = 1; r <= nm; r++) if (F("R", r, "RISK") ~ /OOM_RISK/) { c++; printf "<div data-s=\"%s\"><span class=\"t4\">!</span> <b>%s</b> on %s &nbsp; %s of %s (%s%%)</div>\n", esc(F("R", r, "POD")), esc(F("R", r, "POD")), esc(F("R", r, "NODE")), hmem(nv(F("R", r, "MEM_USED_Mi"))), hmem(nv(F("R", r, "MEM_LIM_Mi"))), F("R", r, "PCT_OF_LIM") }
+  if (!c) print "<div class=\"t1\">none</div>"
+  print "</div><div class=\"sub\"><b>Recent OOMKilled (last container termination)</b></div><div class=\"list\">"
+  c = 0; for (r = 1; r <= nm; r++) if (F("R", r, "LAST_TERMINATION") == "OOMKilled") { c++; printf "<div data-s=\"%s\"><span class=\"t4\">&#10007;</span> <b>%s</b> on %s &nbsp; restarts %s &nbsp; now %s / limit %s</div>\n", esc(F("R", r, "POD")), esc(F("R", r, "POD")), esc(F("R", r, "NODE")), F("R", r, "RESTARTS"), hmem(nv(F("R", r, "MEM_USED_Mi"))), hmem(nv(F("R", r, "MEM_LIM_Mi"))) }
+  if (!c) print "<div class=\"t1\">none</div>"
+  print "</div></div><div><div class=\"sub\"><b>No memory limit (unbounded containers)</b></div><div class=\"list\"><div>"
+  c = 0; for (r = 1; r <= nm; r++) if (F("R", r, "RISK") ~ /NO_LIMIT/) { c++; printf "<span class=\"chip\" data-s=\"%s\">%s</span>", esc(F("R", r, "POD")), esc(F("R", r, "POD")) }
+  if (!c) print "<span class=\"t1\">none</span>"
+  print "</div></div></div></div></section>"
+  panel_open("memwl", "Memory by workload", "used / requested / limited per workload, highest first", csvbtn("memwltable", "memory_by_workload"), 0)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"memwltable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Kind</th><th class=\"l\" onclick=\"kdSort(this)\">Workload</th><th onclick=\"kdSort(this)\">Pods</th><th onclick=\"kdSort(this)\">Used</th><th onclick=\"kdSort(this)\">Req</th><th onclick=\"kdSort(this)\">Lim</th><th onclick=\"kdSort(this)\">%LIM</th><th class=\"l\">MEM/LIM</th></tr></thead><tbody>"
+  for (r = 1; r <= ny; r++) { wi[r] = r; wv[r] = nv(F("Y", r, "MEM_USED_Mi")) }
+  for (i = 2; i <= ny; i++) { v = wi[i]; j = i - 1; while (j > 0 && wv[wi[j]] < wv[v]) { wi[j + 1] = wi[j]; j-- } wi[j + 1] = v }
+  for (i = 1; i <= ny; i++) { r = wi[i]
+    printf "<tr data-s=\"%s\"><td class=\"l\"><span class=\"b neu\">%s</span></td><td class=\"l\"><b>%s</b></td><td>%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td>%s</td><td class=\"l\">%s</td></tr>\n", esc(F("Y", r, "KIND") " " F("Y", r, "WORKLOAD")), esc(F("Y", r, "KIND")), esc(F("Y", r, "WORKLOAD")), F("Y", r, "PODS"),
+      nv(F("Y", r, "MEM_USED_Mi")), hmem(nv(F("Y", r, "MEM_USED_Mi"))), nv(F("Y", r, "MEM_REQ_Mi")), hmem(nv(F("Y", r, "MEM_REQ_Mi"))), nv(F("Y", r, "MEM_LIM_Mi")), hmem(nv(F("Y", r, "MEM_LIM_Mi"))),
+      fp(pct(nv(F("Y", r, "MEM_USED_Mi")), nv(F("Y", r, "MEM_LIM_Mi")))), bar(pct(nv(F("Y", r, "MEM_USED_Mi")), nv(F("Y", r, "MEM_LIM_Mi"))), "") }
+  print "</tbody></table></div><div class=\"legend\"><span><i class=\"h1\"></i>this namespace</span><span><i class=\"oth\"></i>other namespaces</span><span><i style=\"background:var(--free)\"></i>free allocatable</span><span>metrics-server refreshes about every 15 s</span></div></section>"
+}
+
+# memory growth forecast table (fcf: built by kdash from the session samples)
+function forecast_panel(   ln, a, n, ev, from, i, eta, cls, F_, srt, j, v) {
+  n = 0; ev = -1
+  if (fcf != "") { while ((getline ln < fcf) > 0) { split(ln, a, "\t"); if (a[1] == "#EVAL") { ev = a[2]; from = a[3]; continue } F_[++n] = ln } close(fcf) }
+  panel_open("memfc", "Memory growth forecast", "linear trend of each pod over the last " tdur(fcwin) " of samples (a restart starts the trend again) &middot; when would the pod reach its memory limit &middot; times in " tzs(), (n ? csvbtn("fctable", "memory_forecast") : ""), 0)
+  if (ev < 0) { print "<div class=\"legend\"><span>needs a live session (kdash running for a few minutes) - the forecast is built from the session samples</span></div></section>"; return }
+  if (n == 0) { printf "<div class=\"legend\"><span class=\"t1\">no pod memory is growing &middot; %d pod(s) with enough samples since %s</span></div></section>\n", ev, tsx(from); return }
+  for (i = 1; i <= n; i++) { split(F_[i], a, "\t"); srt[i] = i; FV[i] = (a[7] == "-") ? 1e12 - a[6] : a[7] + 0 }
+  for (i = 2; i <= n; i++) { v = srt[i]; j = i - 1; while (j > 0 && FV[srt[j]] > FV[v]) { srt[j + 1] = srt[j]; j-- } srt[j + 1] = v }
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"fctable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Pod</th><th class=\"l\" onclick=\"kdSort(this)\">Node</th><th class=\"l\" onclick=\"kdSort(this)\">Workload</th><th onclick=\"kdSort(this)\">Now</th><th onclick=\"kdSort(this)\">Limit</th><th onclick=\"kdSort(this)\">%LIM</th><th onclick=\"kdSort(this)\">Growth / h</th><th onclick=\"kdSort(this)\">Limit in</th><th class=\"l\" onclick=\"kdSort(this)\">Reaches limit at</th><th class=\"l\">Trend fit</th></tr></thead><tbody>"
+  for (i = 1; i <= n; i++) { split(F_[srt[i]], a, "\t"); eta = a[7]
+    cls = (eta == "-") ? "t0" : (eta + 0 < 3600 ? "t4" : (eta + 0 < 21600 ? "t3" : "t2"))
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td class=\"l\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td>%s</td><td data-v=\"%s\">+%s</td><td data-v=\"%s\" class=\"%s\">%s</td><td class=\"l %s\">%s</td><td class=\"l\">%s</td></tr>\n",
+      esc(a[1] " " a[2] " " a[3]), esc(a[1]), esc(a[2]), esc(a[3]), a[4], hmem(a[4] + 0), (a[5] == "-" ? -1 : a[5]), (a[5] == "-" ? "<span class=\"na\">no limit</span>" : hmem(a[5] + 0)),
+      (a[5] == "-" ? "<span class=\"na\">-</span>" : fp(a[4] * 100 / a[5])), a[6], hmem(a[6] + 0), (eta == "-" ? 1e12 : eta), cls, (eta == "-" ? "-" : (eta + 0 == 0 ? "now" : tdur(eta))),
+      cls, (eta == "-" ? "<span class=\"na\">no limit</span>" : tsx(a[11])), (a[10] + 0 >= 0.6 ? "steady" : "noisy") " &middot; r&sup2; " a[10] " &middot; " a[9] " samples over " tdur(a[8]) }
+  print "</tbody></table></div><div class=\"legend\"><span><b class=\"t4\">red</b> under 1 h</span><span><b class=\"t3\">orange</b> under 6 h</span><span>a linear estimate: leaks, caches and batch peaks behave differently - confirm on the HISTORY tab</span></div></section>"
+}
+
+# ================================================================ generic appendix table
+function gtable(id, f, title,   p, n, r, c, a, v) {
+  p = "G" id; n = L(f, p)
+  printf "<div class=\"ph\" style=\"border-top:1px solid var(--line)\"><h2>%s</h2><p>%s &middot; %d row(s)</p><div class=\"tools\">%s</div></div>\n", esc(title), esc(f), n, csvbtn("g" id, f)
+  printf "<div class=\"scroll\" style=\"max-height:420px\"><table class=\"cli\" id=\"g%s\"><thead><tr>", id
+  for (c = 1; c <= NCOL[p]; c++) if (HN[p, c] != "KEY") printf "<th class=\"l\" onclick=\"kdSort(this)\">%s</th>", esc(HN[p, c])
+  print "</tr></thead><tbody>"
+  for (r = 1; r <= n; r++) { split(RW[p, r], a, "\t"); printf "<tr data-s=\"%s\">", esc(RW[p, r])
+    for (c = 1; c <= NCOL[p]; c++) { if (HN[p, c] == "KEY") continue; v = a[c]; printf "<td class=\"l\"%s>%s</td>", (numeric(v) ? " data-v=\"" v "\"" : ""), (v == "-" ? "<span class=\"na\">-</span>" : esc(v)) }
+    print "</tr>" }
+  print "</tbody></table></div>"
+}
+
+# ================================================================ page helpers
+function build_ar(tlist,   NTL, tl2, tp, i, p, n, sc, it, c, r, a, s, det, key, nx, ARR) {
+  NTL = split(tlist, tl2, "~")
+  for (i = 1; i <= NTL; i++) {
+    split(tl2[i], tp, "|"); if (tp[4] == "-" || tp[4] == "") continue
+    key = tp[1] "|" tp[4]; if (key in ARDONE) continue; ARDONE[key] = 1
+    p = "A" (++arn); n = L(tp[1], p); sc = HX[p, tp[4]]; if (!sc) continue
+    it = 1; for (c = NCOL[p]; c >= 1; c--) if (HN[p, c] ~ /^(NODE|WORKLOAD|SERVICE|SUBNET|CONTAINER)$/) it = c
+    for (c = 1; c <= NCOL[p]; c++) if (HN[p, c] == "POD") it = c
+    for (r = 1; r <= n; r++) {
+      split(RW[p, r], a, "\t"); s = rowsev(a[sc]); if (s != "bad" && s != "warn") continue
+      det = ""; for (c = 1; c <= NCOL[p]; c++) if (c != sc && c != it && HN[p, c] !~ /^(KEY|CPU_PREV_m|MEM_PREV_Mi|NAMESPACE)$/ && a[c] != "-" && a[c] != "" && length(det) < 260) det = det (det == "" ? "" : " &middot; ") hfield(HN[p, c], a[c])
+      nx = nextstep(a[sc], HN[p, it], a[it], a)
+      ARR = sprintf("<tr data-s=\"%s\" data-sev=\"%s\"><td class=\"l\" data-v=\"%d\"><span class=\"b %s\">%s</span></td><td class=\"l\">%s</td><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td class=\"l wrap\">%s</td><td class=\"l wrap nx\">%s</td></tr>", esc(a[it] " " a[sc] " " tp[2]), s, (s == "bad" ? 1 : 2), s, (s == "bad" ? "CRITICAL" : "WARNING"), esc(tp[2]), esc(a[it]), badges(a[sc]), det, nx)
+      if (s == "bad") { nerr++; ARB[nerr] = ARR } else { nwarn++; ARW[nwarn] = ARR }
+      nar++
+    }
+  }
+}
+# ---- readable field names / units for the Action required details
+function hfield(h, v,   l, u) {
+  l = h; u = ""
+  if (l ~ /_Mi$/) { sub(/_Mi$/, "", l); v = (v ~ /^-?[0-9.]+$/) ? hmem(v + 0) : v }
+  else if (l ~ /_m$/) { sub(/_m$/, "", l); v = (v ~ /^-?[0-9.]+$/) ? hcpu(v + 0) : v }
+  else if (l ~ /PCT|_%$/) { u = "%" }
+  gsub(/_/, " ", l); l = tolower(l)
+  sub(/^ns /, "namespace ", l); sub(/^cl /, "cluster ", l); sub(/ req$/, " request", l); sub(/ lim$/, " limit", l); sub(/ pct /, " % ", l); sub(/ pct$/, " %", l)
+  return "<span class=\"na\">" esc(l) "</span> " esc(v) u
+}
+# ---- what to do next, with a command to copy (namespace and object filled in)
+function cmdt(r, c) { return "<code class=\"cp\" title=\"" esc(r) " &middot; click to copy\" onclick=\"kdCopy(this)\">" esc(c) "</code>" }
+function tag(r,   t) { t = r; sub(/ - .*/, "", t); sub(/;.*/, "", t); return "<span class=\"nxt\" title=\"" esc(r) "\">" esc(t) "</span>" }
+function cmd(c) { return "<code class=\"cp\" title=\"click to copy\" onclick=\"kdCopy(this)\">" esc(c) "</code>" }
+function nextstep(st, kind, obj, row,   n, o, t) {
+  n = (ns == "(all namespaces)") ? "" : "-n " ns " "; o = obj
+  if (index(o, "/") && ns == "(all namespaces)") { split(o, t, "/"); n = "-n " t[1] " "; o = t[2] }
+  if (st ~ /CrashLoop|Error/) return cmdt("container keeps failing - read the previous log", "kubectl " n "logs " o " --previous --all-containers --tail=100")
+  if (st ~ /OOMKilled|OOMKILLED/) return cmdt("killed for memory - raise the limit or find the growth (MEMORY tab forecast)", "kubectl " n "describe pod " o)
+  if (st ~ /OOM_RISK/) return cmdt("memory at 90% of its limit - next step is an OOM kill", "kubectl " n "top pod " o " --containers")
+  if (st ~ /ImagePull|CreateContainer|ContainerCreating/) return cmdt("pod cannot start - check the events (image, secret, volume)", "kubectl " n "describe pod " o)
+  if (st ~ /Pending|UNSCHEDULED/) return cmdt("not scheduled - requests vs free capacity, taints, affinity", "kubectl " n "get events --field-selector involvedObject.name=" o)
+  if (st ~ /Evicted|Failed/) return cmdt("pod ended - read the reason, delete when understood", "kubectl " n "describe pod " o)
+  if (st ~ /Terminating/) return cmdt("stuck terminating - finalizers or node down", "kubectl " n "get pod " o " -o jsonpath={.metadata.finalizers}")
+  if (st ~ /NotReady/ && kind == "NODE") return cmdt("node down - its pods are not served", "kubectl describe node " o)
+  if (st ~ /SchedulingDisabled|Cordoned/) return cmdt("node cordoned - drained for maintenance?", "kubectl get node " o " -o wide")
+  if (st ~ /DEGRADED|NOT_READY/) return cmdt("fewer ready replicas than desired", "kubectl " n "get pods -o wide | grep " o)
+  if (st ~ /ROLLING/) return cmdt("rollout in progress", "kubectl " n "get deploy,sts " o)
+  if (st ~ /HA_RISK/) return tag("every replica on one node - one node failure takes it down; add topologySpreadConstraints / anti-affinity")
+  if (st ~ /SKEWED/) return tag("replicas spread unevenly over the nodes")
+  if (st ~ /NO_LIMIT/) return tag("no memory limit - can starve the node; set resources.limits.memory")
+  if (st ~ /DUPLICATE/) return cmdt("same IP on two pods - CNI / IPAM problem", "kubectl get pods -A -o wide | grep " o)
+  if (st ~ /NO_IP/) return tag("pod has no IP yet - not scheduled or CNI not ready")
+  if (st ~ /SINGLE/) return tag("one replica - no redundancy")
+  if (st ~ /SCALED_TO_0|SUSPENDED/) return tag("intentionally off? confirm it is expected")
+  if (st ~ /NotReady/) return cmdt("container not ready - readiness probe failing", "kubectl " n "describe pod " o)
+  return ""
+}
+function action_panel(id,   k) {
+  printf "<details class=\"panel\" id=\"%s\"%s><summary><div class=\"ph\"><h2>Action required</h2><p>%d critical &middot; %d warning &middot; rows that need operational attention, from every table in this report</p><div class=\"tools\">%s</div></div></summary>\n", id, (nar > 0 ? " open" : ""), nerr, nwarn, csvbtn(id "table", "action_required")
+  printf "<div class=\"scroll\" style=\"max-height:380px\"><table class=\"cli\" id=\"%stable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Severity</th><th class=\"l\" onclick=\"kdSort(this)\">Section</th><th class=\"l\" onclick=\"kdSort(this)\">Item</th><th class=\"l\" onclick=\"kdSort(this)\">Status</th><th class=\"l\">Details</th><th class=\"l\">Next step</th></tr></thead><tbody>\n", id
+  for (k = 1; k <= nerr; k++) print ARB[k]
+  for (k = 1; k <= nwarn; k++) print ARW[k]
+  if (!nar) print "<tr><td class=\"l t1\" colspan=\"6\">Nothing needs attention in this report.</td></tr>"
+  print "</tbody></table></div></details>"
+}
+function kpis(v, withaction) {
+  print "<div class=\"kpis\">"
+  if (v == "pods") {
+    kpi((M["pods_healthy"] == M["pods"] ? "ok" : "warn"), "Pods healthy", M["pods_healthy"] " / " M["pods"], esc(M["containers"]) " containers &middot; " esc(M["restarts"]) " restarts", bar(pct(M["pods_healthy"], M["pods"]), "gd"), "")
+    kpi("info", "CPU used", hcpu(nv(M["cpu_used"])), "req " hcpu(nv(M["cpu_req"])) " &middot; lim " hcpu(nv(M["cpu_lim"])), bar(pct(nv(M["cpu_used"]), nv(M["cpu_lim"])), ""), "")
+    kpi("info", "Memory used", hmem(nv(M["mem_used"])), "req " hmem(nv(M["mem_req"])) " &middot; lim " hmem(nv(M["mem_lim"])), bar(pct(nv(M["mem_used"]), nv(M["mem_lim"])), ""), "")
+    kpi((M["pods_mem_ge90_limit"] > 0 ? "bad" : "ok"), "Memory \342\211\245 90% of limit", M["pods_mem_ge90_limit"], "OOMKill risk - see the MEMORY report", "", "")
+    kpi((M["pods_oomkilled"] > 0 ? "bad" : "ok"), "OOMKilled before", M["pods_oomkilled"], "last container exit", "", "OOMKilled")
+    kpi(((M["pods"] - M["pods_healthy"]) > 0 ? "warn" : "ok"), "Not running / not ready", M["pods"] - M["pods_healthy"], "red pod names below", "", "")
+  } else if (v == "nodes") {
+    kpi("info", "Node pools", M["pools"], "label " esc(M["pool_key"]), "", "")
+    kpi("info", "Worker nodes hosting", M["nodes_hosting"], "of " esc(M["nodes_total"]) " readable nodes", "", "")
+    kpi("info", "Namespace memory", hmem(nv(M["mem_used"])), "of " hmem(nv(M["hosting_mem_alloc"])) " allocatable on hosting nodes", bar(pct(nv(M["mem_used"]), nv(M["hosting_mem_alloc"])), ""), "")
+    kpi("info", "Namespace CPU", hcpu(nv(M["cpu_used"])), "of " hcpu(nv(M["hosting_cpu_alloc"])) " allocatable", bar(pct(nv(M["cpu_used"]), nv(M["hosting_cpu_alloc"])), ""), "")
+    kpi("info", "Cluster memory requested", (nv(M["cluster_mem_req"]) < 0 ? "n/a" : hmem(nv(M["cluster_mem_req"]))), (nv(M["cluster_mem_req"]) < 0 ? "cluster pod read " esc(M["cluster_state"]) : sprintf("%.1f%% of %s &middot; %s pods &middot; %s namespaces", pct(nv(M["cluster_mem_req"]), nv(M["cluster_mem_alloc"])), hmem(nv(M["cluster_mem_alloc"])), M["cluster_pods"], M["cluster_namespaces"])), bar(pct(nv(M["cluster_mem_req"]), nv(M["cluster_mem_alloc"])), "rq"), "")
+    kpi("info", "Namespace share of cluster", (pct(nv(M["mem_req"]), nv(M["cluster_mem_alloc"])) < 0 ? "n/a" : sprintf("%.1f%%", pct(nv(M["mem_req"]), nv(M["cluster_mem_alloc"])))), "memory requested of cluster allocatable" (nv(M["cluster_mem_req"]) > 0 ? sprintf(" &middot; %.1f%% of all requests", pct(nv(M["mem_req"]), nv(M["cluster_mem_req"]))) : ""), "", "")
+    kpi((nodestate == "ok" ? "ok" : "warn"), "Node data", (nodestate == "ok" ? "readable" : nodestate), (topnstate == "ok" ? "node metrics readable" : "node metrics " (topnstate == "off" ? "disabled" : topnstate)), "", "")
+    kpi("bad", "NotReady nodes", NOTREADY(), "click to show", "", "NotReady")
+  } else if (v == "workloads") {
+    kpi("info", "Workloads", M["workloads"], "on " M["nodes_hosting"] " worker nodes", "", "")
+    kpi((M["workloads_degraded"] > 0 ? "bad" : "ok"), "Degraded", M["workloads_degraded"] + 0, "fewer ready than desired", "", "DEGRADED")
+    kpi((M["workloads_rolling"] > 0 ? "warn" : "ok"), "Rolling out", M["workloads_rolling"] + 0, "new spec not on every replica", "", "ROLLING")
+    kpi((M["ha_risk"] > 0 ? "bad" : "ok"), "HA risk", M["ha_risk"], "2+ replicas on one node", "", "HA_RISK")
+    kpi((M["skewed"] > 0 ? "warn" : "ok"), "Skewed", M["skewed"], "uneven replica spread", "", "SKEWED")
+    kpi((M["unscheduled_workloads"] > 0 ? "bad" : "ok"), "Unscheduled", M["unscheduled_workloads"], "workloads with pending pods", "", "UNSCHEDULED")
+    kpi("info", "Pods", M["pods"], M["pods_healthy"] " healthy", bar(pct(M["pods_healthy"], M["pods"]), "gd"), "")
+  } else if (v == "ip") {
+    kpi("info", "Pod IPs in use", M["pod_ips"], M["subnets"] " subnet(s) observed", "", "")
+    kpi((M["no_ip"] > 0 ? "warn" : "ok"), "Pods without IP", M["no_ip"], "pending / not scheduled", "", "NO_IP")
+    kpi("info", "Host-network pods", M["host_network"], "share the node IP", "", "HOST_NETWORK")
+    kpi((M["duplicate_ip_pods"] > 0 ? "bad" : "ok"), "Duplicate IPs", M["duplicate_ip_pods"], "same IP on 2+ pods", "", "DUPLICATE")
+    kpi("info", "Services", M["services"], M["cluster_ips"] " ClusterIP &middot; " M["headless"] " headless &middot; " M["nodeports"] " NodePort", "", "")
+    kpi((M["external_addressed"] > 0 ? "warn" : "info"), "External addresses", M["external_addressed"], M["loadbalancers"] " LoadBalancer", "", "LoadBalancer")
+  } else if (v == "mem") {
+    kpi((pct(nv(M["mem_used"]), nv(M["mem_lim"])) >= 90 ? "bad" : "info"), "Memory used", hmem(nv(M["mem_used"])), sprintf("%s of limit", (pct(nv(M["mem_used"]), nv(M["mem_lim"])) < 0 ? "-" : sprintf("%.1f%%", pct(nv(M["mem_used"]), nv(M["mem_lim"]))))), bar(pct(nv(M["mem_used"]), nv(M["mem_lim"])), ""), "")
+    kpi((M["pods_mem_ge90_limit"] > 0 ? "bad" : "ok"), "OOM risk", M["pods_mem_ge90_limit"], "\342\211\245 90% of limit", "", "OOM_RISK")
+    kpi((M["pods_oomkilled"] > 0 ? "bad" : "ok"), "OOMKilled before", M["pods_oomkilled"], "last container exit", "", "OOMKILLED_BEFORE")
+    kpi((M["pods_no_mem_limit"] > 0 ? "warn" : "ok"), "No memory limit", M["pods_no_mem_limit"], "unbounded containers", "", "NO_LIMIT")
+    kpi("info", "Over request", M["pods_over_mem_request"], "normal for Burstable", "", "OVER_REQUEST")
+  }
+  if (v == "io") {
+    kpi("info", "Network in", hb(nv(M["ns_net_rx"])), "received by the namespace (ingress)", "", "")
+    kpi("info", "Network out", hb(nv(M["ns_net_tx"])), "sent by the namespace (egress)", "", "")
+    kpi("info", "Disk read", hb(nv(M["ns_disk_r"])), hio(nv(M["ns_riops"])) " IOPS", "", "")
+    kpi("info", "Disk write", hb(nv(M["ns_disk_w"])), hio(nv(M["ns_wiops"])) " IOPS", "", "")
+    kpi((M["io_state"] ~ /^(prom-url|prom-svc|kubelet)$/ ? "ok" : "warn"), "IO source", (M["io_state"] ~ /^prom/ ? "Prometheus" : (M["io_state"] == "kubelet" ? "kubelet" : M["io_state"])), (M["io_source"] == "-" ? "" : esc(M["io_source"])), "", "")
+  }
+  if (withaction) kpi((nar > 0 ? (nerr > 0 ? "bad" : "warn") : "ok"), "Action required", nar + 0, nerr + 0 " critical &middot; " nwarn + 0 " warning", "", "")
+  print "</div>"
+}
+function raw_block(f, label,   ln, n) {
+  printf "<details class=\"panel\"><summary><div class=\"ph\"><h2>%s</h2><p>the CLI output captured with this report &middot; for tickets and traceability</p></div></summary><pre class=\"raw\">", label
+  n = 0; while ((getline ln < f) > 0) { print esc(ln); n++ } close(f)
+  if (!n) print "(not captured)"
+  print "</pre></details>"
+  return n
+}
+function data_tables(tlist, pre,   NTL, tl2, tp, i) {
+  print "<details class=\"panel\"><summary><div class=\"ph\"><h2>Data tables</h2><p>the exact rows behind this view &middot; sortable &middot; CSV per table</p></div></summary>"
+  NTL = split(tlist, tl2, "~"); for (i = 1; i <= NTL; i++) { split(tl2[i], tp, "|"); gtable(pre i, tp[1], tp[2]) }
+  print "</details>"
+}
+function notes_block(   n, nn_, k) {
+  if (notes == "") return
+  n = split(notes, nn_, "~"); print "<div class=\"notes\">"; for (k = 1; k <= n; k++) if (nn_[k] != "") printf "<div>%s</div>\n", esc(nn_[k]); print "</div>"
+}
+# time charts at the top of each tab (hidden by the page when there is no session history)
+function chartpanel(id, title, sb, h) { return "<section class=\"panel\"><div class=\"ph\"><h2>" title "</h2><p>" sb " &middot; <span data-win></span></p></div><div class=\"chart\" data-chart=\"" id "\" data-h=\"" h "\"></div></section>" }
+function vcharts(v) {
+  if (v == "nodes") print "<div class=\"grid2 sesch\">" chartpanel("node_mem", "Memory per worker node", "this namespace on each node (MiB) &middot; click a legend item to hide it", 200) chartpanel("ns_cl_mem", "Namespace vs cluster memory", "namespace used / requested against the cluster (MiB)", 200) "</div>"
+  else if (v == "workloads") print "<div class=\"grid2 sesch\">" chartpanel("wl_cpu", "CPU per workload", "sum of the pods of each workload (millicores), top 8", 200) chartpanel("wl_mem", "Memory per workload", "sum of the pods of each workload (MiB), top 8", 200) "</div>"
+  else if (v == "ip") print "<div class=\"grid2 sesch\">" chartpanel("ns_pods", "Pods, health and restarts", "pod count (= pod IPs in use), healthy pods, restarts", 180) chartpanel("ns_risk", "Risk counters", "&ge;90% of memory limit, OOMKilled, HA risk, no limit", 180) "</div>"
+  else if (v == "mem") { print "<div class=\"grid2 sesch\">" chartpanel("ns_mem", "Namespace memory", "used / request / limit (MiB)", 200) chartpanel("top_pods", "Top pods by peak memory", "the 10 pods with the highest memory (MiB)", 200) "</div>"
+    print "<section class=\"panel sesch\"><div class=\"ph\"><h2>Pod memory heatmap</h2><p>% of each pod memory limit over time &middot; hover a cell, click a row to chart it</p></div><div data-heat=\"1\"></div></section>" }
+  else if (v == "io") print "<div class=\"grid2 sesch\">" chartpanel("ns_net", "Network in / out", "bytes per second received and sent by the namespace", 200) chartpanel("ns_disk", "Disk read / write", "container filesystem bytes per second", 200) "</div>"
+}
+# disclaimer at the end of every page
+function disc_block() {
+  printf "<section class=\"panel disc\"><div class=\"ph\"><h2>Disclaimer</h2><p>kdash %s &middot; author %s</p></div><div class=\"disctx\">kdash is provided as is, without warranty of any kind. The person who ran this report (<b>%s</b>) is solely responsible for its use, for having authorisation to access the clusters and namespaces it reads, and for any decision or action taken on its content. kdash only reads the cluster, and every run is audited: user, host, origin, context, namespace, every action, every report written (with its sha256) and every kubectl call are logged and stored. Audit session <b>%s</b>.</div></section>\n", esc(ver), esc(author), esc(auser), esc(asid)
+}
+function run_view(v) { vcharts(v); if (v == "pods") view_pods(); else if (v == "nodes") view_nodes(); else if (v == "workloads") view_workloads(); else if (v == "ip") view_ip(); else if (v == "mem") view_mem(); else if (v == "io") view_io() }
+function hb(v) { if (v < 0) return "<span class=\"na\">-</span>"; if (v >= 1024000000) return sprintf("%.1f GiB/s", v / 1073741824); if (v >= 1024000) return sprintf("%.1f MiB/s", v / 1048576); if (v >= 1000) return sprintf("%.1f KiB/s", v / 1024); return sprintf("%d B/s", v + 0.5) }
+function hio(v) { return v < 0 ? "<span class=\"na\">-</span>" : sprintf("%.0f", v) }
+function s2(a, b) { return (a < 0 && b < 0) ? -1 : (a > 0 ? a : 0) + (b > 0 ? b : 0) }
+function view_io(   ni, nq, r, st, okd, t, nt, tot, QO, QV, rr, j) {
+  st = M["io_state"]; okd = (st == "prom-url" || st == "prom-svc" || st == "kubelet")
+  ni = L("io_nodes.tsv", "I"); nq = L("io_pods.tsv", "Q")
+  if (!okd) {
+    print "<section class=\"panel\"><div class=\"ph\"><h2>Network and disk IO</h2><p>ingress / egress and disk read / write per worker node and pod</p></div><div class=\"notes\">"
+    if (st == "warming-up") print "<div>Only one sample so far - rates appear after the second sample (every " esc(M["io_every"]) " s).</div>"
+    else if (st == "not-sampled") print "<div>IO rates need two samples: they are collected in live mode (press x, or kdash --session-report after the run) or with --io-wait SEC.</div>"
+    else if (st == "off") print "<div>IO collection disabled (--no-io).</div>"
+    else print "<div>No IO source readable with your rights (metrics-server only has CPU and memory). Tried: " esc(M["io_reason"]) ".</div><div>Enable with --prom-url http://&lt;prometheus&gt;:9090, --prom-svc [ns/]&lt;prometheus-service&gt;:&lt;port&gt; (needs services/proxy in the namespace) or nodes/proxy (kubelet).</div>"
+    print "</div></section>"; return
+  }
+  panel_open("ionodes", "Worker nodes", "whole node (all namespaces) and this namespace on it &middot; source " esc(M["io_source"]) " &middot; sampled every " esc(M["io_every"]) " s", cnt("ionodetable") csvbtn("ionodetable", "io_nodes"), 0)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"ionodetable\"><thead><tr class=\"grp\"><th colspan=\"3\"></th><th colspan=\"6\" class=\"g-act sep\">WHOLE NODE</th><th colspan=\"4\" class=\"g-asg sep\">THIS NAMESPACE</th></tr><tr><th class=\"l\" onclick=\"kdSort(this)\">Node</th><th class=\"l\" onclick=\"kdSort(this)\">Pool</th><th onclick=\"kdSort(this)\">Pods</th><th class=\"sep\" onclick=\"kdSort(this)\">In</th><th onclick=\"kdSort(this)\">Out</th><th onclick=\"kdSort(this)\">Disk read</th><th onclick=\"kdSort(this)\">Disk write</th><th onclick=\"kdSort(this)\">Read IOPS</th><th onclick=\"kdSort(this)\">Write IOPS</th><th class=\"sep\" onclick=\"kdSort(this)\">In</th><th onclick=\"kdSort(this)\">Out</th><th onclick=\"kdSort(this)\">Share</th><th class=\"l\">namespace &middot; others</th></tr></thead><tbody>"
+  for (r = 1; r <= ni; r++) {
+    t = s2(nv(F("I", r, "NODE_RX_Bps")), nv(F("I", r, "NODE_TX_Bps"))); nt = s2(nv(F("I", r, "NS_RX_Bps")), nv(F("I", r, "NS_TX_Bps")))
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td>%s</td><td class=\"sep\" data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td class=\"sep\" data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td>%s</td><td class=\"l\">%s</td></tr>\n",
+      esc(F("I", r, "NODE") " " F("I", r, "POOL")), esc(F("I", r, "NODE")), esc(F("I", r, "POOL")), F("I", r, "NS_PODS"),
+      nv(F("I", r, "NODE_RX_Bps")), hb(nv(F("I", r, "NODE_RX_Bps"))), nv(F("I", r, "NODE_TX_Bps")), hb(nv(F("I", r, "NODE_TX_Bps"))), nv(F("I", r, "NODE_DISK_R_Bps")), hb(nv(F("I", r, "NODE_DISK_R_Bps"))), nv(F("I", r, "NODE_DISK_W_Bps")), hb(nv(F("I", r, "NODE_DISK_W_Bps"))),
+      hio(nv(F("I", r, "NODE_R_IOPS"))), hio(nv(F("I", r, "NODE_W_IOPS"))), nv(F("I", r, "NS_RX_Bps")), hb(nv(F("I", r, "NS_RX_Bps"))), nv(F("I", r, "NS_TX_Bps")), hb(nv(F("I", r, "NS_TX_Bps"))), fp(pct(nt, t)), cbar(nt, t - (nt > 0 ? nt : 0), t, "w", "used")
+  }
+  print "</tbody></table></div></section>"
+  panel_open("iopods", "Pods", "bytes per second received (in) and sent (out), container filesystem read / write and operations per second", cnt("iopodtable") csvbtn("iopodtable", "io_pods"), 1)
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"iopodtable\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Pod</th><th class=\"l\" onclick=\"kdSort(this)\">Node</th><th class=\"l\" onclick=\"kdSort(this)\">Workload</th><th onclick=\"kdSort(this)\">In</th><th onclick=\"kdSort(this)\">Out</th><th onclick=\"kdSort(this)\">Disk read</th><th onclick=\"kdSort(this)\">Disk write</th><th onclick=\"kdSort(this)\">Read IOPS</th><th onclick=\"kdSort(this)\">Write IOPS</th><th class=\"l\">share of namespace traffic</th></tr></thead><tbody>"
+  tot = s2(nv(M["ns_net_rx"]), nv(M["ns_net_tx"]))
+  for (r = 1; r <= nq; r++) { QO[r] = r; QV[r] = s2(nv(F("Q", r, "NET_RX_Bps")), nv(F("Q", r, "NET_TX_Bps"))) }
+  for (r = 2; r <= nq; r++) { t = QO[r]; j = r - 1; while (j > 0 && QV[QO[j]] < QV[t]) { QO[j + 1] = QO[j]; j-- } QO[j + 1] = t }
+  for (rr = 1; rr <= nq; rr++) { r = QO[rr]
+    t = s2(nv(F("Q", r, "NET_RX_Bps")), nv(F("Q", r, "NET_TX_Bps")))
+    printf "<tr data-s=\"%s\"><td class=\"l\"><b>%s</b></td><td class=\"l\">%s</td><td class=\"l\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td data-v=\"%s\">%s</td><td>%s</td><td>%s</td><td class=\"l\">%s</td></tr>\n",
+      esc(F("Q", r, "POD") " " F("Q", r, "NODE") " " F("Q", r, "WORKLOAD")), esc(F("Q", r, "POD")), esc(F("Q", r, "NODE")), esc(F("Q", r, "WORKLOAD")),
+      nv(F("Q", r, "NET_RX_Bps")), hb(nv(F("Q", r, "NET_RX_Bps"))), nv(F("Q", r, "NET_TX_Bps")), hb(nv(F("Q", r, "NET_TX_Bps"))), nv(F("Q", r, "DISK_R_Bps")), hb(nv(F("Q", r, "DISK_R_Bps"))), nv(F("Q", r, "DISK_W_Bps")), hb(nv(F("Q", r, "DISK_W_Bps"))),
+      hio(nv(F("Q", r, "DISK_R_IOPS"))), hio(nv(F("Q", r, "DISK_W_IOPS"))), bar(pct(t, tot), "w")
+  }
+  print "</tbody></table></div><div class=\"legend\"><span>in = received (ingress)</span><span>out = sent (egress)</span><span>disk = container filesystem</span><span>IOPS = operations per second</span></div></section>"
+}
+function page_head(ttl, multi, res,   ln, i, j, ns5, sb, vk, vn) {
+  print "<!doctype html>\n<html lang=\"en\" data-theme=\"dark\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+  printf "<title>%s - %s / %s</title>\n<style>\n", esc(ttl), esc(ctxn), esc(ns)
+  while ((getline ln < cssf) > 0) print ln; close(cssf)
+  printf "</style>\n<script>window.KDTZ={\"off\":%d,\"name\":%s,\"label\":%s,\"now\":%d};</script>\n<script>\n", tzoff, JS(tzname), JS(tzlabel()), nowe
+  while ((getline ln < jsf) > 0) print ln; close(jsf)
+  print "</script>\n</head>\n<body>\n<div class=\"top\"><div class=\"bar1\">"
+  printf "<span class=\"brand\">KDASH<small>%s</small></span><span class=\"title\">%s</span>", esc(ver), esc(ttl)
+  printf "<span class=\"pill %s\">%s</span><span class=\"pill %s\" title=\"rows in Action required\">critical <b>%d</b> &nbsp; warning <b>%d</b></span><span class=\"spacer\"></span>", res, (notes == "" ? "COMPLETED" : "COMPLETED WITH LIMITATIONS"), res, nerr, nwarn
+  print "<input id=\"gq\" class=\"btn\" style=\"min-width:260px;font-weight:500\" placeholder=\"Search this tab (pod, node, IP, status...)\" oninput=\"kdFind(this.value)\"><button class=\"btn\" onclick=\"kdFind(&quot;&quot;)\">clear</button><select id=\"kdtz\" class=\"btn\" title=\"time zone of every time on this page\" onchange=\"kdTz(this.value)\"><option value=\"host\">host time " esc(tzlabel()) "</option><option value=\"browser\">browser time</option><option value=\"utc\">UTC</option></select><button class=\"btn\" onclick=\"kdTheme()\">theme</button><button class=\"btn\" title=\"every table and the history as JSON\" onclick=\"kdJSON()\">JSON</button><button class=\"btn\" onclick=\"window.print()\">print</button></div>"
+  print "<nav class=\"tabs\">"
+  split("pods|nodes|workloads|ip|mem|io", vk, "|"); split("PODS|NODE POOLS|WORKLOADS|IP POOL|MEMORY|NET &amp; DISK IO", vn, "|")
+  if (multi) {
+    print "<a class=\"tab on\" href=\"#overview\" data-tab=\"overview\" onclick=\"return kdTab(&quot;overview&quot;)\"><span class=\"k\">0</span>OVERVIEW</a>"
+    for (i = 1; i <= 6; i++) printf "<a class=\"tab\" href=\"#%s\" data-tab=\"%s\" onclick=\"return kdTab(&quot;%s&quot;)\"><span class=\"k\">%d</span>%s</a>", vk[i], vk[i], vk[i], i, vn[i]
+    print "<a class=\"tab\" href=\"#history\" data-tab=\"history\" onclick=\"return kdTab(&quot;history&quot;)\"><span class=\"k\">7</span>HISTORY</a>"
+  } else {
+    ns5 = split(sib, sb, ";"); for (i = 1; i <= ns5; i++) { j = index(sb[i], "="); if (j) SIB[substr(sb[i], 1, j - 1)] = substr(sb[i], j + 1) }
+    for (i = 1; i <= 6; i++) {
+      if (vk[i] == view) printf "<span class=\"tab on\"><span class=\"k\">%d</span>%s</span>", i, vn[i]
+      else if (vk[i] in SIB) printf "<a class=\"tab link\" href=\"%s\"><span class=\"k\">%d</span>%s</a>", esc(SIB[vk[i]]), i, vn[i]
+      else printf "<span class=\"tab off\" title=\"not part of this snapshot - use kdash --snapshot\"><span class=\"k\">%d</span>%s</span>", i, vn[i]
+    }
+  }
+  print "</nav><div class=\"ctx\">"
+  printf "<span class=\"pill\">ctx <b>%s</b></span><span class=\"pill\">ns <b>%s</b></span><span class=\"pill\">match <b>%s</b></span><span class=\"pill\">READ ONLY</span>", esc(ctxn), esc(ns), esc(filt)
+  printf "<span class=\"pill\">generated <b>%s</b> %s <span class=\"ago\" data-e=\"" nowe "\"></span></span><span class=\"pill\">operator <b>%s</b></span>", tsx(nowe), tzs(), esc(op)
+  if (multi && SS_N > 0) printf "<span class=\"pill\">session <b>%s</b> &rarr; <b>%s</b> %s (%s, %d samples)</span>", fmtts(S_START), fmtts(SS_T1), tzs(), tdur(SS_T1 - S_START), SS_N
+  if (!multi) printf "<span class=\"pill\" title=\"SHA256 of the text view %s\">sha256 <b>%s&hellip;</b></span>", esc(sha), esc(substr(sha, 1, 12))
+  print "</div></div>\n<main>"
+}
+function fmtdur(s,   h, m) { if (s < 0) s = 0; h = int(s / 3600); m = int((s % 3600) / 60); if (h) return h "h " m "m"; if (m) return m "m " (s % 60) "s"; return s "s" }
+
+# ================================================================ page
+BEGIN {
+  while ((getline ln < (md "/meta.tsv")) > 0) { split(ln, a, "\t"); M[a[1]] = a[2] } close(md "/meta.tsv")
+  metadefaults()
+  if (views == "") views = view
+  NV = split(views, VL, " "); multi = (NV > 1)
+  TBL["pods"] = tbl_pods; TBL["nodes"] = tbl_nodes; TBL["workloads"] = tbl_workloads; TBL["ip"] = tbl_ip; TBL["mem"] = tbl_mem; TBL["io"] = tbl_io
+  if (multi) { session_load(); build_ar(alltables) } else build_ar(tables)
+  res = (nerr > 0) ? "bad" : ((nwarn > 0 || notes != "") ? "warn" : "ok")
+  page_head(title, multi, res)
+  if (!multi) {
+    kpis(view, 1); notes_block(); action_panel("action")
+    run_view(view)
+    data_tables(tables, "g")
+    raw_block(rawf, "Original text view")
+    disc_block()
+    printf "<footer>kdash %s &middot; author %s &middot; read-only snapshot &middot; %s &middot; %s / %s &middot; generated %s %s by %s &middot; audited session %s &middot; sha256 %s</footer>\n</main>\n</body>\n</html>\n", esc(ver), esc(author), esc(view), esc(ctxn), esc(ns), tsx(nowe), tzs(), esc(auser), esc(asid), esc(sha)
+    exit
+  }
+  # ---------------- all tabs in one page
+  print "<div class=\"view\" data-view=\"overview\">"
+  overview()
+  print "</div>"
+  for (vi = 1; vi <= NV; vi++) {
+    v = VL[vi]
+    printf "<div class=\"view\" data-view=\"%s\" hidden>\n", v
+    view = v; kpis(v, 0); run_view(v); data_tables(TBL[v], "g" vi "_"); raw_block(rawdir "/" v ".txt", "Original text view")
+    print "</div>"
+  }
+  print "<div class=\"view\" data-view=\"history\" hidden>"
+  history()
+  print "</div>"
+  emit_data()
+  disc_block()
+  printf "<footer>kdash %s &middot; author %s &middot; read-only namespace report &middot; %s / %s &middot; generated %s %s by %s &middot; audited session %s</footer>\n</main>\n</body>\n</html>\n", esc(ver), esc(author), esc(ctxn), esc(ns), tsx(nowe), tzs(), esc(auser), esc(asid)
+}
+function NOTREADY(   r, n, nn2) { nn2 = L("nodes.tsv", "Q"); n = 0; for (r = 1; r <= nn2; r++) if (F("Q", r, "STATUS") ~ /NotReady/) n++; return n }
+
+# ================================================================ session / history
+function J(v) { return (v == "" || v == "-") ? "null" : v + 0 }
+function JS(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/</, "\\u003c", s); return "\"" s "\"" }
+function tsx(e) { return (e + 0 > 0) ? "<span class=\"ts\" data-e=\"" (e + 0) "\">" tymd(e) " " thms(e) "</span>" : "-" }
+function tzs() { return "<span class=\"tzn\">" esc(tzname) "</span>" }
+function session_load(   ln, a, n, c) {
+  SS_N = 0; NE = 0
+  if (sdir == "") return
+  n = 0
+  while ((getline ln < (sdir "/ns.tsv")) > 0) {
+    split(ln, a, "\t")
+    if (n++ == 0) { for (c = 1; c in a; c++) NSH[a[c]] = c; continue }
+    SS_N++; NSR[SS_N] = ln
+    if (SS_N == 1) SS_T0 = a[1]; SS_T1 = a[1]
+  }
+  close(sdir "/ns.tsv")
+  n = 0
+  while ((getline ln < (sdir "/events.tsv")) > 0) { if (n++ == 0) continue; EVR[++NE] = ln } close(sdir "/events.tsv")
+  for (c = 1; c <= NE; c++) { split(EVR[c], a, "\t"); if (a[2] == "bad") EVB++; else if (a[2] == "warn") EVW++; EVK[a[3]]++ }
+  if (NE > 0) { split(EVR[1], a, "\t"); if (SS_N == 0 || a[1] < SS_T0) S_START = a[1]; else S_START = SS_T0 } else S_START = SS_T0
+}
+function fmtts(e) { return tsx(e) }
+function evrow(i,   a, s) {
+  split(EVR[i], a, "\t"); s = (a[2] == "bad") ? "bad" : (a[2] == "warn" ? "warn" : (a[2] == "ok" ? "ok" : "info"))
+  printf "<tr data-s=\"%s\" data-sev=\"%s\"><td class=\"l\" data-v=\"%s\">%s <small class=\"agev\">%s</small></td><td class=\"l\"><span class=\"b %s\">%s</span></td><td class=\"l\"><span class=\"b neu\">%s</span></td><td class=\"l\"><b>%s</b></td><td class=\"l wrap\">%s</td></tr>\n",
+    esc(a[2] " " a[3] " " a[4] " " a[5]), s, a[1], tsx(a[1]), (nowe - a[1] >= 0 ? tdur(nowe - a[1]) " before report" : ""), s, toupper(a[2] == "ok" ? "ok" : a[2]), esc(a[3]), esc(a[4]), esc(a[5])
+}
+function events_table(id, lim,   i, n) {
+  printf "<div class=\"scroll\" style=\"max-height:%s\"><table class=\"cli\" id=\"%s\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Time</th><th class=\"l\" onclick=\"kdSort(this)\">Severity</th><th class=\"l\" onclick=\"kdSort(this)\">Event</th><th class=\"l\" onclick=\"kdSort(this)\">Object</th><th class=\"l\">Detail</th></tr></thead><tbody>\n", ((lim > 0 && lim <= 50) ? "420px" : "70vh"), id
+  n = 0; for (i = NE; i >= 1; i--) { evrow(i); if (lim && ++n >= lim) break }
+  if (!NE) print "<tr><td class=\"l na\" colspan=\"5\">No session events - events are recorded while kdash runs live.</td></tr>"
+  print "</tbody></table></div>"
+}
+# ---- executive summary: verdict, finding tiles, usage gauges - no prose
+function tile(cls, num, lb, chips) { SUMN++; return "<div class=\"tile " cls "\"><div class=\"tn\">" num "</div><div class=\"tl\">" lb "</div>" (chips != "" ? "<div class=\"tc\">" chips "</div>" : "") "</div>" }
+function shortn(t) { return (length(t) > 20) ? "&hellip;" esc(substr(t, length(t) - 17)) : esc(t) }
+function plain(t) { gsub(/<[^>]*>/, "", t); gsub(/"/, "\\&quot;", t); return t }
+function chip(t, sb, cls) { return "<span class=\"chip " cls "\" title=\"" esc(t) (sb != "" ? " " esc(sb) : "") "\">" shortn(t) (sb != "" ? " <i>" esc(sb) "</i>" : "") "</span>" }
+function more(k, lim) { return (k > lim) ? "<span class=\"chip more\">+" (k - lim) "</span>" : "" }
+function gauge(lb, p, txt) { return "<div class=\"gg\"><div class=\"gl\"><b>" lb "</b><span>" txt "</span></div>" bar(p, "gb") "<div class=\"gp " (p >= 90 ? "bad" : (p >= 75 ? "warn" : "")) "\">" pf(p) "</div></div>" }
+function summary(   n, r, st, nb, out, x, xs, ln, a, fe, fgr, nn, nm, k, wd, gs, sc, sp) {
+  out = ""; SUMN = 0
+  n = L("pods.tsv", "SP"); nb = 0; xs = ""
+  for (r = 1; r <= n; r++) { st = F("SP", r, "STATUS"); if (st !~ /^(Running|Succeeded|Completed)$/ || (st == "Running" && split(F("SP", r, "READY"), x, "/") && x[1] != x[2])) { nb++; if (nb <= 4) xs = xs chip(F("SP", r, "POD"), st (F("SP", r, "RESTARTS") + 0 > 0 ? " x" F("SP", r, "RESTARTS") : ""), "bad") } }
+  out = out (nb ? tile("bad", nb "<small>/" M["pods"] "</small>", "pods not ready", xs more(nb, 4)) : tile("ok", M["pods"] "<small>/" M["pods"] "</small>", "pods ready", ""))
+  nm = L("memory.tsv", "SM"); xs = ""; k = 0
+  for (r = 1; r <= nm; r++) if (F("SM", r, "RISK") ~ /OOM_RISK/) { k++; if (k <= 4) xs = xs chip(F("SM", r, "POD"), F("SM", r, "PCT_OF_LIM") "%", "bad") }
+  if (k) out = out tile("bad", k, "pods &ge;90% memory limit", xs more(k, 4))
+  if (M["pods_oomkilled"] + 0 > 0) out = out tile("bad", M["pods_oomkilled"], "OOMKilled", "")
+  if (fcf != "") { fe = ""; while ((getline ln < fcf) > 0) { split(ln, a, "\t"); if (a[1] == "#EVAL" || a[7] == "-") continue; if (fe == "" || a[7] + 0 < FEV) { FEV = a[7] + 0; fe = a[1]; fgr = hmem(a[6] + 0) "/h" } } close(fcf)
+    if (fe != "") out = out tile(FEV < 21600 ? "bad" : "warn", (FEV < 60 ? "now" : tdur(FEV)), "to memory limit", chip(fe, "+" fgr, "warn")) }
+  wd = M["workloads_degraded"] + 0; if (wd) out = out tile("bad", wd, "workloads degraded", "")
+  nn = L("nodes.tsv", "SN"); xs = ""; k = 0
+  for (r = 1; r <= nn; r++) if (F("SN", r, "NS_PODS") + 0 > 0 && F("SN", r, "STATUS") ~ /NotReady/) { k++; if (k <= 4) xs = xs chip(F("SN", r, "NODE"), "", "bad") }
+  if (k) out = out tile("bad", k, "nodes NotReady", xs more(k, 4))
+  if (M["ha_risk"] + 0 > 0) out = out tile("warn", M["ha_risk"], "replicas on one node", "")
+  if (M["pods_no_mem_limit"] + 0 > 0) out = out tile("warn", M["pods_no_mem_limit"], "no memory limit", "")
+  if (M["restarts"] + 0 > 0) out = out tile(M["restarts"] + 0 > 10 ? "warn" : "info", M["restarts"], "restarts", "")
+  if (NE > 0) { for (r = NE; r >= 1; r--) { split(EVR[r], a, "\t"); if (a[2] == "bad") break } if (r >= 1) out = out tile("warn", "<span data-ts=\"" a[1] "\">" tsx(a[1]) "</span>", "last critical event", chip(a[3], a[4], "bad")) }
+  gs = gauge("Memory", pct(nv(M["mem_used"]), nv(M["mem_lim"])), hmem(nv(M["mem_used"])) " / " hmem(nv(M["mem_lim"])))
+  gs = gs gauge("CPU", pct(nv(M["cpu_used"]), nv(M["cpu_lim"])), hcpu(nv(M["cpu_used"])) " / " hcpu(nv(M["cpu_lim"])))
+  if (M["cluster_state"] == "partial") { sc = nv(M["scope_mem_used"]); sp = "of readable namespaces" } else if (M["cluster_state"] == "ok") { sc = nv(M["cluster_mem_alloc"]); sp = "of cluster" } else sc = -1
+  if (sc > 0) gs = gs gauge("Share", pct(nv(M["mem_used"]), sc), "memory " sp)
+  VERD = (nerr > 0) ? "bad" : ((nwarn > 0) ? "warn" : "ok")
+  printf "<details open class=\"panel sum %s\" id=\"summary\"><summary><div class=\"ph\"><h2>%s</h2><p>%s &middot; %s &middot; %s</p><span class=\"vc\"><b class=\"bad\">%d</b> critical <b class=\"warn\">%d</b> warning</span></div></summary><div class=\"gauges\">%s</div><div class=\"tiles\">%s</div></details>\n", VERD,
+    (VERD == "bad" ? "Needs attention" : (VERD == "warn" ? "Healthy &middot; warnings" : "Healthy")), esc(ns), esc(ctxn), tsx(nowe), nerr, nwarn, gs, out
+}
+function pf(p) { return p < 0 ? "-" : sprintf("%.1f%%", p) }
+# ---- what data this report is built from, and what was missing
+function cov(src, st, det,   c) { if (st == "" || st == "-") st = "not recorded"; if (det == "" || det == "-") det = "&ndash;"; c = (st ~ /^(ok|OK|all|readable|selected|live)/) ? "ok" : ((st ~ /forbidden|unavailable|error|failed|off|none|not-sampled|unread/) ? "warn" : "info")
+  COVC = COVC "<span class=\"cv " c "\" title=\"" esc(st) ": " plain(det) "\"><i>" (c == "ok" ? "&#10003;" : (c == "warn" ? "!" : "&ndash;")) "</i>" src "</span>"
+  return "<tr><td class=\"l\"><b>" src "</b></td><td class=\"l\"><span class=\"b " c "\">" esc(st) "</span></td><td class=\"l wrap\">" det "</td></tr>" }
+function coverage(   t) {
+  COVC = ""
+  t = cov("Pods and containers", "ok", esc(M["pods"]) " pods, " esc(M["containers"]) " containers &middot; pod filter " esc(filt))
+  t = t cov("Pod metrics (kubectl top pod)", (M["top_rows"] + 0 > 0 ? "ok" : "unavailable"), (M["top_rows"] + 0 > 0 ? M["top_rows"] " container rows" : "usage columns show - (metrics-server or pods.metrics.k8s.io)"))
+  t = t cov("Nodes", (nodestate == "" ? "-" : nodestate), esc(M["cluster_nodes"] != "" && M["cluster_nodes"] != "-" ? M["cluster_nodes"] : M["nodes_total"]) " nodes in " esc(M["pools"]) " pools &middot; pool label " esc(M["pool_key"]))
+  t = t cov("Node metrics", (topnstate == "" ? "-" : topnstate), (M["cluster_metrics_total"] != "" && M["cluster_metrics_total"] != "-" ? M["cluster_metrics_nodes"] " of " M["cluster_metrics_total"] " nodes report usage" : "whole-node usage"))
+  t = t cov("Other namespaces", (M["cluster_state"] == "partial" ? M["cluster_scope"] : M["cluster_state"]), (M["cluster_state"] == "ok" ? "every namespace (" M["cluster_namespaces"] ")" : (M["cluster_state"] == "partial" ? "namespaces read: " esc(M["cluster_ns_read"]) (M["scope_no_access"] != "-" && M["scope_no_access"] != "" ? " &middot; no access: " esc(M["scope_no_access"]) : "") : "comparison with other namespaces not available")))
+  t = t cov("Usage of other namespaces", M["scope_usage"], (M["scope_usage"] == "ok" ? "pod metrics, " hmem(nv(M["scope_mem_used"])) " / " hcpu(nv(M["scope_cpu_used"])) : "-"))
+  t = t cov("Workload objects", M["workload_state"], esc(M["workloads"]) " workloads (" esc(M["workload_kinds"]) ")")
+  t = t cov("Services", "ok", esc(M["services"]) " services")
+  t = t cov("Network and disk IO", M["io_state"], (M["io_source"] != "-" ? esc(M["io_source"]) : esc(M["io_reason"])))
+  t = t cov("Session history", (SS_N > 0 ? "live" : "none"), (SS_N > 0 ? SS_N " samples every " every "s, " tsx(S_START) " to " tsx(SS_T1) " &middot; " NE " events" : "single snapshot - run kdash live for history"))
+  t = t cov("Clock", "ok", "host time " esc(tzlabel()) " &middot; generated " tsx(nowe) " by " esc(op))
+  printf "<section class=\"panel\" id=\"coverage\"><div class=\"ph\"><h2>Data coverage</h2><p>kdash %s &middot; hover a chip for detail</p></div><div class=\"covs\">%s</div><details class=\"covd\"><summary>table</summary><div class=\"scroll\"><table class=\"cli\" id=\"covtable\"><thead><tr><th class=\"l\">Source</th><th class=\"l\">State</th><th class=\"l\">Detail</th></tr></thead><tbody>%s</tbody></table></div></details></section>\n", esc(ver), COVC, t
+}
+function overview(   k, dur) {
+  dur = (SS_N > 0) ? SS_T1 - S_START : 0
+  summary()
+  print "<div class=\"kpis\">"
+  kpi((M["pods_healthy"] == M["pods"] ? "ok" : "warn"), "Pods healthy", M["pods_healthy"] " / " M["pods"], esc(M["containers"]) " containers &middot; " esc(M["restarts"]) " restarts", bar(pct(M["pods_healthy"], M["pods"]), "gd"), "")
+  kpi("info", "Memory used", hmem(nv(M["mem_used"])), "req " hmem(nv(M["mem_req"])) " &middot; lim " hmem(nv(M["mem_lim"])), bar(pct(nv(M["mem_used"]), nv(M["mem_lim"])), ""), "")
+  kpi("info", "CPU used", hcpu(nv(M["cpu_used"])), "req " hcpu(nv(M["cpu_req"])) " &middot; lim " hcpu(nv(M["cpu_lim"])), bar(pct(nv(M["cpu_used"]), nv(M["cpu_lim"])), ""), "")
+  kpi("info", "Worker nodes", M["nodes_hosting"], M["pools"] " pool(s) &middot; " (pct(nv(M["mem_used"]), nv(M["hosting_mem_alloc"])) < 0 ? "-" : sprintf("%.1f%%", pct(nv(M["mem_used"]), nv(M["hosting_mem_alloc"])))) " of their memory", "", "")
+  kpi((M["ha_risk"] > 0 ? "bad" : (M["skewed"] > 0 ? "warn" : "ok")), "HA risk / skewed", M["ha_risk"] " / " M["skewed"], M["workloads"] " workloads", "", "")
+  kpi((M["pods_mem_ge90_limit"] > 0 || M["pods_oomkilled"] > 0 ? "bad" : (M["pods_no_mem_limit"] > 0 ? "warn" : "ok")), "OOM risk / OOMKilled", M["pods_mem_ge90_limit"] " / " M["pods_oomkilled"], M["pods_no_mem_limit"] " pod(s) without memory limit", "", "")
+  kpi((M["duplicate_ip_pods"] > 0 ? "bad" : (M["no_ip"] > 0 ? "warn" : "ok")), "Pod IPs", M["pod_ips"], M["no_ip"] " without IP &middot; " M["duplicate_ip_pods"] " duplicate &middot; " M["services"] " services", "", "")
+  kpi((EVB > 0 ? "bad" : (EVW > 0 ? "warn" : "info")), "Session events", NE + 0, EVB + 0 " critical &middot; " EVW + 0 " warning", "", "")
+  kpi("info", "Session", (SS_N > 0 ? fmtdur(dur) : "single sample"), (SS_N > 0 ? SS_N " samples since " tsx(S_START) : "run kdash live for history"), "", "")
+  kpi((nar > 0 ? (nerr > 0 ? "bad" : "warn") : "ok"), "Action required", nar + 0, nerr + 0 " critical &middot; " nwarn + 0 " warning", "", "")
+  print "</div>"
+  notes_block()
+  action_panel("action")
+  rangebar()
+  print "<div class=\"grid2\"><section class=\"panel\"><div class=\"ph\"><h2>Namespace memory</h2><p>used / request / limit across the session</p></div><div class=\"chart\" data-chart=\"ns_mem\"></div></section>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Namespace vs cluster memory</h2><p>this namespace used / requested against everything requested and used in the cluster</p></div><div class=\"chart\" data-chart=\"ns_cl_mem\"></div></section></div>"
+  printf "<section class=\"panel\"><div class=\"ph\"><h2>Recent events</h2><p>latest 15 changes seen while kdash was running &middot; full timeline on the HISTORY tab</p><div class=\"tools\"><button class=\"btn\" onclick=\"kdTab(&quot;history&quot;)\">all %d events</button></div></div>\n", NE
+  events_table("recentevents", 15)
+  print "</section>"
+  coverage()
+}
+function rangebar() {
+  print "<div class=\"rbar\"><span class=\"lbl\">time window</span><button class=\"btn rng\" data-r=\"900\" onclick=\"kdRange(900)\">15m</button><button class=\"btn rng\" data-r=\"3600\" onclick=\"kdRange(3600)\">1h</button><button class=\"btn rng\" data-r=\"21600\" onclick=\"kdRange(21600)\">6h</button><button class=\"btn rng\" data-r=\"86400\" onclick=\"kdRange(86400)\">24h</button><button class=\"btn rng on\" data-r=\"0\" onclick=\"kdRange(0)\">all</button><label class=\"lbl\"><input type=\"checkbox\" checked onchange=\"kdMarks(this.checked)\"> event markers</label><span class=\"win\" data-win></span><span class=\"hint\">drag on a chart to zoom &middot; double-click to reset</span></div>"
+}
+function history() {
+  rangebar()
+  if (SS_N < 2) print "<div class=\"notes\"><div>History needs a live run: start kdash, leave it running, then press x (or after quitting run: kdash --session-report latest). This report holds " SS_N + 0 " sample(s).</div></div>"
+  print "<div class=\"grid2\"><section class=\"panel\"><div class=\"ph\"><h2>Namespace memory</h2><p>used / request / limit (MiB)</p></div><div class=\"chart\" data-chart=\"ns_mem\"></div></section>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Namespace CPU</h2><p>used / request / limit (millicores)</p></div><div class=\"chart\" data-chart=\"ns_cpu\"></div></section></div>"
+  print "<div class=\"grid2\"><section class=\"panel\"><div class=\"ph\"><h2>Namespace vs cluster - memory</h2><p>namespace used / requested &middot; cluster requested / used / allocatable (MiB)</p></div><div class=\"chart\" data-chart=\"ns_cl_mem\"></div></section>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Namespace vs cluster - CPU</h2><p>namespace used / requested &middot; cluster requested / used / allocatable (millicores)</p></div><div class=\"chart\" data-chart=\"ns_cl_cpu\"></div></section></div>"
+  print "<div class=\"grid2\"><section class=\"panel\"><div class=\"ph\"><h2>Network in / out</h2><p>bytes per second received and sent by the namespace (needs an IO source)</p></div><div class=\"chart\" data-chart=\"ns_net\"></div></section>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Disk read / write</h2><p>container filesystem bytes per second</p></div><div class=\"chart\" data-chart=\"ns_disk\"></div></section></div>"
+  print "<div class=\"grid2\"><section class=\"panel\"><div class=\"ph\"><h2>Memory per worker node</h2><p>this namespace on each node (MiB) &middot; click a legend item to hide it</p></div><div class=\"chart\" data-chart=\"node_mem\"></div></section>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Top pods by peak memory</h2><p>the 10 pods with the highest memory seen in the session (MiB)</p></div><div class=\"chart\" data-chart=\"top_pods\"></div></section></div>"
+  print "<div class=\"grid2\"><section class=\"panel\"><div class=\"ph\"><h2>Pods, health and restarts</h2><p>pod count, healthy pods and total container restarts</p></div><div class=\"chart\" data-chart=\"ns_pods\"></div></section>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Risk counters</h2><p>pods at &ge; 90% of memory limit, OOMKilled before, HA-risk workloads</p></div><div class=\"chart\" data-chart=\"ns_risk\"></div></section></div>"
+  print "<section class=\"panel\"><div class=\"ph\"><h2>Pod memory heatmap</h2><p>% of each pod memory limit over time (max per time slice) &middot; follows the time window and zoom above &middot; hover for values, click a row to chart the pod</p></div><div class=\"heat\" data-heat=\"1\"></div><div class=\"legend\"><span><i class=\"hm1\"></i>&lt; 50%</span><span><i class=\"hm2\"></i>&lt; 75%</span><span><i class=\"hm3\"></i>&lt; 90%</span><span><i class=\"hm4\"></i>&ge; 90% of limit</span><span>blank = no sample</span></div></section>"
+  print "<section class=\"panel\" id=\"podhistpanel\" data-primary><div class=\"ph\"><h2>Pod history</h2><p>every pod seen in the session &middot; click a row to chart it</p><div class=\"tools\"><span class=\"count\" data-count=\"podhist\"></span><button class=\"btn\" onclick=\"kdCSV(&quot;podhist&quot;,&quot;pod_history&quot;)\">CSV</button></div></div>"
+  print "<div class=\"chart sel\" data-chart=\"pod\"><div class=\"na\" style=\"padding:20px\">select a pod below</div></div>"
+  print "<div class=\"scroll\"><table class=\"cli\" id=\"podhist\"><thead><tr><th class=\"l\" onclick=\"kdSort(this)\">Pod</th><th class=\"l\" onclick=\"kdSort(this)\">Node (last)</th><th class=\"l\" onclick=\"kdSort(this)\">Workload</th><th onclick=\"kdSort(this)\">Samples</th><th onclick=\"kdSort(this)\">Mem min</th><th onclick=\"kdSort(this)\">Mem avg</th><th onclick=\"kdSort(this)\">Mem max</th><th onclick=\"kdSort(this)\">Mem last</th><th onclick=\"kdSort(this)\">Peak % lim</th><th onclick=\"kdSort(this)\">CPU avg</th><th onclick=\"kdSort(this)\">CPU max</th><th onclick=\"kdSort(this)\">Restarts +</th><th onclick=\"kdSort(this)\">Growth / h</th><th class=\"l\" onclick=\"kdSort(this)\">Reaches limit at</th><th class=\"l\" onclick=\"kdSort(this)\">Status (last)</th><th class=\"l\">Memory trend</th></tr></thead><tbody></tbody></table></div></section>"
+  printf "<section class=\"panel\"><div class=\"ph\"><h2>Event timeline</h2><p>%d event(s) &middot; newest first</p><div class=\"tools\"><button class=\"btn\" onclick=\"kdSev(&quot;&quot;)\">all</button><button class=\"btn\" onclick=\"kdSev(&quot;bad&quot;)\">critical</button><button class=\"btn\" onclick=\"kdSev(&quot;warn&quot;)\">warning</button><button class=\"btn\" onclick=\"kdSev(&quot;info&quot;)\">info</button>%s</div></div>\n", NE, csvbtn("eventtable", "events")
+  events_table("eventtable", 5000)
+  if (NE > 5000) printf "<div class=\"legend\"><span>newest 5000 of %d events shown &middot; the full list is in %s/events.tsv</span></div>\n", NE, esc(sdir)
+  print "</section>"
+}
+# downsample helper: average values in buckets of STEP rows
+function bucket(n, maxp) { STEP = (n > maxp) ? int((n + maxp - 1) / maxp) : 1; return STEP }
+function emit_data(   i, a, n, c, b, k, t, j, cols, out, ln, nn, np, nd, p, key, nk, sm, sc, v, mx, mn, cmax, csum, lim, r0, r1, first) {
+  if (S_START == "") S_START = nowe
+  printf "<script>window.KD={\"start\":%s,\"now\":%s,\"every\":%s,\"scope\":%s,", J(S_START), J(nowe), J(every), JS(M["cluster_scope"])
+  # events for the chart markers (critical / warning / recovered), newest 2000
+  printf "\"events\":["; k = 0; first = 1
+  for (i = NE; i >= 1 && k < 2000; i--) { split(EVR[i], a, "\t"); if (a[2] != "bad" && a[2] != "warn" && a[2] != "ok") continue; k++
+    printf "%s[%s,%s,%s,%s,%s]", (first ? "" : ","), J(a[1]), JS(a[2]), JS(a[3]), JS(a[4]), JS(a[5]); first = 0 }
+  printf "],\"fc\":{"; first = 1
+  if (fcf != "") { while ((getline ln < fcf) > 0) { split(ln, a, "\t"); if (a[1] == "#EVAL") continue
+      printf "%s%s:[%s,%s,%s]", (first ? "" : ","), JS(a[1]), J(a[6]), (a[7] == "-" ? "null" : a[7]), J(a[11]); first = 0 } close(fcf) }
+  printf "},"
+  # ---- namespace series
+  if (SS_N == 0) { SS_N = 1; NSR[1] = nowe "\t" M["pods"] "\t" M["pods_healthy"] "\t" M["restarts"] "\t" M["cpu_used"] "\t" M["cpu_req"] "\t" M["cpu_lim"] "\t" M["mem_used"] "\t" M["mem_req"] "\t" M["mem_lim"] "\t" M["pods_mem_ge90_limit"] "\t" M["pods_oomkilled"] "\t" M["pods_no_mem_limit"] "\t" M["ha_risk"] "\t" M["skewed"]; NSH["EPOCH"] = 1; NSH["PODS"] = 2; NSH["HEALTHY"] = 3; NSH["RESTARTS"] = 4; NSH["CPU_USED_m"] = 5; NSH["CPU_REQ_m"] = 6; NSH["CPU_LIM_m"] = 7; NSH["MEM_USED_Mi"] = 8; NSH["MEM_REQ_Mi"] = 9; NSH["MEM_LIM_Mi"] = 10; NSH["OOM_RISK"] = 11; NSH["OOMKILLED"] = 12; NSH["NO_LIMIT"] = 13; NSH["HA_RISK"] = 14; NSH["SKEWED"] = 15
+    NSR[1] = NSR[1] "\t" M["cluster_mem_req"] "\t" ((M["cluster_scope"] != "all" && M["scope_mem_used"] != "-") ? M["scope_mem_used"] : M["cluster_mem_used"]) "\t" M["cluster_mem_alloc"] "\t" M["cluster_cpu_req"] "\t" ((M["cluster_scope"] != "all" && M["scope_cpu_used"] != "-") ? M["scope_cpu_used"] : M["cluster_cpu_used"]) "\t" M["cluster_cpu_alloc"]
+    NSR[1] = NSR[1] "\t" M["ns_net_rx"] "\t" M["ns_net_tx"] "\t" M["ns_disk_r"] "\t" M["ns_disk_w"]; NSH["NET_RX_Bps"] = 22; NSH["NET_TX_Bps"] = 23; NSH["DISK_R_Bps"] = 24; NSH["DISK_W_Bps"] = 25
+    NSH["CL_MEM_REQ_Mi"] = 16; NSH["CL_MEM_USED_Mi"] = 17; NSH["CL_MEM_ALLOC_Mi"] = 18; NSH["CL_CPU_REQ_m"] = 19; NSH["CL_CPU_USED_m"] = 20; NSH["CL_CPU_ALLOC_m"] = 21 }
+  bucket(SS_N, 600)
+  nn = split("EPOCH PODS HEALTHY RESTARTS CPU_USED_m CPU_REQ_m CPU_LIM_m MEM_USED_Mi MEM_REQ_Mi MEM_LIM_Mi OOM_RISK OOMKILLED NO_LIMIT HA_RISK SKEWED CL_MEM_REQ_Mi CL_MEM_USED_Mi CL_MEM_ALLOC_Mi CL_CPU_REQ_m CL_CPU_USED_m CL_CPU_ALLOC_m NET_RX_Bps NET_TX_Bps DISK_R_Bps DISK_W_Bps", cols, " ")
+  printf "\"ns\":{"
+  for (k = 1; k <= nn; k++) {
+    printf "%s%s:[", (k > 1 ? "," : ""), JS(cols[k]); first = 1
+    for (i = 1; i <= SS_N; i += STEP) {
+      sm = 0; nk = 0
+      for (j = i; j < i + STEP && j <= SS_N; j++) { split(NSR[j], a, "\t"); v = ((cols[k] in NSH) ? a[NSH[cols[k]]] : ""); if (k == 1) { if (j == i) { sm = v; nk = 1 } } else if (v != "-" && v != "") { sm += v; nk++ } }
+      printf "%s%s", (first ? "" : ","), (nk ? (k == 1 ? sm : sprintf("%.1f", sm / nk)) : "null"); first = 0
+    }
+    printf "]"
+  }
+  printf "},"
+  # ---- per node series
+  printf "\"nodes\":["
+  if (sdir != "") {
+    n = 0
+    while ((getline ln < (sdir "/nodes.tsv")) > 0) { if (n++ == 0) continue; split(ln, a, "\t"); nd = a[2]; if (!(nd in NDI)) { NDI[nd] = ++NDN; NDNAME[NDN] = nd } k = NDI[nd]; ND_C[k]++; ND_T[k, ND_C[k]] = a[1]; ND_V[k, ND_C[k]] = a[7]; ND_W[k, ND_C[k]] = a[9]; ND_P[k] = a[3]; ND_A[k] = a[10] }
+    close(sdir "/nodes.tsv")
+  }
+  for (k = 1; k <= NDN; k++) {
+    bucket(ND_C[k], 300)
+    printf "%s{\"name\":%s,\"pool\":%s,\"alloc\":%s,\"t\":[", (k > 1 ? "," : ""), JS(NDNAME[k]), JS(ND_P[k]), J(ND_A[k])
+    out = ""; for (i = 1; i <= ND_C[k]; i += STEP) out = out (out == "" ? "" : ",") ND_T[k, i]; printf "%s],\"ns\":[", out
+    out = ""; for (i = 1; i <= ND_C[k]; i += STEP) { sm = 0; nk = 0; for (j = i; j < i + STEP && j <= ND_C[k]; j++) if (ND_V[k, j] != "-") { sm += ND_V[k, j]; nk++ } out = out (out == "" ? "" : ",") (nk ? sprintf("%.0f", sm / nk) : "null") } printf "%s],\"node\":[", out
+    out = ""; for (i = 1; i <= ND_C[k]; i += STEP) { sm = 0; nk = 0; for (j = i; j < i + STEP && j <= ND_C[k]; j++) if (ND_W[k, j] != "-") { sm += ND_W[k, j]; nk++ } out = out (out == "" ? "" : ",") (nk ? sprintf("%.0f", sm / nk) : "null") } printf "%s]}", out
+  }
+  printf "],"
+  # ---- per pod series + statistics over every sample
+  printf "\"pods\":["
+  # two streaming passes over pods.tsv, so memory stays flat on long sessions:
+  # pass 1 = per pod statistics and sample count, pass 2 = bucketed series (<= 120 points)
+  if (sdir != "") {
+    n = 0
+    while ((getline ln < (sdir "/pods.tsv")) > 0) {
+      if (n++ == 0) continue
+      split(ln, a, "\t"); p = a[2]; if (!(p in PDI)) { PDI[p] = ++PDN; PDNAME[PDN] = p; PMN[PDN] = -1; PMX[PDN] = -1; PCX[PDN] = -1 }
+      k = PDI[p]; PD_C[k]++; PD_N[k] = a[3]; PD_S[k] = a[4]; PD_W[k] = a[10]; PD_L[k] = a[9]; PD_LM[k] = a[8]
+      v = a[8]; if (v != "-" && v != "") { v += 0; if (PMN[k] < 0 || v < PMN[k]) PMN[k] = v; if (v > PMX[k]) PMX[k] = v; PSM[k] += v; PSN[k]++ }
+      v = a[7]; if (v != "-" && v != "") { v += 0; if (v > PCX[k]) PCX[k] = v; PCS[k] += v; PCN[k]++ }
+      if (a[6] ~ /^[0-9]+$/) { if ((k in PRL) && a[6] + 0 > PRL[k]) PRS[k] += a[6] - PRL[k]; PRL[k] = a[6] + 0 }
+    }
+    close(sdir "/pods.tsv")
+    for (k = 1; k <= PDN; k++) { bucket(PD_C[k], 120); PST[k] = STEP }
+    n = 0
+    while ((getline ln < (sdir "/pods.tsv")) > 0) {
+      if (n++ == 0) continue
+      split(ln, a, "\t"); k = PDI[a[2]]; j = ++PJ[k]
+      if ((j - 1) % PST[k] == 0) { b = ++PB[k]; PB_T[k, b] = a[1]; }
+      b = PB[k]
+      if (a[8] != "-" && a[8] != "") { PB_MS[k, b] += a[8]; PB_MN[k, b]++ }
+      if (a[7] != "-" && a[7] != "") { PB_US[k, b] += a[7]; PB_UN[k, b]++ }
+    }
+    close(sdir "/pods.tsv")
+  }
+  for (k = 1; k <= PDN; k++) {
+    printf "%s{\"name\":%s,\"node\":%s,\"wl\":%s,\"status\":%s,\"lim\":%s,\"n\":%d,\"mn\":%s,\"avg\":%s,\"mx\":%s,\"last\":%s,\"cavg\":%s,\"cmx\":%s,\"rs\":%d,\"t\":[", (k > 1 ? "," : ""), JS(PDNAME[k]), JS(PD_N[k]), JS(PD_W[k]), JS(PD_S[k]), J(PD_L[k]), PD_C[k],
+      (PMN[k] < 0 ? "null" : PMN[k]), (PSN[k] ? sprintf("%.0f", PSM[k] / PSN[k]) : "null"), (PMX[k] < 0 ? "null" : PMX[k]), J(PD_LM[k]), (PCN[k] ? sprintf("%.0f", PCS[k] / PCN[k]) : "null"), (PCX[k] < 0 ? "null" : PCX[k]), PRS[k] + 0
+    out = ""; for (b = 1; b <= PB[k]; b++) out = out (b > 1 ? "," : "") PB_T[k, b]; printf "%s],\"m\":[", out
+    out = ""; for (b = 1; b <= PB[k]; b++) out = out (b > 1 ? "," : "") (PB_MN[k, b] ? sprintf("%.0f", PB_MS[k, b] / PB_MN[k, b]) : "null"); printf "%s],\"c\":[", out
+    out = ""; for (b = 1; b <= PB[k]; b++) out = out (b > 1 ? "," : "") (PB_UN[k, b] ? sprintf("%.0f", PB_US[k, b] / PB_UN[k, b]) : "null"); printf "%s]}", out
+  }
+  print "]};</script>"
+}
+'
+
+SNAP_CSS='
+:root{
+  --bg:#070b16;--bg2:#0b1222;--panel:#0f172a;--panel2:#111c33;--line:#1e2a44;--line2:#273556;
+  --text:#e2e8f0;--muted:#8a9bb8;--dim:#5b6b88;--accent:#22d3ee;--pool:#e879f9;--amber:#fb923c;
+  --h1:#4ade80;--h2:#22d3ee;--h3:#fb923c;--h4:#f87171;--h0:#475569;--oth:#60a5fa;--req:#e879f9;--free:#1f2a44;
+  --ok-bg:rgba(74,222,128,.12);--warn-bg:rgba(251,146,60,.13);--bad-bg:rgba(248,113,113,.14);--info-bg:rgba(34,211,238,.10);
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 8px 24px rgba(0,0,0,.35);
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  --sans:Inter,"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif}
+:root[data-theme=light]{
+  --bg:#eef2f8;--bg2:#e6ecf5;--panel:#ffffff;--panel2:#f7f9fc;--line:#dbe3ee;--line2:#c9d4e3;
+  --text:#0f172a;--muted:#55657e;--dim:#8291a8;--accent:#0369a1;--pool:#a21caf;--amber:#c2410c;
+  --h1:#16a34a;--h2:#0891b2;--h3:#c2410c;--h4:#dc2626;--h0:#94a3b8;--oth:#2563eb;--req:#c026d3;--free:#e2e8f0;
+  --ok-bg:#dcfce7;--warn-bg:#ffedd5;--bad-bg:#fee2e2;--info-bg:#e0f2fe;--shadow:0 1px 2px rgba(15,23,42,.06),0 6px 18px rgba(15,23,42,.06)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:13.5px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+.top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.bar1{display:flex;align-items:center;gap:14px;padding:12px 24px 8px;flex-wrap:wrap}
+.brand{font:800 15px/1 var(--mono);letter-spacing:.14em;color:var(--accent)}
+.brand small{color:var(--dim);font-weight:600;letter-spacing:.04em;margin-left:6px}
+.title{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:4px 10px;font:600 11.5px/1.2 var(--mono);color:var(--muted)}
+.pill b{color:var(--text);font-weight:700}
+.pill.ok{color:var(--h1);border-color:color-mix(in srgb,var(--h1) 45%,var(--line2))}
+.pill.warn{color:var(--h3);border-color:color-mix(in srgb,var(--h3) 45%,var(--line2))}
+.pill.bad{color:var(--h4);border-color:color-mix(in srgb,var(--h4) 45%,var(--line2))}
+.btn{border:1px solid var(--line2);background:var(--panel);color:var(--text);border-radius:8px;padding:6px 10px;font:600 12px var(--sans);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.tabs{display:flex;gap:4px;padding:0 24px;overflow-x:auto}
+.tab{font:700 12px/1 var(--mono);letter-spacing:.06em;padding:9px 14px 10px;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;color:var(--dim);white-space:nowrap}
+.tab .k{display:inline-block;min-width:18px;text-align:center;margin-right:6px;padding:1px 4px;border-radius:4px;background:var(--panel2);color:var(--muted)}
+.tab.on{background:var(--panel);border-color:var(--line);color:var(--text)}
+.tab.on .k{background:var(--accent);color:#04111c}
+.tab.link{color:var(--muted)}.tab.link:hover{color:var(--text)}
+.tab.off{opacity:.45;cursor:not-allowed}
+.ctx{display:flex;gap:8px;flex-wrap:wrap;padding:0 24px 10px}
+main{max-width:1880px;margin:0 auto;padding:18px 24px 40px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px 12px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--h0)}
+.kpi.ok:before{background:var(--h1)}.kpi.warn:before{background:var(--h3)}.kpi.bad:before{background:var(--h4)}.kpi.info:before{background:var(--accent)}
+.kpi.click{cursor:pointer}.kpi.click:hover{border-color:var(--line2);transform:translateY(-1px)}
+.kpi .l{font:700 10.5px/1.2 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:800 26px/1.15 var(--mono);margin-top:6px;letter-spacing:-.02em}
+.kpi .s{font:12px/1.35 var(--sans);color:var(--muted);margin-top:4px}
+.kpi .bar{margin-top:8px;width:100%}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin:0 0 16px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+.ph h2{margin:0;font:800 13px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.ph h2:before{content:"\25B8  ";color:var(--accent)}
+.ph p{margin:0;color:var(--muted);font-size:12px}
+.ph .tools{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ph input{background:var(--bg);border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:6px 10px;min-width:220px;font:12.5px var(--sans)}
+.ph select{background:var(--bg);border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:6px 8px;font:12.5px var(--sans)}
+.count{font:700 11px var(--mono);color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:3px 9px}
+.scroll{overflow:auto;max-height:78vh}
+table.cli{border-collapse:separate;border-spacing:0;width:100%;font:12.5px/1.35 var(--mono)}
+table.cli th,table.cli td{padding:6px 10px;white-space:nowrap;border-bottom:1px solid var(--line)}
+table.cli thead th{position:sticky;top:0;z-index:2;background:var(--panel2);color:var(--muted);font:700 10.5px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;text-align:right;cursor:pointer;user-select:none}
+table.cli thead tr.grp th{top:0;text-align:center;font-size:10.5px;letter-spacing:.12em;border-bottom:1px solid var(--line2);cursor:default}
+table.cli thead tr.grp + tr th{top:27px}
+table.cli thead th.l{text-align:left}
+table.cli th.g-act{color:var(--h2)}table.cli th.g-asg{color:var(--amber)}table.cli th.g-utl{color:var(--pool)}
+table.cli td{text-align:right}
+table.cli td.l{text-align:left}
+table.cli .sep{border-left:1px solid var(--line2)}
+table.cli tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+tr.pod td{font-weight:700}
+tr.pod td.name{color:var(--h1)}tr.pod.bad td.name{color:var(--h4)}tr.pod.done td.name{color:var(--dim)}
+tr.det td{color:var(--dim);font-weight:400;font-size:11.5px;text-align:left;border-bottom:none;padding-top:0}
+tr.ctr td{font-weight:400;color:var(--text)}
+tr.ctr td.name{color:var(--muted)}
+tr.ctr td.name .tree{color:var(--dim)}
+tr.why td{text-align:left;color:var(--h3);font-size:11.5px;padding-top:0}
+tbody.pod{border-bottom:1px dotted var(--line2)}
+tbody.pod tr:last-child td{border-bottom:1px dashed var(--line2)}
+tr.pool td{background:color-mix(in srgb,var(--pool) 8%,transparent);color:var(--pool);font-weight:800;border-top:1px solid var(--line2)}
+tr.node td.name{padding-left:26px}
+tr.tot td{font-weight:800;background:var(--panel2);border-top:2px solid var(--line2);position:sticky;bottom:0}
+.hide-det tr.det,.hide-det tr.why{display:none}
+.hide-ctr tr.ctr{display:none}
+.r-hidden{display:none!important}
+.bar{display:inline-flex;width:84px;height:9px;background:var(--free);border-radius:3px;overflow:hidden;vertical-align:middle}
+.bar i{display:block;height:100%}
+.bar.w{width:220px}.bar.m{width:140px}
+.h0{background:var(--h0)}.h1{background:var(--h1)}.h2{background:var(--h2)}.h3{background:var(--h3)}.h4{background:var(--h4)}
+.t0{color:var(--dim)}.t1{color:var(--h1)}.t2{color:var(--h2)}.t3{color:var(--h3)}.t4{color:var(--h4);font-weight:800}
+.oth{background:var(--oth)}.req{background:var(--req)}.cl{background:var(--oth)}
+tr.zero td{color:var(--dim)}
+.wp{font:12px var(--mono);padding:2px 0 2px 16px;color:var(--muted)}.wp b{color:var(--text)}tr.zero td.name{font-weight:500}
+.cmp td.g{min-width:260px}.cmp .bar.g{width:100%;height:12px}.cmp td.k{color:var(--dim);font-size:11px}
+.cmp th.gn{color:var(--h1)}.cmp th.gc{color:var(--oth)}
+.na{color:var(--dim)}
+.up{color:var(--h3)}.dn{color:var(--h2)}.fl{color:var(--dim)}
+.b{display:inline-block;padding:2px 8px;border-radius:999px;font:800 10.5px/1.4 var(--mono);letter-spacing:.03em;margin:1px 3px 1px 0;white-space:nowrap}
+.b.ok{background:var(--ok-bg);color:var(--h1)}.b.warn{background:var(--warn-bg);color:var(--h3)}.b.bad{background:var(--bad-bg);color:var(--h4)}.b.info{background:var(--info-bg);color:var(--h2)}.b.neu{background:var(--panel2);color:var(--muted);border:1px solid var(--line2)}
+.chip{display:inline-block;font:11.5px/1.5 var(--mono);color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin:2px 4px 2px 0}
+.chip b{color:var(--text)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+.legend i{display:inline-block;width:12px;height:9px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:14px;padding:14px}
+.ncard{background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ncard .nh{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ncard .nh .nn{font:800 13px var(--mono)}
+.ncard .nh .nn:before{content:"\25B8 ";color:var(--accent)}
+.ncard .ns{padding:8px 14px;color:var(--muted);font:12px var(--mono);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.ncard table.cli td,.ncard table.cli th{padding:5px 10px}
+.pods{padding:0 0 4px 0}
+.hero{display:grid;grid-template-columns:minmax(320px,1.1fr) minmax(320px,1.4fr);gap:0}
+.hero > div{padding:16px 18px}
+.hero > div + div{border-left:1px solid var(--line)}
+.big{font:800 34px/1.1 var(--mono);letter-spacing:-.02em}
+.sub{color:var(--muted);font:12.5px var(--mono);margin-top:4px}
+.mrow{display:grid;grid-template-columns:120px 1fr 70px;gap:10px;align-items:center;margin-top:10px;font:12px var(--mono);color:var(--muted)}
+.mrow .bar{width:100%;height:11px}
+.spark{width:100%;height:96px;display:block}
+.spark .ln{fill:none;stroke:var(--accent);stroke-width:2}
+.spark .ar{fill:color-mix(in srgb,var(--accent) 16%,transparent);stroke:none}
+.spark .gd{stroke:var(--line);stroke-width:1}
+.spark text{fill:var(--dim);font:10px var(--mono)}
+svg.mini{width:150px;height:22px;vertical-align:middle}
+svg.mini .ln{fill:none;stroke:var(--accent);stroke-width:1.6}
+.risk{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line)}
+.list{padding:8px 16px 12px}
+.list div{padding:6px 0;border-bottom:1px dashed var(--line);font:12.5px var(--mono)}
+.list div:last-child{border-bottom:none}
+.empty{color:var(--h1);font:12.5px var(--mono);padding:10px 16px}
+.notes{border:1px solid color-mix(in srgb,var(--h3) 40%,var(--line));background:var(--warn-bg);border-radius:12px;padding:10px 14px;margin-bottom:16px;color:var(--text);font-size:12.5px}
+.notes div:before{content:"! ";color:var(--h3);font-weight:800}
+details.panel > summary{list-style:none;cursor:pointer}
+details.panel > summary::-webkit-details-marker{display:none}
+details.panel > summary .ph{border-bottom:none}
+details.panel[open] > summary .ph{border-bottom:1px solid var(--line)}
+pre.raw{margin:0;padding:16px;background:#020617;color:#cbd5e1;overflow:auto;max-height:70vh;font:12px/1.45 var(--mono)}
+footer{color:var(--dim);font:11.5px var(--mono);text-align:center;padding:8px 0 28px}
+.wrap{white-space:normal!important;word-break:break-word}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.hero > div + div{border-left:none;border-top:1px solid var(--line)}.nodes{grid-template-columns:1fr}.bar1,.tabs,.ctx,main{padding-left:12px;padding-right:12px}}
+@media print{.top{position:static}.tools,.btn{display:none!important}.scroll{max-height:none;overflow:visible}details.panel{display:block}body{background:#fff}}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid2 > .panel{margin:0 0 16px}
+.chart{position:relative;min-height:236px;padding:8px 12px 6px}
+.chart.sel{border-bottom:1px solid var(--line)}
+.chart svg{width:100%;display:block;overflow:visible}
+.chart .ax{stroke:var(--line);stroke-width:1}
+.chart .gl{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4}
+.chart text{fill:var(--dim);font:10.5px var(--mono)}
+.chart .s{fill:none;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.chart .cur{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.lg{display:flex;flex-wrap:wrap;gap:4px 14px;padding:0 14px 10px;font:11.5px var(--mono);color:var(--muted)}
+.lg span{cursor:pointer;white-space:nowrap}.lg span.off{opacity:.35;text-decoration:line-through}
+.lg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.tip{position:absolute;pointer-events:none;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 9px;font:11.5px/1.45 var(--mono);color:var(--text);box-shadow:var(--shadow);z-index:5;white-space:nowrap;display:none}
+.tip b{display:block;color:var(--muted);font-weight:700;margin-bottom:3px}
+.tip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.view[hidden]{display:none!important}
+tr.picked td{background:color-mix(in srgb,var(--accent) 12%,transparent)!important}
+#podhist tbody tr{cursor:pointer}
+@media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+@media print{.view[hidden]{display:block!important}.chart{break-inside:avoid}}
+.cw{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 14px;padding:2px 2px 6px;font:11.5px var(--mono);color:var(--muted)}
+.cw b{color:var(--text);font-weight:700}.cw a{color:var(--h2)}
+.chart .evm{stroke-width:1;stroke-dasharray:2 3;opacity:.75}.chart .evm.bad{stroke:var(--h4)}.chart .evm.warn{stroke:var(--h3)}
+.chart .evt.bad{fill:var(--h4)}.chart .evt.warn{fill:var(--h3)}
+.chart .zr{fill:var(--h2);opacity:.15}
+.chart svg{cursor:crosshair;user-select:none}
+.tip .tev{font-size:11px}.tip .tev.bad{color:var(--h4)}.tip .tev.warn{color:var(--h3)}
+.lg em{font-style:normal;color:var(--dim);margin-left:4px}
+.lg .evl{cursor:default;color:var(--dim)}.lg .evl i{width:9px;height:9px;margin:0 4px 0 6px}.lg .evl i.bad{background:var(--h4)}.lg .evl i.warn{background:var(--h3)}
+.rbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 12px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font:12px var(--mono);color:var(--muted)}
+.rbar .btn.on{border-color:var(--h2);color:var(--text);box-shadow:inset 0 0 0 1px var(--h2)}
+.rbar .lbl{font-weight:700}.rbar label.lbl{font-weight:500;display:inline-flex;gap:5px;align-items:center}
+.rbar .win{color:var(--text);font-weight:700;margin-left:6px}.rbar .hint{margin-left:auto;color:var(--dim)}
+.tzn{color:var(--muted);font-weight:600}
+@media print{.rbar .hint,.rbar .btn,#kdtz{display:none}}
+.zm{color:var(--h2)}
+.heat{position:relative;padding:8px 12px 4px}.heat svg{width:100%;display:block}
+.heat .hl{fill:var(--muted);font:10.5px var(--mono)}.heat .hv{font:600 10.5px var(--mono);fill:var(--muted)}
+.heat rect{cursor:pointer}.heat rect:hover{stroke:var(--text);stroke-width:1}
+.hm1{fill:var(--h1);fill-opacity:.45;background:var(--h1)}.hm2{fill:var(--oth);background:var(--oth)}.hm3{fill:var(--req);background:var(--req)}.hm4{fill:var(--h4);background:var(--h4)}
+.heat text.hm1,.heat text.hm2,.heat text.hm3,.heat text.hm4{fill-opacity:1}.heat text.hm1{fill:var(--h1)}.heat text.hm2{fill:var(--oth)}.heat text.hm3{fill:var(--req)}.heat text.hm4{fill:var(--h4)}
+.legend i.hm1,.legend i.hm2,.legend i.hm3,.legend i.hm4{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.ago,.agev{color:var(--dim);font-weight:500;margin-left:4px}
+.sum{border-left:4px solid var(--h1)}.sum.warn{border-left-color:var(--h3)}.sum.bad{border-left-color:var(--h4)}
+.sum h2{font-size:15px}.sum.bad h2{color:var(--h4)}.sum.warn h2{color:var(--h3)}.sum.ok h2{color:var(--h1)}
+.sumlist{margin:0;padding:6px 18px 14px 34px;display:grid;gap:5px;font-size:13.5px;line-height:1.45}
+.sumlist li::marker{color:var(--dim)}.sumlist li.bad::marker{color:var(--h4)}.sumlist li.warn::marker{color:var(--h3)}.sumlist li.ok::marker{color:var(--h1)}
+.sumlist li.bad b{color:var(--h4)}
+td.nx{min-width:260px;max-width:520px;white-space:normal}
+code.cp{display:inline-block;margin-top:3px;padding:2px 7px;border:1px solid var(--line2);border-radius:6px;background:var(--panel2);color:var(--text);font:11.5px var(--mono);cursor:copy;white-space:normal;word-break:break-all}
+code.cp:hover{border-color:var(--h2)}code.cp.copied{border-color:var(--h1);color:var(--h1)}code.cp.copied::after{content:"  copied"}
+@media print{code.cp{border:none;background:none}}
+#actiontable td:nth-child(5){min-width:280px}#actiontable td:nth-child(3){white-space:normal;word-break:break-all;min-width:180px;max-width:280px}
+.sum .ph{flex-wrap:wrap}.sum .vc{margin-left:auto;font:12px var(--mono);color:var(--muted)}.sum .vc b{font-size:15px;margin:0 3px 0 10px}.vc b.bad{color:var(--h4)}.vc b.warn{color:var(--h3)}
+.gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 22px;padding:4px 18px 10px}
+.gg{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:center}.gg .gl{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted)}.gg .gl b{color:var(--text);font-size:12.5px}
+.gg .bar{grid-column:1;width:100%;height:10px}.gg .gp{grid-row:1/span 2;grid-column:2;font:700 18px var(--mono);color:var(--h1)}.gg .gp.warn{color:var(--h3)}.gg .gp.bad{color:var(--h4)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:4px 18px 16px}
+.tile{border:1px solid var(--line);border-left:4px solid var(--h2);border-radius:10px;padding:9px 12px;background:var(--panel2);min-width:0}
+.tile.bad{border-left-color:var(--h4)}.tile.warn{border-left-color:var(--h3)}.tile.ok{border-left-color:var(--h1)}
+.tile .tn{font:700 24px var(--mono);line-height:1.1}.tile.bad .tn{color:var(--h4)}.tile.warn .tn{color:var(--h3)}.tile.ok .tn{color:var(--h1)}.tile .tn small{font-size:14px;color:var(--muted)}
+.tile .tl{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:2px}
+.tile .tc{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.chip{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:11px var(--mono);padding:1px 7px;border-radius:999px;border:1px solid var(--line2);color:var(--text)}
+.chip i{font-style:normal;color:var(--muted)}.chip.bad{border-color:color-mix(in srgb,var(--h4) 55%,transparent)}.chip.warn{border-color:color-mix(in srgb,var(--h3) 55%,transparent)}.chip.more{color:var(--muted)}
+.nxt{display:inline-block;font:11.5px var(--mono);padding:1px 7px;border-radius:6px;background:var(--panel2);border:1px dashed var(--line2);color:var(--muted);cursor:help}
+.covs{display:flex;flex-wrap:wrap;gap:6px;padding:4px 18px 12px}
+.cv{font-size:12px;padding:3px 10px 3px 4px;border-radius:999px;border:1px solid var(--line2);cursor:help;display:inline-flex;align-items:center;gap:6px}
+.cv i{font-style:normal;font-weight:700;width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;background:var(--line2)}
+.cv.ok i{background:color-mix(in srgb,var(--h1) 25%,transparent);color:var(--h1)}.cv.warn i{background:color-mix(in srgb,var(--h3) 25%,transparent);color:var(--h3)}.cv.warn{border-color:color-mix(in srgb,var(--h3) 50%,transparent)}
+.covd{padding:0 18px 12px}.covd>summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.tile .tc .chip{display:block;width:fit-content}
+.pspk{display:inline-block;vertical-align:middle;margin-left:8px;cursor:pointer}.psv{width:96px;height:18px;display:block}
+.psv polyline{fill:none;stroke-width:1.4;vector-effect:non-scaling-stroke}.psv .pm{stroke:var(--h2)}.psv .pc{stroke:var(--h1);opacity:.75}
+#podtable tbody.pod{cursor:pointer}#podtable tbody.picked>tr.pod>td{background:color-mix(in srgb,var(--h2) 12%,transparent)}
+.grid2.in{padding:0 12px 12px;gap:14px}.mono{font-family:var(--mono)}
+#podselname{text-transform:none;letter-spacing:0;color:var(--h2)}
+.disc{border-left:4px solid var(--h3)}.disctx{padding:4px 18px 16px;font-size:12.5px;line-height:1.55;color:var(--muted)}.disctx b{color:var(--text)}
+'
+
+SNAP_JS='
+(function(){
+  var root=document.documentElement;
+  try{var t=localStorage.getItem("kdash-theme");if(t)root.setAttribute("data-theme",t);}catch(e){}
+  window.kdTheme=function(){var n=root.getAttribute("data-theme")==="light"?"dark":"light";root.setAttribute("data-theme",n);try{localStorage.setItem("kdash-theme",n);}catch(e){}};
+  function activeRoot(){var v=document.querySelector(".view:not([hidden])");return v||document;}
+  function units(scope){return Array.prototype.slice.call((scope||activeRoot()).querySelectorAll("[data-s]"));}
+  function count(){document.querySelectorAll("[data-count]").forEach(function(c){var id=c.getAttribute("data-count"),box=document.getElementById(id);if(!box)return;var all=box.querySelectorAll("[data-s]"),n=0;all.forEach(function(u){if(!u.classList.contains("r-hidden"))n++;});c.textContent=n+" / "+all.length;});}
+  window.kdFind=function(q){q=(q||"").toLowerCase().trim();var parts=q.split(/\s+/).filter(Boolean);units().forEach(function(u){var s=u.getAttribute("data-s").toLowerCase();var ok=parts.every(function(p){return s.indexOf(p)>-1;});u.classList.toggle("r-hidden",!ok);});var g=document.getElementById("gq");if(g&&g.value!==q)g.value=q;count();};
+  window.kdPick=function(tok){var t=activeRoot().querySelector("[data-primary]");units().forEach(function(u){u.classList.remove("r-hidden");});if(t){var q=tok.toLowerCase();units(t).forEach(function(u){u.classList.toggle("r-hidden",u.getAttribute("data-s").toLowerCase().indexOf(q)<0);});t.scrollIntoView({behavior:"smooth",block:"start"});}var g=document.getElementById("gq");if(g)g.value="";count();};
+  window.kdToggle=function(id,cls,btn){var e=document.getElementById(id);if(!e)return;e.classList.toggle(cls);if(btn)btn.classList.toggle("on");};
+  window.kdSortPods=function(key){var t=document.getElementById("podtable");if(!t)return;var b=Array.prototype.slice.call(t.querySelectorAll("tbody.pod"));b.sort(function(x,y){if(key==="name")return x.getAttribute("data-name").localeCompare(y.getAttribute("data-name"));return parseFloat(y.getAttribute("data-"+key))-parseFloat(x.getAttribute("data-"+key));});var tf=t.querySelector("tfoot");b.forEach(function(x){t.insertBefore(x,tf);});};
+  window.kdSort=function(th){var tb=th.closest("table"),body=tb.tBodies[0];if(!body)return;var idx=Array.prototype.indexOf.call(th.parentNode.children,th);var dir=th.getAttribute("data-dir")==="a"?"d":"a";th.parentNode.querySelectorAll("th").forEach(function(h){h.removeAttribute("data-dir");});th.setAttribute("data-dir",dir);var rows=Array.prototype.slice.call(body.rows);function key(r){var c=r.cells[idx];if(!c)return "";var v=c.getAttribute("data-v");if(v!==null&&v!=="")return parseFloat(v);var t=c.textContent.trim();var n=parseFloat(t.replace(/[^0-9.\-]/g,""));return (/^-?[0-9]/.test(t)&&!isNaN(n))?n:t.toLowerCase();}rows.sort(function(a,b){var x=key(a),y=key(b);var c=(typeof x==="number"&&typeof y==="number")?x-y:String(x).localeCompare(String(y));return dir==="a"?c:-c;});rows.forEach(function(r){body.appendChild(r);});};
+  window.kdCSV=function(id,name){var t=document.getElementById(id);if(!t)return;var q=function(s){return "\""+s.replace(/"/g,"\"\"")+"\"";};var lines=[];Array.prototype.forEach.call(t.querySelectorAll("tr"),function(r){if(r.classList.contains("r-hidden")||r.closest(".r-hidden")||r.classList.contains("grp")||r.classList.contains("det")||r.classList.contains("why"))return;lines.push(Array.prototype.map.call(r.cells,function(c){return q(c.textContent.replace(/\s+/g," ").trim());}).join(","));});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")+"\n"],{type:"text/csv"}));a.download=(name||id)+".csv";document.body.appendChild(a);a.click();a.remove();};
+  document.addEventListener("DOMContentLoaded",count);
+})();
+(function(){
+  window.kdCopy=function(el){var t=el.textContent;function ok(){el.classList.add("copied");setTimeout(function(){el.classList.remove("copied");},1200);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fb();});}else fb();
+    function fb(){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");ok();}catch(e){}a.remove();}};
+  // every table on the page (all tabs) + the session data, for scripts and tickets
+  window.kdJSON=function(){var out={generator:"kdash",title:document.title,generated:(window.KDTZ&&KDTZ.now)||null,timezone:window.KDTZ||null,tables:{},history:window.KD||null};
+    document.querySelectorAll("table[id]").forEach(function(t){var hr=t.querySelector("thead tr:last-child");if(!hr)return;var cols=Array.prototype.map.call(hr.cells,function(c){return c.textContent.replace(/\s+/g," ").trim();});var rows=[];
+      Array.prototype.forEach.call(t.tBodies,function(b){Array.prototype.forEach.call(b.rows,function(r){if(r.classList.contains("det")||r.classList.contains("why")||r.cells.length<2)return;var o={};Array.prototype.forEach.call(r.cells,function(c,i){var k=cols[i]||("col"+i);var v=c.getAttribute("data-v");var tx=c.textContent.replace(/\s+/g," ").trim();o[k]=(v!==null&&v!==""&&!isNaN(+v)&&/^[-+]?[0-9.]/.test(tx))?+v:tx;});rows.push(o);});});
+      out.tables[t.id]={columns:cols,rows:rows};});
+    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,1)],{type:"application/json"}));a.download=(document.title.replace(/[^A-Za-z0-9._-]+/g,"_")||"kdash")+".json";document.body.appendChild(a);a.click();a.remove();};
+})();
+(function(){
+  var PAL=["#22d3ee","#e879f9","#818cf8","#4ade80","#f87171","#60a5fa","#fb923c","#a78bfa","#2dd4bf","#f472b6","#a3e635","#2dd4bf","#38bdf8","#c084fc","#34d399"];
+  function esc(x){return String(x===null||x===undefined?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function pad(n){return (n<10?"0":"")+n;}
+  // ---- time: every time is shown in the zone of the host that ran kdash (KDTZ),
+  // switchable to browser time or UTC; the choice is remembered per browser
+  var Z="host";try{Z=localStorage.getItem("kdash-tz")||"host";}catch(e){}
+  function TZ(){return window.KDTZ||{off:0,name:"UTC",label:"UTC"};}
+  function P(e){if(Z==="browser"){var d=new Date(e*1000);return [d.getFullYear(),d.getMonth()+1,d.getDate(),d.getHours(),d.getMinutes(),d.getSeconds()];}var u=new Date((e+(Z==="utc"?0:TZ().off))*1000);return [u.getUTCFullYear(),u.getUTCMonth()+1,u.getUTCDate(),u.getUTCHours(),u.getUTCMinutes(),u.getUTCSeconds()];}
+  function zn(){if(Z==="utc")return "UTC";if(Z==="browser"){var o=-new Date().getTimezoneOffset(),z="browser";try{z=Intl.DateTimeFormat().resolvedOptions().timeZone||z;}catch(e){}return z+" (UTC"+(o<0?"-":"+")+pad(Math.floor(Math.abs(o)/60))+":"+pad(Math.abs(o)%60)+")";}return TZ().name;}
+  function fT(e,full,sec){var p=P(e);var hm=pad(p[3])+":"+pad(p[4])+(sec||full?":"+pad(p[5]):"");return full?p[0]+"-"+pad(p[1])+"-"+pad(p[2])+" "+hm:hm;}
+  function fD(e){var p=P(e);return pad(p[1])+"-"+pad(p[2]);}
+  function fDur(s){s=Math.max(0,Math.round(s));if(s<60)return s+"s";if(s<3600)return Math.floor(s/60)+"m"+(s%60?pad(s%60)+"s":"");if(s<86400)return Math.floor(s/3600)+"h"+(s%3600?pad(Math.floor(s%3600/60))+"m":"");return Math.floor(s/86400)+"d"+pad(Math.floor(s%86400/3600))+"h";}
+  window.kdFmtTimes=function(){document.querySelectorAll(".ts[data-e]").forEach(function(s){var e=parseInt(s.getAttribute("data-e"),10);if(!isNaN(e))s.textContent=fT(e,true);});document.querySelectorAll(".tzn").forEach(function(s){s.textContent=zn();});var sel=document.getElementById("kdtz");if(sel)sel.value=Z;kdAgo();};
+  // "x ago" against the viewer clock, refreshed every 30 s
+  window.kdAgo=function(){var n=Date.now()/1000;document.querySelectorAll(".ago[data-e]").forEach(function(s){var e=+s.getAttribute("data-e");if(!e)return;var d=n-e;s.textContent=d<0?"":"("+(d<90?Math.round(d)+"s":fDur(d))+" ago)";});};
+  setInterval(function(){if(window.kdAgo)kdAgo();},30000);
+  window.kdTz=function(v){Z=(v==="browser"||v==="utc")?v:"host";try{localStorage.setItem("kdash-tz",Z);}catch(e){}kdFmtTimes();renderAll();};
+  function fV(v,u){if(v===null||v===undefined||isNaN(v))return "-";if(u==="Mi")return v>=1024?(v%1024?(v/1024).toFixed(1):(v/1024))+"Gi":Math.round(v)+"Mi";if(u==="B")return v>=1048576?(v/1048576).toFixed(1)+" MiB/s":(v>=1024?(v/1024).toFixed(1)+" KiB/s":Math.round(v)+" B/s");if(u==="m")return v>=1000?(v%1000?(v/1000).toFixed(2):(v/1000))+"c":Math.round(v)+"m";return Math.round(v*10)/10+"";}
+  function el(n,a){var e=document.createElementNS("http://www.w3.org/2000/svg",n);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  // ---- shared time window: range buttons (last 15m / 1h / 6h / 24h / all) and
+  // drag-to-zoom on any chart; every chart on the page follows the same window
+  var VR={r:0,a:null,b:null,marks:true};
+  function win(t){var t0=t[0],t1=t[t.length-1];if(VR.r>0)t0=Math.max(t0,t1-VR.r);if(VR.a!==null){t0=Math.max(t[0],VR.a);t1=Math.min(t[t.length-1],VR.b);if(t1<=t0){t0=VR.a;t1=VR.b;}}return [t0,t1];}
+  function winLabel(){var s=VR.a!==null?"zoomed "+fT(VR.a,true)+" \u2192 "+fT(VR.b,true)+" "+zn()+" ("+fDur(VR.b-VR.a)+")":(VR.r>0?"last "+fDur(VR.r):"all samples");document.querySelectorAll("[data-win]").forEach(function(w){w.textContent=s;});document.querySelectorAll(".rng").forEach(function(b){b.classList.toggle("on",VR.a===null&&+b.getAttribute("data-r")===VR.r);});}
+  window.kdRange=function(r){VR.r=r;VR.a=null;VR.b=null;renderAll();};
+  window.kdMarks=function(on){VR.marks=!!on;renderAll();};
+  function evIn(t0,t1){var K=window.KD;if(!K||!K.events||!VR.marks)return [];return K.events.filter(function(e){return e[0]>=t0&&e[0]<=t1&&(e[1]==="bad"||e[1]==="warn");});}
+  function stats(t,d){var n=0,sm=0,mn=null,mx=null,tm=null,last=null;for(var i=0;i<d.length;i++){var v=d[i];if(v===null||v===undefined)continue;n++;sm+=v;last=v;if(mn===null||v<mn)mn=v;if(mx===null||v>=mx){mx=v;tm=t[i];}}return {n:n,avg:n?sm/n:null,mn:mn,mx:mx,tm:tm,last:last};}
+  // line chart: cfg {t:[], series:[{name,data,color,dash}], unit}
+  window.kdChart=function(box,cfg){
+    box.innerHTML="";var W=Math.max(200,(box.clientWidth||624)-24),H=parseInt(box.getAttribute("data-h")||"230",10);
+    var tA=cfg.t||[];
+    if(!tA.length||!cfg.series.length){box.innerHTML="<div class=\"na\" style=\"padding:20px\">no samples"+(cfg.unit==="B"?" - IO needs an IO source (see the NET &amp; DISK IO tab)":"")+"</div>";return;}
+    var w=win(tA),t0=w[0],t1=w[1];if(t1<=t0)t1=t0+1;
+    var ix=[];for(var q=0;q<tA.length;q++)if(tA[q]>=t0&&tA[q]<=t1)ix.push(q);
+    var t=ix.map(function(i){return tA[i];});
+    var all=cfg.series.map(function(s){return {name:s.name,color:s.color,dash:s.dash,off:s.off,src:s,data:ix.map(function(i){var v=s.data[i];return v===undefined?null:v;})};});
+    var ss=all.filter(function(s){return !s.off;});
+    var hd=document.createElement("div");hd.className="cw";
+    hd.innerHTML="<span><b>"+fT(t0,true)+"</b> \u2192 <b>"+fT(t1,true)+"</b> "+esc(zn())+"</span><span>"+fDur(t1-t0)+" &middot; "+t.length+" sample"+(t.length===1?"":"s")+(VR.a!==null?" &middot; <a href=\"#\" class=\"rz\">reset zoom</a>":"")+"</span>";
+    box.appendChild(hd);var rz=hd.querySelector(".rz");if(rz)rz.onclick=function(ev){ev.preventDefault();VR.a=null;VR.b=null;renderAll();};
+    if(!t.length){var na=document.createElement("div");na.className="na";na.style.padding="20px";na.textContent="no samples in this time window";box.appendChild(na);return;}
+    var L=58,R=12,T=10,B=24,iw=Math.max(10,W-L-R),ih=Math.max(10,H-T-B);
+    var mx=0,mn=0;ss.forEach(function(s){s.data.forEach(function(v){if(v!==null&&v>mx)mx=v;});});if(mx<=0)mx=1;
+    var raw=mx*1.05/4,mag=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)),f=raw/mag,st=(f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*mag;if(cfg.unit==="Mi"&&raw>=48&&raw<1024){st=[64,128,256,512,1024].filter(function(x){return x>=raw;})[0];}else if(cfg.unit==="Mi"&&raw>=1024){var g=raw/1024,gm=Math.pow(10,Math.floor(Math.log(g)/Math.LN10)),gf=g/gm;st=(gf<=1?1:gf<=2?2:gf<=2.5?2.5:gf<=5?5:10)*gm*1024;}if(cfg.unit===""&&st<1)st=1;mx=st*4;
+    var span=t1-t0,sec=span<900,days=span>=80000||fD(t0)!==fD(t1);
+    var X=function(e){return L+(e-t0)/(t1-t0)*iw;},Y=function(v){return T+ih-(v-mn)/(mx-mn)*ih;};
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,preserveAspectRatio:"none",height:H});
+    for(var gi=0;gi<=4;gi++){var v=mn+(mx-mn)*gi/4,y=Y(v);svg.appendChild(el("line",{x1:L,x2:L+iw,y1:y,y2:y,"class":gi?"gl":"ax"}));var tx=el("text",{x:L-6,y:y+3,"text-anchor":"end"});tx.textContent=fV(v,cfg.unit);svg.appendChild(tx);}
+    var nx=Math.max(2,Math.min(8,Math.floor(iw/(days?120:90))));for(var i=0;i<=nx;i++){var e=t0+(t1-t0)*i/nx,x=X(e);svg.appendChild(el("line",{x1:x,x2:x,y1:T+ih,y2:T+ih+4,"class":"ax"}));var tt=el("text",{x:x,y:H-6,"text-anchor":i===0?"start":(i===nx?"end":"middle")});tt.textContent=(days&&(i===0||i===nx||nx<5)?fD(e)+" ":"")+fT(e,false,sec||i===0||i===nx);svg.appendChild(tt);}
+    var EV=evIn(t0,t1);EV.forEach(function(e){var x=X(e[0]);svg.appendChild(el("line",{x1:x,x2:x,y1:T,y2:T+ih,"class":"evm "+e[1]}));svg.appendChild(el("path",{d:"M"+(x-4).toFixed(1)+","+(T-1)+"L"+(x+4).toFixed(1)+","+(T-1)+"L"+x.toFixed(1)+","+(T+6),"class":"evt "+e[1]}));});
+    ss.forEach(function(s){var d="",pen=false;for(var i=0;i<t.length;i++){var v=s.data[i];if(v===null||v===undefined){pen=false;continue;}d+=(pen?"L":"M")+X(t[i]).toFixed(1)+","+Y(v).toFixed(1);pen=true;}
+      if(t.length===1&&s.data[0]!==null)d="M"+L+","+Y(s.data[0]).toFixed(1)+"L"+(L+iw)+","+Y(s.data[0]).toFixed(1);
+      var p=el("path",{d:d,"class":"s",stroke:s.color});if(s.dash)p.setAttribute("stroke-dasharray",s.dash);svg.appendChild(p);});
+    var cur=el("line",{y1:T,y2:T+ih,"class":"cur",style:"display:none"});svg.appendChild(cur);
+    var zr=el("rect",{y:T,height:ih,"class":"zr",style:"display:none"});svg.appendChild(zr);box.appendChild(svg);
+    var tip=document.createElement("div");tip.className="tip";box.appendChild(tip);
+    function px(ev){var r=svg.getBoundingClientRect();return (ev.clientX-r.left)*W/r.width;}
+    function at(p){return t0+(Math.min(Math.max(p,L),L+iw)-L)/iw*(t1-t0);}
+    var drag=null;
+    svg.addEventListener("mousedown",function(ev){if(ev.button!==0)return;var p=px(ev);if(p<L||p>L+iw)return;drag={x:p};ev.preventDefault();});
+    svg.addEventListener("mousemove",function(ev){var r=svg.getBoundingClientRect();var mxp=px(ev);
+      if(drag){var a=Math.max(L,Math.min(drag.x,mxp)),b=Math.min(L+iw,Math.max(drag.x,mxp));zr.setAttribute("x",a);zr.setAttribute("width",Math.max(1,b-a));zr.style.display="";}
+      if(mxp<L||mxp>L+iw){tip.style.display="none";cur.style.display="none";return;}
+      var e=at(mxp),bi=0,bd=1e18;for(var i=0;i<t.length;i++){var dd=Math.abs(t[i]-e);if(dd<bd){bd=dd;bi=i;}}
+      var x=X(t[bi]);cur.setAttribute("x1",x);cur.setAttribute("x2",x);cur.style.display="";
+      var h="<b>"+fT(t[bi],true)+" "+esc(zn())+"</b>";ss.forEach(function(s){h+="<div><i style=\"background:"+s.color+"\"></i>"+esc(s.name)+" &nbsp; "+fV(s.data[bi],cfg.unit)+"</div>";});
+      var tol=Math.max((t1-t0)/iw*6,((window.KD&&KD.every)||15)),near=EV.filter(function(v){return Math.abs(v[0]-e)<=tol;}).slice(0,4);
+      near.forEach(function(v){h+="<div class=\"tev "+v[1]+"\">"+(v[1]==="bad"?"!":"^")+" "+fT(v[0],false,true)+" "+esc(v[2])+" "+esc(v[3])+"</div>";});
+      tip.innerHTML=h;tip.style.display="block";
+      var pxl=(x*r.width/W)+14;if(pxl+tip.offsetWidth>box.clientWidth)pxl=pxl-tip.offsetWidth-28;tip.style.left=pxl+"px";tip.style.top="34px";});
+    svg.addEventListener("mouseup",function(ev){if(!drag)return;var p=px(ev),a=Math.min(drag.x,p),b=Math.max(drag.x,p);drag=null;zr.style.display="none";if(b-a<8)return;var ea=at(a),eb=at(b);if(eb-ea<2)return;VR.a=Math.floor(ea);VR.b=Math.ceil(eb);renderAll();});
+    svg.addEventListener("mouseleave",function(){tip.style.display="none";cur.style.display="none";if(drag){drag=null;zr.style.display="none";}});
+    svg.addEventListener("dblclick",function(){VR.a=null;VR.b=null;VR.r=0;renderAll();});
+    var lg=document.createElement("div");lg.className="lg";all.forEach(function(s){var sp=document.createElement("span");if(s.off)sp.className="off";var S=stats(t,s.data);
+      sp.innerHTML="<i style=\"background:"+s.color+"\"></i>"+esc(s.name)+(S.n?(S.mn===S.mx?" <em>"+fV(S.last,cfg.unit)+"</em>":" <em>now "+fV(S.last,cfg.unit)+" &middot; min "+fV(S.mn,cfg.unit)+" &middot; avg "+fV(S.avg,cfg.unit)+" &middot; max "+fV(S.mx,cfg.unit)+" @ "+fT(S.tm,false,true)+"</em>"):"");
+      sp.onclick=function(){s.src.off=!s.src.off;kdChart(box,cfg);};lg.appendChild(sp);});
+    if(EV.length){var es=document.createElement("span");es.className="evl";es.innerHTML="<i class=\"bad\"></i>"+EV.filter(function(e){return e[1]==="bad";}).length+" critical <i class=\"warn\"></i>"+EV.filter(function(e){return e[1]==="warn";}).length+" warning events";lg.appendChild(es);}
+    box.appendChild(lg);
+  };
+  function ser(name,data,i,dash){return {name:name,data:data,color:PAL[i%PAL.length],dash:dash};}
+  var CH={};
+  function build(){
+    var K=window.KD;if(!K)return;var N=K.ns;
+    CH.ns_mem={t:N.EPOCH,unit:"Mi",series:[ser("used",N.MEM_USED_Mi,0),ser("request",N.MEM_REQ_Mi,2,"5 4"),ser("limit",N.MEM_LIM_Mi,4,"2 4")]};
+    CH.ns_cpu={t:N.EPOCH,unit:"m",series:[ser("used",N.CPU_USED_m,0),ser("request",N.CPU_REQ_m,2,"5 4"),ser("limit",N.CPU_LIM_m,4,"2 4")]};
+    var SL=(K.scope==="readable")?"your namespaces":((K.scope==="selected")?"selected namespaces":"cluster");
+    CH.ns_cl_mem={t:N.EPOCH,unit:"Mi",series:[ser("namespace used",N.MEM_USED_Mi||[],3),ser("namespace requested",N.MEM_REQ_Mi||[],3,"5 4"),ser(SL+" requested",N.CL_MEM_REQ_Mi||[],5,"5 4"),ser(SL+" used",N.CL_MEM_USED_Mi||[],5),ser("cluster allocatable",N.CL_MEM_ALLOC_Mi||[],4,"2 4")].filter(function(x){return x.data.some(function(v){return v!==null;});})};
+    CH.ns_cl_cpu={t:N.EPOCH,unit:"m",series:[ser("namespace used",N.CPU_USED_m||[],3),ser("namespace requested",N.CPU_REQ_m||[],3,"5 4"),ser(SL+" requested",N.CL_CPU_REQ_m||[],5,"5 4"),ser(SL+" used",N.CL_CPU_USED_m||[],5),ser("cluster allocatable",N.CL_CPU_ALLOC_m||[],4,"2 4")].filter(function(x){return x.data.some(function(v){return v!==null;});})};
+    CH.ns_net={t:N.EPOCH,unit:"B",series:[ser("in (received)",N.NET_RX_Bps||[],0),ser("out (sent)",N.NET_TX_Bps||[],1)].filter(function(x){return x.data.some(function(v){return v!==null;});})};
+    CH.ns_disk={t:N.EPOCH,unit:"B",series:[ser("read",N.DISK_R_Bps||[],5),ser("write",N.DISK_W_Bps||[],6)].filter(function(x){return x.data.some(function(v){return v!==null;});})};
+    CH.ns_pods={t:N.EPOCH,unit:"",series:[ser("pods",N.PODS,0),ser("healthy",N.HEALTHY,3),ser("restarts",N.RESTARTS,2)]};
+    CH.ns_risk={t:N.EPOCH,unit:"",series:[ser(">=90% mem limit",N.OOM_RISK,4),ser("OOMKilled before",N.OOMKILLED,1),ser("HA risk workloads",N.HA_RISK,2),ser("no mem limit",N.NO_LIMIT,5,"4 3")]};
+    // per node: align on the union of node sample times
+    var tu={};K.nodes.forEach(function(n){n.t.forEach(function(e){tu[e]=1;});});var tn=Object.keys(tu).map(Number).sort(function(a,b){return a-b;});
+    CH.node_mem={t:tn,unit:"Mi",series:K.nodes.map(function(n,i){var m={};n.t.forEach(function(e,j){m[e]=n.ns[j];});return ser(n.name,tn.map(function(e){return e in m?m[e]:null;}),i);})};
+    var top=K.pods.slice().filter(function(p){return p.mx!==null;}).sort(function(a,b){return b.mx-a.mx;}).slice(0,10);
+    var tp={};top.forEach(function(p){p.t.forEach(function(e){tp[e]=1;});});var tq=Object.keys(tp).map(Number).sort(function(a,b){return a-b;});
+    CH.top_pods={t:tq,unit:"Mi",series:top.map(function(p,i){var m={};p.t.forEach(function(e,j){m[e]=p.m[j];});return ser(p.name,tq.map(function(e){return e in m?m[e]:null;}),i);})};
+    CH.wl_mem=wlSeries(K,"m");CH.wl_cpu=wlSeries(K,"c");
+    renderAll();podTable();podSparks();
+  }
+  function renderAll(){winLabel();document.querySelectorAll("[data-chart]").forEach(function(b){var c=CH[b.getAttribute("data-chart")];if(!c)return;if(b.offsetParent===null)return;kdChart(b,c);});document.querySelectorAll("[data-heat]").forEach(function(b){if(b.offsetParent!==null)kdHeat(b);});}
+  // pod memory heatmap: rows = pods with a memory limit, columns = time slices of the window
+  function hcls(v){return v===null?"":(v>=90?"hm4":(v>=75?"hm3":(v>=50?"hm2":"hm1")));}
+  window.kdHeat=function(box){var K=window.KD;box.innerHTML="";if(!K||!K.pods||!K.ns||!K.ns.EPOCH||!K.ns.EPOCH.length){box.innerHTML="<div class=\"na\" style=\"padding:16px\">no session samples</div>";return;}
+    var w=win(K.ns.EPOCH),t0=w[0],t1=w[1];if(t1<=t0)t1=t0+1;
+    var LW=Math.min(300,Math.max(140,Math.floor((box.clientWidth||900)*0.24))),W=Math.max(400,(box.clientWidth||900)-24),nc=Math.max(10,Math.min(180,Math.floor((W-LW-70)/6))),cw=(W-LW-70)/nc,RH=15;
+    var rows=K.pods.filter(function(p){return p.lim>0;}).map(function(p){var c=[],mx=null,last=null;for(var i=0;i<nc;i++)c.push(null);
+      for(var j=0;j<p.t.length;j++){var e=p.t[j],v=p.m[j];if(v===null||e<t0||e>t1)continue;var k=Math.min(nc-1,Math.floor((e-t0)/(t1-t0)*nc));var q=v*100/p.lim;if(c[k]===null||q>c[k])c[k]=q;if(mx===null||q>mx)mx=q;last=q;}
+      var lv=null,lk=-9,gap=Math.max(1,Math.ceil(((K.every||15)*2*2)/((t1-t0)/nc)));for(var i2=0;i2<nc;i2++){if(c[i2]!==null){lv=c[i2];lk=i2;}else if(lv!==null&&i2-lk<=gap)c[i2]=lv;}
+      return {p:p,c:c,mx:mx,last:last};}).filter(function(r){return r.mx!==null;}).sort(function(a,b){return b.mx-a.mx;});
+    if(!rows.length){box.innerHTML="<div class=\"na\" style=\"padding:16px\">no pod with a memory limit has samples in this window</div>";return;}
+    var max=60,more=rows.length>max;rows=rows.slice(0,max);var H=rows.length*RH+30;
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,height:H,preserveAspectRatio:"none"});
+    rows.forEach(function(r,i){var y=i*RH;var tx=el("text",{x:LW-8,y:y+11,"text-anchor":"end","class":"hl"});tx.textContent=r.p.name.length>44?r.p.name.slice(0,43)+"~":r.p.name;svg.appendChild(tx);
+      for(var k=0;k<nc;k++){if(r.c[k]===null)continue;var rc=el("rect",{x:(LW+k*cw).toFixed(1),y:y+1,width:Math.max(1,cw-0.6).toFixed(1),height:RH-2,"class":hcls(r.c[k]),"data-i":i,"data-k":k});svg.appendChild(rc);}
+      var tv=el("text",{x:LW+nc*cw+8,y:y+11,"class":"hv "+hcls(r.last)});tv.textContent=r.last===null?"-":Math.round(r.last)+"%";svg.appendChild(tv);});
+    [0,0.5,1].forEach(function(f,i){var e=t0+(t1-t0)*f;var tt=el("text",{x:LW+nc*cw*f,y:H-8,"text-anchor":i===0?"start":(i===2?"end":"middle"),"class":"hl"});tt.textContent=fT(e,false,(t1-t0)<21600);svg.appendChild(tt);});
+    box.appendChild(svg);var tip=document.createElement("div");tip.className="tip";box.appendChild(tip);
+    svg.addEventListener("mousemove",function(ev){var t=ev.target;if(!t.hasAttribute||!t.hasAttribute("data-k")){tip.style.display="none";return;}var r=rows[+t.getAttribute("data-i")],k=+t.getAttribute("data-k");var a=t0+(t1-t0)*k/nc,b=t0+(t1-t0)*(k+1)/nc;
+      tip.innerHTML="<b>"+esc(r.p.name)+"</b><div>"+fT(a,false,true)+" - "+fT(b,false,true)+" "+esc(zn())+"</div><div>max "+Math.round(r.c[k])+"% of "+fV(r.p.lim,"Mi")+" limit</div>";tip.style.display="block";var bx=box.getBoundingClientRect();var px=ev.clientX-bx.left+14;if(px+tip.offsetWidth>box.clientWidth)px-=tip.offsetWidth+28;tip.style.left=px+"px";tip.style.top=(ev.clientY-bx.top+12)+"px";});
+    svg.addEventListener("mouseleave",function(){tip.style.display="none";});
+    svg.addEventListener("click",function(ev){var t=ev.target;var i=t.getAttribute&&t.getAttribute("data-i");if(i===null||i===undefined)return;var p=rows[+i].p;var s2=[ser("memory (MiB)",p.m,0)];if(p.lim)s2.push(ser("limit",p.t.map(function(){return p.lim;}),4,"2 4"));CH.pod={t:p.t,unit:"Mi",series:s2};var b=document.querySelector("[data-chart=pod]");if(b){kdChart(b,CH.pod);b.scrollIntoView({behavior:"smooth",block:"center"});}});
+    if(more){var m=document.createElement("div");m.className="legend";m.innerHTML="<span>top 60 of "+K.pods.filter(function(p){return p.lim>0;}).length+" pods by peak % of limit in the window</span>";box.appendChild(m);}
+  };
+  // printing shows every tab: draw charts of hidden tabs at the printed width first
+  var unhid=[];
+  window.addEventListener("beforeprint",function(){document.querySelectorAll(".view[hidden]").forEach(function(v){v.hidden=false;unhid.push(v);});renderAll();});
+  window.addEventListener("afterprint",function(){unhid.forEach(function(v){v.hidden=true;});unhid=[];renderAll();});
+  window.kdRenderCharts=renderAll;
+  function spark(p){var v=p.m.filter(function(x){return x!==null;});if(!v.length)return "<span class=\"na\">-</span>";var mx=Math.max.apply(null,v),mn=Math.min.apply(null,v);if(mx===mn){mx=mn+1;}var w=150,h=22,pts=p.m.map(function(x,i){if(x===null)return null;return (p.m.length>1?i/(p.m.length-1)*(w-4)+2:2).toFixed(1)+","+(h-3-(x-mn)/(mx-mn)*(h-6)).toFixed(1);}).filter(Boolean).join(" ");if(p.m.length===1)pts+=" "+(w-2)+","+pts.split(",")[1];return "<svg class=\"mini\" viewBox=\"0 0 "+w+" "+h+"\"><polyline class=\"ln\" points=\""+pts+"\"/></svg>";}
+  function fcCells(n){var f=window.KD&&KD.fc&&KD.fc[n];if(!f)return "<td data-v=\"-1\"><span class=\"na\">-</span></td><td class=\"l\" data-v=\"\"><span class=\"na\">-</span></td>";var c=f[1]===null?"t0":(f[1]<3600?"t4":(f[1]<21600?"t3":"t2"));return "<td data-v=\""+f[0]+"\" class=\"t3\">+"+fV(f[0],"Mi")+"</td><td class=\"l "+c+"\" data-v=\""+(f[2]===null?"":f[2])+"\">"+(f[2]===null?"no limit":"<span class=\"ts\" data-e=\""+f[2]+"\">"+fT(f[2],true)+"</span> ("+fDur(f[1])+")")+"</td>";}
+  function cls(p){if(p===null)return "t0";return p>=90?"t4":(p>=75?"t3":(p>=50?"t2":"t1"));}
+
+
+  // per workload: resample every pod onto a common grid (last sample within 3 steps), then sum per workload
+  function wlSeries(K,key){var E=(K.ns&&K.ns.EPOCH)||[],unit=key==="m"?"Mi":"m";if(E.length<2||!K.pods)return {t:[],series:[],unit:unit};
+    var n=Math.min(120,E.length),t0=E[0],t1=E[E.length-1],gs=(t1-t0)/Math.max(1,n-1),g=[];for(var i=0;i<n;i++)g.push(Math.round(t0+i*gs));
+    var W={},H={};K.pods.forEach(function(p){var w=p.wl||"-",d=p[key]||[],pt=p.t||[];if(!pt.length)return;var ps=pt.length>1?(pt[pt.length-1]-pt[0])/(pt.length-1):(K.every||15),tol=3*Math.max(ps,gs,K.every||15),k=0;
+      if(!W[w]){W[w]=g.map(function(){return null;});}
+      for(var j=0;j<n;j++){while(k+1<pt.length&&pt[k+1]<=g[j])k++;if(pt[k]>g[j]||g[j]-pt[k]>tol)continue;var v=d[k];if(v===null||v===undefined)continue;W[w][j]=(W[w][j]||0)+v;}});
+    var pk={};Object.keys(W).forEach(function(w){pk[w]=Math.max.apply(null,W[w].map(function(v){return v||0;}));});
+    var top=Object.keys(W).filter(function(w){return pk[w]>0;}).sort(function(a,b){return pk[b]-pk[a];}).slice(0,8);
+    return {t:g,unit:unit,series:top.map(function(w,i){return ser(w.replace(/^[^\/]*\//,""),W[w],i);})};}
+  // PODS tab: CPU + memory sparkline per pod, click a pod to chart it against its limits
+  function sp2(p){var w=96,h=18;function line(d,cls){var v=d.filter(function(x){return x!==null&&x!==undefined;});if(v.length<1)return "";var mx=Math.max.apply(null,v),mn=Math.min.apply(null,v);if(mx===mn){mx=mn+1;}var n=d.length,pts=[];for(var i=0;i<n;i++){if(d[i]===null||d[i]===undefined)continue;pts.push(((n>1?i/(n-1):1)*(w-4)+2).toFixed(1)+","+(h-2-(d[i]-mn)/(mx-mn)*(h-4)).toFixed(1));}if(pts.length===1)pts.push((w-2)+","+pts[0].split(",")[1]);return "<polyline class=\""+cls+"\" points=\""+pts.join(" ")+"\"/>";}
+    return "<svg class=\"psv\" viewBox=\"0 0 "+w+" "+h+"\">"+line(p.c||[],"pc")+line(p.m||[],"pm")+"</svg>";}
+  function podPick(name){var K=window.KD;if(!K||!K.pods)return;var p=K.pods.filter(function(q){return q.name===name;})[0];var tb=null;document.querySelectorAll("#podtable .pspk[data-pod]").forEach(function(x){if(x.getAttribute("data-pod")===name)tb=x.closest("tbody");});
+    document.querySelectorAll("#podtable tbody.picked").forEach(function(x){x.classList.remove("picked");});if(tb)tb.classList.add("picked");
+    var nm=document.getElementById("podselname");if(nm)nm.textContent=name;if(!p){CH.pod_cpu={t:[],series:[],unit:"m"};CH.pod_mem={t:[],series:[],unit:"Mi"};renderAll();return;}
+    function flat(v){v=+v;return p.t.map(function(){return v>0?v:null;});}
+    var cl=tb?tb.getAttribute("data-clim"):0,cr=tb?tb.getAttribute("data-creq"):0,ml=tb?tb.getAttribute("data-mlim"):p.lim,mr=tb?tb.getAttribute("data-mreq"):0;
+    CH.pod_cpu={t:p.t,unit:"m",series:[ser("cpu used",p.c,3),ser("request",flat(cr),2,"5 4"),ser("limit",flat(cl),4,"2 4")].filter(function(x){return x.data.some(function(v){return v!==null;});})};
+    CH.pod_mem={t:p.t,unit:"Mi",series:[ser("memory used",p.m,0),ser("request",flat(mr),2,"5 4"),ser("limit",flat(ml),4,"2 4")].filter(function(x){return x.data.some(function(v){return v!==null;});})};
+    renderAll();}
+  function podSparks(){var K=window.KD;var has=K&&K.pods&&K.pods.length&&K.ns&&K.ns.EPOCH&&K.ns.EPOCH.length>1;
+    document.querySelectorAll(".podcharts,.sesch").forEach(function(e){e.style.display=has?"":"none";});if(!has)return;var by={};K.pods.forEach(function(p){by[p.name]=p;});
+    document.querySelectorAll(".pspk[data-pod]").forEach(function(s){var p=by[s.getAttribute("data-pod")];if(!p)return;var lm=(p.m||[]).filter(function(x){return x!==null;});s.innerHTML=sp2(p);s.title="CPU (green) and memory (blue) over the session"+(lm.length?" - memory "+fV(Math.min.apply(null,lm),"Mi")+" to "+fV(Math.max.apply(null,lm),"Mi"):"");});
+    var t=document.getElementById("podtable");if(t)t.addEventListener("click",function(ev){if(ev.target.closest("button,a,select,code"))return;var b=ev.target.closest("tbody.pod");var k=b&&b.querySelector(".pspk[data-pod]");if(k){podPick(k.getAttribute("data-pod"));var ps=document.getElementById("podsel");if(ps&&ps.scrollIntoView)ps.scrollIntoView({behavior:"smooth",block:"start"});}});
+    var first=document.querySelector("#podtable tbody.pod");if(first){var fk=first.querySelector(".pspk[data-pod]"),nm=fk?fk.getAttribute("data-pod"):"";var top=K.pods.slice().filter(function(p){return p.lim>0&&p.mx!==null;}).sort(function(a,b){return b.mx/b.lim-a.mx/a.lim;})[0];podPick(top?top.name:nm);}}
+  function podTable(){var tb=document.querySelector("#podhist tbody");if(!tb||!window.KD)return;var K=window.KD,h="";
+    K.pods.slice().sort(function(a,b){return (b.mx||0)-(a.mx||0);}).forEach(function(p){var pk=(p.lim&&p.mx!==null)?p.mx*100/p.lim:null;
+      h+="<tr data-s=\""+esc(p.name+" "+p.node+" "+p.wl+" "+p.status)+"\" data-pod=\""+esc(p.name)+"\"><td class=\"l\"><b>"+esc(p.name)+"</b></td><td class=\"l\">"+esc(p.node)+"</td><td class=\"l\">"+esc(p.wl)+"</td><td>"+p.n+"</td><td data-v=\""+(p.mn===null?-1:p.mn)+"\">"+fV(p.mn,"Mi")+"</td><td data-v=\""+(p.avg===null?-1:p.avg)+"\">"+fV(p.avg,"Mi")+"</td><td data-v=\""+(p.mx===null?-1:p.mx)+"\">"+fV(p.mx,"Mi")+"</td><td data-v=\""+(p.last===null?-1:p.last)+"\">"+fV(p.last,"Mi")+"</td><td data-v=\""+(pk===null?-1:pk.toFixed(1))+"\" class=\""+cls(pk)+"\">"+(pk===null?"-":pk.toFixed(1))+"</td><td data-v=\""+(p.cavg===null?-1:p.cavg)+"\">"+fV(p.cavg,"m")+"</td><td data-v=\""+(p.cmx===null?-1:p.cmx)+"\">"+fV(p.cmx,"m")+"</td><td class=\""+(p.rs>0?"t3":"t0")+"\">"+p.rs+"</td>"+fcCells(p.name)+"<td class=\"l\">"+esc(p.status)+"</td><td class=\"l\">"+spark(p)+"</td></tr>";});
+    tb.innerHTML=h||"<tr><td class=\"l na\" colspan=\"16\">no pod samples - run kdash live to record pod history</td></tr>";
+    tb.onclick=function(ev){var tr=ev.target.closest("tr[data-pod]");if(!tr)return;tb.querySelectorAll("tr.picked").forEach(function(x){x.classList.remove("picked");});tr.classList.add("picked");var p=K.pods.filter(function(q){return q.name===tr.getAttribute("data-pod");})[0];if(!p)return;
+      var s=[ser("memory (MiB)",p.m,0)];if(p.lim)s.push(ser("limit",p.t.map(function(){return p.lim;}),4,"2 4"));CH.pod={t:p.t,unit:"Mi",series:s};var b=document.querySelector("[data-chart=pod]");kdChart(b,CH.pod);};
+    var c=document.querySelector("[data-count=podhist]");if(c)c.textContent=K.pods.length+" pods";}
+  window.kdTab=function(v){var ok=false;document.querySelectorAll(".view").forEach(function(d){var on=d.getAttribute("data-view")===v;if(on)ok=true;d.hidden=!on;});if(!ok)return false;
+    document.querySelectorAll(".tab[data-tab]").forEach(function(a){a.classList.toggle("on",a.getAttribute("data-tab")===v);});
+    try{history.replaceState(null,"","#"+v);}catch(e){}var g=document.getElementById("gq");if(g&&g.value)kdFind(g.value);renderAll();window.scrollTo(0,0);return false;};
+  window.kdSev=function(s){document.querySelectorAll("#eventtable tbody tr").forEach(function(r){r.classList.toggle("r-hidden",!!s&&r.getAttribute("data-sev")!==s);});};
+  document.addEventListener("keydown",function(e){if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="SELECT"))return;var m={"0":"overview","1":"pods","2":"nodes","3":"workloads","4":"ip","5":"mem","6":"io","7":"history"};if(m[e.key]&&document.querySelector(".view"))kdTab(m[e.key]);if(e.key==="/"){var g=document.getElementById("gq");if(g){e.preventDefault();g.focus();}}});
+  document.addEventListener("DOMContentLoaded",function(){kdFmtTimes();build();var h=(location.hash||"").slice(1);if(h&&document.querySelector(".view[data-view=\""+h+"\"]"))kdTab(h);});
+  var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderAll,150);});
+})();
+'
+
+snapshot_notes() {
+  [ "$TOP_OK" = 1 ] || echo "kubectl top pod unavailable - live usage columns are empty (requests / limits still collected)."
+  [ "$NODES_STATE" = ok ] || echo "Node read $NODES_STATE - pools, allocatable and podCIDR unknown; nodes taken from pod placement (needs get/list nodes)."
+  case "$VIEW_SNAP" in nodes|mem|all)
+    [ "$TOPN_STATE" = ok ] || echo "Node metrics ${TOPN_STATE/off/disabled} - whole-node usage and other-namespace share unavailable (needs nodes.metrics.k8s.io)." ;;
+  esac
+  case "$VIEW_SNAP" in ip|all) [ "$SVC_STATE" = ok ] || echo "Services read $SVC_STATE." ;; esac
+  case "$VIEW_SNAP" in nodes|all)
+    case "$CLUSTER_STATE" in ok|off) ;; partial) echo "No cluster-wide pod read - cluster comparison uses the namespaces you can read: ${NS_READ_LIST}." ;;
+      *) echo "Cluster pod read $CLUSTER_STATE - cluster requests unavailable (needs list pods in all namespaces)." ;; esac ;;
+  esac
+  case "$VIEW_SNAP" in workloads|all) case "$WL_STATE" in ok) ;; *) echo "Workload read $WL_STATE - desired replicas and rollout unknown (needs get deployments / statefulsets / daemonsets)." ;; esac ;; esac
+  case "$VIEW_SNAP" in io|all) case "$(awk -F'\t' '$1 == "io_state" { print $2 }' "$MODEL/meta.tsv" 2>/dev/null)" in
+      prom-url|prom-svc|kubelet|off|"") ;; warming-up) echo "IO: only one sample taken so far - rates appear after the second sample." ;;
+      not-sampled) echo "IO rates are sampled in live mode (x / --session-report) or with --io-wait SEC." ;;
+      *) echo "IO unavailable: ${IO_REASON:-no source} - use --prom-url, --prom-svc (services/proxy) or nodes/proxy." ;; esac ;; esac
+  [ "${NS_FALLBACK:-0}" = 1 ] && echo "Context binds no namespace - showing \"default\"."
+  return 0
+}
+
+# snapshot_html_name VIEW STAMP -> file name (no directory)
+snapshot_html_name() { printf '%s_%s_%s_%s.html' "$(snap_slug "$1")" "$(safe_name "$CTX_NAME")" "$(safe_name "$NS")" "$2"; }
+
+# snapshot_view VIEW STAMP SIBLINGS -> prints the HTML path
+snapshot_view() {
+  local v="$1" stamp="${2:-$(date '+%Y%m%d_%H%M%S')}" sib="${3:-}" dir html raw t0 sha c fcf=""
+  t0=$(date +%s); host_clock
+  [ -s "$TMPD/forecast.tsv" ] && fcf="$TMPD/forecast.tsv"
+  dir="$REPORT_DIR"; mkdir -p "$dir" 2>/dev/null || { printf 'kdash: cannot create %s\n' "$dir" >&2; return 1; }
+  html="$dir/$(snapshot_html_name "$v" "$stamp")"
+  raw="$TMPD/snap_$v.txt"
+  printf '%s\n' "$SNAP_CSS" > "$TMPD/snap.css"; printf '%s\n' "$SNAP_JS" > "$TMPD/snap.js"
+  c="$COLOR"; COLOR=0
+  RENDER_COLS=220 render_text_view "$v" > "$raw"
+  COLOR="$c"
+  sha="$( (sha256sum "$raw" 2>/dev/null || shasum -a 256 "$raw" 2>/dev/null) | awk '{print $1}')"
+  VIEW_SNAP="$v"
+  awk -v md="$MODEL" -v view="$v" -v title="$(snap_title "$v")" -v tables="$(snap_tables "$v" | paste -sd"~" -)" \
+      -v rawf="$raw" -v cssf="$TMPD/snap.css" -v jsf="$TMPD/snap.js" -v histf="$HIST" -v nhistf="$NHIST" \
+      -v ns="$NS" -v ctxn="$CTX_NAME" -v filt="$FILTER" -v ver="$KDASH_VERSION" -v allns="$ALL_NS" -v sib="$sib" \
+      -v nodestate="$NODES_STATE" -v topnstate="$TOPN_STATE" \
+      -v ts="$(date '+%Y-%m-%d %H:%M:%S %z')" -v op="$(id -un 2>/dev/null || echo "${USER:-?}")" -v sha="${sha:--}" \
+      -v author="$KDASH_AUTHOR" -v asid="$AUDIT_SID" -v auser="$AUDIT_USER@$AUDIT_HOST" -v nowe="$NOW_S" -v tzoff="$TZ_OFF" -v tzname="$TZ_NAME" -v fcf="$fcf" -v fcwin="$FC_WIN" \
+      -v notes="$(snapshot_notes | paste -sd"~" -)" "$SNAP_UI_AWK" < /dev/null > "$html.tmp" &&
+    mv -f "$html.tmp" "$html" || { rm -f "$html.tmp"; return 1; }
+  audit_file REPORT_HTML "$html"
+  chmod 0644 "$html" 2>/dev/null
+  printf '%s\n' "$html"
+}
+
+# snapshot_index: newest-first list of every kdash snapshot in the report dir
+snapshot_index() {
+  local idx="$REPORT_DIR/index.html" f
+  {
+    printf '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>kdash snapshots</title>'
+    printf '<style>body{margin:0;background:#f4f7fb;font:14px/1.45 Inter,Segoe UI,Arial,sans-serif;color:#182230}header{background:linear-gradient(135deg,#1e1b4b,#3730a3);color:#fff;padding:24px 32px}h1{margin:0;font-size:22px}main{max-width:1400px;margin:auto;padding:20px 28px}a{color:#0b5cab;text-decoration:none}li{padding:7px 0;border-bottom:1px solid #e4e7ec;list-style:none;font-family:ui-monospace,Consolas,monospace;font-size:13px}ul{padding:0;background:#fff;border:1px solid #dfe5ec;border-radius:12px;padding:6px 18px}</style></head><body>'
+    printf '<header><h1>kdash snapshots</h1><p>%s</p></header><main><ul>' "$REPORT_DIR"
+    ls -1t "$REPORT_DIR"/kdash_*.html 2>/dev/null | while IFS= read -r f; do
+      f="${f##*/}"; printf '<li><a href="%s">%s</a></li>' "$f" "$f"
+    done
+    printf '</ul></main></body></html>\n'
+  } > "$idx.tmp" && mv -f "$idx.tmp" "$idx"
+}
+
+# parse "all", "current", "2", "25", "nodes,mem", "1-5" -> list of views
+snapshot_select() {
+  local sel="$1" out="" tok v
+  case "$sel" in
+    ""|c|current) printf '%s\n' "$VIEW"; return ;;
+    a|all|"1-6") printf '%s\n' pods nodes workloads ip mem io; return ;;
+  esac
+  sel="${sel//,/ }"
+  if [[ "$sel" =~ ^[1-7]+$ ]]; then sel="$(printf '%s' "$sel" | sed 's/./& /g')"; fi
+  for tok in $sel; do
+    v="$(norm_view "$tok")" || return 1
+    [ "$v" = all ] && { printf '%s\n' pods nodes workloads ip mem io; return; }
+    case " $out " in *" $v "*) ;; *) out="$out $v" ;; esac
+  done
+  printf '%s\n' $out
+}
+
+# take_snapshots SELECTION -> prints one path per line, sets SNAP_COUNT / SNAP_LAST
+take_snapshots() {
+  local views v p n=0 stamp sib=""
+  views="$(snapshot_select "$1")" || { printf 'kdash: unknown snapshot selection: %s\n' "$1" >&2; return 2; }
+  # the ALERTS view is the overview of the namespace report (summary + action table)
+  views="$(printf '%s\n' $views | grep -vx alerts)"
+  [ -n "$views" ] || { namespace_report "${SDIR:-}"; return; }
+  stamp="$(date '+%Y%m%d_%H%M%S')"
+  # one stamp per batch; bump it while any target already exists
+  for v in $views; do
+    while [ -e "$REPORT_DIR/$(snapshot_html_name "$v" "$stamp")" ]; do stamp="${stamp%_*}_$(printf "%06d" $(( 10#${stamp##*_} + 1 )))"; done
+  done
+  for v in $views; do sib="${sib}${sib:+;}$v=$(snapshot_html_name "$v" "$stamp")"; done
+  for v in $views; do
+    p="$(snapshot_view "$v" "$stamp" "$sib")" || { printf 'kdash: snapshot of %s failed\n' "$v" >&2; continue; }
+    printf '%s\n' "$p"; n=$((n + 1)); SNAP_LAST="$p"
+  done
+  SNAP_COUNT=$n
+  snapshot_index
+  [ "$n" -gt 0 ]
+}
+
+# namespace_report [SESSION_DIR] -> prints the HTML path
+# One HTML file with every tab (overview, the five views, history). With a
+# session folder the overview / history tabs chart everything recorded since
+# kdash started: namespace totals, memory per worker node, every pod, events.
+namespace_report() {
+  local sd="${1:-$SDIR}" stamp dir html rawd v c sha all="" tp="" tn="" tw="" ti="" tm="" to="" hf nf fcf=""
+  dir="$REPORT_DIR"; mkdir -p "$dir" 2>/dev/null || { printf 'kdash: cannot create %s\n' "$dir" >&2; return 1; }
+  stamp="$(date '+%Y%m%d_%H%M%S')"
+  html="$dir/kdash_namespace_report_$(safe_name "$CTX_NAME")_$(safe_name "$NS")_${stamp}.html"
+  while [ -e "$html" ]; do stamp="${stamp%_*}_$(printf "%06d" $(( 10#${stamp##*_} + 1 )))"; html="$dir/kdash_namespace_report_$(safe_name "$CTX_NAME")_$(safe_name "$NS")_${stamp}.html"; done
+  rawd="$TMPD/nsraw"; mkdir -p "$rawd"
+  printf '%s\n' "$SNAP_CSS" > "$TMPD/snap.css"; printf '%s\n' "$SNAP_JS" > "$TMPD/snap.js"
+  c="$COLOR"; COLOR=0
+  for v in pods nodes workloads ip mem io; do RENDER_COLS=220 render_text_view "$v" > "$rawd/$v.txt"; done
+  COLOR="$c"
+  sha="$(cat "$rawd"/*.txt | { sha256sum 2>/dev/null || shasum -a 256; } | awk '{print $1}')"
+  # memory trend for the MEMORY tab: the whole session when there is one
+  hf="$HIST"; nf="$NHIST"
+  if [ -n "$sd" ] && [ -s "$sd/ns.tsv" ] && [ "$(wc -l < "$sd/ns.tsv")" -gt 2 ]; then
+    hf="$TMPD/nsr_hist"; nf="$TMPD/nsr_nhist"
+    awk -F'\t' -v OFS='\t' 'NR > 1 && $8 != "-" && $8 != "" { print $1, $8, $5 }' "$sd/ns.tsv" | tail -n "$HIST_N" > "$hf"
+    awk -F'\t' -v OFS='\t' 'NR > 1 { print $1, $2, $7, $9 }' "$sd/nodes.tsv" | tail -n $(( HIST_N * 64 )) > "$nf"
+  fi
+  # memory growth forecast over the newest samples of the session (host clock)
+  host_clock
+  if [ -n "$sd" ] && [ -s "$sd/pods.tsv" ]; then
+    fcf="$TMPD/fc_report.tsv"; forecast_build "$sd" "$fcf" "$(awk -F'\t' 'NR > 1 { l = $1 } END { print l + 0 }' "$sd/pods.tsv")"
+    [ -s "$fcf" ] || fcf=""
+  fi
+  for v in pods nodes workloads ip mem io; do
+    c="$(snap_tables "$v" | paste -sd"~" -)"; all="${all}${all:+~}$c"
+    case "$v" in pods) tp="$c" ;; nodes) tn="$c" ;; workloads) tw="$c" ;; ip) ti="$c" ;; mem) tm="$c" ;; io) to="$c" ;; esac
+  done
+  VIEW_SNAP=all
+  awk -v md="$MODEL" -v views="pods nodes workloads ip mem io" -v view=pods -v title="Namespace Report" \
+      -v alltables="$all" -v tbl_pods="$tp" -v tbl_nodes="$tn" -v tbl_workloads="$tw" -v tbl_ip="$ti" -v tbl_mem="$tm" -v tbl_io="$to" \
+      -v rawdir="$rawd" -v sdir="$sd" -v every="$SAMPLE_EVERY" \
+      -v cssf="$TMPD/snap.css" -v jsf="$TMPD/snap.js" -v histf="$hf" -v nhistf="$nf" \
+      -v ns="$NS" -v ctxn="$CTX_NAME" -v filt="$FILTER" -v ver="$KDASH_VERSION" -v allns="$ALL_NS" \
+      -v nodestate="$NODES_STATE" -v topnstate="$TOPN_STATE" \
+      -v ts="$(date '+%Y-%m-%d %H:%M:%S %z')" -v op="$(id -un 2>/dev/null || echo "${USER:-?}")" -v sha="${sha:--}" \
+      -v author="$KDASH_AUTHOR" -v asid="$AUDIT_SID" -v auser="$AUDIT_USER@$AUDIT_HOST" -v nowe="$NOW_S" -v tzoff="$TZ_OFF" -v tzname="$TZ_NAME" -v fcf="$fcf" -v fcwin="$FC_WIN" \
+      -v notes="$(snapshot_notes | paste -sd"~" -)" "$SNAP_UI_AWK" < /dev/null > "$html.tmp" &&
+    mv -f "$html.tmp" "$html" || { rm -f "$html.tmp"; return 1; }
+  audit_file REPORT_HTML "$html"
+  chmod 0644 "$html" 2>/dev/null
+  snapshot_index
+  SNAP_LAST="$html"
+  printf '%s\n' "$html"
+}
+
+# --session-report [latest|DIR|NAME]: rebuild the namespace report from a
+# recorded session after kdash has exited (no cluster access needed)
+session_report_main() {
+  local sd="$1"
+  case "$sd" in
+    ""|latest) sd="$(session_latest "")" ;;
+    */*) ;;
+    *) sd="$REPORT_DIR/sessions/$sd" ;;
+  esac
+  [ -n "$sd" ] && [ -f "$sd/meta.env" ] && [ -d "$sd/model" ] || fail "no recorded session found${1:+ for $1} (sessions live in $REPORT_DIR/sessions)"
+  [ -s "$sd/model/meta.tsv" ] || fail "session $sd has no samples yet"
+  # shellcheck disable=SC1091
+  . "$sd/meta.env"
+  CTX_NAME="$S_CTX"; NS="$S_NS"; FILTER="$S_FILTER"; ALL_NS="$S_ALLNS"
+  NODES_STATE=ok; TOPN_STATE=ok; SVC_STATE=ok; TOP_OK=1
+  [ -f "$sd/model/state.env" ] && . "$sd/model/state.env"
+  cp -f "$sd"/model/*.tsv "$MODEL/" || fail "cannot read $sd/model"
+  SPEC_AT="$(awk -F'\t' '{ l = $1 } END { print l + 0 }' "$sd/ns.tsv")"
+  printf 'kdash namespace report from session %s\n' "${sd##*/}"
+  namespace_report "$sd" | sed 's/^/  /'; [ "${PIPESTATUS[0]}" = 0 ] || exit 1
+  printf '  index   %s/index.html\n' "$REPORT_DIR"
+}
+
+#-- exports ---------------------------------------------------------------------
+view_files() {
+  case "$1" in
+    pods)      echo "pods.tsv containers.tsv" ;;
+    nodes)     echo "pools.tsv nodes.tsv cluster_ns.tsv" ;;
+    workloads) echo "workloads.tsv wl_node.tsv" ;;
+    ip)        echo "ip.tsv subnets.tsv ipblocks.tsv services.tsv" ;;
+    mem)       echo "memory.tsv nodes.tsv" ;;
+    io)        echo "io_nodes.tsv io_pods.tsv" ;;
+    alerts)    echo "alerts.tsv" ;;
+    all)       echo "pools.tsv nodes.tsv cluster_ns.tsv workloads.tsv wl_node.tsv memory.tsv ip.tsv subnets.tsv ipblocks.tsv services.tsv io_nodes.tsv io_pods.tsv pods.tsv containers.tsv" ;;
+  esac
+}
+tsv2csv() {
+  awk -F'\t' '{ out = ""; for (i = 1; i <= NF; i++) { v = $i; if (v == "-") v = ""
+      if (v ~ /[",\n]/ || v ~ /^[=+@-]/) { gsub(/"/, "\"\"", v); v = "\"" v "\"" }
+      out = out (i > 1 ? "," : "") v } print out }' "$1"
+}
+emit_tables() {          # fmt view
+  local f first=1
+  [ "$2" = alerts ] && { ALERT_TSV="$MODEL/alerts.tsv" render_text_view alerts > /dev/null; }
+  for f in $(view_files "$2"); do
+    [ "$first" = 1 ] || printf '\n'; first=0
+    printf '# %s\n' "${f%.tsv}"
+    if [ "$1" = csv ]; then tsv2csv "$MODEL/$f"; else cat "$MODEL/$f"; fi
+  done
+}
+render_text_view() {     # view -> plain text on stdout
+  local saved="$VIEW"; VIEW="$1"; render; cat "$HDRF" "$BODYF" "$FTRF"; VIEW="$saved"
+}
+
+HTML_AWK='
+function esc(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); gsub(/"/, "\\&quot;", s); return s }
+function badge(v) {
+  if (v ~ /HA_RISK|OOM_RISK|DUPLICATE|NotReady|CrashLoop|Error|OOMKilled|Evicted|Failed|UNSCHEDULED|NO_IP/) return "bad"
+  if (v ~ /SKEWED|NOT_READY|Pending|Terminating|NO_LIMIT|OVER_REQUEST|ContainerCreating|Cordoned|SchedulingDisabled|HOST_NETWORK/) return "warn"
+  if (v ~ /^(OK|Running|Ready|Succeeded|Completed|PER_NODE)$/) return "ok"
+  return ""
+}
+function card(lbl, val, sb, cls) {
+  printf "<div class=\"card %s\"><div class=\"cl\">%s</div><div class=\"cv\">%s</div><div class=\"cs\">%s</div></div>\n", cls, esc(lbl), esc(val), esc(sb)
+}
+function mh(mi) { if (mi == "-" || mi == "") return "-"; mi += 0; if (mi >= 1024) return sprintf("%.1f GiB", mi / 1024); return sprintf("%d MiB", mi) }
+function ch(m)  { if (m == "-" || m == "") return "-"; m += 0; if (m >= 1000) return sprintf("%.2f cores", m / 1000); return sprintf("%d m", m) }
+function pc(a, b) { if (a == "-" || b == "-" || b + 0 <= 0) return -1; return a * 100 / b }
+function table(id, title, desc, f,   ln, n, a, i, nc, cell, cls, v, skip, w) {
+  n = 0
+  printf "<section id=\"%s\"><div class=\"sh\"><div><h2>%s</h2><p>%s</p></div><div class=\"tools\"><input type=\"search\" placeholder=\"Filter rows\" oninput=\"ft(this,%s)\"><button onclick=\"csv(%s)\">CSV</button></div></div>\n", id, esc(title), esc(desc), "\047" id "\047", "\047" id "\047"
+  printf "<div class=\"tw\"><table id=\"t_%s\">\n", id
+  while ((getline ln < (md "/" f)) > 0) {
+    nc = split(ln, a, "\t")
+    if (n == 0) {
+      printf "<thead><tr>"
+      for (i = 1; i <= nc; i++) { H[i] = a[i]; if (a[i] == "KEY") { skip[i] = 1; continue } printf "<th onclick=\"st(this)\">%s</th>", esc(a[i]) }
+      printf "</tr></thead><tbody>\n"
+    } else {
+      printf "<tr>"
+      for (i = 1; i <= nc; i++) {
+        if (i in skip) continue
+        v = a[i]; cls = badge(v)
+        if (H[i] ~ /PCT/ && v != "-" && v ~ /^[0-9.]+$/) {
+          w = v + 0; if (w > 100) w = 100
+          printf "<td class=\"n\" data-v=\"%s\"><div class=\"pb\"><span class=\"%s\" style=\"width:%.1f%%\"></span></div>%s%%</td>", v, (H[i] ~ /REQ/ ? "hn" : (v >= 90 ? "hb" : (v >= 75 ? "hw" : "hg"))), w, v
+        } else if (v == "-") printf "<td class=\"n\" data-v=\"-1\">-</td>"
+        else if (v ~ /^-?[0-9]+(\.[0-9]+)?$/) printf "<td class=\"n\" data-v=\"%s\">%s</td>", v, v
+        else if (cls != "") printf "<td><span class=\"b %s\">%s</span></td>", cls, esc(v)
+        else printf "<td>%s</td>", esc(v)
+      }
+      printf "</tr>\n"
+    }
+    n++
+  }
+  close(md "/" f)
+  if (n <= 1) printf "<tr><td class=\"empty\" colspan=\"99\">no rows</td></tr>\n"
+  printf "</tbody></table></div></section>\n"
+}
+BEGIN {
+  while ((getline ln < (md "/meta.tsv")) > 0) { split(ln, a, "\t"); M[a[1]] = a[2] }
+  close(md "/meta.tsv")
+  title = "kdash report - " ctxn " / " ns
+  print "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+  print "<title>" esc(title) "</title><style>"
+  print ":root{--bg:#f4f6fa;--fg:#0f172a;--mut:#64748b;--card:#fff;--bd:#e2e8f0;--hd:#0f172a;--ok:#15803d;--okb:#dcfce7;--wa:#a16207;--wab:#fef9c3;--ba:#b91c1c;--bab:#fee2e2;--ac:#0369a1}"
+  print "@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--fg:#e2e8f0;--mut:#94a3b8;--card:#111a2e;--bd:#1e293b;--hd:#020617;--okb:#14532d;--ok:#86efac;--wab:#713f12;--wa:#fde68a;--bab:#7f1d1d;--ba:#fecaca;--ac:#7dd3fc}}"
+  print "*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}"
+  print "header{background:linear-gradient(120deg,#0f172a,#0e7490);color:#fff;padding:22px 28px}header h1{margin:0 0 6px;font-size:22px}header p{margin:2px 0;opacity:.85}"
+  print "nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--bd);padding:8px 28px;display:flex;gap:14px;flex-wrap:wrap}nav a{color:var(--ac);text-decoration:none;font-weight:600}"
+  print "main{padding:20px 28px;max-width:1700px;margin:auto}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:22px}"
+  print ".card{background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--ac);border-radius:10px;padding:12px 14px}.card.bad{border-left-color:#dc2626}.card.warn{border-left-color:#d97706}.card.ok{border-left-color:#16a34a}"
+  print ".cl{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}.cv{font-size:24px;font-weight:700;margin:2px 0}.cs{color:var(--mut);font-size:12px}"
+  print "section{scroll-margin-top:52px;background:var(--card);border:1px solid var(--bd);border-radius:10px;margin:0 0 20px;padding:14px 16px}.sh{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end}"
+  print "h2{margin:0;font-size:17px}.sh p{margin:2px 0 8px;color:var(--mut)}.tools{display:flex;gap:8px}.tools input{padding:6px 9px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);min-width:220px}"
+  print ".tools button{padding:6px 12px;border:1px solid var(--bd);border-radius:6px;background:var(--ac);color:#fff;cursor:pointer}.tw{overflow:auto;max-height:620px}"
+  print "table{border-collapse:collapse;width:100%;font-size:12.5px}th{position:sticky;top:0;background:var(--hd);color:#fff;text-align:left;padding:7px 8px;cursor:pointer;white-space:nowrap}"
+  print "td{border-bottom:1px solid var(--bd);padding:5px 8px;vertical-align:top;white-space:nowrap}tr:hover td{background:rgba(14,116,144,.08)}td.n{text-align:right;font-variant-numeric:tabular-nums}"
+  print ".b{display:inline-block;padding:1px 8px;border-radius:10px;font-weight:600;font-size:11.5px}.b.ok{background:var(--okb);color:var(--ok)}.b.warn{background:var(--wab);color:var(--wa)}.b.bad{background:var(--bab);color:var(--ba)}"
+  print ".pb{display:inline-block;width:70px;height:8px;background:var(--bd);border-radius:4px;margin-right:6px;vertical-align:middle;overflow:hidden}.pb span{display:block;height:100%}.hg{background:#16a34a}.hw{background:#d97706}.hb{background:#dc2626}.hn{background:#0284c7}"
+  print ".empty{color:var(--mut);text-align:center}footer{color:var(--mut);padding:10px 28px 30px;font-size:12px}"
+  print "</style></head><body>"
+  printf "<header><h1>%s</h1><p>Context <b>%s</b> &nbsp;|&nbsp; Namespace <b>%s</b> &nbsp;|&nbsp; Pod filter <b>%s</b></p><p>Generated %s by kdash %s &nbsp;|&nbsp; Pool label %s</p></header>\n",
+    "Kubernetes Namespace Operations Report", esc(ctxn), esc(ns), esc(filt), esc(ts), esc(ver), esc(M["pool_key"])
+  print "<nav><a href=\"#summary\">Summary</a><a href=\"#pools\">Node pools</a><a href=\"#nodes\">Worker nodes</a><a href=\"#spread\">Workload spread</a><a href=\"#pernode\">Pods per node</a><a href=\"#memory\">Memory</a><a href=\"#ip\">IP pool</a><a href=\"#subnets\">Subnets</a><a href=\"#blocks\">IP blocks</a><a href=\"#svc\">Services</a><a href=\"#pods\">Pods</a><a href=\"#ctr\">Containers</a></nav><main>"
+  print "<div class=\"cards\" id=\"summary\">"
+  card("Pods healthy", M["pods_healthy"] " / " M["pods"], M["containers"] " containers, " M["restarts"] " restarts", (M["pods_healthy"] == M["pods"] ? "ok" : "warn"))
+  card("Memory used", mh(M["mem_used"]), "req " mh(M["mem_req"]) "  lim " mh(M["mem_lim"]), (pc(M["mem_used"], M["mem_lim"]) >= 90 ? "bad" : "ok"))
+  card("CPU used", ch(M["cpu_used"]), "req " ch(M["cpu_req"]) "  lim " ch(M["cpu_lim"]), "")
+  card("Worker nodes", M["nodes_hosting"], "hosting this namespace, of " M["nodes_total"] " readable", "")
+  card("Node pools", M["pools"], "label " M["pool_key"], "")
+  card("Node memory share", (pc(M["mem_used"], M["hosting_mem_alloc"]) < 0 ? "-" : sprintf("%.1f%%", pc(M["mem_used"], M["hosting_mem_alloc"]))), "namespace used / allocatable " mh(M["hosting_mem_alloc"]), "")
+  card("HA risk workloads", M["ha_risk"], M["skewed"] " skewed, " M["unscheduled_workloads"] " with unscheduled pods", (M["ha_risk"] > 0 ? "bad" : (M["skewed"] > 0 ? "warn" : "ok")))
+  card("OOM risk pods", M["pods_mem_ge90_limit"], M["pods_oomkilled"] " OOMKilled before, " M["pods_no_mem_limit"] " without limit", (M["pods_mem_ge90_limit"] > 0 || M["pods_oomkilled"] > 0 ? "bad" : (M["pods_no_mem_limit"] > 0 ? "warn" : "ok")))
+  card("Pod IPs", M["pod_ips"], M["subnets"] " subnets, " M["no_ip"] " without IP, " M["duplicate_ip_pods"] " duplicate", (M["duplicate_ip_pods"] > 0 ? "bad" : "ok"))
+  card("Services", M["services"], M["cluster_ips"] " ClusterIP, " M["loadbalancers"] " LoadBalancer, " M["headless"] " headless", "")
+  print "</div>"
+  table("pools", "Node pools", "Namespace usage per node pool against the allocatable capacity of the nodes that host it.", "pools.tsv")
+  table("nodes", "Worker nodes", "Per worker node: namespace pods, CPU and memory used / requested / limited, node allocatable and whole-node usage.", "nodes.tsv")
+  table("spread", "Workload spread and HA", "Replica placement per workload. HA_RISK: 2+ replicas on one node. SKEWED: uneven spread.", "workloads.tsv")
+  table("pernode", "Pods per worker node", "Which workloads run on which node, with pod names.", "wl_node.tsv")
+  table("memory", "Memory and OOM risk", "Every pod by memory used, with request / limit percentages and risk flags.", "memory.tsv")
+  table("ip", "Pod IP assignments", "Pod IPs, host IPs and notes (host network, duplicate, no IP).", "ip.tsv")
+  table("subnets", "Pod subnets", "Observed /24 subnets and the nodes that use them.", "subnets.tsv")
+  table("blocks", "Node IP blocks", "Per node: node IP, podCIDR (when readable) and observed /26 IP blocks.", "ipblocks.tsv")
+  table("svc", "Services", "ClusterIP, external IPs and load-balancer ingress addresses.", "services.tsv")
+  table("pods", "Pods", "Full pod inventory with usage, requests and limits (CPU m, memory MiB).", "pods.tsv")
+  table("ctr", "Containers", "Per container usage, requests, limits, readiness and last termination reason.", "containers.tsv")
+  print "</main><footer>CPU in millicores, memory in MiB unless stated. \"-\" = unset, unknown or not permitted. Usage is a metrics-server sample at generation time.</footer>"
+  print "<script>"
+  print "function ft(i,id){var q=i.value.toLowerCase();document.querySelectorAll(\"#t_\"+id+\" tbody tr\").forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)>-1?\"\":\"none\"})}"
+  print "function st(th){var t=th.closest(\"table\"),b=t.tBodies[0],i=Array.prototype.indexOf.call(th.parentNode.children,th),d=th.dataset.d==\"a\"?\"d\":\"a\";th.dataset.d=d;var rs=Array.prototype.slice.call(b.rows);rs.sort(function(x,y){var a=x.cells[i],c=y.cells[i];if(!a||!c)return 0;var u=a.dataset.v,v=c.dataset.v;var r=(u!==undefined&&v!==undefined)?(parseFloat(u)-parseFloat(v)):a.textContent.localeCompare(c.textContent);return d==\"a\"?r:-r});rs.forEach(function(r){b.appendChild(r)})}"
+  print "function csv(id){var t=document.getElementById(\"t_\"+id),o=[];Array.prototype.forEach.call(t.rows,function(r){if(r.style.display==\"none\")return;o.push(Array.prototype.map.call(r.cells,function(c){return \"\\\"\"+c.textContent.replace(/\"/g,\"\\\"\\\"\")+\"\\\"\"}).join(\",\"))});var a=document.createElement(\"a\");a.href=URL.createObjectURL(new Blob([o.join(\"\\n\")],{type:\"text/csv\"}));a.download=id+\".csv\";a.click()}"
+  print "</script></body></html>"
+}
+'
+
+safe_name() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_'; }
+make_report() {          # writes bundle + HTML, prints the paths
+  local stamp base dir html v f
+  stamp="$(date '+%Y%m%d_%H%M%S')"
+  base="kdash_$(safe_name "$CTX_NAME")_$(safe_name "$NS")_${stamp}"
+  mkdir -p "$REPORT_DIR" 2>/dev/null || { printf 'kdash: cannot create %s\n' "$REPORT_DIR" >&2; return 1; }
+  dir="$REPORT_DIR/$base"; html="$REPORT_DIR/${base}.html"
+  mkdir -p "$dir/tsv" "$dir/csv" || return 1
+  chmod 700 "$dir" 2>/dev/null
+  local c="$COLOR"; COLOR=0
+  for v in pods nodes workloads ip mem io alerts; do
+    RENDER_COLS=200 render_text_view "$v" > "$dir/$v.txt"
+  done
+  COLOR="$c"
+  for f in "$MODEL"/*.tsv; do
+    cp -f "$f" "$dir/tsv/"; tsv2csv "$f" > "$dir/csv/$(basename "${f%.tsv}").csv"
+  done
+  awk -v md="$MODEL" -v ns="$NS" -v ctxn="$CTX_NAME" -v filt="$FILTER" -v ver="$KDASH_VERSION" \
+      -v ts="$(date '+%Y-%m-%d %H:%M:%S %z')" "$HTML_AWK" < /dev/null > "$html" || return 1
+  cp -f "$html" "$dir/report.html"
+  ( cd "$dir" && find . -type f ! -name SHA256SUMS -print0 2>/dev/null | sort -z | xargs -0 sha256sum > SHA256SUMS 2>/dev/null ) || true
+  REPORT_HTML="$html"; REPORT_BUNDLE="$dir"
+  audit_file REPORT_BUNDLE "$html"
+  printf 'kdash report\n  html    %s\n  bundle  %s  (text views, tsv/, csv/, SHA256SUMS)\n' "$html" "$dir"
+}
+
+#-- paint: clip to viewport, pin header/footer, horizontal scroll, no flicker ----
+# Lines are clipped to the terminal width (ANSI colour codes kept, UTF-8 aware) so
+# a wide table never wraps and breaks the frame; h / l scroll horizontally.
+CLIP_AWK='
+BEGIN { E = sprintf("%c", 27) }
+{
+  s = $0; n = length(s); i = 1; vis = 0; out = ""; left = 0; last = 0; cut = 0; drop = 0
+  while (i <= n) {
+    c = substr(s, i, 1)
+    if (c == E) {                                   # copy escape sequences
+      j = i + 1; if (substr(s, j, 1) == "[") { j++; while (j <= n && substr(s, j, 1) !~ /[A-Za-z]/) j++ }
+      if (vis <= off + w) out = out substr(s, i, j - i + 1); i = j + 1; continue
+    }
+    if (c >= "\200" && c < "\300") { if (!drop && vis > off && vis <= off + w) out = out c; i++; continue }  # UTF-8 continuation
+    vis++; drop = 0
+    if (vis <= off) { if (c != " ") left = 1 }
+    else if (vis <= off + w) {
+      if (vis == off + w) last = length(out)
+      if (vis == off + 1 && off > 0 && left) { out = out "\033[0;2m" ml "\033[0m"; drop = 1 } else out = out c
+    } else if (c != " ") { cut = 1; break }
+    i++
+  }
+  if (cut && w > 1) out = substr(out, 1, last) "\033[0;2m" mr
+  printf "%s\033[0m\033[K\n", out
+}'
+SCROLL=0; HSCROLL=0; FLASH=""; FLASH_UNTIL=0; FLASH_BG=""
+paint() {
+  local rows cols hn fn bn budget max shown status pad="" ML="<" MR=">"
+  [ "${BARCHR:-unicode}" = ascii ] || { ML=$'\342\200\271'; MR=$'\342\200\272'; }
+  rows="${KDASH_LINES:-$( (tput lines 2>/dev/null || echo "${LINES:-40}") )}"
+  cols="${KDASH_COLUMNS:-$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )}"
+  if [ "$cols" -lt 60 ] || [ "$rows" -lt 12 ]; then
+    printf '\033[H kdash: terminal %sx%s is too small\n need at least 60x12 (80x24 recommended)\n\n %s %s  ns %s\n q quits, resize to continue\033[J' "$cols" "$rows" "$(date +%H:%M:%S)" "${TZ_NAME:-}" "$NS"
+    return
+  fi
+  hn=$(wc -l < "$HDRF"); fn=$(wc -l < "$FTRF"); bn=$(wc -l < "$BODYF")
+  budget=$(( rows - hn - fn - 1 ))
+  [ "$budget" -lt 3 ] && budget=3
+  max=$(( bn - budget )); [ "$max" -lt 0 ] && max=0
+  [ "$SCROLL" -gt "$max" ] && SCROLL=$max
+  [ "$SCROLL" -lt 0 ] && SCROLL=0
+  [ "$HSCROLL" -lt 0 ] && HSCROLL=0
+  shown=$(( bn - SCROLL )); [ "$shown" -gt "$budget" ] && shown=$budget; [ "$shown" -lt 0 ] && shown=0
+  local i=$shown; while [ "$i" -lt "$budget" ]; do pad="${pad}"$'\033[K\n'; i=$((i+1)); done
+  local now age nxt spin live bg="7" lt
+  now=$(date +%s); printf -v lt '%(%H:%M:%S)T' "$now" 2>/dev/null || lt="$(date +%H:%M:%S)"
+  # live clock: data age, next refresh, spec age, fetch time; stale data turns the bar red,
+  # a paused dashboard magenta
+  age=$(( TOP_AT > 0 ? now - TOP_AT : -1 )); nxt=$(( ${INTERVAL%.*} - (now - LAST) )); [ "$nxt" -lt 0 ] && nxt=0
+  if [ "${BARCHR:-unicode}" = ascii ]; then spin='*'; [ $(( now % 2 )) = 1 ] && spin='.'
+  else spin=$'\342\227\217'; [ $(( now % 2 )) = 1 ] && spin=$'\342\227\213'; fi   # heartbeat: filled / hollow dot
+  if [ "$PAUSED" = 1 ]; then live="PAUSED $(( now - PAUSED_AT ))s (P resumes)"; bg="45;97"
+  else
+    live="$spin LIVE $lt  next $(printf '%ss' "$nxt")"
+    if [ "${TOP_OK:-0}" != 1 ]; then live="$live  metrics FAILING"; bg="41;97"
+    elif [ "$age" -ge 0 ]; then live="$live  data ${age}s old"
+      [ "$age" -gt $(( ${INTERVAL%.*} * 3 + 10 )) ] && bg="41;97"; fi
+  fi
+  live="$live  spec $(( now - SPEC_AT ))/${SPEC_TTL}s  fetch $(( FETCH_MS / 1000 )).$(( FETCH_MS % 1000 / 100 ))s  poll ${INTERVAL}s  AUDITED"
+  local view_seg keys seg k hs=""
+  [ "$HSCROLL" -gt 0 ] && hs=" | col +$HSCROLL (h/l)"
+  if [ "$bn" -gt "$budget" ]; then view_seg="$VIEW | rows $((SCROLL+1))-$((SCROLL+shown))/$bn$hs"; else view_seg="$VIEW$hs"; fi
+  keys=("? help" "1-7 view" "n ns" "s sort($SORT$([ "$SORT_REV" = 1 ] && echo ' rev'))" "/ filter" "P pause" "x html" "q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme")
+  if [ -n "$FLASH" ] && [ "$now" -le "$FLASH_UNTIL" ]; then
+    status=" $FLASH | $live"; [ -n "$FLASH_BG" ] && bg="$FLASH_BG"
+  else FLASH_BG=""; status=" $live"; fi
+  # drop the least useful live details first when the terminal is narrow
+  if [ "${#status}" -gt $(( cols - ${#view_seg} - 3 )) ]; then status="${status/  spec $(( now - SPEC_AT ))\/${SPEC_TTL}s/}"; fi
+  if [ "${#status}" -gt $(( cols - ${#view_seg} - 3 )) ]; then status="${status/  poll ${INTERVAL}s/}"; fi
+  [ $(( ${#status} + ${#view_seg} + 3 )) -le "$cols" ] && status="$status | $view_seg"
+  seg=" |"; for k in "${keys[@]}"; do [ $(( ${#status} + ${#seg} + ${#k} + 2 )) -le "$cols" ] || break; seg="$seg $k "; done
+  [ "$seg" != " |" ] && status="$status$seg"
+  if [ "${#status}" -gt "$cols" ]; then status="${status:0:$(( cols - 1 ))}>"; else printf -v status '%-*s' "$cols" "$status"; fi
+  [ "$COLOR" = 1 ] && status=$'\033['"${bg}m${status}"$'\033[0m'
+  {
+    printf '\033[H'
+    LC_ALL=C awk -v w="$cols" -v off=0 -v ml="$ML" -v mr="$MR" "$CLIP_AWK" "$HDRF"
+    sed -n "$((SCROLL+1)),$((SCROLL+budget))p" "$BODYF" | LC_ALL=C awk -v w="$cols" -v off="$HSCROLL" -v ml="$ML" -v mr="$MR" "$CLIP_AWK"
+    printf '%s' "$pad"
+    LC_ALL=C awk -v w="$cols" -v off=0 -v ml="$ML" -v mr="$MR" "$CLIP_AWK" "$FTRF"
+    printf '%s\033[K\033[J' "$status"
+  } > "$TMPD/frame"
+  cat "$TMPD/frame"
+}
+
+cycle_sort() {
+  case "$SORT" in
+    cpu) SORT=mem ;; mem) SORT=cpupct ;; cpupct) SORT=mempct ;;
+    mempct) SORT=restarts ;; restarts) SORT=name ;; *) SORT=cpu ;;
+  esac
+}
+next_view() {
+  case "$VIEW" in pods) VIEW=nodes ;; nodes) VIEW=workloads ;; workloads) VIEW=ip ;; ip) VIEW=mem ;; mem) VIEW=io ;; io) VIEW=alerts ;; *) VIEW=pods ;; esac
+}
+# every live action goes to the audit log; scrolling / panning are not logged
+audit_key() {
+  case "$1" in
+    j|k|' '|f|b|g|G|h|l|0|$'\033') return 0 ;;
+    1|2|3|4|5|6|7|$'\t'|v) audit VIEW "view=$VIEW" ;;
+    s|o) audit SORT "key=$SORT reverse=$SORT_REV view=$VIEW" ;;
+    w) audit GROUP "grouped=$GROUP" ;;
+    p) audit PODS_ONLY "pods_only=$PODS_ONLY" ;;
+    d) audit DETAIL "detail=$DETAIL" ;;
+    r) audit REFRESH "re-read requested" ;;
+    x|e) audit REPORT_REQUEST "key=$1 result=$(printf '%s' "$out" | tail -1)" ;;
+    /) audit FILTER "filter=$FILTER" ;;
+    n) [ "$NS" != "$AK_NS" ] || audit NS_PICK_CANCEL "stayed on $NS" ;;
+    a) audit NODES_SCOPE "all_nodes=$ALL_NODES" ;;
+    P) audit PAUSE "paused=$PAUSED" ;;
+    +|=|-|_) audit INTERVAL "poll=${INTERVAL}s" ;;
+    Z) audit ZOOM "zoom=$ZOOM" ;;
+    c) audit GRAPHS "pods_graphs=${POD_GRAPHS:-1}" ;;
+    z) audit WINDOW "window=$TWIN" ;;
+    T) audit THEME "theme=$THEME" ;;
+    '?') audit HELP "view=$VIEW" ;;
+    *) audit KEY "key=$(printf '%q' "$1")" ;;
+  esac
+}
+flash() { FLASH="$1"; FLASH_BG=""; FLASH_UNTIL=$(( $(date +%s) + ${2:-4} )); }
+# new critical session events (OOMKilled, CrashLoop, NotReady node ...) raise a red alert in the
+# status bar for 30 s; --bell / KDASH_BELL=1 also rings the terminal bell
+EV_SEEN=-1
+check_alerts() {
+  [ "${SESSION_ON:-0}" = 1 ] && [ -f "$SDIR/events.tsv" ] || return 0
+  local n msg c k o t
+  n=$(wc -l < "$SDIR/events.tsv"); [ "$EV_SEEN" -lt 0 ] && EV_SEEN=$n
+  [ "$n" -gt "$EV_SEEN" ] || return 0
+  msg=$(awk -F'\t' -v s="$EV_SEEN" 'NR > s && $2 == "bad" { c++; k = $3; o = $4; t = $1 } END { if (c) printf "%d|%s|%s|%s", c, k, o, t }' "$SDIR/events.tsv")
+  EV_SEEN=$n
+  [ -n "$msg" ] || return 0
+  IFS='|' read -r c k o t <<< "$msg"
+  printf -v t '%(%H:%M:%S)T' "$t" 2>/dev/null || t=""
+  flash "ALERT $t $k $o$([ "$c" -gt 1 ] && printf ' (+%d more critical)' $((c - 1)))  - 5 MEMORY / x report" 30
+  FLASH_BG="41;97;1"; ALERTS=$(( ${ALERTS:-0} + c ))
+  audit ALERT "kind=$k object=$o new_critical=$c"
+  [ "${KDASH_BELL:-0}" = 1 ] && printf '\a'
+}
+# ? key: what the view on screen shows, how to read it, and every key
+set_interval() {      # + / - step through 1 2 3 5 10 15 30 60 seconds
+  local steps=(1 2 3 5 10 15 30 60) i cur="${INTERVAL%.*}"
+  for i in "${!steps[@]}"; do [ "${steps[$i]}" -ge "$cur" ] && break; done
+  if [ "$1" = up ]; then [ "${steps[$i]}" -gt "$cur" ] || i=$((i + 1)); else i=$((i - 1)); fi
+  [ "$i" -lt 0 ] && i=0; [ "$i" -gt 7 ] && i=7
+  INTERVAL="${steps[$i]}"
+}
+cycle_window() {
+  case "$TWIN" in all) TWIN=15m ;; 15m) TWIN=1h ;; 1h) TWIN=6h ;; 6h) TWIN=24h ;; *) TWIN=all ;; esac
+  WIN_S="$(win_secs "$TWIN")"
+}
+show_help() {
+  local b=$'\033[1m' d=$'\033[2m' n=$'\033[0m'
+  [ "$COLOR" = 1 ] || { b=""; d=""; n=""; }
+  printf '\033[H\033[2J'
+  printf '%skdash %s - help for the %s view%s   (any key returns)      author %s\n\n' "$b" "$KDASH_VERSION" "$VIEW" "$n" "$KDASH_AUTHOR"
+  case "$VIEW" in
+    pods) cat <<'H'
+ PODS - every pod and container of the namespace, live usage against what it asked for.
+   Health line (every view): ready pods, restarts, OOM risk, OOMKilled, pods without a memory
+               limit, CPU / memory against limits, degraded / rolling workloads, events of 15 min.
+   Grouped by workload (Deployment / StatefulSet / ...): the workload line is the sum of its pods.
+   ACTUAL      CPU in millicores (1000m = 1 core) and memory in MiB, measured by metrics-server.
+               T = trend since the last poll: up / down / flat.
+   ASSIGNED    requests (reserved for scheduling) and limits (hard cap) from the pod spec.
+   UTILISATION used as % of request and of limit. Red at >= 90% of the limit:
+               CPU is throttled, memory is about to be OOM-killed.
+   RDY / RST   ready containers / all containers, and restarts.
+   Detail line CPU and memory sparkline of the pod (last 40 session samples + now; memory
+               coloured by % of its limit, pk = peak), node, pool, pod IP, QoS class, status
+               and the last exit reason (OOMKilled ...).
+   Timeline    namespace CPU and memory over the session (z window, c hides the graphs).
+H
+    ;;
+    nodes) cat <<'H'
+ NODE POOLS - where the namespace runs, and how it compares with the cluster.
+   Summary     this namespace / the cluster (or the namespaces you can read, when you have
+               no cluster-wide rights) / the namespace share of the cluster.
+   Graphs      per pool: left = this namespace, right = everyone (or, without cluster-wide
+               rights, this namespace against its own limits). Full block = used, medium
+               shade = requested but not used, light shade = free allocatable.
+   Zoom        small shares are magnified (zoom x2..x100 shown); % values are always true.
+               Z switches to true scale. "i node metrics for X of Y nodes" = NotReady nodes
+               report no usage; cluster / pool "used" covers the nodes that do.
+   Nodes       nodes running the namespace, grouped by pool [nodes running it / nodes in pool].
+               nsUsed / nsReq / nsLim = this namespace on the node, alloc = node allocatable,
+               %al = namespace share, node% = whole node used (node metrics), clReq% = all
+               requests on the node. OTHER NODES lists the rest (a hides it).
+   Namespaces  usage (pod metrics) and requests of every namespace - or, with namespace rights
+               only, of every namespace you can read (checked with auth can-i, read in
+               parallel, KDASH_NS_SCAN = 30). "namespace share of all N namespaces you can
+               read" = this namespace against all of them. --compare ns1,ns2 sets the list.
+H
+    ;;
+    workloads) cat <<'H'
+ WORKLOADS - each Deployment / StatefulSet / DaemonSet / CronJob with its pods.
+   READY       ready / desired replicas from the workload object (pods ready / pods if the
+               object cannot be read).   UPD = replicas already on the newest spec.
+   STATUS      OK, SINGLE (one replica), HA_RISK (all replicas on one node), SKEWED (uneven
+               spread), DEGRADED (fewer ready than desired), ROLLING (rollout running),
+               SCALED_TO_0, UNSCHEDULED, NOT_READY, PER_NODE (DaemonSet).
+   Pods        under each workload: status, ready, node, CPU, memory, restarts, IP, image.
+   Spread      matrix of pods per worker node (N1, N2 ... are listed below it).
+H
+    ;;
+    ip) cat <<'H'
+ IP POOL - the addresses the namespace holds.
+   Pod IPs     every pod IP with node and workload; HOST_NETWORK = uses the node IP,
+               DUPLICATE = same IP on two pods, NO_IP = not started / not scheduled.
+   Subnets     observed /24 pod subnets.  Node IP blocks: node IP, podCIDR, addresses used.
+   Services    ClusterIP, external / load-balancer addresses and ports.
+H
+    ;;
+    mem) cat <<'H'
+ MEMORY - live memory of the namespace.
+   Top         used / request / limit, CPU for comparison, the chart window
+               (start -> end in this host's clock and time zone).
+   Timeline    memory and CPU over time: bars coloured by % of limit, = limit line,
+               - request line, start / middle / end times, ! critical and ^ warning
+               events under the axis, now / min / avg / max with the time of the peak.
+               z cycles the window: all since start, 15m, 1h, 6h, 24h.
+   Events      the newest session events in the window (restarts, OOMKilled, status).
+   Heatmap     one row per pod, one column per time slice of the window: shade and colour =
+               % of the memory limit (< 50 / < 75 / < 90 / >= 90), ! = restart in that slice.
+   Forecast    pods whose memory grows: growth per hour, time left until the limit
+               and the clock time it would be reached (linear trend, KDASH_FORECAST_WINDOW).
+   Nodes       namespace memory per worker node against allocatable, with other namespaces.
+   Pods        sorted by the sort key (memory used, % of limit, name, restarts).
+   OOM risk    >= 90% of the memory limit.  OOMKilled = last container exit was an OOM kill.
+H
+    ;;
+    alerts) cat <<'H'
+ ALERTS - every section on one live page: what is wrong right now and what to run.
+   Verdict     CRITICAL / WARNING / HEALTHY, counts, NEW alerts and alerts cleared in 5 min.
+   Sections    PODS, MEMORY, NODES, WORKLOADS, IP, TRAFFIC with their key numbers; the dot is
+               red (critical), magenta (warning) or green.
+   Alerts      critical first, then NEW (first seen in the last 30 s), then by section.
+               AGE = how long the alert has been active. LIVE VALUE = the number that fired
+               the rule now; TREND = memory / CPU of the pod over the session.
+               The line under each alert is the kubectl command to run next.
+   Rules       pods: CrashLoop / image / pending / not ready / restarts or OOMKilled in 5 min /
+               CPU >= 90% of limit; memory: >= 90% (critical) or 80% of limit, limit reached
+               within 6 h (forecast), pods without limit, namespace >= 90% of its limits;
+               nodes: NotReady, cordoned, memory >= 90 / 80%, CPU >= 90%; workloads: degraded,
+               unscheduled, HA risk, rolling; IP: duplicate, no IP, pod CIDR >= 90% used;
+               traffic: node NIC >= 100 MiB/s, node IOPS >= 3000, a pod with >= 50% of the
+               namespace traffic, a pod traffic spike (3x the previous sample).
+   Thresholds  KDASH_ALERT_MEM (default 90), KDASH_ALERT_NET_MBPS (100), KDASH_ALERT_IOPS (3000).
+   Cleared     alerts that stopped firing in the last 5 minutes, with how long they lasted.
+   Top         live top 5 pods by memory % of limit, CPU % of limit and traffic.
+H
+    ;;
+    io) cat <<'H'
+ NET & DISK IO - traffic and disk activity, per worker node and per pod.
+   in / out    bytes per second received (ingress) and sent (egress).
+   Timeline    namespace network in / out and disk read / write over time (host clock),
+               with event markers; z cycles the window.
+   disk        container filesystem read / write bytes per second and operations per second.
+   ns%         share of the node traffic caused by this namespace.
+   Source      Prometheus (--prom-url, --prom-svc, or found in the namespace; needs
+               services/proxy) or the kubelet (needs nodes/proxy). Rates need two samples.
+   Sort keys   cpu = network in+out, mem = disk read+write, cpupct = in, mempct = out,
+               restarts = IOPS, name.
+H
+    ;;
+  esac
+  cat <<'H'
+
+ KEYS
+   1-7 / Tab  switch view          n  pick another namespace     /  pod name filter (regex)
+   s          next sort key        o  reverse the sort order     w  PODS grouped / flat
+   j k arrows scroll               h l arrows  pan left / right  g G  top / bottom
+   d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
+   x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
+   P          pause / resume live  + -  poll interval 1..60 s
+   T          colour theme         z  chart window (all/15m/1h/6h/24h)
+   Z          NODE POOLS auto zoom / true scale     c  PODS timeline graphs on / off
+   ?          this help            q  quit
+   Times are this host's clock (date): TZ=UTC kdash shows UTC.
+   Audit       this session is audited: every action, namespace
+               switch, report and kubectl call is logged. kdash --audit shows the log.
+   Edges       a dim > at the right edge = the line continues (l pans), < at the left = panned.
+   Alerts      a new critical event (OOMKilled, CrashLoop, NotReady node ...) turns the status
+               bar red for 30 s; --bell also rings the terminal bell.
+   Status bar  LIVE clock, next refresh, data age, spec age, fetch time and poll interval.
+               It turns red when metrics fail or the data is stale, magenta while paused.
+
+ COLOURS   green = fine / this namespace     blue = information / other namespaces
+           magenta = warning / requested      bold red = critical     grey = secondary / free
+H
+  printf '\033[?25l'
+  IFS= read -rsn1 _k </dev/tty || true
+  printf '\033[2J'
+}
+cycle_theme() { case "$THEME" in safe) THEME=dark ;; dark) THEME=light ;; light) THEME=mono ;; *) THEME=safe ;; esac; }
+
+#-- namespace picker -------------------------------------------------------------
+# Full-screen list of namespaces (API list, or what kdash can infer when listing is
+# forbidden). Every namespace on screen is checked with "kubectl auth can-i list pods"
+# (a self-review every account may run), so namespaces you cannot open are marked and
+# refused inside the picker instead of failing after the switch.
+# Type a number, a name, or text to filter; A = all namespaces.
+# Sets PICKED (a namespace, or "*" for all); returns 1 when cancelled.
+declare -A NSACC=(); PICK_MSG=""
+ns_access_probe() {     # namespaces... -> NSACC[ns] = yes | no | ? (parallel, cached)
+  local d="$TMPD/nsacc" ns n=0 todo=()
+  mkdir -p "$d"
+  for ns in "$@"; do [ -n "${NSACC[$ns]:-}" ] || todo+=("$ns"); done
+  [ "${#todo[@]}" -gt 0 ] || return 0
+  for ns in "${todo[@]}"; do
+    ( r="$("${KC[@]}" auth can-i list pods -n "$ns" --request-timeout=8s 2>/dev/null | head -1)"
+      case "$r" in yes) printf 'yes' ;; no) printf 'no' ;; *) printf '?' ;; esac > "$d/$ns" ) &
+    n=$((n + 1)); [ $((n % 12)) = 0 ] && wait
+  done
+  wait
+  for ns in "${todo[@]}"; do NSACC["$ns"]="$(cat "$d/$ns" 2>/dev/null || echo '?')"; done
+  return 0
+}
+ns_pick() {
+  local rows cols q="" line i n w ncol nrow maxr k cur items=() show=() recent=() cnt name mark src total msg="$PICK_MSG" acc nok=0 nno=0 b="" d="" g="" r="" x=""
+  PICK_MSG=""
+  declare -A PODS=() SEEN=()
+  [ "$COLOR" = 1 ] && { b=$'\033[1m'; d=$'\033[90m'; g=$'\033[32m'; r=$'\033[31m'; x=$'\033[0m'; }
+  rows="${KDASH_LINES:-$( (tput lines 2>/dev/null || echo "${LINES:-40}") )}"
+  cols="${KDASH_COLUMNS:-$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )}"
+  printf '\033[H\033[2J%s Select namespace%s   context %s - reading the namespace list ...\n' "$b" "$x" "$CTX_NAME"
+  list_namespaces > "$TMPD/nslist" 2>/dev/null
+  if [ "$NSLIST_STATE" = ok ]; then src="namespace list from the API"
+  else src="namespace list ${NSLIST_STATE} - showing namespaces kdash could infer; you can type any name"; fi
+  [ -s "$MODEL/cluster_ns.tsv" ] && while IFS=$'\t' read -r name cnt _; do [ "$name" = NAMESPACE ] || PODS["$name"]="$cnt"; done < "$MODEL/cluster_ns.tsv"
+  mapfile -t recent < <(recent_ns)
+  for name in ${recent[@]+"${recent[@]}"}; do grep -qx -- "$name" "$TMPD/nslist" && [ -z "${SEEN[$name]:-}" ] && { items+=("$name"); SEEN["$name"]=r; }; done
+  while IFS= read -r name; do [ -n "$name" ] && [ -z "${SEEN[$name]:-}" ] && { items+=("$name"); SEEN["$name"]=1; }; done < "$TMPD/nslist"
+  total=${#items[@]}
+  # access check: the first NS_PROBE_MAX namespaces (recent ones first), in parallel
+  if [ "${KDASH_NS_PROBE:-1}" = 1 ] && [ "$total" -gt 0 ]; then
+    printf '%s checking your access to %d namespace(s) ...%s\n' "$d" "$(( total < ${KDASH_NS_PROBE_MAX:-80} ? total : ${KDASH_NS_PROBE_MAX:-80} ))" "$x"
+    ns_access_probe "${items[@]:0:${KDASH_NS_PROBE_MAX:-80}}"
+    # readable namespaces first (recent order kept), then unknown, then no access
+    local ord=()
+    for acc in yes '?' no; do for name in "${items[@]}"; do [ "${NSACC[$name]:-?}" = "$acc" ] && ord+=("$name"); done; done
+    items=("${ord[@]}")
+  fi
+  for name in ${items[@]+"${items[@]}"}; do case "${NSACC[$name]:-?}" in yes) nok=$((nok + 1)) ;; no) nno=$((nno + 1)) ;; esac; done
+  while :; do
+    show=()
+    for name in ${items[@]+"${items[@]}"}; do [ -z "$q" ] || [[ "${name,,}" == *"${q,,}"* ]] && show+=("$name"); done
+    n=${#show[@]}; w=8
+    for name in ${show[@]+"${show[@]}"}; do [ $(( ${#name} + 16 )) -gt "$w" ] && w=$(( ${#name} + 16 )); done
+    ncol=$(( cols / w )); [ "$ncol" -lt 1 ] && ncol=1; [ "$ncol" -gt 6 ] && ncol=6
+    maxr=$(( rows - 10 )); [ "$maxr" -lt 3 ] && maxr=3
+    nrow=$(( (n + ncol - 1) / ncol )); [ "$nrow" -gt "$maxr" ] && nrow=$maxr
+    printf '\033[H\033[2J%s Select namespace%s   context %s   now: %s%s%s\n' "$b" "$x" "$CTX_NAME" "$b" "$NS" "$x"
+    printf ' %s.  %d namespaces%s.\n' "$src" "$total" "$([ -n "$q" ] && printf ', %d match "%s"' "$n" "$q")"
+    printf ' %saccess%s %s%d you can open%s  %s%d no access%s  %s(checked with kubectl auth can-i list pods)%s    * current  + recent  (n) pods\n\n' \
+      "$d" "$x" "$g" "$nok" "$x" "$r" "$nno" "$x" "$d" "$x"
+    for ((i = 0; i < nrow; i++)); do
+      line=""
+      for ((k = 0; k < ncol; k++)); do
+        cur=$(( k * nrow + i )); [ "$cur" -lt "$n" ] || continue
+        name="${show[$cur]}"; mark=" "; [ "${SEEN[$name]}" = r ] && mark="+"; [ "$name" = "$NS" ] && mark="*"
+        cnt="${PODS[$name]:-}"; [ -n "$cnt" ] && cnt="($cnt)"
+        case "${NSACC[$name]:-?}" in
+          yes) line="$line$(printf '%4d %s %s%-*s%s %-7s' $((cur + 1)) "$mark" "$g" $(( w - 16 )) "$name" "$x" "$cnt")" ;;
+          no)  line="$line$(printf '%4d %s %s%-*s%s %-7s' $((cur + 1)) "$mark" "$r" $(( w - 16 )) "$name x" "$x" "$cnt")" ;;
+          *)   line="$line$(printf '%4d %s %-*s %-7s' $((cur + 1)) "$mark" $(( w - 16 )) "$name" "$cnt")" ;;
+        esac
+      done
+      printf '%s\n' "$line"
+    done
+    [ "$n" -gt $(( nrow * ncol )) ] && printf '   ... %d more - type part of a name to narrow the list\n' $(( n - nrow * ncol ))
+    [ "$n" -eq 0 ] && printf '   no namespace matches "%s" - Enter clears the filter, or type the exact name\n' "$q"
+    [ -n "$msg" ] && printf '\n %s%s%s\n' "$r" "$msg" "$x"
+    msg=""
+    printf '\n\033[?25h number | name | text to filter | A = all namespaces | Enter = %s | q = cancel > ' "$([ -n "$q" ] && echo 'clear filter' || echo 'keep current')"
+    IFS= read -r line </dev/tty || { printf '\033[?25l'; return 1; }
+    printf '\033[?25l'
+    line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
+    PICKED=""
+    case "$line" in
+      "") [ -n "$q" ] && { q=""; continue; }; return 1 ;;
+      q|Q) return 1 ;;
+      A|'*') PICKED="*" ;;
+    esac
+    if [ -z "$PICKED" ] && [[ "$line" =~ ^[0-9]+$ ]]; then
+      if [ "$line" -ge 1 ] && [ "$line" -le "$n" ]; then PICKED="${show[$((line - 1))]}"
+      else msg="no entry $line on the list"; continue; fi
+    fi
+    if [ -z "$PICKED" ]; then
+      for name in ${items[@]+"${items[@]}"}; do [ "$name" = "$line" ] && PICKED="$name"; done
+    fi
+    if [ -z "$PICKED" ]; then
+      q="$line"; show=()
+      for name in ${items[@]+"${items[@]}"}; do [[ "${name,,}" == *"${q,,}"* ]] && show+=("$name"); done
+      if [ "${#show[@]}" -eq 1 ]; then PICKED="${show[0]}"
+      elif [ "${#show[@]}" -eq 0 ] && [[ "$line" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] && [ "${#line}" -le 63 ]; then
+        PICKED="$line"; q=""            # not listed (list forbidden / partial): check it
+      else continue; fi
+    fi
+    [ "$PICKED" = "*" ] && return 0
+    ns_access_probe "$PICKED"
+    if [ "${NSACC[$PICKED]}" = no ]; then
+      msg="no access to $PICKED - your account cannot list pods there (kubectl auth can-i list pods -n $PICKED = no). Pick another namespace."
+      q=""; continue
+    fi
+    return 0
+  done
+}
+
+# switch the whole dashboard to another namespace ("*" = all namespaces).
+# The new namespace is read first; on failure nothing changes and SWITCH_ERR says why.
+switch_ns() {
+  local new="$1" err="$TMPD/switch.err" tmp="$TMPD/spec.sw" scope
+  SWITCH_ERR=""
+  if [ "$new" = "*" ]; then scope=(--all-namespaces); else scope=(-n "$new"); fi
+  [ "$new" = "*" ] && [ "$ALL_NS" = 1 ] && return 0
+  [ "$new" = "$NS" ] && [ "$ALL_NS" = 0 ] && return 0
+  if ! "${KC[@]}" "${scope[@]}" get pods --request-timeout=20s -o jsonpath="$SPEC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
+    SWITCH_ERR="$(sed -n '1{s/^Error from server ([A-Za-z]*): //;p}' "$err" | cut -c1-140)"; [ -n "$SWITCH_ERR" ] || SWITCH_ERR="kubectl failed"
+    audit NS_SWITCH_DENIED "from=$NS to=${new/#\*/all-namespaces} reason=$SWITCH_ERR"
+    rm -f "$tmp"; return 1
+  fi
+  session_close
+  if [ "$new" = "*" ]; then ALL_NS=1; NS="(all namespaces)"; SCOPE=(--all-namespaces)
+  else ALL_NS=0; NS="$new"; SCOPE=(-n "$NS"); remember_ns "$NS"; fi
+  NS_FALLBACK=0
+  mv -f "$tmp" "$SPEC"; SPEC_AT=0
+  : > "$TOPC"; : > "$TOPP"; : > "$SVC"; : > "$HIST"; : > "$NHIST"; rm -f "$TMPD/forecast.tsv" "$TMPD/heat.tsv"; SVC_STATE="unread"
+  io_reset
+  refresh_spec; SPEC_AT=$(date +%s); refresh_top
+  build_model
+  NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv")
+  session_start && session_tick
+  audit NS_SWITCH "to=$NS pods=${NPODS:-0}"
+  return 0
+}
+
+#-- main ------------------------------------------------------------------------
+[ "$DO_SREP" = 1 ] && { session_report_main "$SREP_ARG"; exit 0; }
+if [ "$PICK_NS" = 1 ]; then
+  [ "$ALTSCR" = 1 ] && printf '\033[?1049h'
+  # a pick is only taken when its pods can be read; otherwise back to the list with the reason
+  picked_ok=0
+  while ns_pick start; do
+    if [ "$PICKED" = "*" ]; then sc=(--all-namespaces); else sc=(-n "$PICKED"); fi
+    printf '\033[H\033[2J opening %s ...\n' "${PICKED/#\*/all namespaces}"
+    if "${KC[@]}" "${sc[@]}" get pods --request-timeout=20s -o name > /dev/null 2> "$TMPD/pick.err"; then picked_ok=1; audit NS_PICK "namespace=${PICKED/#\*/all-namespaces}"; break; fi
+    audit NS_PICK_DENIED "namespace=${PICKED/#\*/all-namespaces} reason=$(sed -n '1{s/^Error from server ([A-Za-z]*): //;p}' "$TMPD/pick.err" | cut -c1-140)"
+    [ "$PICKED" != "*" ] && NSACC["$PICKED"]=no
+    PICK_MSG="cannot open ${PICKED/#\*/all namespaces}: $(sed -n '1{s/^Error from server ([A-Za-z]*): //;p}' "$TMPD/pick.err" | cut -c1-140)"
+  done
+  if [ "$picked_ok" = 1 ]; then
+    if [ "$PICKED" = "*" ]; then ALL_NS=1; NS="(all namespaces)"; SCOPE=(--all-namespaces)
+    else NS="$PICKED"; SCOPE=(-n "$NS"); fi
+    NS_FALLBACK=0
+  elif [ -z "$NS" ]; then NS="default"; SCOPE=(-n "$NS"); NS_FALLBACK=1; fi
+  [ "$ALTSCR" = 1 ] && printf '\033[?1049l'
+  printf '\033[?25h'
+fi
+refresh_spec; refresh_top
+[ -s "$SPEC" ] || [ "$SPEC_OK" = 1 ] || {
+  [ -s "$TMPD/spec.err" ] && sed 's/^/kdash: /' "$TMPD/spec.err" >&2
+  fail "could not read pods (context ${CTX_NAME}, namespace ${NS}). Check access and kubeconfig."
+}
+# only namespaces that could be opened go to the recent list
+[ "$INTERACTIVE" = 1 ] && [ "$ALL_NS" = 0 ] && [ "${NS_FALLBACK:-0}" = 0 ] && remember_ns "$NS"
+build_model || fail "could not build the data model (awk failed)"
+if [ "$ONCE" = 1 ] || [ "$DO_SNAP" = 1 ] || [ "$DO_REPORT" = 1 ]; then
+  [ "$IO_WAIT" -gt 0 ] && { io_wait_once; build_model; }
+else
+  io_tick                     # live: detect the IO source and take the first sample
+fi
+NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv")
+
+if [ "$DO_SNAP" = 1 ]; then
+  case "$SNAP_SEL" in
+    ""|report|ns|n)
+      # one HTML with every tab; history from a kdash session on this
+      # context / namespace that is still recording (sampled in the last 15 min)
+      _sp="$REPORT_DIR/sessions/kdash_$(safe_name "$CTX_NAME")_$(safe_name "$NS")_"
+      _sd="$(ls -1dt "$_sp"* 2>/dev/null | head -1)"
+      if [ -n "$_sd" ] && [ -f "$_sd/ns.tsv" ] && [ $(( $(date +%s) - $(awk -F'\t' '{ l = $1 } END { print l + 0 }' "$_sd/ns.tsv") )) -le 900 ]; then :; else _sd=""; fi
+      printf 'kdash namespace report  (%s / %s)%s
+' "$CTX_NAME" "$NS" "${_sd:+  history from running session ${_sd##*/}}"
+      namespace_report "$_sd" | sed 's/^/  /'; rc=${PIPESTATUS[0]} ;;
+    *)
+      printf 'kdash HTML snapshots  (%s / %s)\n' "$CTX_NAME" "$NS"
+      take_snapshots "$SNAP_SEL" | sed 's/^/  /'; rc=${PIPESTATUS[0]} ;;
+  esac
+  [ "$rc" = 0 ] && printf '  index   %s/index.html\n' "$REPORT_DIR"
+  [ "$rc" = 0 ] || exit "$rc"
+  [ "${NPODS:-0}" -gt 0 ] || exit 3
+  exit 0
+fi
+if [ "$DO_REPORT" = 1 ]; then
+  make_report || fail "report generation failed"
+  [ "${NPODS:-0}" -gt 0 ] || exit 3
+  exit 0
+fi
+
+if [ "$ONCE" = 1 ]; then
+  if [ "$OUTFMT" != text ]; then
+    emit_tables "$OUTFMT" "$VIEW"
+  elif [ "$VIEW" = all ]; then
+    first=1
+    for v in pods nodes workloads ip mem io alerts; do
+      [ "$first" = 1 ] || printf '\n'; first=0
+      render_text_view "$v"
+    done
+  else
+    render_text_view "$VIEW"
+  fi
+  [ "${NPODS:-0}" -gt 0 ] || exit 3
+  exit 0
+fi
+[ "$VIEW" = all ] && VIEW=pods
+session_start && session_tick
+if [ ! -t 0 ] || [ ! -t 1 ]; then          # piped: plain frames, no keys
+  # stop when the reader goes away (kdash | head, closed pager)
+  while :; do render; cat "$HDRF" "$BODYF" "$FTRF" 2>/dev/null || exit 0; sleep "$INTERVAL"; fetch; done
+fi
+
+if ! render; then
+  printf 'kdash: could not render a frame (see errors above)\n' >&2
+  exit 1
+fi
+if [ "${NPODS:-0}" -eq 0 ] && [ "$INTERACTIVE" = 0 ]; then
+  printf 'kdash: no pods matched "%s" in namespace %s (context %s)\n' "$FILTER" "$NS" "$CTX_NAME" >&2
+  exit 3
+fi
+[ "${NPODS:-0}" -eq 0 ] && flash "no pods match \"$FILTER\" in $NS - n picks another namespace, / changes the filter" 15
+
+LOOPED=1
+ALERT_STATE="$TMPD/alerts.state"; : > "$ALERT_STATE"
+[ -n "$FLASH" ] || { flash "AUDITED session $AUDIT_SID - every action is logged; use is your responsibility (kdash --about)" 10; FLASH_BG="45;97"; }
+while IFS= read -rsn1 -t 0.01 _flush; do :; done
+exec 3>&2 2>"$ERRLOG"
+[ "$ALTSCR" = 1 ] && printf '\033[?1049h'
+printf '\033[?25l\033[2J'
+LAST=$(date +%s); check_alerts
+while :; do
+  now=$(date +%s)
+  if [ "$PAUSED" = 0 ] && [ $((now - LAST)) -ge "${INTERVAL%.*}" ]; then fetch; LAST=$now; check_alerts; fi
+  render; paint
+  if [ "${BASH_VERSINFO[0]:-3}" -lt 4 ]; then sleep "$INTERVAL"; continue; fi
+  IFS= read -rsn1 -t 0.4 key || key=""
+  out=""; AK_NS="$NS"
+  case "$key" in
+    1) VIEW=pods; SCROLL=0; HSCROLL=0 ;; 2) VIEW=nodes; SCROLL=0; HSCROLL=0 ;; 3) VIEW=workloads; SCROLL=0; HSCROLL=0 ;;
+    4) VIEW=ip; SCROLL=0; HSCROLL=0 ;; 5) VIEW=mem; SCROLL=0; HSCROLL=0 ;; 6) VIEW=io; SCROLL=0; HSCROLL=0 ;;
+    7) VIEW=alerts; SCROLL=0; HSCROLL=0 ;;
+    $'\t'|v) next_view; SCROLL=0; HSCROLL=0 ;;
+    j) SCROLL=$((SCROLL+1)) ;;
+    k) SCROLL=$((SCROLL-1)) ;;
+    ' '|f) SCROLL=$((SCROLL+10)) ;;
+    b) SCROLL=$((SCROLL-10)) ;;
+    g) SCROLL=0 ;;
+    G) SCROLL=999999 ;;
+    h) HSCROLL=$((HSCROLL-20)) ;;
+    l) HSCROLL=$((HSCROLL+20)) ;;
+    0) HSCROLL=0 ;;
+    p) PODS_ONLY=$((1-PODS_ONLY)); SCROLL=0 ;;
+    d) DETAIL=$((1-DETAIL)); SCROLL=0 ;;
+    s) cycle_sort; SCROLL=0; flash "sort: $SORT ($([ "$SORT_REV" = 1 ] && echo 'reversed' || echo 'highest first / A-Z')) - o reverses" 4 ;;
+    o) SORT_REV=$((1 - SORT_REV)); SCROLL=0; flash "sort order: $([ "$SORT_REV" = 1 ] && echo 'lowest first / Z-A' || echo 'highest first / A-Z')" 4 ;;
+    w) GROUP=$((1 - GROUP)); SCROLL=0; flash "PODS: $([ "$GROUP" = 1 ] && echo 'grouped by workload' || echo 'flat list')" 4 ;;
+    r) SPEC_AT=0; LAST=0 ;;
+    x) flash "writing namespace report (all tabs + history) ..." 30; paint
+       if out="$(namespace_report "$SDIR" 2>&1)"; then flash "report: $(printf '%s\n' "$out" | tail -1)" 12
+       else flash "report failed: $(printf '%s' "$out" | tail -1)" 8; fi ;;
+    e) printf '\033[%d;1H\033[K\033[?25h\033[7m HTML: Enter = one file, all tabs + history | c current view (%s) | 1-6 views (e.g. 256) | a all 6 separate | b full bundle > \033[0m' \
+         "${KDASH_LINES:-$(tput lines 2>/dev/null || echo 40)}" "$VIEW"
+       IFS= read -r sel </dev/tty || sel=""
+       printf '\033[?25l'
+       sel="$(printf '%s' "$sel" | tr -d ' ')"
+       if [ -z "$sel" ] || [ "$sel" = n ]; then
+         flash "writing namespace report (all tabs + history) ..." 30; paint
+         if out="$(namespace_report "$SDIR" 2>&1)"; then flash "report: $(printf '%s\n' "$out" | tail -1)" 12
+         else flash "report failed: $(printf '%s' "$out" | tail -1)" 8; fi
+       elif [ "$sel" = b ]; then
+         flash "writing full report bundle ..." 30; paint
+         if out="$(make_report 2>&1)"; then flash "bundle: ${REPORT_HTML:-$(printf '%s\n' "$out" | sed -n 's/^  html *//p')}" 10
+         else flash "export failed: $(printf '%s' "$out" | tail -1)" 8; fi
+       else
+         flash "writing HTML snapshot(s) ..." 60; paint
+         if out="$(take_snapshots "$sel" 2>&1)"; then
+           n=$(printf '%s\n' "$out" | grep -c '\.html$')
+           if [ "$n" -gt 1 ]; then flash "$n HTML snapshots in $REPORT_DIR (index.html lists them)" 10
+           else flash "snapshot: $(printf '%s\n' "$out" | tail -1)" 10; fi
+         else flash "snapshot failed: $(printf '%s' "$out" | tail -1)" 8; fi
+       fi ;;
+    /) printf '\033[%d;1H\033[K\033[?25h filter (pod regex, empty = all): ' "${KDASH_LINES:-$(tput lines 2>/dev/null || echo 40)}"
+       IFS= read -r nf </dev/tty || nf=""
+       printf '\033[?25l'
+       [ -n "$nf" ] || nf='.*'
+       printf '' | grep -E -- "$nf" >/dev/null 2>&1; rc=$?
+       if [ "$rc" -le 1 ]; then FILTER="$nf"; : > "$HIST"; : > "$NHIST"; rm -f "$TMPD/forecast.tsv"; build_model; session_reset_state; NPODS=1; SCROLL=0; flash "filter: $FILTER" 3
+       else flash "invalid regex: $nf" 4; fi ;;
+    n) while ns_pick live; do
+         flash "opening namespace ${PICKED/#\*/all namespaces} ..." 30; printf '\033[2J'; paint
+         if switch_ns "$PICKED"; then SCROLL=0; HSCROLL=0; flash "namespace $NS - ${NPODS:-0} pods (history restarted for this namespace)" 8; break; fi
+         [ "$PICKED" != "*" ] && NSACC["$PICKED"]=no
+         PICK_MSG="cannot open ${PICKED/#\*/all namespaces}: $SWITCH_ERR - still on $NS"
+       done
+       PICK_MSG=""; printf '\033[2J' ;;
+    a) ALL_NODES=$((1 - ALL_NODES)); SCROLL=0
+       flash "NODE POOLS: $([ "$ALL_NODES" = 1 ] && echo 'every node' || echo 'only nodes running this namespace')" 4 ;;
+    P) if [ "$PAUSED" = 1 ]; then PAUSED=0; LAST=0; flash "live again - refreshing every ${INTERVAL}s" 4
+       else PAUSED=1; PAUSED_AT=$(date +%s); flash "paused - data frozen at $(date +%H:%M:%S); P resumes (views, sort, scroll and reports still work)" 6; fi ;;
+    +|=) set_interval up; flash "poll every ${INTERVAL}s" 3 ;;
+    -|_) set_interval down; flash "poll every ${INTERVAL}s" 3 ;;
+    Z) ZOOM=$((1 - ZOOM)); flash "NODE POOLS bars: $([ "$ZOOM" = 1 ] && echo 'auto zoom (small shares magnified, % values true)' || echo 'true scale')" 5 ;;
+    c) POD_GRAPHS=$(( 1 - ${POD_GRAPHS:-1} )); flash "PODS graphs $([ "$POD_GRAPHS" = 1 ] && echo on || echo off) (c toggles)" 3 ;;
+    z) cycle_window; [ "${SESSION_ON:-0}" = 1 ] && heat_build "$SDIR" "$TMPD/heat.tsv" "$WIN_S"; flash "chart window: $( [ "$TWIN" = all ] && echo 'all since kdash started' || echo "last $TWIN" )" 4 ;;
+    T) cycle_theme; printf '\033[2J'; flash "colour theme: $THEME" 4 ;;
+    '?') show_help ;;
+    q) audit QUIT "key q"; cleanup; exit 0 ;;
+    $'\033') IFS= read -rsn2 -t 0.05 seq || seq=""
+             case "$seq" in '[A') SCROLL=$((SCROLL-1)) ;; '[B') SCROLL=$((SCROLL+1)) ;;
+                            '[C') HSCROLL=$((HSCROLL+20)) ;; '[D') HSCROLL=$((HSCROLL-20)) ;;
+                            '[5') SCROLL=$((SCROLL-10)) ;; '[6') SCROLL=$((SCROLL+10)) ;; esac ;;
+  esac
+  [ -n "$key" ] && audit_key "$key"
+done
+KDASH_PAYLOAD_EOF
+
+bash -n "$tmp" || { rm -f "$tmp"; die "embedded payload failed its syntax check; nothing installed"; }
+install -m 0755 "$tmp" "$BIN" || { rm -f "$tmp"; die "could not install $BIN"; }
+rm -f "$tmp"
+command -v restorecon >/dev/null 2>&1 && restorecon -F "$BIN" 2>/dev/null
+say "installed  $BIN  (v$VERSION)"
+
+#-- 2. remove older kdash copies ------------------------------------------------
+BIN_REAL="$(readlink -f -- "$BIN")"
+NEED_SUDO=""
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  [ "$f" = "$BIN_REAL" ] && continue
+  v="$(kdash_file_version "$f")"
+  if [ "$v" = unknown ]; then vt="(no version, pre-4)"; else vt="v$v"; fi
+  if is_v4 "$v"; then
+    say "found      $f (v$v, current generation - left in place)"
+    continue
+  fi
+  if [ "$KEEP_OLD" = 1 ]; then
+    warn "older kdash $vt at $f kept (--keep-old); it may shadow v4 in some shells"
+    continue
+  fi
+  if [ -w "$(dirname "$f")" ]; then
+    mkdir -p "$OLDDIR" && chmod 700 "$OLDDIR"
+    dest="$OLDDIR/$(printf '%s' "$f" | tr '/' '_').v$v.$STAMP"
+    if mv -f -- "$f" "$dest"; then say "removed    older kdash $vt from $f (kept as $dest)"
+    else warn "could not move $f"; fi
+  else
+    NEED_SUDO="${NEED_SUDO}${NEED_SUDO:+ }$f"
+    warn "older kdash $vt at $f is root-owned (not writable by $(id -un)) - see the sudo command below"
+  fi
+done < <(find_kdash_files)
+
+#-- 3. site config, root only -------------------------------------------------
+if [ "$AS_ROOT" = 1 ]; then
+  if [ -e /etc/kdash.conf ]; then
+    say "kept       /etc/kdash.conf (already present)"
+  else
+    cat > /etc/kdash.conf <<'KDASH_CONF_EOF'
+# kdash configuration
+# Load order (later wins): /etc/kdash.conf -> $XDG_CONFIG_HOME/kdash.conf
+#                          -> environment -> command-line flags
+# Plain shell assignments only; this file is sourced.
+
+# Refresh behaviour
+KDASH_INTERVAL=2            # usage poll period, seconds
+KDASH_SPEC_TTL=30           # pods / nodes / services re-read period, seconds
+
+# Fills in the namespace for users whose context binds none.
+# Format: "context=namespace context=namespace"
+KDASH_NS_MAP="example-cluster-1=demo-namespace-0001 example-cluster-2=demo-namespace-0003 example-cluster-3=demo-namespace-0002"
+
+# Defaults applied when no flag is given
+#KDASH_NS=default
+#KDASH_CONTEXT=prod-cluster
+#KDASH_FILTER='^web-'
+#KDASH_KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+#KDASH_KUBECTL="kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"
+
+# v4 views and reports
+#KDASH_VIEW=pods                 # pods | nodes | workloads | ip | mem
+#KDASH_POOL_LABEL=example.com/nodepool    # node label naming the pool (default: auto)
+#KDASH_TOPN=15                   # rows in "top pods" lists
+#KDASH_HISTORY=60                # samples kept for memory sparklines
+#KDASH_NODE_METRICS=1            # 0 = never call kubectl top node
+#KDASH_REPORT_DIR=$HOME/kdash_reports
+
+# Force frame size instead of asking the terminal
+#KDASH_COLUMNS=160
+#KDASH_LINES=50
+
+# Audit (author Dheeraj V). Every run is logged; these only choose where.
+#KDASH_AUDIT_CENTRAL=/var/log/kdash   # central log, created by this installer (1733)
+#KDASH_AUDIT_REQUIRED=1               # refuse to run when no audit file is writable
+#KDASH_AUDIT_SYSLOG=1                 # copy every event to syslog (logger -t kdash)
+KDASH_CONF_EOF
+    chmod 0644 /etc/kdash.conf
+    say "installed  /etc/kdash.conf"
+  fi
+# central audit log: every user can append his own file, nobody can list or read others
+if [ "$AS_ROOT" = 1 ]; then
+  if [ -d /var/log/kdash ]; then say "kept       /var/log/kdash (central audit log)"
+  elif mkdir -p /var/log/kdash && chmod 1733 /var/log/kdash; then
+    say "created    /var/log/kdash (central audit log, mode 1733 - for tamper-proof logs: chattr +a /var/log/kdash/*.log)"
+  else warn "could not create /var/log/kdash - kdash audits to ~/kdash_reports/audit and syslog only"; fi
+fi
+fi
+
+#-- 4. per-user namespace map (only when none is configured anywhere) -----------
+if ! grep -qs '^[[:space:]]*KDASH_NS_MAP=' /etc/kdash.conf "$USERCONF"; then
+  mkdir -p "$(dirname "$USERCONF")"
+  {
+    [ -s "$USERCONF" ] || printf '# kdash user configuration (sourced; plain assignments only)\n'
+    printf '%s\n' '# context -> namespace, used when the kubeconfig context binds no namespace'
+    printf '%s\n' 'KDASH_NS_MAP="example-cluster-1=demo-namespace-0001 example-cluster-2=demo-namespace-0003 example-cluster-3=demo-namespace-0002"'
+  } >> "$USERCONF"
+  say "updated    $USERCONF (context -> namespace map)"
+fi
+
+#-- 5. completion -------------------------------------------------------------
+if "$BIN" --completion bash > "$COMPFILE" 2>/dev/null; then
+  [ "$AS_ROOT" = 1 ] && chmod 0644 "$COMPFILE"
+  say "installed  $COMPFILE"
+else
+  rm -f "$COMPFILE"; warn "could not write $COMPFILE (completion skipped)"
+fi
+
+#-- 6. shell integration ----------------------------------------------------------
+if [ "$DO_SHELL" = 1 ]; then
+  cat > "$SHELLFILE.new" <<KDASH_SHELL_EOF
+# kdash v$VERSION shell integration - written by kdash-bundle.sh; re-run it to update.
+# Loaded from the END of ~/.bashrc and ~/.bash_profile so it wins over any
+# older kdash function, alias or binary defined earlier in start-up.
+KDASH_BIN="$BIN"
+_kd_p=":\$PATH:"                                     # put the v4 directory first on PATH
+while case "\$_kd_p" in *":$PREFIX:"*) true ;; *) false ;; esac; do _kd_p="\${_kd_p//":$PREFIX:"/:}"; done
+_kd_p="\${_kd_p#:}"; PATH="$PREFIX:\${_kd_p%:}"; PATH="\${PATH%:}"; export PATH; unset _kd_p
+[ -r "$COMPFILE" ] && . "$COMPFILE"
+
+# Drop older kdash definitions (platform CLI functions, aliases from kdash 3.x).
+for _kd_n in kdash kdtop kdmem kdwatch kdnodes kdwl kdip kdmemlive kdreport kdpods kdsnap kdhist kdns kdio; do
+  unalias "\$_kd_n" 2>/dev/null; unset -f "\$_kd_n" 2>/dev/null
+done
+unset _kd_n
+hash -r 2>/dev/null
+
+# Namespace of this shell: _ns() helper when present, else \$KDASH_NS / \$PLATFORM_NS.
+_kdash_ns() {
+  local ns=""
+  declare -F _ns >/dev/null 2>&1 && ns="\$(_ns 2>/dev/null)"
+  [ -n "\$ns" ] || ns="\${KDASH_NS:-\${PLATFORM_NS:-}}"
+  printf '%s' "\$ns"
+}
+# Run the v4 binary; add -n <shell namespace> unless -n / -A was given.
+_kdash_run() {
+  local a ns
+  for a in "\$@"; do
+    case "\$a" in -n|--namespace|-A|--all-namespaces|-h|--help|-V|--version|--completion|--install) "\$KDASH_BIN" "\$@"; return; esac
+  done
+  ns="\$(_kdash_ns)"
+  if [ -n "\$ns" ]; then "\$KDASH_BIN" "\$@" -n "\$ns"; else "\$KDASH_BIN" "\$@"; fi
+}
+
+kdash()     { _kdash_run "\$@"; }                       # always kdash v4
+kdpods()    { _kdash_run -v pods "\$@"; }               # 1 pods vs requests / limits
+kdnodes()   { _kdash_run -v nodes "\$@"; }              # 2 node pools per worker node
+kdwl()      { _kdash_run -v workloads "\$@"; }          # 3 pods per node + HA spread
+kdip()      { _kdash_run -v ip "\$@"; }                 # 4 namespace IP pool
+kdmemlive() { _kdash_run -v mem "\$@"; }                # 5 live memory dashboard
+kdio()      { _kdash_run -v io "\$@"; }                 # 6 network / disk IO per node and pod
+kdreport()  { _kdash_run --report "\$@"; }              # HTML + TSV/CSV bundle
+kdsnap()    { _kdash_run --snapshot \${1:+"\$1"} "\${@:2}"; }   # one HTML, all tabs (+ history if kdash is live); all | 25 | nodes,mem = separate files
+kdhist()    { _kdash_run --session-report "\${1:-latest}"; }
+kdns()      { _kdash_run --pick-ns "\$@"; }                # pick the namespace from a list, then live   # all-tabs report + history of the last live run
+kdtop()     { _kdash_run -s cpupct "\$@"; }             # worst CPU vs limit first
+kdmem()     { _kdash_run -s mempct "\$@"; }             # worst memory vs limit first
+kdwatch()   { _kdash_run -i 1 -R 10 "\$@"; }            # tight poll during a rollout
+# kd is often "kubectl describe" in platform shells - only claim it when it is free.
+if ! alias kd >/dev/null 2>&1 && ! declare -F kd >/dev/null 2>&1 && ! type -P kd >/dev/null 2>&1; then
+  kd() { _kdash_run "\$@"; }
+fi
+KDASH_SHELL_EOF
+  if bash -n "$SHELLFILE.new" 2>/dev/null; then
+    mv -f "$SHELLFILE.new" "$SHELLFILE"; chmod 0644 "$SHELLFILE"
+    say "installed  $SHELLFILE"
+  else
+    rm -f "$SHELLFILE.new"; die "generated $SHELLFILE failed its syntax check"
+  fi
+
+  # one marker block at the very END of each start-up file
+  put_block() {   # file
+    local f="$1" new bk
+    [ -e "$f" ] || : > "$f"
+    bk="$f.bak.kdash.$STAMP"
+    cp -p "$f" "$bk" || die "could not back up $f"
+    new="$(mktemp)" || die "mktemp failed"
+    sed "/^$BEGIN_MARK\$/,/^$END_MARK\$/d" "$f" > "$new"
+    {
+      printf '\n%s\n' "$BEGIN_MARK"
+      printf '%s\n' "# Added by kdash-bundle.sh v$VERSION. Keep this block LAST in the file so the"
+      printf '%s\n' "# v4 dashboard wins over older kdash definitions. Run --uninstall to remove."
+      printf '%s\n' "[ -r \"$SHELLFILE\" ] && . \"$SHELLFILE\""
+      printf '%s\n' "$END_MARK"
+    } >> "$new"
+    if bash -n "$new" 2>/dev/null; then
+      cat "$new" > "$f"; rm -f "$new"
+      say "updated    $f  (backup: $bk)"
+    else
+      rm -f "$new"; warn "generated $f failed its syntax check; your file was left untouched"
+    fi
+  }
+  put_block "$RC"
+  if [ ! -f "$PROFILE" ] && [ ! -f "$HOME/.bash_login" ] && [ ! -f "$HOME/.profile" ]; then
+    # no login profile at all: login shells would never read ~/.bashrc
+    printf '%s\n' '# created by the kdash installer: login shells load ~/.bashrc' '[ -f ~/.bashrc ] && . ~/.bashrc' > "$PROFILE" &&
+      say "created    $PROFILE  (login shells load ~/.bashrc)"
+  fi
+  [ -f "$PROFILE" ] && put_block "$PROFILE"
+fi
+
+#-- 7. verify -----------------------------------------------------------------
+say ""
+say "--- verification ---"
+"$BIN" --version >/dev/null 2>&1 && say "[OK]   $("$BIN" --version)  ($BIN)"
+defs="$(find_kdash_defs)"
+if [ -n "$defs" ]; then
+  say "[INFO] older kdash shell definitions found - now overridden at shell start-up:"
+  printf '%s\n' "$defs" | sed 's/^/         /'
+  say "       delete them from your platform CLI source when convenient (e.g. its heredoc)."
+fi
+if [ -n "$NEED_SUDO" ]; then
+  say "[WARN] root-owned older kdash still on disk (shadowed by the shell function, but"
+  say "       scripts and other users may still run it). Remove it with:"
+  for f in $NEED_SUDO; do say "         sudo mv $f $f.pre-v4.old"; done
+  say "       or install v4 for every user:  sudo bash $0"
+fi
+if command -v kubectl >/dev/null 2>&1; then
+  say "[OK]   kubectl: $(command -v kubectl)"
+  ns="$(kubectl config view --minify -o jsonpath='{..namespace}' 2>/dev/null)"
+  ctx="$(kubectl config current-context 2>/dev/null)"
+  if [ -n "$ns" ]; then say "[OK]   current namespace: $ns"
+  else
+    mapped="$(KDASH_NS_MAP=""; for _cf in /etc/kdash.conf "$USERCONF"; do [ -r "$_cf" ] && . "$_cf"; done
+              for p in $KDASH_NS_MAP; do case "$p" in "$ctx="*) printf '%s' "${p#*=}"; break ;; esac; done)"
+    if [ -n "$mapped" ]; then say "[OK]   context $ctx binds no namespace - KDASH_NS_MAP gives $mapped"
+    else say "[WARN] context ${ctx:-?} binds no namespace - use -n NS, your _ns helper, or KDASH_NS_MAP"; ns=""; fi
+    ns="${ns:-$mapped}"
+  fi
+  if kubectl top pod ${ns:+-n "$ns"} --no-headers >/dev/null 2>&1; then
+    say "[OK]   pod metrics readable${ns:+ in $ns} - live usage will populate"
+  else
+    say "[WARN] kubectl top pod failed${ns:+ in $ns} - usage shows \"-\" until metrics.k8s.io is readable"
+  fi
+  if kubectl get nodes -o name >/dev/null 2>&1; then
+    say "[OK]   nodes readable - node pools and allocatable will populate"
+  else
+    say "[WARN] get nodes not permitted - node pools fall back to pod placement"
+  fi
+  if kubectl top node --no-headers >/dev/null 2>&1; then
+    say "[OK]   node metrics readable - whole-node memory and other-namespace share shown"
+  else
+    say "[WARN] kubectl top node not permitted - node bars show this namespace only"
+  fi
+else
+  say "[WARN] kubectl not in PATH - kdash needs it at runtime"
+fi
+[ "${BASH_VERSINFO[0]:-0}" -ge 4 ] && say "[OK]   bash ${BASH_VERSION%%(*}" || say "[WARN] bash 4+ needed for interactive keys"
+PROBE_RC=0
+if [ "$DO_SHELL" = 1 ]; then report_probe; PROBE_RC=$?; fi
+say ""
+if [ "$PROBE_RC" = 2 ]; then
+  PROBE_RC=0
+  say "Done. Load it in THIS terminal with:   exec bash -l"
+elif [ "$PROBE_RC" = 0 ]; then
+  say "Done. Load it in THIS terminal with:   exec bash -l"
+else
+  say "A new login shell still resolves an older kdash. Something re-defines it AFTER"
+  say "the kdash block (for example an platform CLI file sourced at the very end of"
+  say ".bash_profile, or a regenerated .bashrc). Add this as the LAST line there:"
+  say "    [ -r \"$SHELLFILE\" ] && . \"$SHELLFILE\""
+  say "then check again with:   bash $0 --check"
+fi
+say ""
+say "  kdash / kdpods     1 pods vs requests and limits (live)"
+say "  kdnodes            2 node pools: namespace memory / CPU per worker node"
+say "  kdwl               3 pods per worker node by workload + HA spread"
+say "  kdip               4 namespace IP pool"
+say "  kdmemlive          5 live memory dashboard"
+say "  kdio               6 network in / out and disk IO per worker node and pod"
+say "  kdsnap [sel]       one HTML with every tab (+ live history); sel all | 25 | nodes,mem = separate files"
+say "  kdns               pick a namespace from a list (also key n while running)"
+say "  kdhist [DIR]       all tabs + full history of the last live kdash run (after you quit)"
+say "  kdreport           combined HTML + TSV/CSV bundle under ~/kdash_reports"
+say "  kdtop  kdmem  kdwatch        kdash --help"
+say ""
+say "author: Dheeraj V    audit: kdash --about | --audit | --audit-verify | --audit-report"
+say "DISCLAIMER: provided as is. The person running kdash is solely responsible for its use and"
+say "for having authorisation to read the clusters / namespaces. Every run, user action, report and"
+say "kubectl call is audited (~/kdash_reports/audit, /var/log/kdash when present, syslog)."
+say "keys: 1-7/Tab view (7 = live ALERTS)  ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / filter  h/l pan  j/k scroll  q quit"
+exit "$PROBE_RC"
