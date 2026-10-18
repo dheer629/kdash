@@ -3,7 +3,12 @@
 # This is the companion of scripts/redact-run.sh for data that is already
 # committed; the mapping file itself must never be committed.
 #
-#   bash scripts/redact-history.sh --map ~/map.tsv [--branch main]
+#   bash scripts/redact-history.sh --map ~/map.tsv [--branch main] [--detect FILE]
+#
+# --detect FILE lists the names that mark a commit as not yet redacted (default:
+# every name in the mapping). Give it when your mapping also rewrites text you
+# keep on purpose - for example an author credit - so the tip is not mistaken for
+# an old commit and stripped of its images.
 #
 # What the rewrite does in every commit
 #   * replaces the mapped names in text files and in gzip-compressed captures
@@ -18,21 +23,25 @@
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
 
-MAP=""; BRANCH=main
+MAP=""; BRANCH=main; DETECT=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --map)    MAP="${2:?}"; shift 2 ;;
     --branch) BRANCH="${2:?}"; shift 2 ;;
-    -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
+    --detect) DETECT="${2:?}"; shift 2 ;;
+    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
 done
 [ -n "$MAP" ] && [ -f "$MAP" ] || { printf 'a mapping file is required: --map FILE\n' >&2; exit 2; }
+[ -z "$DETECT" ] || [ -f "$DETECT" ] || { printf 'detect file not found: %s\n' "$DETECT" >&2; exit 2; }
 [ -z "$(git status --porcelain --untracked-files=no)" ] || { printf 'tracked files are modified - commit first\n' >&2; exit 1; }
 
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 SED="$WORK/redact.sed"; PATTERNS="$WORK/patterns"; FILTER="$WORK/filter.sh"
 : > "$SED"; : > "$PATTERNS"
+# the names that mark a commit as pre-redaction
+[ -z "$DETECT" ] || grep -v '^[[:space:]]*$' "$DETECT" > "$PATTERNS"
 {
   printf '#!/usr/bin/env bash\nset -uo pipefail\n'
   printf 'sed -f %q </dev/null >/dev/null 2>&1 || { echo "invalid redaction rules" >&2; exit 1; }\n' "$SED"
@@ -55,7 +64,7 @@ while IFS= read -r line; do
   case "$line" in ''|'#'*) continue ;; esac
   from="${line%%$'\t'*}"; to="${line#*$'\t'}"
   [ "$from" = "$line" ] && continue
-  printf '%s\n' "$from" >> "$PATTERNS"
+  [ -n "$DETECT" ] || printf '%s\n' "$from" >> "$PATTERNS"
   esc_from="$(printf '%s' "$from" | sed 's/[][\\.^$*+?(){}|/]/\\&/g')"
   esc_to="$(printf '%s' "$to" | sed 's/[\\&/]/\\&/g')"
   printf 's/%s/%s/g\n' "$esc_from" "$esc_to" >> "$SED"
