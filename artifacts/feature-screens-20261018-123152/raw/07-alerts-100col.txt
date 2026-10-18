@@ -1,0 +1,40 @@
+════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.12.0   1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS
+    2026-10-18 18:02:34 IST
+ ctx devops-admin@local-cluster   ns orders-service-e2e   match .*   sort cpu ▼ high first
+ ! pods 14/27 ready rst 1514 oom 0 oomk 0 nolim 3 cpu 4m 0% lim mem 25Mi 1% lim wl 23 ev15m ! 0 ^ 1
+ ALERTS   live critical summary of every section, with the action for each signal
+   CRITICAL    11 critical   11 warning   0 new   0 cleared in 5 min   rules run every refresh (5s)›
+────────────────────────────────────────────────────────────────────────────────────────────────────
+► SECTIONS ────────────────────────────────────────────────────────────────────────────────────────
+  ● PODS       14/27 ready  rst 1514  10 crit 1 warn
+  ● MEMORY     25Mi / 3392Mi lim  0.7%  0 >=90%  3 no-limit  ░░░░░░░░░
+  ● NODES      1 hosting  0 NotReady  max node mem 27.2% dev
+  ● WORKLOADS  23  0 degraded  3 HA risk  0 rolling
+  ● IP         19 pod IPs  8 no IP  0 duplicate  8 svc
+  ● TRAFFIC    in 921B/s out 1.0K/s  disk r 0B/s w 0B/s  ███__
+
+► ACTIVE ALERTS  22 (11 critical, 11 warning)   critical first, NEW first, action under each ──────
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE
+  ! NEW    PODS      orders-crash                   CrashLoopBackOff   restarts 393, ready 0/1
+                   ↳ kubectl -n orders-service-e2e logs orders-crash --previous --all-containers --›
+  ! NEW    PODS      orders-image                   ImagePullBackOff   image / config error
+                   ↳ kubectl -n orders-service-e2e describe pod orders-image
+  ! NEW    PODS      orders-job-failed-9hwvb        Failed             node dev
+                   ↳ kubectl -n orders-service-e2e describe pod orders-job-failed-9hwvb
+  ! NEW    PODS      orders-job-failed-p5fdq        Failed             node dev
+                   ↳ kubectl -n orders-service-e2e describe pod orders-job-failed-p5fdq
+  ! NEW    PODS      orders-kafka                   Failed             node dev
+                   ↳ kubectl -n orders-service-e2e describe pod orders-kafka
+  ! NEW    PODS      orders-liveness                CrashLoopBackOff   restarts 757, ready 0/1
+                   ↳ kubectl -n orders-service-e2e logs orders-liveness --previous --all-containers›
+  ! NEW    PODS      orders-longimage               ErrImageNeverPull  image / config error
+                   ↳ kubectl -n orders-service-e2e describe pod orders-longimage
+  ! NEW    PODS      orders-missing-config          CreateContainerCo~ restarts 0, ready 0/1
+                   ↳ kubectl -n orders-service-e2e logs orders-missing-config --previous --all-cont›
+  ! NEW    PODS      orders-oom                     Failed             node dev
+                   ↳ kubectl -n orders-service-e2e describe pod orders-oom
+  ! NEW    PODS      orders-postgres                Failed             node dev
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  T›
+ ● LIVE 18:02:34  next 5s  data 0s old  fetch 0.3s  poll 5s  AUDITED | alerts | rows 1-29/80

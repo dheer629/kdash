@@ -134,7 +134,7 @@ one-true-awk and busybox awk), coreutils.
 ```bash
 kdash                                   # pods, current namespace, live
 kdash -v nodes                          # node pools, live
-kdash -v workloads '^order-svc-1-'   # where those pods run + HA spread
+kdash -v workloads '^order-svc-1-'      # where those pods run + HA spread
 kdash -v ip --once                      # IP pool snapshot
 kdash -v mem -i 5                       # memory dashboard, 5 s poll
 kdash -v all --once > snapshot.txt      # every view as plain text
@@ -143,7 +143,7 @@ kdash --report                          # HTML + text + TSV + CSV bundle in ~/kd
 kdash -A -v mem                         # every readable namespace
 kdash -n                                # pick the namespace from a list first
 kdash -v nodes --theme light            # darker colours for a white terminal
-kdash -v io --prom-svc prometheus:9090   # network / disk IO from the namespace Prometheus
+kdash -v io --prom-svc prometheus:9090        # network / disk IO from the namespace Prometheus
 kdash -s mem --reverse                  # smallest memory first
 ```
 
@@ -265,7 +265,7 @@ suffixes are folded back to the Deployment / CronJob name), then the spread tabl
 ▸ worker-a1  pool pool-app   pods 4 (ready 4)   cpu 4740m   mem 12.6Gi / req 9408Mi   21.5% of node
     DaemonSet   apps-log-shipper                                 1   1/1    0      30      180
     Deployment  order-svc-1-manager                              1   1/1    1    1710     3740
-    StatefulSet order-svc-1-fileserver6-master                2   2/2    3    3000     9000
+    StatefulSet order-svc-1-file-server-01-master                2   2/2    3    3000     9000
 ▸ worker-a2  pool pool-app   pods 3 (ready 3)   cpu 558m   mem 2038Mi / req 1600Mi   3.4% of node
     Deployment  order-svc-1-utility                              1   0/1    0       -        -
 
@@ -335,7 +335,7 @@ namespace holds. IP blocks are derived from live pod IPs (Calico allocates /26 p
 ...
 ► MEMORY GROWTH FORECAST  (linear trend of the last 30m, a restart starts the trend again) ───────────────────
   POD                                  NODE         NOW    LIMIT   GROWTH/h  %LIM  LIMIT IN     REACHES LIMIT AT   TREND
-  order-svc-1-fileserver6-master-1  worker-a1  3803Mi   8192Mi    +35.3Gi  46.4  7m17s        06:51:15           steady (r2 1.00, 79 samples)
+  order-svc-1-file-server-01-master-1  worker-a1  3803Mi   8192Mi    +35.3Gi  46.4  7m17s        06:51:15           steady (r2 1.00, 79 samples)
 ```
 
 - **Time charts** (memory and CPU, side by side on wide terminals): one bar per column, coloured
@@ -395,7 +395,7 @@ samples:
 
 1. Prometheus `/federate` (plain text, cAdvisor series): `--prom-url URL` (read with curl from the
    management host), `--prom-svc [ns/]service:port` (through the API service proxy, needs
-   `services/proxy`), or auto-detected in the namespace (`prometheus`, `prometheus`,
+   `services/proxy`), or auto-detected in the namespace (`prometheus`,
    `victoria-metrics`, `thanos-query` services).
 2. The kubelet cAdvisor endpoint of the nodes that run the namespace (needs `nodes/proxy`).
 

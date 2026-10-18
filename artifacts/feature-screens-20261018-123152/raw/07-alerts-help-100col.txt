@@ -1,0 +1,40 @@
+   Verdict     CRITICAL / WARNING / HEALTHY, counts, NEW alerts and alerts cleared in 5 min.
+   Sections    PODS, MEMORY, NODES, WORKLOADS, IP, TRAFFIC with their key numbers; the dot is
+               red (critical), magenta (warning) or green.
+   Alerts      critical first, then NEW (first seen in the last 30 s), then by section.
+               AGE = how long the alert has been active. LIVE VALUE = the number that fired
+               the rule now; TREND = memory / CPU of the pod over the session.
+               The line under each alert is the kubectl command to run next.
+   Rules       pods: CrashLoop / image / pending / not ready / restarts or OOMKilled in 5 min /
+               CPU >= 90% of limit; memory: >= 90% (critical) or 80% of limit, limit reached
+               within 6 h (forecast), pods without limit, namespace >= 90% of its limits;
+               nodes: NotReady, cordoned, memory >= 90 / 80%, CPU >= 90%; workloads: degraded,
+               unscheduled, HA risk, rolling; IP: duplicate, no IP, pod CIDR >= 90% used;
+               traffic: node NIC >= 100 MiB/s, node IOPS >= 3000, a pod with >= 50% of the
+               namespace traffic, a pod traffic spike (3x the previous sample).
+   Thresholds  KDASH_ALERT_MEM (default 90), KDASH_ALERT_NET_MBPS (100), KDASH_ALERT_IOPS (3000).
+   Cleared     alerts that stopped firing in the last 5 minutes, with how long they lasted.
+   Top         live top 5 pods by memory % of limit, CPU % of limit and traffic.
+
+ KEYS
+   1-7 / Tab  switch view          n  pick another namespace     /  pod name filter (regex)
+   s          next sort key        o  reverse the sort order     w  PODS grouped / flat
+   j k arrows scroll               h l arrows  pan left / right  g G  top / bottom
+   d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
+   x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
+   P          pause / resume live  + -  poll interval 1..60 s
+   T          colour theme         z  chart window (all/15m/1h/6h/24h)
+   Z          NODE POOLS auto zoom / true scale     c  PODS timeline graphs on / off
+   ?          this help            q  quit
+   Times are this host's clock (date): TZ=UTC kdash shows UTC.
+   Audit       this session is audited: every action, namespace
+               switch, report and kubectl call is logged. kdash --audit shows the log.
+   Edges       a dim > at the right edge = the line continues (l pans), < at the left = panned.
+   Alerts      a new critical event (OOMKilled, CrashLoop, NotReady node ...) turns the status
+               bar red for 30 s; --bell also rings the terminal bell.
+   Status bar  LIVE clock, next refresh, data age, spec age, fetch time and poll interval.
+               It turns red when metrics fail or the data is stale, magenta while paused.
+
+ COLOURS   green = fine / this namespace     blue = information / other namespaces
+           magenta = warning / requested      bold red = critical     grey = secondary / free
+

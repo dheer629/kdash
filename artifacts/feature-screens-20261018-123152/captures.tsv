@@ -1,0 +1,9 @@
+file	columns	rows	title	png
+raw/07-alerts-100col.ansi	100	40	kdash alerts view on a 100 column terminal - namespace orders-service-e2e	cli_7_alerts_100col.png
+raw/07-alerts-170col-early.ansi	170	50	kdash alerts view on a 170 column terminal - namespace orders-service-e2e	cli_7_alerts_170col.png
+raw/07-alerts-help-100col.ansi	100	40	kdash help screen for the alerts view (100 columns)	cli_7_alerts_help_narrow.png
+raw/07-alerts-170col-late.ansi	170	50	kdash alerts view later in the run - new and cleared alerts - namespace orders-service-e2e	cli_7_alerts_new_cleared.png
+raw/07-alerts-help-170col.ansi	170	50	kdash help screen for the alerts view	cli_7_alerts_help.png
+raw/audit-log.ansi	170	50	kdash audit log of this session	cli_audit_log.png
+raw/disclaimer-first-run.ansi	170	50	kdash first interactive run: the disclaimer gate	cli_disclaimer_first_run.png
+raw/disclaimer-declined.ansi	170	50	kdash first run declined: it exits without reading the cluster	cli_disclaimer_declined.png

@@ -1,0 +1,50 @@
+2026-10-18 18:01:52+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / START                mode=live view=pods filter=.* kubeconfig=/home/dh
+eer/.kube/config term=xterm-256color 100x40 argv=-c devops-admin@local-cluster -n orders-service-e2e -i 5
+2026-10-18 18:01:52+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / START                mode=live view=pods filter=.* kubeconfig=/home/dh
+eer/.kube/config term=xterm-256color 170x50 argv=-c devops-admin@local-cluster -n orders-service-e2e -i 5
+2026-10-18 18:02:27+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / VIEW                 view=alerts
+2026-10-18 18:02:27+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / VIEW                 view=alerts
+2026-10-18 18:02:40+0530 demo@node          local /dev/pts/5       devops-admin@local-cluster / HELP                 view=alerts
+2026-10-18 18:03:49+0530 demo@node          local /dev/pts/6       devops-admin@local-cluster / HELP                 view=alerts
+2026-10-18 18:03:57+0530 demo@node          local /dev/pts/4       - / -                        AUDIT_VIEW           n=40 all=0 grep=
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pane is dead (status 0, Sun Oct 18 12:33:57 2026)

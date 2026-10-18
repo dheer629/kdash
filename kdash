@@ -470,7 +470,7 @@ EXIT CODES
 EXAMPLES
   kdash                                  every pod, live
   kdash -v nodes                         node pools for the namespace, live
-  kdash -v workloads '^order-svc-1-'  where those pods run, HA spread
+  kdash -v workloads '^order-svc-1-'     where those pods run, HA spread
   kdash -v ip --once                     IP pool snapshot
   kdash -v mem -i 5                      memory dashboard, 5 s poll
   kdash -v all --once > snapshot.txt     every view as plain text

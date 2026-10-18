@@ -52,13 +52,57 @@ node names, operator and timestamps - so review them before publishing.
 cd samples/html && sha256sum -c SHA256SUMS
 ```
 
-## Earlier images kept at the top of samples/
+## The sample gallery at the top of samples/
 
-The PNG files directly in `samples/` (`cli_*.png`, `html_*.png`) predate this run and
-come from the repository history: they were taken with kdash 4.11.0 / 4.8.0 against
-a different, multi-node context (`example-cluster-1`, namespace `demo-test`). They are
-kept as historical examples of the dashboard on a production-like cluster. The
-samples of this run are only the ones under `cli/` and `html/`.
+`cli_*.png` are live CLI screens and `html_*.png` are pages of the HTML reports.
+Every one of them was produced from this project's own runs against the local WSL
+vcluster (context `devops-admin@local-cluster`), so the names inside them are the
+generic ones of that cluster and nothing else.
+
+| File | Shows | Made from |
+|---|---|---|
+| `cli_7_alerts_170col.png` | view 7 ALERTS on a 170x50 terminal | `artifacts/feature-screens-<run>/raw/07-alerts-170col-early.ansi` |
+| `cli_7_alerts_100col.png` | the same view on a narrow 100x40 terminal | `.../raw/07-alerts-100col.ansi` |
+| `cli_7_alerts_new_cleared.png` | the same view later in the run (new alerts, cleared counter) | `.../raw/07-alerts-170col-late.ansi` |
+| `cli_7_alerts_help.png` | the `?` help screen of view 7 | `.../raw/07-alerts-help-170col.ansi` |
+| `cli_7_alerts_help_narrow.png` | the same help screen at 100 columns | `.../raw/07-alerts-help-100col.ansi` |
+| `cli_audit_log.png` | `kdash --audit 40` of the session | `.../raw/audit-log.ansi` |
+| `cli_disclaimer_first_run.png` | the first-run disclaimer gate | `.../raw/disclaimer-first-run.ansi` |
+| `cli_disclaimer_declined.png` | declining it: kdash exits 5 without reading the cluster | `.../raw/disclaimer-declined.ansi` |
+| `cli_pods_audited_header.png` | view 1 PODS with the AUDITED header | `samples/cli/orders-service-e2e/01-pods.png` |
+| `cli_pods_timeline_sparklines.png` | view 1 with the timeline charts and trend sparklines | `samples/cli/ml-service-prod/01-pods.png` |
+| `cli_workloads_sparklines.png` | view 3 WORKLOADS with the per-replica sparklines | `samples/cli/gitops-core/03-workloads.png` |
+| `html_overview.png` | Overview of the all-tabs namespace report | browser screenshot of the report HTML |
+| `html_report_disclaimer_footer.png` | the same report down to its disclaimer footer | browser screenshot, tall window |
+| `html_pods_charts.png` | Pods tab of a snapshot report | browser screenshot |
+| `html_memory_charts.png` | Memory tab of a snapshot report | browser screenshot |
+| `html_workloads_charts.png` | Workloads tab of a snapshot report | browser screenshot |
+| `html_audit_report.png` | the audit report page | browser screenshot |
+
+`samples/SHA256SUMS` lists all of them. The CLI images are renders of saved tmux
+screens (not operating-system window screenshots) and the HTML images are
+headless-browser screenshots, both stated in the images themselves. Where the
+captured command had already finished - the audit table and the declined
+disclaimer - tmux prints its own `Pane is dead (status N)` line at the bottom of
+the pane: that is tmux's exit-status marker, not kdash output.
+
+Regenerate the gallery with:
+
+```bash
+# inside WSL Ubuntu, from the repository root
+bash scripts/capture-feature-screens.sh                  # live screens -> artifacts/feature-screens-<run>/
+bash scripts/compress-raw-captures.sh artifacts/feature-screens-<run>
+```
+
+```powershell
+# on Windows, from the repository root
+powershell -ExecutionPolicy Bypass -File scripts/make-sample-gallery.ps1 `
+  -RunDirectory artifacts/wsl-validation-<run-id> -FeatureDirectory artifacts/feature-screens-<run-id>
+```
+
+Earlier versions of this folder held sample images taken from a different,
+non-generic environment. They were removed and replaced by the gallery above,
+which comes entirely from the generic WSL vcluster runs recorded in `artifacts/`.
 
 ## Reproduce
 
