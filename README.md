@@ -30,6 +30,65 @@ Every view is live (no flicker, header and footer pinned, body scrolls), can be 
 once as text / TSV / CSV, and is exported to HTML. A live run records everything it
 sees, and `x` writes **one HTML file with every tab plus the history since kdash started**.
 
+## Screenshots
+
+Every screenshot below is a saved live screen from a recorded validation run
+(`kubectl` reads only, five minutes per namespace, three namespaces). The complete
+set - all seven views for all three namespaces plus the help screen, the audit
+table, a narrow terminal and the first-run disclaimer - is in
+[`samples/`](samples/README.md), and the raw evidence behind it is in
+[`artifacts/`](artifacts/README.md).
+
+### 7 ALERTS - the one page an operator keeps open
+
+<img src="samples/cli_7_alerts_170col.png" width="900" alt="kdash ALERTS view: verdict, per-section health lines and every alert with the kubectl action to run">
+
+Verdict (`CRITICAL` / `WARNING` / `HEALTHY`), one health line per section, then every
+critical and warning signal with its age, live value, trend and the `kubectl`
+command to run under it - followed by the live top consumers and recent events.
+
+### The other views, and the HTML report
+
+| | |
+|---|---|
+| **1 PODS** - pod and container usage against requests and limits, grouped by workload<br><img src="samples/cli_pods_audited_header.png" width="450" alt="kdash PODS view"> | **3 WORKLOADS** - replicas, rollout and the pods-per-node spread<br><img src="samples/cli_workloads_sparklines.png" width="450" alt="kdash WORKLOADS view"> |
+| **HTML report** - every tab plus the recorded history in one file, with filters and per-table CSV<br><img src="samples/html_overview.png" width="450" alt="kdash HTML namespace report"> | **Audit table** - `kdash --audit`: every run, action, report and kubectl call<br><img src="samples/cli_audit_log.png" width="450" alt="kdash audit table"> |
+
+### All seven views, on a namespace with real problems
+
+`orders-service-e2e` in the recorded run: 27 pods, 14 ready, a crash loop, an image
+error, an unschedulable pod and 1482 cumulative restarts.
+
+| View | What it answers | Screenshot |
+|---|---|---|
+| **1 PODS** | what each pod and container uses, against its requests and limits | <img src="samples/cli/orders-service-e2e/01-pods.png" width="430" alt="PODS view"> |
+| **2 NODE POOLS** | this namespace against the whole cluster, per pool and per node | <img src="samples/cli/orders-service-e2e/02-nodes.png" width="430" alt="NODE POOLS view"> |
+| **3 WORKLOADS** | ready vs desired replicas, rollout, and where the pods actually run | <img src="samples/cli/orders-service-e2e/03-workloads.png" width="430" alt="WORKLOADS view"> |
+| **4 IP POOL** | pod IPs, node CIDR blocks, subnets, services, missing or duplicate IPs | <img src="samples/cli/orders-service-e2e/04-ip.png" width="430" alt="IP POOL view"> |
+| **5 MEMORY** | live memory and CPU charts, OOM risk and the memory growth forecast | <img src="samples/cli/orders-service-e2e/05-mem.png" width="430" alt="MEMORY view"> |
+| **6 NET & DISK IO** | network in / out and disk read / write per node and per pod | <img src="samples/cli/orders-service-e2e/06-io.png" width="430" alt="NET and DISK IO view"> |
+| **7 ALERTS** | everything that needs attention now, with the action for each signal | <img src="samples/cli/orders-service-e2e/07-alerts.png" width="430" alt="ALERTS view"> |
+
+The same seven views are published for two quieter namespaces:
+[`ml-service-prod`](samples/cli/ml-service-prod) (4 pods) and
+[`gitops-core`](samples/cli/gitops-core) (7 pods).
+
+### Around the dashboard
+
+[help screen](samples/cli_7_alerts_help.png) ·
+[help at 100 columns](samples/cli_7_alerts_help_narrow.png) ·
+[100-column layout](samples/cli_7_alerts_100col.png) ·
+[alerts over time, NEW and cleared](samples/cli_7_alerts_new_cleared.png) ·
+[first-run disclaimer](samples/cli_disclaimer_first_run.png) ·
+[declined disclaimer](samples/cli_disclaimer_declined.png) ·
+[report footer with the disclaimer](samples/html_report_disclaimer_footer.png) ·
+[HTML audit report](samples/html_audit_report.png) ·
+[all HTML samples](samples/html) · [checksums](samples/SHA256SUMS)
+
+The names in these images are generic placeholders, and the images are renders of
+the saved terminal screens (not window captures): see
+[`artifacts/README.md`](artifacts/README.md#redaction-the-names-here-are-placeholders).
+
 ## Install / upgrade from 3.x
 
 ```bash
@@ -851,3 +910,18 @@ HTML reports: clearer data, easier hand-off.
 ## License
 
 MIT.
+
+## Author
+
+**Dheeraj V** - *Dheeraj Vishwakarma* - GitHub: [@demo629](https://github.com/demo629)
+
+- Author of kdash: one Bash file, seven views, read-only through `kubectl`, and every
+  run audited. The dashboard header (`by Dheeraj V`), `kdash --about`, the installer
+  and the HTML reports all name the same author.
+- Repository: <https://github.com/demo629/kdash> - issues and pull requests:
+  <https://github.com/demo629/kdash/issues>
+- The screenshots in this README come from the recorded runs published in
+  [`artifacts/`](artifacts/README.md); how they were captured, and what was redacted
+  before publication, is documented in [`samples/README.md`](samples/README.md) and
+  [`artifacts/README.md`](artifacts/README.md).
+- Licence: MIT (see above).
