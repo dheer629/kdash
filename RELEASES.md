@@ -4,11 +4,16 @@ Every kdash version is published as its own immutable GitHub Release, so you can
 download the exact version you want, or an older one, at any time:
 <https://github.com/dheer629/kdash/releases>
 
-| Version | Tag | What it adds |
-|---|---|---|
-| 4.13.1 | `v4.13.1` | installer summary names every view and key (no code change to the CLI) |
-| 4.13.0 | `v4.13.0` | doctor, inspector, command palette, Events and explanations, services, storage, `-A` fix, inspector find/containers/export |
-| 4.12.0 | `v4.12.0` | ALERTS view (kept for reference; the `-A` limitation applies) |
+| Version | Tag | What it adds | Download |
+|---|---|---|---|
+| 4.13.1 | `v4.13.1` | installer summary names every view and key (no code change to the CLI) | [release](https://github.com/dheer629/kdash/releases/tag/v4.13.1) |
+| 4.13.0 | `v4.13.0` | doctor, inspector, command palette, Events and explanations, services, storage, `-A` fix, inspector find/containers/export | [release](https://github.com/dheer629/kdash/releases/tag/v4.13.0) |
+| 4.12.0 | `v4.12.0` | ALERTS view (kept for reference; the `-A` limitation applies) | [source archive](https://github.com/dheer629/kdash/archive/refs/tags/v4.12.0.tar.gz) |
+
+4.12.0 was tagged before this release workflow existed, so its tag gives you the source
+archive: run the workflow manually (Actions -> Versioned downloads -> Run workflow, source
+ref `v4.12.0`) to build the same files as the versions above. The tag itself already makes
+that version permanently downloadable, which is the point of versioned releases.
 
 ## What each release contains
 

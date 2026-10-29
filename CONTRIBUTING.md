@@ -60,11 +60,13 @@ bash scripts/validate-all.sh
 That one command checks the Bash syntax of every shipped script, that the
 installer embeds `kdash` byte for byte, every fixture test under `tests/` (the 11
 uninstall tests plus runtime, events, health and inspector; none needs a cluster),
-every checksum, the recorded run and its captures, the published samples, that no
-environment, product, site or personal name and no credential is in the tree, that
-every README reference resolves, and that the working tree is clean. CI runs the
-same script ([.github/workflows/ci.yml](.github/workflows/ci.yml)), so a red build
-there means the pull request is not ready.
+every checksum (root, `samples/`, `samples/html/`, `samples/cli_413/`), the recorded
+run and its captures, the feature-screen run and its 22 captures plus manifest, the
+published samples, that no environment, product, site or personal name and no
+credential is in the tree, that every README reference resolves, that the README keeps
+a direct download link for each published version, and that the working tree is clean.
+CI runs the same script ([.github/workflows/ci.yml](.github/workflows/ci.yml)), so a red
+build there means the pull request is not ready.
 
 ## For the maintainer: how "nobody else can change it" is enforced
 
