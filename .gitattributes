@@ -32,6 +32,14 @@ SHA256SUMS       text eol=lf
 *.yml            text eol=lf
 *.yaml           text eol=lf
 
+# Extension-less text files, for the same reason: LICENSE is hashed in
+# SHA256SUMS and the repository's own config files are read on Linux.
+LICENSE          text eol=lf
+.editorconfig    text eol=lf
+.gitattributes   text eol=lf
+.gitignore       text eol=lf
+.github/CODEOWNERS text eol=lf
+
 # Windows helper scripts.
 *.ps1            text eol=crlf
 
