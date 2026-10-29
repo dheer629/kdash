@@ -5,6 +5,13 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.13.1] - 2026-10-29
+
+### Fixed
+- The installer's closing summary listed only views 1-7. It now names every key,
+  including 8 SERVICES, 9 STORAGE, `E` Events, `!` explanations, `Enter`/`i` inspect,
+  `:` command palette and `F` filters.
+
 ## [4.13.0] - 2026-10-29
 
 ### Added

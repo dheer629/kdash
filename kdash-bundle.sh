@@ -43,7 +43,7 @@ set -uo pipefail
 # A damaged PATH from an earlier shell start-up must not stop the repair.
 PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; export PATH
 
-VERSION="4.13.0"
+VERSION="4.13.1"
 PREFIX=""; DO_SHELL=1; UNINSTALL=0; KEEP_OLD=0; CHECK_ONLY=0; DRY_RUN=0
 BEGIN_MARK="# >>> kdash setup >>>"
 END_MARK="# <<< kdash setup <<<"
@@ -370,7 +370,7 @@ cat > "$tmp" <<'KDASH_PAYLOAD_EOF'
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.13.0"
+KDASH_VERSION="4.13.1"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"
@@ -7783,5 +7783,6 @@ say "author: Dheeraj V    audit: kdash --about | --audit | --audit-verify | --au
 say "DISCLAIMER: provided as is. The person running kdash is solely responsible for its use and"
 say "for having authorisation to read the clusters / namespaces. Every run, user action, report and"
 say "kubectl call is audited (~/kdash_reports/audit, /var/log/kdash when present, syslog)."
-say "keys: 1-7/Tab view (7 = live ALERTS)  ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / filter  h/l pan  j/k scroll  q quit"
+say "keys: 1-9/Tab view (7 ALERTS, 8 SERVICES, 9 STORAGE)  E events  ! explain  Enter/i inspect  : palette  F filters"
+say "      ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / filter  h/l pan  j/k scroll  q quit"
 exit "$PROBE_RC"

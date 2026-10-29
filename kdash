@@ -24,7 +24,7 @@
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.13.0"
+KDASH_VERSION="4.13.1"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"

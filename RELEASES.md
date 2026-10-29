@@ -6,7 +6,8 @@ download the exact version you want, or an older one, at any time:
 
 | Version | Tag | What it adds |
 |---|---|---|
-| 4.13.0 | `v4.13.0` | doctor, inspector, command palette, Events and explanations, services, storage, `-A` fix |
+| 4.13.1 | `v4.13.1` | installer summary names every view and key (no code change to the CLI) |
+| 4.13.0 | `v4.13.0` | doctor, inspector, command palette, Events and explanations, services, storage, `-A` fix, inspector find/containers/export |
 | 4.12.0 | `v4.12.0` | ALERTS view (kept for reference; the `-A` limitation applies) |
 
 ## What each release contains
