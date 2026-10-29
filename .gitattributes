@@ -25,6 +25,13 @@ SHA256SUMS       text eol=lf
 *.csv            text eol=lf
 *.html           text eol=lf
 
+# Workflow definitions and CI configuration. Without a rule these follow
+# core.autocrlf, so a Windows checkout has CRLF while CI checks out LF, and
+# every checksum of them disagrees with the repository (the failure this rule
+# removes: .github/workflows/*.yml in SHA256SUMS).
+*.yml            text eol=lf
+*.yaml           text eol=lf
+
 # Windows helper scripts.
 *.ps1            text eol=crlf
 

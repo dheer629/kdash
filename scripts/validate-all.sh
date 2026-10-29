@@ -102,7 +102,7 @@ for f in samples/cli_7_alerts_170col.png samples/html_overview.png \
          samples/cli_413/18-inspector-containers.png; do
   [ -s "$f" ] && ok "present $f" || bad "missing $f"
 done
-FEATURE=$(ls -d artifacts/feature-screens-* 2>/dev/null | tail -1)
+FEATURE=$(find artifacts -maxdepth 1 -type d -name 'feature-screens-*' 2>/dev/null | sort | tail -1)
 if [ -n "$FEATURE" ]; then
   a=$(ls -1 "$FEATURE"/raw/*.ansi 2>/dev/null | wc -l)
   t=$(ls -1 "$FEATURE"/raw/*.txt 2>/dev/null | wc -l)
