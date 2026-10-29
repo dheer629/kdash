@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.13.1   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-29 20:43:10 IST
+ ctx devops-admin@local-cluster   ns default   match .*   poll 5s  spec 1s/30s  session 20:42:34 up 36s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 10m ░░░░░░ 0% lim  mem 444Mi █░░░░░ 17% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+Data pods=fresh age=1s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+PERSISTENT STORAGE
+PVC/PV capacity describes allocation; measured usage is shown only when PVC-labelled volume samples exist.
+  pvcs: ok; 2026-10-29 20:43:07 +0530 (3s ago); successful API read; empty means no objects in this scope
+  pods: ok; 2026-10-29 20:43:06 +0530 (4s ago); successful API read; empty means no objects in this scope
+  pvs: ok; 2026-10-29 20:43:07 +0530 (3s ago); successful API read; empty means no objects in this scope
+  storageclasses: ok; 2026-10-29 20:43:07 +0530 (3s ago); successful API read; empty means no objects in this scope
+  volume-metrics: unknown; 2026-10-29 20:43:07 +0530 (3s ago); no configured or existing Prometheus source; measured PVC usage unknown
+
+PVC BINDINGS AND POD REFERENCES
+  NAMESPACE/CLAIM                    PHASE      PV                   REQUEST       PVC CAPACITY  STORAGECLASS
+  default/platform-cache             Bound      pvc-a019ce04-eaa1-47b4-a8d4-20f50ec84706 512Mi         512Mi         local-path
+    access=ReadWriteOnce; volumeMode=Filesystem
+    PV phase=Bound; capacity=512Mi; reclaim=Delete; driver=unknown
+    StorageClass provisioner=rancher.io/local-path; binding=WaitForFirstConsumer; expansion=unknown
+    pod reference: default/platform-web-fb5754c79-vstz8 (Running/True)
+    declared mount: default/platform-web-fb5754c79-vstz8 container=web path=/cache readOnly=false
+    Measured usage unknown: no usable PVC-labelled volume sample for this claim.
+  default/platform-data              Bound      pvc-4da52a0f-ed99-41c6-aa78-3c73f670a32e 1Gi           1Gi           local-path
+    access=ReadWriteOnce; volumeMode=Filesystem
+    PV phase=Bound; capacity=1Gi; reclaim=Delete; driver=unknown
+    StorageClass provisioner=rancher.io/local-path; binding=WaitForFirstConsumer; expansion=unknown
+    pod reference: default/platform-web-fb5754c79-vstz8 (Running/True)
+    declared mount: default/platform-web-fb5754c79-vstz8 container=web path=/data readOnly=false
+    Measured usage unknown: no usable PVC-labelled volume sample for this claim.
+  default/platform-kafka-data        Bound      pvc-cfea93a4-a98d-4b0d-9da6-9c158494d931 2Gi           2Gi           local-path
+    access=ReadWriteOnce; volumeMode=Filesystem
+    PV phase=Bound; capacity=2Gi; reclaim=Delete; driver=unknown
+    StorageClass provisioner=rancher.io/local-path; binding=WaitForFirstConsumer; expansion=unknown
+    pod reference: default/platform-kafka-65c6d4dcfd-l7mqq (Running/True)
+    declared mount: default/platform-kafka-65c6d4dcfd-l7mqq container=kafka path=/var/lib/kafka/data readOnly=false
+    Measured usage unknown: no usable PVC-labelled volume sample for this claim.
+  default/platform-postgres-data     Bound      pvc-75ba908f-6f34-44db-9045-62e711f5159e 2Gi           2Gi           local-path
+    access=ReadWriteOnce; volumeMode=Filesystem
+    PV phase=Bound; capacity=2Gi; reclaim=Delete; driver=unknown
+    StorageClass provisioner=rancher.io/local-path; binding=WaitForFirstConsumer; expansion=unknown
+    pod reference: default/platform-postgres-74699cf6db-69g4h (Running/True)
+    declared mount: default/platform-postgres-74699cf6db-69g4h container=postgres path=/var/lib/postgresql/data readOnly=false
+    Measured usage unknown: no usable PVC-labelled volume sample for this claim.
+
+Pod volume references and declared mount paths do not prove a volume mounted successfully.
+Measured filesystem samples can differ from PVC/PV allocation; missing samples never mean zero usage.
+
+STORAGE-RELATED RECORDED EVENTS
+8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit
+ ● LIVE 20:43:10  next 4s  data 0s old  spec 1/30s  fetch 0.0s  poll 5s  AUDITED | storage | rows 1-43/44 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause

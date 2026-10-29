@@ -1,0 +1,50 @@
+[1m══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.13.1[0m  [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [1;7m 7 ALERTS [0m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-29 20:43:06[0m[90m IST[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m default   [90mmatch[39m .*   [90mpoll 5s  spec 31s/30s  session [39m20:42:34[90m up [39m32s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m10m [32m░░░░░░[39m [32m0%[90m lim  mem [39m444Mi [32m█░░░░░[39m [32m17%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mALERTS   live critical summary of every section, with the action for each signal[0m
+ [1;7m[35m  WARNING  [0m  [32m0[39m [90mcritical[39m   [1m[35m1[0m [90mwarning[39m   [90m0[39m [90mnew[39m   [90m0[39m [90mcleared in 5 min[39m   [90mrules run every refresh (5s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000[39m
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=31s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+STALE nodes: last successful read 31s ago
+STALE svc: last successful read 31s ago
+[1m[94m►[0m [1mSECTIONS[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [32m●[39m [1mPODS      [0m [32m3/3[39m ready  rst 9  [90m0 crit[39m [90m0 warn[39m                                       [35m●[39m [1mMEMORY    [0m 444Mi / 2560Mi lim [32m17.3[39m%  [90m0 >=90%[39m  [35m1 no-limit[39m  [94m░░░░░░[39m
+  [32m●[39m [1mNODES     [0m 1 hosting  [32m0 NotReady[39m  max node mem [32m25.8[39m% dev                         [32m●[39m [1mWORKLOADS [0m 3  [32m0 degraded[39m  [90m0 HA risk[39m  [90m0 rolling[39m
+  [32m●[39m [1mIP        [0m 3 pod IPs  [90m0 no IP[39m  [90m0 duplicate[39m  6 svc                                [32m●[39m [1mTRAFFIC   [0m [90mno IO source (unavailable)[39m
+
+[1m[94m►[0m [1mACTIVE ALERTS  1 (0 critical, 1 warning)   critical first, NEW first, action under each[0m [90m───────────────────────────────────────────────────────────────────────────────[39m
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE                           TREND
+  [35m^[39m [1;7m[31mNEW  [0m  MEMORY    [1m1 pod(s)                      [0m [35mNO_MEM_LIMIT      [39m can grow until the node runs out
+                   [90m↳ [36mkubectl -n default get pods -o custom-columns=POD:.metadata.name,LIM:.spec.containers[*].resources.limits.memory[39m
+
+[1m[94m►[0m [1mLIVE TOP CONSUMERS[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1mmemory % of limit                                     [0m  [1mCPU % of limit                                        [0m  [1mtraffic in+out[0m
+  [32m 26.6[39m platform-kafka-65c6d4dcfd-l7mqq                   [32m  0.5[39m platform-kafka-65c6d4dcfd-l7mqq
+  [32m  2.0[39m platform-postgres-74699cf6db-69g4h                [32m  0.2[39m platform-postgres-74699cf6db-69g4h
+
+
+
+
+[1m[94m►[0m [1mEVENTS  last hour[0m [90m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1mEVENTS[0m [90m1 in window[39m   [32m! 0[39m [90mcritical[39m   [32m^ 0[39m [90mwarning[39m
+  [90m20:42:34      [39m [90m-[39m [90mSESSION         [39m default                                  [90mkdash 4.13.1 started on node by dheer - filter .*[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS[2m›
+[0;7m ● LIVE 20:43:06  next 3s  data 2s old  spec 31/30s  fetch 0.0s  poll 5s  AUDITED | alerts | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit     [0m

@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.13.1   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-29 20:43:14 IST
+ ctx devops-admin@local-cluster   ns default   match .*   poll 5s  spec 5s/30s  session 20:42:34 up 40s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 10m ░░░░░░ 0% lim  mem 444Mi █░░░░░ 17% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+Data pods=fresh age=5s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+INCIDENT EVIDENCE AND POSSIBLE EXPLANATIONS
+Context: devops-admin@local-cluster | Scope: default
+Coverage: ok | Last successful read: 2026-10-29 20:43:06 +0530 (8s ago)
+These are Kubernetes API Events; local session change records are separate.
+Events describe observations, including historical failures. Timing alone does not establish a cause.
+Cached pod fact: default/platform-kafka-65c6d4dcfd-l7mqq status=Running ready=1/1 cumulative restarts=3 node=dev
+Cached pod fact: default/platform-postgres-74699cf6db-69g4h status=Running ready=1/1 cumulative restarts=3 node=dev
+Cached pod fact: default/platform-web-fb5754c79-vstz8 status=Running ready=1/1 cumulative restarts=3 node=dev
+Pod facts use the dashboard model; their collection time can differ from Events.
+
+No matching retained warning event evidence. Coverage gaps, event expiry and failures without Events remain possible.
+
+Compare current readiness, resource identities, logs and workload conditions before deciding on a change.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit
+ ● LIVE 20:43:14  next 5s  data 4s old  spec 5/30s  fetch 0.0s  poll 5s  AUDITED | explain | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit

@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.13.1   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-29 20:43:06 IST
+ ctx devops-admin@local-cluster   ns default   match .*   poll 5s  spec 31s/30s  session 20:42:34 up 32s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 10m ░░░░░░ 0% lim  mem 444Mi █░░░░░ 17% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+ ALERTS   live critical summary of every section, with the action for each signal
+   WARNING    0 critical   1 warning   0 new   0 cleared in 5 min   rules run every refresh (5s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=31s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+STALE nodes: last successful read 31s ago
+STALE svc: last successful read 31s ago
+► SECTIONS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ● PODS       3/3 ready  rst 9  0 crit 0 warn                                       ● MEMORY     444Mi / 2560Mi lim 17.3%  0 >=90%  1 no-limit  ░░░░░░
+  ● NODES      1 hosting  0 NotReady  max node mem 25.8% dev                         ● WORKLOADS  3  0 degraded  0 HA risk  0 rolling
+  ● IP         3 pod IPs  0 no IP  0 duplicate  6 svc                                ● TRAFFIC    no IO source (unavailable)
+
+► ACTIVE ALERTS  1 (0 critical, 1 warning)   critical first, NEW first, action under each ───────────────────────────────────────────────────────────────────────────────
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE                           TREND
+  ^ NEW    MEMORY    1 pod(s)                       NO_MEM_LIMIT       can grow until the node runs out
+                   ↳ kubectl -n default get pods -o custom-columns=POD:.metadata.name,LIM:.spec.containers[*].resources.limits.memory
+
+► LIVE TOP CONSUMERS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  memory % of limit                                       CPU % of limit                                          traffic in+out
+   26.6 platform-kafka-65c6d4dcfd-l7mqq                     0.5 platform-kafka-65c6d4dcfd-l7mqq
+    2.0 platform-postgres-74699cf6db-69g4h                  0.2 platform-postgres-74699cf6db-69g4h
+
+
+
+
+► EVENTS  last hour ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  EVENTS 1 in window   ! 0 critical   ^ 0 warning
+  20:42:34       - SESSION          default                                  kdash 4.13.1 started on node by dheer - filter .*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS›
+ ● LIVE 20:43:06  next 3s  data 2s old  spec 31/30s  fetch 0.0s  poll 5s  AUDITED | alerts | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit

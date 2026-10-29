@@ -1,0 +1,50 @@
+[1m══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.13.1[0m  [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [1;7m 8 SVCS [0m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-29 20:43:08[0m[90m IST[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m default   [90mmatch[39m .*   [90mpoll 5s  spec 33s/30s  session [39m20:42:34[90m up [39m34s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m10m [32m░░░░░░[39m [32m0%[90m lim  mem [39m444Mi [32m█░░░░░[39m [32m17%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+Data pods=fresh age=33s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+STALE nodes: last successful read 33s ago
+STALE svc: last successful read 33s ago
+SERVICES AND BACKENDS
+Observed Kubernetes configuration and readiness; this does not test end-to-end reachability.
+  services: collecting; time unknown; first read in progress; values appear when it completes
+  pods: collecting; time unknown; first read in progress; values appear when it completes
+  endpoints: collecting; time unknown; first read in progress; values appear when it completes
+  ingresses: collecting; time unknown; first read in progress; values appear when it completes
+
+INGRESS -> SERVICE -> ENDPOINTS -> READY PODS
+  Ingress routes unknown: optional source unknown.
+
+SERVICE BACKEND DIAGNOSTICS
+  NAMESPACE/SERVICE                    TYPE          SELECTED   READY PODS ENDPOINT READINESS
+  Service inventory unknown: source unknown.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit
+[7m ● LIVE 20:43:08  next 1s  data 4s old  spec 33/30s  fetch 0.0s  poll 5s  AUDITED | services | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit   [0m

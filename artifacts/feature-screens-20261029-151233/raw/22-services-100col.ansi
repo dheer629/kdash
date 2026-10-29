@@ -1,0 +1,40 @@
+[1m════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.13.1[0m  [90m 1 PODS [39m [90m 2 NODES [39m [90m 3 WLOADS [39m [90m 4 IP [39m [90m 5 MEM [39m [90m 6 IO [39m [90m 7 ALERTS [39m
+    [1m2026-10-29 20:46:01[0m[90m IST[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m default   [90mmatch[39m .*   [1m[94msort cpu ▼ high first[0m
+[90m [32mpods 3/3 ready[90m rst [35m9[90m oom [32m0[90m oomk [32m0[90m nolim [35m1[90m cpu [39m8m [32m0%[90m lim mem [39m444Mi [32m17%[90m lim wl [39m3[90m ev15m [32m! 0[39m [32m^ 0[39m
+Data pods=fresh age=18s metrics=available | Enter/i inspect | 8 services 9 storage E events ! expla[2m›
+[0mSERVICES AND BACKENDS
+Observed Kubernetes configuration and readiness; this does not test end-to-end reachability.
+  services: collecting; time unknown; first read in progress; values appear when it completes
+  pods: collecting; time unknown; first read in progress; values appear when it completes
+  endpoints: collecting; time unknown; first read in progress; values appear when it completes
+  ingresses: collecting; time unknown; first read in progress; values appear when it completes
+
+INGRESS -> SERVICE -> ENDPOINTS -> READY PODS
+  Ingress routes unknown: optional source unknown.
+
+SERVICE BACKEND DIAGNOSTICS
+  NAMESPACE/SERVICE                    TYPE          SELECTED   READY PODS ENDPOINT READINESS
+  Service inventory unknown: source unknown.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit
+[7m ○ LIVE 20:46:01  next 2s  data 3s old  spec 18/30s  fetch 0.0s  poll 5s  AUDITED | services      [0m

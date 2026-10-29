@@ -1,0 +1,50 @@
+ kdash inspector - keys (any key returns)
+
+ FIND                          PANES                       NAVIGATE
+  /  find in this pane         s  summary                  j k arrows  line
+  &  show only matches         d  describe                 space b     page
+  n N  next / previous match   e  events                   PgUp PgDn   page
+  L  log level: all, ERROR,    !  why (event hypotheses)    g G Home End  top/bottom
+     WARN, INFO, DEBUG         l  current logs             c  choose container
+  f  follow logs               p  previous logs            r  reload now
+  w  export what you see       q Esc  back                ?  this help
+
+ / keeps the context around every match and highlights it; & hides everything else.
+ A lowercase pattern ignores case: /error finds ERROR and error.
+ n and N wrap around and put the match at the top of the pane.
+ c lists every container with readiness, restarts, state and last exit: pick one
+ and l/p read that container. Search and level stay active across panes.
+ w writes the filtered pane to /home/demo/kdash_reports/inspector/ (review it before sharing).
+
+ any key returns
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

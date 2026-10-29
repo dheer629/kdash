@@ -12,6 +12,19 @@ the detailed per-release notes.
   including 8 SERVICES, 9 STORAGE, `E` Events, `!` explanations, `Enter`/`i` inspect,
   `:` command palette and `F` filters.
 
+### Added
+- Versioned downloads in the README: every release with its own immutable GitHub
+  Release, per-version direct links (`kdash`, `kdash-bundle.sh`, `kdash-<version>.tar.gz`,
+  `SHA256SUMS`) and a one-command install of one exact version.
+- Fresh 4.13.1 screenshots: 22 saved live screens of the new views and the inspector in
+  `samples/cli_413/`, with the raw `.ansi` / `.txt` captures and manifest in
+  `artifacts/feature-screens-20261029-151233/`, checksummed in
+  `samples/cli_413/SHA256SUMS`. `scripts/validate-all.sh` now verifies that set and its
+  manifest; `scripts/update-checksums.sh` regenerates both.
+- The 4.13.1 captures were redacted with `scripts/redact-run.sh` (context, personal
+  paths, host and the other tenants of that shared development cluster) and re-rendered
+  so text and pixels agree; the mapping stays private, as in `samples/README.md`.
+
 ## [4.13.0] - 2026-10-29
 
 ### Added

@@ -1,0 +1,40 @@
+════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.13.1   1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS
+    2026-10-29 20:46:01 IST
+ ctx devops-admin@local-cluster   ns default   match .*   sort cpu ▼ high first
+ pods 3/3 ready rst 9 oom 0 oomk 0 nolim 1 cpu 8m 0% lim mem 444Mi 17% lim wl 3 ev15m ! 0 ^ 0
+Data pods=fresh age=18s metrics=available | Enter/i inspect | 8 services 9 storage E events ! expla›
+SERVICES AND BACKENDS
+Observed Kubernetes configuration and readiness; this does not test end-to-end reachability.
+  services: collecting; time unknown; first read in progress; values appear when it completes
+  pods: collecting; time unknown; first read in progress; values appear when it completes
+  endpoints: collecting; time unknown; first read in progress; values appear when it completes
+  ingresses: collecting; time unknown; first read in progress; values appear when it completes
+
+INGRESS -> SERVICE -> ENDPOINTS -> READY PODS
+  Ingress routes unknown: optional source unknown.
+
+SERVICE BACKEND DIAGNOSTICS
+  NAMESPACE/SERVICE                    TYPE          SELECTED   READY PODS ENDPOINT READINESS
+  Service inventory unknown: source unknown.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit
+ ○ LIVE 20:46:01  next 2s  data 3s old  spec 18/30s  fetch 0.0s  poll 5s  AUDITED | services

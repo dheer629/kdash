@@ -40,34 +40,96 @@ Every view is live (no flicker, header and footer pinned, body scrolls), can be 
 once as text / TSV / CSV, and is exported to HTML. A live run records everything it
 sees, and `x` writes **one HTML file with every tab plus the history since kdash started**.
 
+## Releases and downloads
+
+Every version is published as its own immutable GitHub Release, so an older version stays
+downloadable after a newer one ships. [All releases](https://github.com/dheer629/kdash/releases)
+| [how they are built](RELEASES.md).
+
+| Version | Released | Highlights | Download |
+|---|---|---|---|
+| **4.13.1** | 2026-10-29 | installer summary lists every view and key | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-4.13.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.1/SHA256SUMS) |
+| **4.13.0** | 2026-10-29 | doctor, inspector (find, containers, export), services, storage, Events, `-A` fix | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-4.13.0.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.0/SHA256SUMS) |
+| 4.12.0 | 2026-10-18 | ALERTS view (the `-A` limitation applies) | [source archive](https://github.com/dheer629/kdash/archive/refs/tags/v4.12.0.tar.gz) · assets can be generated from that commit |
+
+Download and install one exact version:
+
+```bash
+v=4.13.1
+base=https://github.com/dheer629/kdash/releases/download/v$v
+curl -fsSLO "$base/kdash-$v.tar.gz" -O "$base/SHA256SUMS"
+sha256sum --ignore-missing -c SHA256SUMS          # must print: kdash-4.13.1.tar.gz: OK
+tar -xzf "kdash-$v.tar.gz" && bash kdash-bundle.sh
+kdash --version                                    # kdash 4.13.1
+```
+
 ## Screenshots
 
-Every screenshot below is a saved live screen from a recorded validation run
-(`kubectl` reads only, five minutes per namespace, three namespaces). The complete
-set - all seven views for all three namespaces plus the help screen, the audit
-table, a narrow terminal and the first-run disclaimer - is in
-[`samples/`](samples/README.md), and the raw evidence behind it is in
-[`artifacts/`](artifacts/README.md).
+Every image here is a saved live screen from **kdash 4.13.1** on a local WSL vcluster
+(`kubectl` reads only, namespace `default`), rendered from the exact tmux capture with
+[`scripts/capture-terminal.py`](scripts/capture-terminal.py) - nothing is drawn by hand.
+The captures behind them and the full list are in
+[`samples/cli_413/`](samples/cli_413/README.md) and
+[`artifacts/feature-screens-20261029-151233/raw/`](artifacts/feature-screens-20261029-151233/raw).
+The names are placeholders: the context, the personal paths, the host and the other
+tenants of that shared development cluster were replaced by
+[`scripts/redact-run.sh`](scripts/redact-run.sh) before publication, exactly as described
+in [`samples/README.md`](samples/README.md).
+The earlier 4.12.0 validation run keeps its own gallery in [`samples/cli/`](samples/cli).
 
-### 7 ALERTS - the one page an operator keeps open
-
-<img src="samples/cli_7_alerts_170col.png" width="900" alt="kdash ALERTS view: verdict, per-section health lines and every alert with the kubectl action to run">
-
-Verdict (`CRITICAL` / `WARNING` / `HEALTHY`), one health line per section, then every
-critical and warning signal with its age, live value, trend and the `kubectl`
-command to run under it - followed by the live top consumers and recent events.
-
-### The other views, and the HTML report
+### The views added in 4.13: services and storage
 
 | | |
 |---|---|
-| **1 PODS** - pod and container usage against requests and limits, grouped by workload<br><img src="samples/cli_pods_audited_header.png" width="450" alt="kdash PODS view"> | **3 WORKLOADS** - replicas, rollout and the pods-per-node spread<br><img src="samples/cli_workloads_sparklines.png" width="450" alt="kdash WORKLOADS view"> |
-| **HTML report** - every tab plus the recorded history in one file, with filters and per-table CSV<br><img src="samples/html_overview.png" width="450" alt="kdash HTML namespace report"> | **Audit table** - `kdash --audit`: every run, action, report and kubectl call<br><img src="samples/cli_audit_log.png" width="450" alt="kdash audit table"> |
+| **8 SERVICES** - Ingress -> Service -> EndpointSlice -> ready pods: selector mismatches, unready backends, missing named target ports, selectorless and ExternalName services<br><img src="samples/cli_413/08-services.png" width="450" alt="kdash SERVICES view: service backend diagnostics"> | **9 STORAGE** - Pod -> PVC -> PV -> StorageClass: bound and pending claims, `claimRef` mismatches, declared mounts, storage Events, measured usage only when it exists<br><img src="samples/cli_413/09-storage.png" width="450" alt="kdash STORAGE view: PVC bindings, PVs and mounts"> |
 
-### All seven views, on a namespace with real problems
+### Events, explanations, doctor - an alert to evidence to the next check
+
+| | |
+|---|---|
+| **E KUBERNETES EVENTS** - real Events with reason, involved object, count, first/last seen and coverage<br><img src="samples/cli_413/10-events.png" width="450" alt="kdash EVENTS view"> | **! INCIDENT EVIDENCE** - the observed fact, a *possible* explanation and the next read-only command<br><img src="samples/cli_413/11-explain.png" width="450" alt="kdash EXPLAIN view"> |
+| **DOCTOR** - kubeconfig, endpoint, TLS, RBAC, Metrics API and local reports, each classified with a next check<br><img src="samples/cli_413/12-doctor.png" width="450" alt="kdash doctor view"> | **1 PODS** - the 4.13 tab bar (`8 SVCS 9 STOR E EVENTS ! WHY`), health line and data freshness<br><img src="samples/cli_413/01-pods.png" width="450" alt="kdash PODS view with the new tab bar"> |
+
+### Inspector: find in a pane, only matches, container drill-down
+
+| | |
+|---|---|
+| **`/` find** - every line stays visible, matches are highlighted, the header counts them (`137 matching`) and `n`/`N` jump<br><img src="samples/cli_413/16-inspector-find.png" width="450" alt="kdash inspector find"> | **`&` only matches** - the same 202-line Kafka log reduced to the 37 lines that matter<br><img src="samples/cli_413/17-inspector-only-matches.png" width="450" alt="kdash inspector only matches"> |
+| **`c` choose container** - ready, restarts, state, last exit and image per container; `1`-`9` opens one, `l`/`p` jumps to its logs<br><img src="samples/cli_413/18-inspector-containers.png" width="450" alt="kdash container picker"> | **`?` keys** - panes, find, level, follow, export, container switching<br><img src="samples/cli_413/19-inspector-help.png" width="450" alt="kdash inspector help"> |
+
+### Every view, on the vcluster
+
+| View | Screenshot |
+|---|---|
+| **1 PODS** | <img src="samples/cli_413/01-pods.png" width="430" alt="PODS"> |
+| **2 NODE POOLS** | <img src="samples/cli_413/02-nodes.png" width="430" alt="NODE POOLS"> |
+| **3 WORKLOADS** | <img src="samples/cli_413/03-workloads.png" width="430" alt="WORKLOADS"> |
+| **4 IP POOL** | <img src="samples/cli_413/04-ip.png" width="430" alt="IP POOL"> |
+| **5 MEMORY** | <img src="samples/cli_413/05-mem.png" width="430" alt="MEMORY"> |
+| **6 NET & DISK IO** | <img src="samples/cli_413/06-io.png" width="430" alt="NET and DISK IO"> |
+| **7 ALERTS** | <img src="samples/cli_413/07-alerts.png" width="430" alt="ALERTS"> |
+| **8 SERVICES** | <img src="samples/cli_413/08-services.png" width="430" alt="SERVICES"> |
+| **9 STORAGE** | <img src="samples/cli_413/09-storage.png" width="430" alt="STORAGE"> |
+| **help (`?`)** | <img src="samples/cli_413/20-help-keys.png" width="430" alt="dashboard help"> |
+
+Narrow terminals: [1 PODS at 100 columns](samples/cli_413/21-pods-100col.png) ·
+[8 SERVICES at 100 columns](samples/cli_413/22-services-100col.png).
+Intermediate screens: [pod picker](samples/cli_413/13-inspector-pod-picker.png) ·
+[pod summary](samples/cli_413/14-inspector-summary.png) ·
+[previous logs](samples/cli_413/15-inspector-previous-logs.png).
+
+### The 4.12.0 validation run (kept for reference)
 
 `orders-service-e2e` in the recorded run: 27 pods, 14 ready, a crash loop, an image
-error, an unschedulable pod and 1571 cumulative restarts.
+error, an unschedulable pod and 1571 cumulative restarts. This is the run published
+in [`artifacts/wsl-validation-20261018-134816`](artifacts/wsl-validation-20261018-134816)
+(five minutes per namespace, three namespaces) and it is what the 4.12.0 images show.
+
+<img src="samples/cli_7_alerts_170col.png" width="900" alt="kdash ALERTS view from the 4.12.0 run: verdict, per-section health lines and every alert with the kubectl action to run">
+
+| | |
+|---|---|
+| **HTML report** - every tab plus the recorded history in one file, with filters and per-table CSV<br><img src="samples/html_overview.png" width="450" alt="kdash HTML namespace report"> | **Audit table** - `kdash --audit`: every run, action, report and kubectl call<br><img src="samples/cli_audit_log.png" width="450" alt="kdash audit table"> |
 
 | View | What it answers | Screenshot |
 |---|---|---|

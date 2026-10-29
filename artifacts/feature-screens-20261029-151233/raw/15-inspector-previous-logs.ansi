@@ -1,0 +1,50 @@
+ Context: devops-admin@local-cluster
+ Namespace: default | Pod: platform-kafka-65c6d4dcfd-l7mqq
+ Container: kafka | ready | restarts 3 | Running | last exit Unknown exit=255 | apache/kafka:3.9.1
+ Pane: previous | rows 1-42/202
+
+Container: kafka | previous logs | last 200 lines | maximum 65536 bytes | timestamps
+
+2026-10-29T11:31:32.686437249Z [2026-10-29 11:31:32,686] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-45 in
+2026-10-29T11:31:32.686443599Z [2026-10-29 11:31:32,686] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-12 in
+2026-10-29T11:31:32.708891548Z [2026-10-29 11:31:32,708] INFO Loaded member MemberMetadata(memberId=console-consumer-83766b00-ade9-4b4c-9ad1-38b6b1591a02, groupInstanceId
+2026-10-29T11:31:32.714835902Z [2026-10-29 11:31:32,714] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-41 in
+2026-10-29T11:31:32.715224523Z [2026-10-29 11:31:32,715] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-24 in
+2026-10-29T11:31:32.715385943Z [2026-10-29 11:31:32,715] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-20 in
+2026-10-29T11:31:32.715515154Z [2026-10-29 11:31:32,715] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-49 in
+2026-10-29T11:31:32.715542683Z [2026-10-29 11:31:32,715] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-0 in 3
+2026-10-29T11:31:32.715842908Z [2026-10-29 11:31:32,715] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-29 in
+2026-10-29T11:31:32.716016764Z [2026-10-29 11:31:32,715] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-25 in
+2026-10-29T11:31:32.716023817Z [2026-10-29 11:31:32,715] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-8 in 3
+2026-10-29T11:31:32.716142005Z [2026-10-29 11:31:32,716] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-37 in
+2026-10-29T11:31:32.716157216Z [2026-10-29 11:31:32,716] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-4 in 3
+2026-10-29T11:31:32.716244670Z [2026-10-29 11:31:32,716] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-33 in
+2026-10-29T11:31:32.716247647Z [2026-10-29 11:31:32,716] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-15 in
+2026-10-29T11:31:32.716334024Z [2026-10-29 11:31:32,716] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-48 in
+2026-10-29T11:31:32.716417889Z [2026-10-29 11:31:32,716] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-11 in
+2026-10-29T11:31:32.716428341Z [2026-10-29 11:31:32,716] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-44 in
+2026-10-29T11:31:32.727798809Z [2026-10-29 11:31:32,727] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-23 in
+2026-10-29T11:31:32.727899339Z [2026-10-29 11:31:32,727] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-19 in
+2026-10-29T11:31:32.727988302Z [2026-10-29 11:31:32,727] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-32 in
+2026-10-29T11:31:32.727995226Z [2026-10-29 11:31:32,727] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-28 in
+2026-10-29T11:31:32.728100694Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-7 in 4
+2026-10-29T11:31:32.728243948Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-40 in
+2026-10-29T11:31:32.728253949Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-3 in 4
+2026-10-29T11:31:32.728359156Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-36 in
+2026-10-29T11:31:32.728421013Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-47 in
+2026-10-29T11:31:32.728521146Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-14 in
+2026-10-29T11:31:32.728527997Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-43 in
+2026-10-29T11:31:32.728620512Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-10 in
+2026-10-29T11:31:32.728625385Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-22 in
+2026-10-29T11:31:32.728710416Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-18 in
+2026-10-29T11:31:32.728746367Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-31 in
+2026-10-29T11:31:32.728796622Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-27 in
+2026-10-29T11:31:32.728839995Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-39 in
+2026-10-29T11:31:32.728917128Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-6 in 4
+2026-10-29T11:31:32.728988775Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-35 in
+2026-10-29T11:31:32.728999511Z [2026-10-29 11:31:32,728] INFO [GroupMetadataManager brokerId=1] Finished loading offsets and group metadata from __consumer_offsets-2 in 4
+2026-10-29T11:31:41.617759328Z [2026-10-29 11:31:41,616] INFO Terminating process due to signal SIGTERM (org.apache.kafka.common.utils.LoggingSignalHandler)
+2026-10-29T11:31:41.625647920Z [2026-10-29 11:31:41,625] INFO [BrokerServer id=1] Transition from STARTED to SHUTTING_DOWN (kafka.server.BrokerServer)
+ s summary | d describe | e events | ! why | l logs | p previous | c container | ? keys
+ / find | & only matches | n N match | L level | f follow(off) | w export | r reload | q back
+

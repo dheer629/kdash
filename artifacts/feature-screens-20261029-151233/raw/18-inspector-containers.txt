@@ -1,0 +1,50 @@
+ Containers of default/platform-kafka-65c6d4dcfd-l7mqq | Context: devops-admin@local-cluster
+
+ #   NAME                       TYPE     READY  RST   STATE LAST EXIT        IMAGE
+>1   kafka                      app      ready  3     Running Unknown exit=2   apache/kafka:3.9.1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ j/k or arrows select | 1-9 open that container | Enter summary | l current logs | p previous logs | q/Esc cancel
+ Every container of this pod, including init and debug containers. Init is shown first in the pod spec.
+

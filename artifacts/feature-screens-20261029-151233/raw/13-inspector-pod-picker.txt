@@ -1,0 +1,50 @@
+ Select pod | Context: devops-admin@local-cluster
+ Namespace: default | 3 matching pods
+ Selected identity: (none)
+
+> default/platform-kafka-65c6d4dcfd-l7mqq  Running  ready=1/1  restarts=3  node=dev
+  default/platform-postgres-74699cf6db-69g4h  Running  ready=1/1  restarts=3  node=dev
+  default/platform-web-fb5754c79-vstz8  Running  ready=1/1  restarts=3  node=dev
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ j/k or arrows select | Enter/i inspect | c containers | F filters | q/Esc dashboard
+ Logs are fetched only when you open l/p; search and follow stay inside the pod.

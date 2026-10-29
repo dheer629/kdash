@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.13.1   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-29 20:43:12 IST
+ ctx devops-admin@local-cluster   ns default   match .*   poll 5s  spec 3s/30s  session 20:42:34 up 38s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 10m ░░░░░░ 0% lim  mem 444Mi █░░░░░ 17% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+Data pods=fresh age=3s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+KUBERNETES EVENTS
+Context: devops-admin@local-cluster | Scope: default
+Coverage: ok | Last successful read: 2026-10-29 20:43:06 +0530 (6s ago)
+These are Kubernetes API Events; local session change records are separate.
+No matching retained Kubernetes Events; this does not establish application health.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit
+ ● LIVE 20:43:12  next 2s  data 2s old  spec 3/30s  fetch 0.0s  poll 5s  AUDITED | events | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit

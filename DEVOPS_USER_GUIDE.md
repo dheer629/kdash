@@ -17,7 +17,7 @@ Everything below was exercised on 2026-10-18 in the WSL Ubuntu distribution as u
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli/` holds rendered screenshots of the seven CLI views per namespace, and `samples/html/` holds the HTML reports with checksums. Every claim in this guide can be traced to one of those files.
+`artifacts/` holds that raw evidence, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. Every claim in this guide can be traced to one of those files.
 
 ## 1. Open the correct environment
 
@@ -259,7 +259,9 @@ artifacts/wsl-validation-<run-id>/
     reports/               namespace report, snapshots, evidence bundle, sessions/
     audit/                 audit_YYYYMM.log (+ CSV and HTML audit export)
 samples/
-  cli/<namespace>/01-pods.png ... 07-alerts.png   rendered screenshots of views 1-7
+  cli/<namespace>/01-pods.png ... 07-alerts.png   rendered screenshots of views 1-7 (4.12.0 run)
+  cli_413/01-pods.png ... 22-services-100col.png  the 4.13.1 views and the inspector, from
+                                                  artifacts/feature-screens-*/raw/*.ansi
   html/<namespace>/       the HTML reports, byte for byte, plus screenshots/ and SHA256SUMS
   <historical images>     earlier samples kept from the repository history
 ```

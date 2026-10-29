@@ -1,0 +1,40 @@
+[1m════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.13.1[0m  [1;7m 1 PODS [0m [90m 2 NODES [39m [90m 3 WLOADS [39m [90m 4 IP [39m [90m 5 MEM [39m [90m 6 IO [39m [90m 7 ALERTS [39m
+    [1m2026-10-29 20:45:59[0m[90m IST[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m default   [90mmatch[39m .*   [1m[94msort cpu ▼ high first[0m
+[90m [32mpods 3/3 ready[90m rst [35m9[90m oom [32m0[90m oomk [32m0[90m nolim [35m1[90m cpu [39m8m [32m0%[90m lim mem [39m444Mi [32m17%[90m lim wl [39m3[90m ev15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mPOD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat lis[0;2m›
+[0m                                       [90m│[39m [1m[94m  ACTUAL (live)   [0m [90m│[39m [1m[35m   ASSIGNED (req / limit)    [0m [90m│[39m [1m[35mUTILI[0;2m›
+[0mWORKLOAD / POD / CONTAINER     RDY RST [90m│[39m   CPUm T  MEM Mi T [90m│[39m CPUreq CPUlim  MEMreq  MEMlim [90m│[39m c%REQ[2m›
+[0m[90m────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=16s metrics=available | Enter/i inspect | 8 services 9 storage E events ! expla[2m›
+[0;1m[94m►[0m [1mTIMELINE  20:45:42 -> 20:45:59 IST  (all since kdash started, z window, c hides graphs)[0m [90m─────────[39m
+  [1mCPU used - namespace
+[0m  [90m       one sample so far - the chart starts with the 2nd (run kdash live)
+[39m  [1mMEMORY used - namespace
+[0m  [90m       one sample so far - the chart starts with the 2nd (run kdash live)
+
+[1m[94m►[0m [1mPODS[0m [90m────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1m[35m► Deployment platform-kafka  ~[0m [32m1/1[39m [35m  3[39m [90m│[39m      5 [90m·[39m     408 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  2.5[2m[39m›
+[0m[32m  platform-kafka-65c6d4dcfd-l~[39m [32m1/1[39m [35m  3[39m [90m│[39m      5 [90m·[39m     408 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  2.5[2m[39m›
+[0m      [90mcpu [32m░░              [90m  mem [32m░░              [90m  pk 408Mi [39m  [90mnode dev   pool role:control-plane,mas[2m[39m›
+[0m    └─ kafka                   [32mY  [39m [35m  3[39m [90m│[39m      5 [90m·[39m     408 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  2.5[2m[39m›
+[0m        [35mlast-exit Unknown[39m
+[90m....................................................................................................
+[1m[35m► Deployment platform-postgre~[0m [32m1/1[39m [35m  3[39m [90m│[39m      2 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  2.0[2m[39m›
+[0m[32m  platform-postgres-74699cf6d~[39m [32m1/1[39m [35m  3[39m [90m│[39m      2 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  2.0[2m[39m›
+[0m      [90mcpu [32m░░              [90m  mem [32m░░              [90m  pk 20Mi [39m  [90mnode dev   pool role:control-plane,mast[2m[39m›
+[0m    └─ postgres                [32mY  [39m [35m  3[39m [90m│[39m      2 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  2.0[2m[39m›
+[0m        [35mlast-exit Unknown[39m
+[90m....................................................................................................
+[1m[35m► Deployment platform-web  (1~[0m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[2m[39m›
+[0m[32m  platform-web-fb5754c79-vstz8[39m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[2m[39m›
+[0m      [90mcpu [32m░░              [90m  mem [94m░░              [90m  pk 16Mi [39m  [90mnode dev   pool role:control-plane,mast[2m[39m›
+[0m    └─ web                     [32mY  [39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[2m[39m›
+[0m        [35mlast-exit Unknown[39m
+
+
+[90m────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m[39mTOTAL (3 pods, 3 workloads)   [0m     [35m  9[39m [90m│[39m      8 [90m·[39m     444 [90m·[39m [90m│[39m    300   2500     768    2560 [90m│[39m [32m  2.7[2m[39m›
+[0m [90mlegend[39m cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / O[2m›
+[0;7m ○ LIVE 20:45:59  next 4s  data 1s old  spec 16/30s  fetch 0.0s  poll 5s  AUDITED | pods | ? help [0m

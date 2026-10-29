@@ -4,6 +4,19 @@ Raw, unedited evidence of one kdash 4.12.0 validation cycle on the local Ubuntu 
 distribution against the local vcluster context `devops-admin@local-cluster`.
 `latest-run.txt` names the run directory this README describes.
 
+A second, smaller run lives next to it: `feature-screens-20261029-151233/` holds the raw
+screens of the **kdash 4.13.1** views that did not exist in 4.12.0 (8 SERVICES, 9 STORAGE,
+Events, explanations, DOCTOR) and of the inspector (find, only matches, container picker,
+help). It is the source of `../samples/cli_413/`: 22 captures at `170x50` and `100x40`,
+each `.ansi` (with colours) and `.txt` (plain text), listed in `captures.tsv`. It was
+captured live against the same kind of local vcluster and rendered with the same
+`../scripts/capture-terminal.py`. It is not a five-minute validation cycle, so it makes
+no claim about long-run behaviour. Like the run above it was redacted with
+`../scripts/redact-run.sh` and a private mapping (context as `devops-admin@local-cluster`,
+personal paths as `/home/demo`, host as `node`, the shared cluster's other tenants as
+`ml-service-prod`, `ml-service-dev`, `gitops-core`), and the images were re-rendered from
+the redacted captures afterwards.
+
 The run was produced by `../scripts/wsl-validation.sh`, which is the reproducible
 form of the manual steps in `../DEVOPS_USER_GUIDE.md`. Nothing in this directory was
 edited by hand: every log, capture, report and checksum was written by the run.

@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.13.1   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-29 20:43:18 IST
+ ctx devops-admin@local-cluster   ns default   match .*   poll 5s  spec 9s/30s  session 20:42:34 up 44s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 10m ░░░░░░ 0% lim  mem 444Mi █░░░░░ 17% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+Data pods=fresh age=9s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+KDASH 4.13.1 DOCTOR
+Context: devops-admin@local-cluster
+Namespace: default
+Kubeconfig: /home/demo/.local/state/kdash/dev-0000000/kubeconfig
+Endpoint: https://localhost:10093
+PASS pods: readable (an empty namespace is valid)
+PASS nodes: readable
+PASS services: readable
+PASS endpointslices.discovery.k8s.io: readable
+PASS persistentvolumeclaims: readable
+PASS events: readable
+PASS metrics: pod CPU/memory readable
+PASS local reports: writable
+Audit: /home/demo/kdash_reports/audit/audit_202610.log
+Read-only checks complete; no cluster changes made.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit
+ ● LIVE 20:43:18  next 1s  data 8s old  spec 9/30s  fetch 0.0s  poll 5s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit

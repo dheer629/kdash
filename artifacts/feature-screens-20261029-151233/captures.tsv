@@ -1,0 +1,23 @@
+file	columns	rows	title	png
+raw/01-pods.ansi	170	50	1 PODS - live usage against requests and limits (local WSL vcluster / default)	samples/cli_413/01-pods.png
+raw/02-nodes.ansi	170	50	2 NODE POOLS - this namespace vs the whole cluster (tenant names redacted)	samples/cli_413/02-nodes.png
+raw/03-workloads.ansi	170	50	3 WORKLOADS - replicas, rollout, pods per node	samples/cli_413/03-workloads.png
+raw/04-ip.ansi	170	50	4 IP POOL	samples/cli_413/04-ip.png
+raw/05-mem.ansi	170	50	5 MEMORY - charts, forecast, OOM risk	samples/cli_413/05-mem.png
+raw/06-io.ansi	170	50	6 NET & DISK IO	samples/cli_413/06-io.png
+raw/07-alerts.ansi	170	50	7 ALERTS - verdict, sections, actions	samples/cli_413/07-alerts.png
+raw/08-services.ansi	170	50	8 SERVICES - Ingress -> Service -> EndpointSlice -> ready pods (new in 4.13)	samples/cli_413/08-services.png
+raw/09-storage.ansi	170	50	9 STORAGE - Pod -> PVC -> PV -> StorageClass (new in 4.13)	samples/cli_413/09-storage.png
+raw/10-events.ansi	170	50	E KUBERNETES EVENTS - real Events, deduplicated (new in 4.13)	samples/cli_413/10-events.png
+raw/11-explain.ansi	170	50	! INCIDENT EVIDENCE - hypotheses and the next read-only check (new in 4.13)	samples/cli_413/11-explain.png
+raw/12-doctor.ansi	170	50	DOCTOR - connection, TLS, RBAC, metrics, reports (new in 4.13)	samples/cli_413/12-doctor.png
+raw/13-inspector-pod-picker.ansi	170	50	Inspector - pod picker (new in 4.13)	samples/cli_413/13-inspector-pod-picker.png
+raw/14-inspector-summary.ansi	170	50	Inspector - pod summary and container state	samples/cli_413/14-inspector-summary.png
+raw/15-inspector-previous-logs.ansi	170	50	Inspector - previous logs of a container	samples/cli_413/15-inspector-previous-logs.png
+raw/16-inspector-find.ansi	170	50	Inspector - / find: context kept, matches highlighted and counted (new in 4.13)	samples/cli_413/16-inspector-find.png
+raw/17-inspector-only-matches.ansi	170	50	Inspector - & show only matching lines (new in 4.13)	samples/cli_413/17-inspector-only-matches.png
+raw/18-inspector-containers.ansi	170	50	Inspector - c container picker with state and last exit (new in 4.13)	samples/cli_413/18-inspector-containers.png
+raw/19-inspector-help.ansi	170	50	Inspector - ? key map (new in 4.13)	samples/cli_413/19-inspector-help.png
+raw/20-help-keys.ansi	170	50	Dashboard help (?)	samples/cli_413/20-help-keys.png
+raw/21-pods-100col.ansi	100	40	1 PODS at 100 columns	samples/cli_413/21-pods-100col.png
+raw/22-services-100col.ansi	100	40	8 SERVICES at 100 columns	samples/cli_413/22-services-100col.png

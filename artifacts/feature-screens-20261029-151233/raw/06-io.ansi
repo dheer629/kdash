@@ -1,0 +1,50 @@
+[1m══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+[0m [1m[94mKDASH 4.13.1[0m  [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [1;7m 6 NET & DISK IO [0m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-29 20:43:04[0m[90m IST[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m default   [90mmatch[39m .*   [90mpoll 5s  spec 29s/30s  session [39m20:42:34[90m up [39m30s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m9m [32m░░░░░░[39m [32m0%[90m lim  mem [39m444Mi [32m█░░░░░[39m [32m17%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mNETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod[0m
+[35m ! no IO source readable with your rights - metrics-server only has CPU and memory[39m
+[90m   tried: no Prometheus service in the namespace[39m
+[90m   to enable: --prom-url http://<prometheus>:9090 (curl from this host)  |  --prom-svc [ns/]<prometheus-service>:<port> (needs services/proxy)  |  nodes/proxy (kubelet)[39m
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=29s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[90m nothing to show yet[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[7m[39m ● LIVE 20:43:04  next 5s  data 5s old  spec 29/30s  fetch 0.0s  poll 5s  AUDITED | io | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit         [0m

@@ -16,6 +16,20 @@ Shareable examples produced by the validation run `wsl-validation-20261018-13481
 (kdash 4.12.0, context `devops-admin@local-cluster`, three namespaces, five minutes
 each). The raw evidence behind every file here is in `../artifacts/`.
 
+## 4.13.1 screenshots - the new views and the inspector
+
+`samples/cli_413/` holds 22 fresh screens from **kdash 4.13.1** against a local WSL
+vcluster (namespace `default`, 5 s poll). They cover
+what the 4.12.0 run predates: the 4.13 tab bar in every view, **8 SERVICES**,
+**9 STORAGE**, **E** Events, **!** explanations, **DOCTOR**, the inspector with
+`/` find, `&` only matches, the `c` container picker and its key map, plus 100-column
+layouts. Same method as above: `tmux capture-pane -e -p` while live, replayed cell by
+cell with `scripts/capture-terminal.py`. The raw `.ansi` / `.txt` captures and the
+manifest are in `../artifacts/feature-screens-20261029-151233/`, and
+`samples/cli_413/SHA256SUMS` lists the 22 images. See
+[`cli_413/README.md`](cli_413/README.md) for the file list and for the placeholder
+names that `../scripts/redact-run.sh` substituted.
+
 ## CLI screenshots - views 1-7 for each namespace
 
 `samples/cli/<namespace>/01-pods.png` ... `07-alerts.png` - 21 images, seven per

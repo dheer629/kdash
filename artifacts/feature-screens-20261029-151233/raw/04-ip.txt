@@ -1,0 +1,50 @@
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ KDASH 4.13.1   1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-29 20:42:59 IST
+ ctx devops-admin@local-cluster   ns default   match .*   poll 5s  spec 24s/30s  session 20:42:34 up 25s   sorted by IP address
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 9m ░░░░░░ 0% lim  mem 444Mi █░░░░░ 17% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+ IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
+ pod IPs 3 in use   no IP 0   host-network 0   duplicate 0   subnets 1
+ services 6   ClusterIP 6   headless 0   NodePort 2   LoadBalancer 0   external addresses 0
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=24s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+► POD SUBNETS (observed, /24) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SUBNET                 PODS  NODES
+  10.244.0.0/24             3  dev
+
+► NODE IP BLOCKS (per worker node) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254     3     0 ░░░░░░░░░░  10.244.0.128/26
+
+► SERVICES ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  kafka                                ClusterIP              10.109.120.49    -                        9092/TCP
+  kafka-nodeport                       NodePort               10.108.89.68     -                        9092/TCP
+  kubernetes                           ClusterIP              10.96.0.1        -                        443/TCP
+  platform-web                         ClusterIP              10.107.161.155   -                        9898/TCP
+  postgres                             ClusterIP              10.106.72.255    -                        5432/TCP
+  postgres-nodeport                    NodePort               10.103.57.209    -                        5432/TCP
+
+► POD IP ASSIGNMENTS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.150     platform-web-fb5754c79-vstz8                 dev                        172.18.0.2       platform-web
+  10.244.0.158     platform-postgres-74699cf6db-69g4h           dev                        172.18.0.2       platform-postgres
+  10.244.0.165     platform-kafka-65c6d4dcfd-l7mqq              dev                        172.18.0.2       platform-kafka
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n›
+ ○ LIVE 20:42:59  next 5s  data 0s old  spec 24/30s  fetch 0.0s  poll 5s  AUDITED | ip | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q quit
