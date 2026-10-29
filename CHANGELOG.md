@@ -5,6 +5,43 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.13.0] - 2026-10-29
+
+### Added
+- `kdash --doctor` and a `doctor` view: read-only checks of the kubeconfig, context,
+  endpoint, pods, nodes, services, EndpointSlices, PVCs, Events and the Metrics API.
+  Failures are classified (RBAC, authentication, TLS, unreachable, timeout) and a missing
+  Metrics API is reported as a capability gap, not as an outage.
+- Pod inspector (`Enter` / `i`, `--inspect POD`): summary, containers, Events, `describe`
+  and opt-in, bounded current / previous logs. Logs never reach reports or sessions.
+- Command palette (`:`) with fixed handlers, and structured pod filters (`F`,
+  `--selector`, `--status`, `--node`, `--workload`, `--unhealthy`).
+- Kubernetes Events (`E`, `--events`) and evidence-backed explanations (`!`, `--explain`):
+  observed fact, possible explanation and the next read-only check; coverage gaps are
+  shown as unknown.
+- Views **8 SERVICES** (Ingress -> Service -> EndpointSlice -> ready pods) and
+  **9 STORAGE** (Pod -> PVC -> PV -> StorageClass, measured usage only when a metrics
+  source exists).
+- `src/` modules, `scripts/build.sh` (assembles `kdash` and the installer),
+  `scripts/package-release.sh` and `.github/workflows/release.yml` (versioned downloads),
+  `RELEASES.md`.
+- Tests: `test-runtime.sh`, `test-events.sh`, `test-health.sh`, `test-inspector.sh`, all
+  fixture-only (no cluster, no kubeconfig).
+
+### Changed
+- Cluster reads run in a background worker; a snapshot is adopted only when complete, so a
+  slow API call no longer blocks the keyboard. Failed reads keep the last good inventory,
+  back off and recover automatically; the header shows data age and `STALE`.
+- `scripts/validate-all.sh` runs every test under `tests/`, counts checksum entries from
+  the files themselves and compares against the matching remote branch.
+
+### Fixed
+- `-A` / `--all-namespaces` was placed before the kubectl verb and was rejected; it now
+  follows the resource.
+- A successful read that returned no pods kept the previous pods on screen.
+- Slow collection could block key handling.
+- Service selectors and PVC access modes no longer print a trailing comma.
+
 ## [Unreleased]
 
 ### Added

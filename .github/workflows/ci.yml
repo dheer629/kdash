@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   check:
-    name: bash syntax, tests, payload, checksums
+    name: Bash modules, fixture tests, payload, checksums
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,7 +21,11 @@ jobs:
         run: |
           bash --version | head -1
           awk --version | head -1 || true
-          kubectl version --client 2>/dev/null | head -1 || echo "kubectl not installed (not needed by these checks)"
+          if command -v kubectl >/dev/null 2>&1; then
+            kubectl version --client
+          else
+            echo "kubectl not installed; fixture tests use stubs and require no cluster"
+          fi
 
       - name: Validate everything this repository publishes
         run: bash scripts/validate-all.sh

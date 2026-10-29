@@ -6,7 +6,7 @@
 # Checks, in order:
 #   1. Bash syntax of every shipped script
 #   2. the installer embeds kdash byte for byte
-#   3. the uninstall integration tests
+#   3. every fixture/integration test under tests/
 #   4. every checksum in SHA256SUMS, samples/SHA256SUMS and samples/html/SHA256SUMS
 #   5. the recorded run named by artifacts/latest-run.txt: status, failures, the
 #      seven captures per namespace and the exit status of each namespace
@@ -14,47 +14,63 @@
 #   7. no environment, product, site or personal names in the tree (the author's
 #      own credit in the README and the tool is the one allowed reference)
 #   8. every image and link the README points at exists
-#   9. the working tree is clean and, when a remote is reachable, GitHub's main
-#      matches this checkout
+#   9. the working tree is clean and, when a matching remote branch exists,
+#      that branch matches this checkout (detached/tag checkouts skip this)
 #
 # Exit status 0 means every check passed. CI runs the same script.
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+shopt -s nullglob
+VALIDATE_TMP="$(mktemp -d "${TMPDIR:-/tmp}/kdash-validate.XXXXXXXX")" || exit 1
+validate_cleanup() {
+  case "$VALIDATE_TMP" in "${TMPDIR:-/tmp}"/kdash-validate.*) rm -rf -- "$VALIDATE_TMP" ;; esac
+}
+trap validate_cleanup EXIT
 
 fail=0
 ok()  { printf 'PASS  %s\n' "$*"; }
 bad() { printf 'FAIL  %s\n' "$*"; fail=$((fail + 1)); }
 
 echo "=== 1. Bash syntax and installer payload"
-for f in kdash kdash-bundle.sh kdash-uninstall.sh tests/*.sh; do
+for f in kdash kdash-bundle.sh kdash-uninstall.sh src/*.sh tests/*.sh; do
   bash -n "$f" 2>/dev/null && ok "syntax $f" || bad "syntax $f"
 done
 for f in scripts/*.sh; do
   case "$f" in scripts/_*) continue ;; esac
   bash -n "$f" 2>/dev/null && ok "syntax $f" || bad "syntax $f"
 done
-if sed -n '347,5894p' kdash-bundle.sh > /tmp/kdash-payload.$$ 2>/dev/null &&
-   cmp -s /tmp/kdash-payload.$$ kdash; then
+if awk '
+  /^cat > "\$tmp" <<\047KDASH_PAYLOAD_EOF\047$/ { capture=1; starts++; next }
+  capture && /^KDASH_PAYLOAD_EOF$/ { capture=0; ends++; next }
+  capture { print }
+  END { if (starts != 1 || ends != 1 || capture) exit 1 }
+' kdash-bundle.sh > "$VALIDATE_TMP/payload" &&
+   cmp -s "$VALIDATE_TMP/payload" kdash; then
   ok "kdash-bundle.sh embeds kdash byte for byte"
 else
   bad "the installer payload differs from kdash"
 fi
-rm -f /tmp/kdash-payload.$$
-
-echo "=== 2. uninstall integration tests"
-if bash tests/test-uninstall.sh > /tmp/kdash-tests.$$ 2>&1; then
-  ok "$(tail -1 /tmp/kdash-tests.$$)"
-else
-  bad "uninstall integration tests"
-  tail -5 /tmp/kdash-tests.$$
-fi
-rm -f /tmp/kdash-tests.$$
+echo "=== 2. fixture and integration tests (no live cluster)"
+for f in tests/*.sh; do
+  if bash "$f" > "$VALIDATE_TMP/test-output" 2>&1; then
+    ok "$f: $(tail -1 "$VALIDATE_TMP/test-output")"
+  else
+    bad "$f"
+    tail -10 "$VALIDATE_TMP/test-output"
+  fi
+done
 
 echo "=== 3. checksums"
-for pair in ".:SHA256SUMS:31" "samples:SHA256SUMS:17" "samples/html:SHA256SUMS:36"; do
-  dir="${pair%%:*}"; rest="${pair#*:}"; file="${rest%%:*}"; want="${rest##*:}"
-  n=$(cd "$dir" && sha256sum -c "$file" 2>/dev/null | grep -c ': OK$')
-  [ "$n" = "$want" ] && ok "$dir/$file $n/$want" || bad "$dir/$file $n/$want verified"
+for dir in . samples samples/html; do
+  file=SHA256SUMS
+  want=$(awk 'NF {n++} END {print n+0}' "$dir/$file" 2>/dev/null)
+  if [ "${want:-0}" -gt 0 ] && (cd "$dir" && sha256sum -c "$file") > "$VALIDATE_TMP/checksums" 2>&1; then
+    n=$(grep -c ': OK$' "$VALIDATE_TMP/checksums")
+    [ "$n" = "$want" ] && ok "$dir/$file $n/$want" || bad "$dir/$file $n/$want verified"
+  else
+    bad "$dir/$file verification failed"
+    [ ! -f "$VALIDATE_TMP/checksums" ] || tail -5 "$VALIDATE_TMP/checksums"
+  fi
 done
 
 echo "=== 4. the recorded run"
@@ -107,13 +123,22 @@ done < <({ grep -o 'src="[^"]*"' README.md | sed 's/^src="//; s/"$//'
 
 echo "=== 8. git state"
 d=$(git status --porcelain 2>/dev/null | wc -l)
-[ "$d" = 0 ] && ok "working tree clean" || { bad "$d uncommitted change(s)"; git status --short | head -10; }
-ok "HEAD $(git log --oneline -1)"
-if r=$(git ls-remote origin refs/heads/main 2>/dev/null | cut -f1) && [ -n "$r" ]; then
-  l=$(git rev-parse HEAD)
-  [ "$r" = "$l" ] && ok "GitHub main matches this checkout ($l)" || bad "GitHub main $r differs from local $l"
+if [ "$d" = 0 ]; then
+  ok "working tree clean"
+elif [ "${KDASH_VALIDATE_ALLOW_DIRTY:-0}" = 1 ]; then
+  printf 'SKIP  clean working tree requirement explicitly disabled (%s changes)\n' "$d"
 else
-  printf 'SKIP  remote not reachable (offline checkout)\n'
+  bad "$d uncommitted change(s)"; git status --short | head -10
+fi
+ok "HEAD $(git log --oneline -1)"
+branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+if [ -z "$branch" ]; then
+  printf 'SKIP  remote branch comparison (detached or tag checkout)\n'
+elif r=$(git ls-remote --exit-code origin "refs/heads/$branch" 2>/dev/null | cut -f1) && [ -n "$r" ]; then
+  l=$(git rev-parse HEAD)
+  [ "$r" = "$l" ] && ok "remote branch $branch matches this checkout ($l)" || bad "remote branch $branch $r differs from local $l"
+else
+  printf 'SKIP  remote branch absent or unreachable (%s)\n' "$branch"
 fi
 
 echo

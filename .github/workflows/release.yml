@@ -1,0 +1,53 @@
+name: Versioned downloads
+
+on:
+  push:
+    tags: ['v[0-9]*']
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: 'Existing commit or tag to package (blank uses this workflow commit)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate new version
+        if: github.event_name == 'push' || inputs.source_ref == ''
+        run: bash scripts/validate-all.sh
+      - name: Package the selected committed version
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: bash scripts/package-release.sh "${SOURCE_REF:-HEAD}"
+      - name: Publish immutable version assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          ref="${SOURCE_REF:-HEAD}"
+          version="$(git show "$ref:kdash" | sed -n 's/^KDASH_VERSION="\([^"]*\)"$/\1/p' | head -1)"
+          tag="v$version"
+          commit="$(git rev-parse "$ref^{commit}")"
+          if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_NAME" != "$tag" ]; then
+            echo 'Tag and embedded version disagree' >&2; exit 1
+          fi
+          # Never replace files attached to an already published version.
+          if gh release view "$tag" --repo "$REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists; leaving its assets intact."
+            exit 0
+          fi
+          # A pushed tag must already exist. A manual run for an older commit has no
+          # tag yet, so the release creates it at exactly that commit.
+          verify=()
+          if [ "$GITHUB_EVENT_NAME" = push ]; then verify=(--verify-tag); fi
+          gh release create "$tag" dist/"$tag"/* --repo "$REPOSITORY" --target "$commit" \
+            --title "kdash $version" --generate-notes "${verify[@]}"

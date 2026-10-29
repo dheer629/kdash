@@ -168,7 +168,7 @@ Keep the session running for at least five minutes of recorded observations. Vis
 
 Repeat with `ns='ml-service-prod'` and `ns='gitops-core'`, or run them in separate terminals using a separate `KDASH_REPORT_DIR` for each. Separate sessions make the histories easy to attribute. Pressing `n` changes namespace interactively and begins a new history session for the selected namespace.
 
-**Current limitation:** the all-namespaces `-A` route has a known kubectl argument-order issue in this version. Use explicit `-n NAME` runs for this exercise. Do not interpret a failed `-A` command as evidence that every namespace is empty or inaccessible. Some older README/help examples also say that `--snapshot all` generates five files; the implementation now generates six standalone view reports.
+**Version note:** kdash 4.12.0 had a kubectl argument-order defect on the all-namespaces `-A` route, so use `-n NAME` there. It is fixed in 4.13.0 (`kdash -A` now runs `get pods --all-namespaces`). On any version, do not interpret a failed `-A` command as evidence that every namespace is empty or inaccessible; run `kdash --doctor` first. Some older README/help examples also say that `--snapshot all` generates five files; the implementation now generates six standalone view reports.
 
 ## 4. Read the seven CLI views
 
@@ -314,7 +314,11 @@ Logs are hash-chained. `--audit-verify` detects broken links in the available fi
 | Usage is `-` | Try `kubectl --context "$ctx" -n "$ns" top pods`. Check metrics-server availability and permissions. Structural requests/limits can remain visible without usage. |
 | Nodes or whole-cluster comparison missing | Inspect coverage notes and `kubectl --context "$ctx" auth can-i list nodes`. `--no-cluster` can skip cluster-wide pod reads when deliberately limiting scope. |
 | IO is missing | Wait for two samples; use `--io-wait 20` for one-shot reports. Check the stated source and proxy permission. `--prom-svc namespace/service:port` or `--prom-url URL` selects an existing source. Do not invent traffic values. |
-| `-A` fails | Use explicit `-n NAME` runs; this version has a known all-namespaces argument-order issue. |
+| `-A` fails | On 4.12.0 use explicit `-n NAME` runs (known argument-order defect, fixed in 4.13.0). On 4.13.0 run `kdash --doctor`: a failure usually means cluster-wide list RBAC is missing. |
+| Nothing loads, or the header says `STALE` | Run `kdash --doctor`. It separates an unreachable endpoint, TLS, expired credentials, RBAC and a missing Metrics API, and prints the next read-only check for each. kdash keeps the last good pods on screen and retries by itself. |
+| CPU / memory show `-` | The Metrics API is not answering. This is a capability gap, not an outage: requests, limits, readiness, services, storage and Events are still read. `--doctor` reports it as `INFO metrics`. |
+| A pod is failing and you want evidence | Select it with `Enter` / `i` (summary, containers, Events, describe, opt-in logs), or `kdash --explain POD -n NS`. Explanations are hypotheses with their supporting Event; they do not prove a cause. |
+| Service has no backends, or a claim is Pending | View `8` (selector mismatch / unready / missing named port) and view `9` (claim, PV, StorageClass, mounts, storage Events). A denied read is shown as unknown, never as zero. |
 | Session report has no trend | Check the selected session path and sample count. A new one-shot invocation or the wrong `latest` directory may not contain the intended history. |
 | Terminal is narrow or glyphs look broken | Enlarge the terminal, pan with `h`/`l`, or use `--ascii`. Use `--theme light` for light terminals and `-N` for plain text. |
 | Export fails | Verify the selected report directory is writable and has space. Preserve stderr and the exit code. |

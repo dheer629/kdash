@@ -2,18 +2,19 @@
 # Regenerate SHA256SUMS at the repository root.
 #
 # It covers what the repository ships: the Bash entry points, the documentation
-# and the sample gallery images. Verify with:  sha256sum -c SHA256SUMS
-set -uo pipefail
+# source modules, release helpers and sample gallery images.
+# Verify with: sha256sum -c SHA256SUMS
+set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+shopt -s nullglob
 
 {
-  for f in kdash kdash-bundle.sh kdash-uninstall.sh tests/test-uninstall.sh \
+  for f in kdash kdash-bundle.sh kdash-uninstall.sh \
            README.md DEVOPS_USER_GUIDE.md KDASH_EXPLAINER.txt CHANGELOG.md \
-           CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md LICENSE \
-           artifacts/README.md samples/README.md; do
-    [ -f "$f" ] && sha256sum "$f"
-  done
-  for f in $(ls -1 samples/*.png 2>/dev/null | LC_ALL=C sort); do
+           CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md LICENSE RELEASES.md \
+           ENHANCEMENT_ROADMAP.md artifacts/README.md samples/README.md \
+           src/*.sh tests/*.sh scripts/*.sh .github/workflows/*.yml samples/*.png; do
+    [ -f "$f" ] || continue
     sha256sum "$f"
   done
 } > SHA256SUMS

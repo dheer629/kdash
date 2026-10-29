@@ -1,4 +1,4 @@
-# kdash 4.12
+# kdash 4.13
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -19,7 +19,8 @@
 
 Live Kubernetes namespace operations dashboard for the terminal, built for DevOps teams
 running platform namespaces on management hosts. One Bash file, no build step, no jq,
-no Python. It reads `kubectl`, joins everything locally, and gives you seven views.
+no Python. It reads `kubectl`, joins everything locally, and gives you seven views plus
+services, storage, events and an inspector.
 Press `?` in any view for an explanation of what is on screen.
 
 | Key | View | What it answers |
@@ -31,6 +32,9 @@ Press `?` in any view for an explanation of what is on screen.
 | `5` | **MEMORY** | Live memory dashboard: memory and CPU time charts (host clock, start / middle / end times, request and limit lines, event markers), session events, per-node bars, pods by memory, OOM risk, **memory growth forecast** (when does a pod hit its limit), OOMKilled history and memory by workload. |
 | `6` | **NET & DISK IO** | Network in (ingress) / out (egress) and disk read / write / IOPS over time and per worker node and per pod, with the namespace share of each node. |
 | `7` | **ALERTS** | One live page for DevOps: the verdict (CRITICAL / WARNING / HEALTHY), a health line per section and every critical and warning signal from all sections. Each alert shows its age, live value and trend, with the kubectl action to run under it. NEW and recently cleared alerts are marked, followed by the live top consumers (memory, CPU, traffic) and events. |
+| `8` | **SERVICES** | Ingress -> Service -> EndpointSlice -> ready pods: selector mismatches, unready backends, missing named ports, unknown (not zero) when a read is denied. |
+| `9` | **STORAGE** | Pod -> PVC -> PV -> StorageClass: unbound claims, claim/PV mismatches, mounts, storage events, and measured usage only when a metrics source exists. |
+| `E` `!` | **EVENTS / EXPLAIN** | Real Kubernetes Events, then evidence-backed hypotheses with the next read-only check. `Enter`/`i` inspects a pod, `:` opens the command palette, `F` filters. |
 
 Every view is live (no flicker, header and footer pinned, body scrolls), can be printed
 once as text / TSV / CSV, and is exported to HTML. A live run records everything it
@@ -234,6 +238,11 @@ kdash -s mem --reverse                  # smallest memory first
 | `-i` `-R` `-1` | usage poll seconds, spec re-read seconds, render once |
 | `-s` `-P` `-C` `-D` | sort key, pods only, force containers, hide detail lines |
 | `--ascii` `-N` `-S` | ASCII glyphs, no colour, no alternate screen |
+| `--doctor` | read-only connection, TLS, RBAC, metrics and report diagnostics, then exit |
+| `--events` `--explain [POD]` | Kubernetes Events / evidence-backed explanations, then exit |
+| `--inspect POD` `--container NAME` `--logs current\|previous` | pod summary; logs only when asked, bounded |
+| `--selector` `--status` `--node` `--workload` `--unhealthy` | structured pod filters |
+| `--request-timeout SEC` | per-request seconds (default 5; every kubectl call is also capped by `KDASH_CMD_TIMEOUT`, default 12) |
 
 ### Keys
 
@@ -248,6 +257,9 @@ kdash -s mem --reverse                  # smallest memory first
 | `s` | cycle sort key (every view) | `o` | reverse sort order |
 | `w` | PODS grouped by workload / flat | `?` | help for the view on screen |
 | `r` | re-read spec now | | |
+| `8` `9` | services / storage | `E` `!` | Kubernetes Events / explanations |
+| `Enter` `i` | inspect a pod | `:` | command palette |
+| `F` | structured filters (label, status, node, workload, unhealthy) | | |
 | `n` | pick another namespace | `a` | NODE POOLS: every node / hosting nodes only |
 | `T` | colour theme | `z` | time-chart window: all since start, 15m, 1h, 6h, 24h |
 | `Z` | NODE POOLS auto zoom / true scale | `P` | pause / resume live refresh (data frozen) |
@@ -699,6 +711,49 @@ journalctl -t kdash --since today # syslog copy
 | 6 | `KDASH_AUDIT_REQUIRED=1` and no audit file writable |
 | 126 | (kubectl wrapper) a verb that could change the cluster was refused |
 
+## Changes in 4.13.0
+
+From an alert to evidence to the next read-only check, without leaving kdash.
+
+- **Doctor** (`kdash --doctor`, `: doctor`): kubeconfig, context, endpoint (user info and query
+  strings are never printed), pods, nodes, services, EndpointSlices, PVCs, Events and the Metrics
+  API are probed separately. A missing Metrics API is reported as a capability gap, not as a
+  failure: requests, limits and object health remain available. Failures are classified as RBAC
+  denied, authentication, TLS, unreachable endpoint or timeout, each with a next read-only check.
+  Exit status 1 when pods or the local report directory cannot be used.
+- **Resilient refresh:** collection runs in a background worker and a complete snapshot is adopted
+  only when the worker finishes, so slow API calls never block the keyboard. A failed read keeps
+  the last good inventory, backs off (2, 4, 8 ... 32 s) and recovers on its own. The header shows
+  `Data pods=fresh|STALE age=Ns metrics=available|unavailable`. A read that succeeds with no pods
+  now replaces the old pods; a failed or partial read never does.
+- **Inspector:** `Enter` / `i` opens a pod picker, then summary, containers, events, `describe` and
+  current / previous logs, and `q` returns to the same row. `kdash --inspect POD -n NS` prints the
+  same summary. Logs are opt-in (`--container NAME --logs current|previous`), bounded by
+  `KDASH_LOG_TAIL` (200, max 2000) and `KDASH_LOG_LIMIT_BYTES` (64 KiB, max 1 MiB), and are never
+  written to reports or session files.
+- **Command palette and structured filters:** `:` opens a palette of fixed handlers (it never runs
+  shell text). `F` or `--selector`, `--status`, `--node`, `--workload`, `--unhealthy` filter pods.
+- **Events and explanations:** `E` / `--events` list real Kubernetes Events (reason, object, count,
+  first / last seen, deduplicated, never merged across resources). `!` / `--explain [POD]` groups
+  warnings into scheduling, storage, probe, image, restart and memory hypotheses. Each one shows
+  the observed fact, a *possible* explanation, and the next read-only command. Timing alone is
+  never presented as a cause, and denied Events access shows unknown coverage, not "no events".
+- **Services (`8`):** Ingress -> Service -> EndpointSlice -> ready pods, with selector mismatch,
+  selected-but-unready, missing named target port, selectorless, ExternalName and headless cases.
+  Denied EndpointSlice access is reported as unknown, never as zero backends.
+- **Storage (`9`):** PVC -> PV -> StorageClass with bound / pending claims, `claimRef` mismatches,
+  `WaitForFirstConsumer`, declared mounts (including init containers), PVC conditions and recent
+  storage Events. Measured usage appears only when a configured Prometheus (`--prom-url`,
+  `--prom-svc`) or the existing IO source supplies `kubelet_volume_stats_*`; otherwise it is
+  `unknown`, never zero. Allocation and usage are always labelled separately.
+- **Fixed:** `-A` / `--all-namespaces` was placed before the verb, so kubectl rejected it. It now
+  follows the resource (`get pods --all-namespaces`).
+- Requires nothing new: Bash 4+, `kubectl`, `awk`. Still read-only; the wrapper refuses any verb
+  that could change the cluster.
+
+Download an exact version (older versions stay available) from
+[Releases](https://github.com/dheer629/kdash/releases) - see [RELEASES.md](RELEASES.md).
+
 ## Changes in 4.12.0
 
 New view **7 ALERTS** (`7`, `-v alerts`): a live critical summary of every section on one page.
@@ -933,7 +988,9 @@ HTML reports: clearer data, easier hand-off.
 kdash                 the whole CLI (one Bash file)
 kdash-bundle.sh       installer (embeds kdash byte for byte) + the uninstaller
 kdash-uninstall.sh    standalone uninstaller
-tests/                uninstall integration tests (11)
+src/                  source modules built into kdash (runtime, events, health, inspector)
+tests/                fixture tests: uninstall (11), runtime, events, health, inspector
+RELEASES.md           how versions are published and downloaded
 scripts/              capture, render, redact, validate and checksum helpers
                        (scripts/validate-all.sh checks everything in one go)
 samples/              published screenshots and HTML samples

@@ -283,10 +283,20 @@ Two practical findings are baked into it:
     its own. Without that, captures come back with a status line and the wrong height.
 12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
 --------------------------------------------------
-Version 4.12.0:
-  * the all-namespaces route (-A / --all-namespaces) has a known kubectl
-    argument-order issue; use an explicit -n NAME and do not read a failed -A as
-    "the namespace is empty or forbidden".
+Version 4.13.0:
+  * the all-namespaces route (-A) is fixed: the flag now follows the resource
+    (get pods --all-namespaces). Version 4.12.0 had an argument-order defect there;
+    on that version use an explicit -n NAME. Never read a failed -A as "the
+    namespace is empty or forbidden": run kdash --doctor.
+  * Events and explanations are observations and hypotheses. An Event can be old,
+    expired or missing, and timing alone does not prove a cause. No retained Event
+    does not establish that the application is healthy.
+  * measured volume usage exists only when a configured Prometheus (or the existing IO
+    source) supplies kubelet_volume_stats_*. Otherwise it is unknown, never zero.
+    PVC/PV capacity is allocation, not usage.
+  * the services view reports API objects and readiness. It does not test DNS,
+    ingress controllers, NetworkPolicy, routing, TLS or application responses.
+  * the inspector never writes logs to reports or session files.
   * IO (view 6) needs a reachable Prometheus/cAdvisor endpoint or the kubelet
     proxy. metrics-server supplies CPU and memory only. Where no source is
     reachable, IO is reported as unavailable, never as zero.

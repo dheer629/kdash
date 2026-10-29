@@ -41,3 +41,4 @@ __pycache__/
 # a run that was started but not published
 artifacts/tmp/
 artifacts/scratch/
+dist/

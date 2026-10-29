@@ -24,7 +24,7 @@
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.12.0"
+KDASH_VERSION="4.13.0"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"
@@ -38,6 +38,10 @@ TOPN="${KDASH_TOPN:-15}"; HIST_N="${KDASH_HISTORY:-60}"; NODE_METRICS="${KDASH_N
 REPORT_DIR="${KDASH_REPORT_DIR:-$HOME/kdash_reports}"; DO_REPORT=0; DO_SNAP=0; SNAP_SEL=""; DO_SREP=0; SREP_ARG=""
 SORT="${KDASH_SORT:-cpu}"; SORT_REV=0; GROUP="${KDASH_GROUP:-1}"; ONCE=0; PODS_ONLY=0; DETAIL=1; BARCHR="${KDASH_GLYPHS:-unicode}"; COLOR=1; ALTSCR=1
 ALL_NS=0; PICK_NS=0
+DO_DOCTOR=0; DO_EVENTS=0; DO_EXPLAIN=0; INSPECT_POD=""; EXPLAIN_POD=""
+REQUEST_TIMEOUT="${KDASH_REQUEST_TIMEOUT:-5}"
+KDASH_LABEL_SELECTOR="${KDASH_LABEL_SELECTOR:-}"; KDASH_STATUS_FILTER="${KDASH_STATUS_FILTER:-}"
+KDASH_NODE_FILTER="${KDASH_NODE_FILTER:-}"; KDASH_WORKLOAD_FILTER="${KDASH_WORKLOAD_FILTER:-}"; KDASH_UNHEALTHY="${KDASH_UNHEALTHY:-0}"
 TWIN="${KDASH_WINDOW:-all}"; FC_WIN="${KDASH_FORECAST_WINDOW:-1800}"; ZOOM="${KDASH_ZOOM:-1}"; COMPARE_NS="${KDASH_COMPARE_NS:-}"
 THEME="${KDASH_THEME:-safe}"; CLUSTER="${KDASH_CLUSTER:-1}"; ALL_NODES="${KDASH_ALL_NODES:-1}"
 [ -n "${NO_COLOR:-}" ] && COLOR=0
@@ -169,7 +173,7 @@ if [ "$ok" = 0 ]; then
   printf 'kdash: refused "kubectl %s %s" - kdash is read-only\n' "$verb" "$sub" >&2
   exit 126
 fi
-"$KDASH_REAL_KUBECTL" "$@"; rc=$?
+timeout --kill-after=1s "${KDASH_CMD_TIMEOUT:-12}s" "$KDASH_REAL_KUBECTL" "$@"; rc=$?
 printf '%s\t%s\t%s\n' "$(date +%s)" "$rc" "${shape:0:300}" >> "$KDASH_KLOG" 2>/dev/null
 exit "$rc"
 KWRAP
@@ -386,6 +390,18 @@ VIEW OPTIONS
                          light | mono       (key T cycles while running)
   -S, --no-altscreen     draw in the normal buffer
 
+DIAGNOSTICS (read-only)
+      --doctor          connection, TLS, RBAC, metrics and report diagnostics
+      --events          actual Kubernetes Events, then exit
+      --explain [POD]   event-backed hypotheses and next checks, then exit
+      --inspect POD     pod/container summary (use -n NAME), then exit
+      --container NAME --logs current|previous   explicit bounded log inspection
+      --selector LABELS --status REGEX --node NAME --workload REGEX --unhealthy
+      --request-timeout SEC  per-request seconds (default 5; hard command cap 12)
+      -v services|storage   service/backend map or PVC/PV health (keys 8/9)
+  Enter/i inspector   : command palette   F structured filters
+  E Kubernetes Events   ! explanations   8 services   9 storage
+
 OTHER
       --install [DIR]    install as "kdash"
       --completion bash  print a bash completion script
@@ -393,7 +409,7 @@ OTHER
   -h, --help             this help
 
 KEYS WHILE RUNNING
-  1-7 / Tab     switch view       x         HTML report: all tabs + history so far
+  1-9 / Tab     switch view       x         HTML report: all tabs + history so far
   e             HTML menu: all-tabs report, current view, views 1-6, or the bundle
   j k / arrows  scroll            space b   page down / up
   h l / arrows  pan left / right  0         back to column 1
@@ -540,6 +556,10 @@ norm_view() {
     5|mem|memory|ram) echo mem ;;
     6|io|net|disk|traffic) echo io ;;
     7|alert|alerts|crit|critical|summary) echo alerts ;;
+    8|service|services|health) echo services ;;
+    9|storage|pvc|volumes) echo storage ;;
+    events) echo events ;;
+    explain) echo explain ;;
     all) echo all ;;
     *) return 1 ;;
   esac
@@ -554,6 +574,19 @@ while [ $# -gt 0 ]; do
                        else NS="$2"; shift 2; fi ;;
     --namespace=*)     NS="${1#--namespace=}"; shift ;;
     --pick-ns)         PICK_NS=1; NS=""; shift ;;
+    --doctor)          DO_DOCTOR=1; ONCE=1; shift ;;
+    --events)          DO_EVENTS=1; ONCE=1; VIEW=events; shift ;;
+    --explain)         DO_EXPLAIN=1; ONCE=1; VIEW=explain; shift
+                       if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then EXPLAIN_POD="$1"; shift; fi ;;
+    --inspect)         need_arg "$@"; INSPECT_POD="$2"; ONCE=1; shift 2 ;;
+    --container)       need_arg "$@"; KDASH_INSPECT_CONTAINER="$2"; shift 2 ;;
+    --logs)            need_arg "$@"; KDASH_INSPECT_LOGS="$2"; shift 2 ;;
+    --selector)        need_arg "$@"; KDASH_LABEL_SELECTOR="$2"; shift 2 ;;
+    --status)          need_arg "$@"; KDASH_STATUS_FILTER="$2"; shift 2 ;;
+    --node)            need_arg "$@"; KDASH_NODE_FILTER="$2"; shift 2 ;;
+    --workload)        need_arg "$@"; KDASH_WORKLOAD_FILTER="$2"; shift 2 ;;
+    --unhealthy)       KDASH_UNHEALTHY=1; shift ;;
+    --request-timeout) need_arg "$@"; REQUEST_TIMEOUT="$2"; shift 2 ;;
     --theme)           need_arg "$@"; THEME="$2"; shift 2 ;;
     --no-cluster)      CLUSTER=0; shift ;;
     --no-io)           KDASH_IO=0; shift ;;
@@ -614,6 +647,12 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+case "$REQUEST_TIMEOUT" in ''|*[!0-9]*|0) die "--request-timeout requires positive integer seconds" ;; esac
+case "${KDASH_CMD_TIMEOUT:-12}" in ''|*[!0-9]*|0) die "KDASH_CMD_TIMEOUT requires positive integer seconds" ;; esac
+case "${KDASH_INSPECT_LOGS:-}" in ''|current|previous) ;; *) die "--logs must be current or previous" ;; esac
+for _filter in "$KDASH_STATUS_FILTER" "$KDASH_WORKLOAD_FILTER"; do
+    printf '' | grep -E -- "$_filter" >/dev/null 2>&1; [ $? -le 1 ] || die "invalid structured filter regex"
+done
 VIEW="$(norm_view "$VIEW")" || die "unknown view (use pods | nodes | workloads | ip | mem | io | all)"
 case "$OUTFMT" in text|tsv|csv) ;; *) die "unknown output format '$OUTFMT' (text | tsv | csv)" ;; esac
 case "$SORT" in cpu|mem|cpupct|mempct|name|restarts) ;; *) die "unknown sort key '$SORT' (cpu | mem | cpupct | mempct | name | restarts)" ;; esac
@@ -695,6 +734,7 @@ fi
 read -r -a KC <<< "${KDASH_KUBECTL:-kubectl}"
 [ "$DO_SREP" = 1 ] || command -v "${KC[0]}" >/dev/null 2>&1 || fail "${KC[0]} not found in PATH"
 [ -t 1 ] || { COLOR=0; ALTSCR=0; }
+KC+=(--request-timeout="${REQUEST_TIMEOUT}s")
 
 if [ -n "$KUBECONF" ]; then
   [ -r "$KUBECONF" ] || fail "kubeconfig not readable: $KUBECONF"
@@ -736,6 +776,8 @@ fi
 if [ "$ALL_NS" = 1 ]; then SCOPE=(--all-namespaces); NS="(all namespaces)"; else SCOPE=(-n "${NS:-default}"); fi
 if [ "$DO_SREP" = 1 ]; then CTX_NAME="${CTX:-n/a}"; else CTX_NAME="${CTX:-$("${KC[@]}" config current-context 2>/dev/null || echo n/a)}"; fi
 
+[ -n "$CTX" ] || [ "$CTX_NAME" = n/a ] || KC+=(--context "$CTX_NAME")
+
 TMPD="$(mktemp -d "${TMPDIR:-/tmp}/kdash.XXXXXX")" || fail "mktemp failed"
 chmod 700 "$TMPD"
 audit_wrap_kubectl
@@ -751,6 +793,7 @@ LOOPED=0
 ERRLOG="$TMPD/stderr"
 cleanup() {
   local rc=$?
+  declare -F toolkit_cancel >/dev/null && toolkit_cancel
   [ "${AUDIT_STARTED:-0}" = 1 ] && audit_end "$rc"
   if [ "$LOOPED" = 1 ]; then
     LOOPED=0
@@ -803,27 +846,30 @@ _klass() {
 
 refresh_spec() {
   local tmp="$TMPD/spec.new" err="$TMPD/spec.err"
-  if "${KC[@]}" "${SCOPE[@]}" get pods -o jsonpath="$SPEC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
+  local pod_selector=(); [ -z "$KDASH_LABEL_SELECTOR" ] || pod_selector=(--selector "$KDASH_LABEL_SELECTOR")
+  SPEC_OK=0
+  if "${KC[@]}" get pods "${SCOPE[@]}" "${pod_selector[@]}" -o jsonpath="$SPEC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
     SPEC_OK=1
     # an empty answer replaces the spec only when the namespace really is empty
     # (first read, or every pod gone); a transient blank never blanks the frame
-    if [ -s "$tmp" ] || [ "$SPEC_AT" = 0 ] || [ ! -s "$SPEC" ]; then mv -f "$tmp" "$SPEC"; SPEC_AT=$(date +%s); else rm -f "$tmp"; fi
+    mv -f "$tmp" "$SPEC"; SPEC_AT=$(date +%s)
   else rm -f "$tmp"; fi            # keep last good spec
   tmp="$TMPD/nodes.new"; err="$TMPD/nodes.err"
   if "${KC[@]}" get nodes -o jsonpath="$NODE_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp" && [ -s "$tmp" ]; then
-    mv -f "$tmp" "$NODES"; NODES_STATE="ok"
-  else rm -f "$tmp"; [ -s "$NODES" ] || NODES_STATE="$(_klass "$err")"; fi
+    mv -f "$tmp" "$NODES"; date +%s > "$TMPD/nodes.updated"; NODES_STATE="ok"
+  else rm -f "$tmp"; NODES_STATE="$(_klass "$err")"; fi
   refresh_cluster
+  [ "$WL_STATE" != forbidden ] || WL_STATE=unread
   refresh_workloads
   tmp="$TMPD/svc.new"; err="$TMPD/svc.err"
-  if "${KC[@]}" "${SCOPE[@]}" get services -o jsonpath="$SVC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
-    mv -f "$tmp" "$SVC"; SVC_STATE="ok"
-  else rm -f "$tmp"; [ -s "$SVC" ] || SVC_STATE="$(_klass "$err")"; fi
+  if "${KC[@]}" get services "${SCOPE[@]}" -o jsonpath="$SVC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
+    mv -f "$tmp" "$SVC"; date +%s > "$TMPD/svc.updated"; SVC_STATE="ok"
+  else rm -f "$tmp"; SVC_STATE="$(_klass "$err")"; fi
 }
 refresh_workloads() {    # namespace scope; a kind the server or RBAC refuses is dropped
   [ "$WL_STATE" = forbidden ] && return 0
   local tmp="$TMPD/wl.new" err="$TMPD/wl.err"
-  "${KC[@]}" "${SCOPE[@]}" get "$WL_KINDS" --request-timeout=20s -o jsonpath="$WL_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"
+  "${KC[@]}" get "$WL_KINDS" "${SCOPE[@]}" --request-timeout="${REQUEST_TIMEOUT}s" -o jsonpath="$WL_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"
   if [ -s "$tmp" ]; then mv -f "$tmp" "$WLS"; WL_STATE="ok"
     grep -qiE 'forbidden|cannot (list|get)' "$err" 2>/dev/null && WL_STATE="partial"
     return 0
@@ -946,9 +992,9 @@ recent_ns() { [ -r "$RECENT_NS_FILE" ] && awk -F'\t' -v c="$CTX_NAME" '$1 == c {
 
 refresh_top() {
   local tmp="$TMPD/top.new" err="$TMPD/top.err"
-  if "${KC[@]}" "${SCOPE[@]}" top pod --containers --no-headers > "$tmp" 2>"$err"; then
+  if "${KC[@]}" top pod "${SCOPE[@]}" --containers --no-headers > "$tmp" 2>"$err"; then
     cp -f "$TOPC" "$TOPP"; mv -f "$tmp" "$TOPC"; TOP_OK=1; TOP_AT=$(date +%s)
-  else rm -f "$tmp"; TOP_OK=0; fi
+  else rm -f "$tmp"; : > "$TOPC"; TOP_OK=0; fi
   if [ "$NODE_METRICS" = 1 ] && [ "$TOPN_STATE" != forbidden ]; then
     tmp="$TMPD/topn.new"; err="$TMPD/topn.err"
     if "${KC[@]}" top node --no-headers > "$tmp" 2>"$err" && [ -s "$tmp" ]; then
@@ -958,7 +1004,7 @@ refresh_top() {
 }
 TOP_AT=0; FETCH_AT=0; FETCH_MS=0; PAUSED=0; PAUSED_AT=0
 _ms() { local t="${EPOCHREALTIME:-}"; if [ -n "$t" ]; then t="${t/[.,]/}"; printf '%s' "${t:0:${#t}-3}"; else printf '%s000' "$(date +%s)"; fi; }
-fetch() {
+fetch_sync() {
   local now t0; now=$(date +%s); t0=$(_ms)
   [ $((now - SPEC_AT)) -ge "$SPEC_TTL" ] && refresh_spec
   refresh_top
@@ -1788,7 +1834,7 @@ END {
 }
 '
 
-build_model() {
+build_model_core() {
   local tp; [ -s "$TOPP" ] && tp="$TOPP" || tp="$TOPC"
   { printf '@@SPEC\n'; cat "$SPEC"
     printf '@@TOP\n'; cat "$TOPC"
@@ -2564,7 +2610,7 @@ END {
 BEGIN { while ((getline ln < iohistf) > 0) { split(ln, a, "\t"); IOH = IOH (IOH == "" ? "" : " ") (a[2] + a[3]) } close(iohistf) }
 '
 
-render() {
+render_core() {
   local cols age prog
   cols="${KDASH_COLUMNS:-$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )}"
   [ "${RENDER_COLS:-}" ] && cols="$RENDER_COLS"
@@ -2633,7 +2679,7 @@ END {
     else if (st == "Pending" || w == "ContainerCreating") al("W", "PODS", p, (st == "Pending" ? "Pending" : w), "node " f[7], "kubectl " podns(p) "get events --field-selector involvedObject.name=" podnm(p))
     else if (st ~ /Evicted|Failed|Unknown/) al("C", "PODS", p, st, "node " f[7], "kubectl " podns(p) "describe pod " podnm(p))
     else if (st == "Running" && rr[1] != rr[2]) al("W", "PODS", p, "NOT_READY", "ready " f[5], "kubectl " podns(p) "describe pod " podnm(p) "   (readiness probe)")
-    cu = nv(f[14]); cl = nv(f[16]); if (cu >= 0 && cl > 0 && cu * 100 / cl >= hy("PODS", p, "CPU_THROTTLE", 90, 5)) al("W", "PODS", p, "CPU_THROTTLE", sprintf("cpu %s = %.0f%% of limit %s", hcpu(cu), cu * 100 / cl, hcpu(cl)), "kubectl " podns(p) "top pod " podnm(p) " --containers", SPC[p]) }
+    cu = nv(f[14]); cl = nv(f[16]); if (cu >= 0 && cl > 0 && cu * 100 / cl >= hy("PODS", p, "CPU_LIMIT_PRESSURE", 90, 5)) al("W", "PODS", p, "CPU_LIMIT_PRESSURE", sprintf("cpu %s = %.0f%% of limit %s", hcpu(cu), cu * 100 / cl, hcpu(cl)), "kubectl " podns(p) "top pod " podnm(p) " --containers", SPC[p]) }
   # restarts / OOM kills in the last 5 minutes (session events)
   evload(evf, now - 300)
   for (i = 1; i <= EVN; i++) if (EVK[i] == "OOMKILLED" || EVK[i] == "RESTART") { RC5[EVO[i]]++; if (EVK[i] == "OOMKILLED") RO5[EVO[i]] = 1; RL5[EVO[i]] = EVM[i]; RT5[EVO[i]] = EVT[i] }
@@ -4918,6 +4964,8 @@ make_report() {          # writes bundle + HTML, prints the paths
   awk -v md="$MODEL" -v ns="$NS" -v ctxn="$CTX_NAME" -v filt="$FILTER" -v ver="$KDASH_VERSION" \
       -v ts="$(date '+%Y-%m-%d %H:%M:%S %z')" "$HTML_AWK" < /dev/null > "$html" || return 1
   cp -f "$html" "$dir/report.html"
+  if [ "${TOOLKIT_REQUESTED:-0}" = 0 ]; then events_collect; health_collect; fi
+  toolkit_export "$dir"
   ( cd "$dir" && find . -type f ! -name SHA256SUMS -print0 2>/dev/null | sort -z | xargs -0 sha256sum > SHA256SUMS 2>/dev/null ) || true
   REPORT_HTML="$html"; REPORT_BUNDLE="$dir"
   audit_file REPORT_BUNDLE "$html"
@@ -5016,7 +5064,7 @@ cycle_sort() {
   esac
 }
 next_view() {
-  case "$VIEW" in pods) VIEW=nodes ;; nodes) VIEW=workloads ;; workloads) VIEW=ip ;; ip) VIEW=mem ;; mem) VIEW=io ;; io) VIEW=alerts ;; *) VIEW=pods ;; esac
+  case "$VIEW" in pods) VIEW=nodes ;; nodes) VIEW=workloads ;; workloads) VIEW=ip ;; ip) VIEW=mem ;; mem) VIEW=io ;; io) VIEW=alerts ;; alerts) VIEW=services; TOOLKIT_REQUESTED=1 ;; services) VIEW=storage ;; storage) VIEW=events ;; events) VIEW=explain ;; *) VIEW=pods ;; esac
 }
 # every live action goes to the audit log; scrolling / panning are not logged
 audit_key() {
@@ -5191,7 +5239,7 @@ H
   cat <<'H'
 
  KEYS
-   1-7 / Tab  switch view          n  pick another namespace     /  pod name filter (regex)
+   1-9 / Tab  switch view          n  pick another namespace     /  pod name filter (regex)
    s          next sort key        o  reverse the sort order     w  PODS grouped / flat
    j k arrows scroll               h l arrows  pan left / right  g G  top / bottom
    d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
@@ -5339,11 +5387,12 @@ switch_ns() {
   if [ "$new" = "*" ]; then scope=(--all-namespaces); else scope=(-n "$new"); fi
   [ "$new" = "*" ] && [ "$ALL_NS" = 1 ] && return 0
   [ "$new" = "$NS" ] && [ "$ALL_NS" = 0 ] && return 0
-  if ! "${KC[@]}" "${scope[@]}" get pods --request-timeout=20s -o jsonpath="$SPEC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
+  if ! "${KC[@]}" get pods "${scope[@]}" --request-timeout=20s -o jsonpath="$SPEC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
     SWITCH_ERR="$(sed -n '1{s/^Error from server ([A-Za-z]*): //;p}' "$err" | cut -c1-140)"; [ -n "$SWITCH_ERR" ] || SWITCH_ERR="kubectl failed"
     audit NS_SWITCH_DENIED "from=$NS to=${new/#\*/all-namespaces} reason=$SWITCH_ERR"
     rm -f "$tmp"; return 1
   fi
+  toolkit_cancel; rm -rf "$TOOLKIT_DIR"; mkdir -p "$TOOLKIT_DIR"; TOOLKIT_NEXT=0
   session_close
   if [ "$new" = "*" ]; then ALL_NS=1; NS="(all namespaces)"; SCOPE=(--all-namespaces)
   else ALL_NS=0; NS="$new"; SCOPE=(-n "$NS"); remember_ns "$NS"; fi
@@ -5351,7 +5400,8 @@ switch_ns() {
   mv -f "$tmp" "$SPEC"; SPEC_AT=0
   : > "$TOPC"; : > "$TOPP"; : > "$SVC"; : > "$HIST"; : > "$NHIST"; rm -f "$TMPD/forecast.tsv" "$TMPD/heat.tsv"; SVC_STATE="unread"
   io_reset
-  refresh_spec; SPEC_AT=$(date +%s); refresh_top
+  : > "$WLS"; SPEC_AT=0; SPEC_OK=1; FETCH_NEXT=0
+  if [ "$INTERACTIVE" = 1 ]; then fetch; else refresh_spec; refresh_top; fi
   build_model
   NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv")
   session_start && session_tick
@@ -5359,7 +5409,1198 @@ switch_ns() {
   return 0
 }
 
+# BEGIN KDASH MODULES
+# Runtime diagnostics, filtering and bounded background snapshots (embedded).
+toolkit_clean() { LC_ALL=C tr -d '\000-\010\013\014\016-\037\177'; }
+
+doctor_classify() {
+    if grep -qiE 'forbidden|cannot (get|list)' "$1"; then printf 'RBAC denied'
+    elif grep -qiE 'Unauthorized|must be logged in|credentials|expired' "$1"; then printf 'authentication failed or expired'
+    elif grep -qiE 'x509|certificate|TLS' "$1"; then printf 'TLS certificate validation failed'
+    elif grep -qiE 'refused|no route|no such host|dial tcp|Unable to connect' "$1"; then printf 'endpoint unreachable'
+    elif grep -qiE 'timeout|deadline exceeded|context canceled' "$1"; then printf 'request timed out'
+    elif grep -qiE 'metrics.*not available|not find.*resource|not found|doesn.t have a resource' "$1"; then printf 'API or metrics unavailable'
+    else printf 'read failed'; fi
+}
+
+doctor_run() {
+    local endpoint code=0 probe="$TMPD/doctor.out" err="$TMPD/doctor.err"
+    printf 'KDASH %s DOCTOR\nContext: %s\nNamespace: %s\nKubeconfig: %s\n' "$KDASH_VERSION" "$CTX_NAME" "$NS" "$KUBECONF_SHOWN"
+    endpoint="$("${KC[@]}" config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null)"
+    # Only display an endpoint without user info or query parameters.
+    endpoint="${endpoint%%\?*}"; case "$endpoint" in *@*) endpoint='(endpoint contains user information; hidden)' ;; esac
+    printf 'Endpoint: %s\n' "${endpoint:-not configured}" | toolkit_clean
+    if "${KC[@]}" get pods "${SCOPE[@]}" -o name > "$probe" 2> "$err"; then
+        printf 'PASS pods: readable (an empty namespace is valid)\n'
+    else
+        printf 'FAIL pods: %s\n' "$(doctor_classify "$err")"; code=1
+        printf 'Next: kubectl --context %q -n %q get pods --request-timeout=%ss\n' "$CTX_NAME" "${NS/\(all namespaces\)/default}" "$REQUEST_TIMEOUT"
+        printf 'For a local vcluster, check its existing runtime and connection; keep recovery kubeconfigs separate.\n'
+    fi
+    local resource
+    for resource in nodes services endpointslices.discovery.k8s.io persistentvolumeclaims events; do
+        if [ "$resource" = nodes ]; then
+            "${KC[@]}" get "$resource" -o name > "$probe" 2> "$err"
+        else
+            "${KC[@]}" get "$resource" "${SCOPE[@]}" -o name > "$probe" 2> "$err"
+        fi
+        if [ $? = 0 ]; then printf 'PASS %s: readable\n' "$resource"
+        else printf 'INFO %s: %s (capability unavailable)\n' "$resource" "$(doctor_classify "$err")"; fi
+    done
+    if "${KC[@]}" top pod "${SCOPE[@]}" --no-headers > "$probe" 2> "$err"; then
+        printf 'PASS metrics: pod CPU/memory readable\n'
+    else
+        printf 'INFO metrics: %s; requests/limits and object health remain available\n' "$(doctor_classify "$err")"
+        printf 'Next: inspect the existing Metrics API/metrics-server and your metrics permissions.\n'
+    fi
+    if [ -d "$REPORT_DIR" ] && [ -w "$REPORT_DIR" ] || { mkdir -p "$REPORT_DIR" 2>/dev/null && [ -w "$REPORT_DIR" ]; }; then
+        printf 'PASS local reports: writable\n'
+    else printf 'FAIL local reports: directory is not writable\n'; code=1; fi
+    printf 'Audit: %s\nRead-only checks complete; no cluster changes made.\n' "${AUDIT_FILE:-$AUDIT_DIR}"
+    audit DOCTOR "result=$code context=$CTX_NAME namespace=$NS"
+    return "$code"
+}
+
+toolkit_init() {
+    TOOLKIT_DIR="$TMPD/toolkit"; mkdir -p "$TOOLKIT_DIR"
+    FETCH_PID=""; FETCH_NEXT=0; FETCH_FAILURES=0; FETCH_SUCCESS=0
+    TOOLKIT_PID=""; TOOLKIT_NEXT=0
+    TOOLKIT_REQUESTED=0
+}
+
+filter_spec() {
+    awk -F'|' -v sf="${KDASH_STATUS_FILTER:-}" -v nf="${KDASH_NODE_FILTER:-}" \
+        -v wf="${KDASH_WORKLOAD_FILTER:-}" -v uh="${KDASH_UNHEALTHY:-0}" '
+    function flush(  a,st,w,ok,i) {
+        if (!n) return
+        split(row[1],a,"|"); st=a[3]; if (waiting!="") st=waiting
+        if (st=="Running" && !ready) st="NotReady"
+        w=a[10]; sub(/-[a-z0-9]+$/, "", w)
+        ok=(sf=="" || st~sf) && (nf=="" || a[4]==nf) && (wf=="" || w~wf)
+        if (uh==1 && (st=="Succeeded" || st=="Completed" || (st=="Running" && ready))) ok=0
+        if(ok) for(i=1;i<=n;i++) print row[i]
+    }
+    $1=="P" {flush(); n=0; waiting=""; ready=1}
+    {row[++n]=$0; if($1=="S") {if($3!="true")ready=0; if($6!="")waiting=$6}}
+    END {flush()}' "$1"
+}
+
+build_model() {
+    local original="$SPEC"
+    filter_spec "$original" > "$TMPD/spec.filtered"
+    SPEC="$TMPD/spec.filtered"; build_model_core; local rc=$?; SPEC="$original"
+    return "$rc"
+}
+
+# Workers never modify the displayed model. A complete snapshot is adopted only
+# after the worker exits. A hung credential plugin is also bounded by the guard.
+fetch_worker() (
+    trap - EXIT INT TERM HUP
+    local parent="$TMPD" job="$TMPD/fetch-job" name
+    mkdir -p "$job"
+    for name in spec top topprev nodes topnode svc cluster workloads; do cp -f "$parent/$name" "$job/$name" 2>/dev/null || : > "$job/$name"; done
+    cp -f "$parent"/*.updated "$job/" 2>/dev/null || true
+    [ ! -d "$parent/io" ] || cp -a "$parent/io" "$job/io"
+    TMPD="$job"; SPEC="$job/spec"; TOPC="$job/top"; TOPP="$job/topprev"
+    NODES="$job/nodes"; TOPN_F="$job/topnode"; SVC="$job/svc"; CLUS="$job/cluster"; WLS="$job/workloads"
+    local now; now=$(date +%s)
+    if [ $((now - SPEC_AT)) -ge "$SPEC_TTL" ] || [ "$SPEC_OK" != 1 ]; then refresh_spec; fi
+    if [ "$now" -ge "${METRICS_NEXT:-0}" ]; then
+        [ "$TOPN_STATE" != forbidden ] || TOPN_STATE=unread
+        refresh_top
+        if [ "$TOP_OK" = 1 ]; then METRICS_NEXT=0; else METRICS_NEXT=$((now + 30)); fi
+    fi
+    IO_PID=""; io_tick
+    if [ -n "$IO_PID" ]; then wait "$IO_PID" 2>/dev/null || true; IO_PID=""; io_tick; fi
+    [ -z "$IO_PID" ] || { wait "$IO_PID" 2>/dev/null || true; IO_PID=""; }
+    for name in SPEC_OK SPEC_AT TOP_OK TOP_AT NODES_STATE SVC_STATE TOPN_STATE TOPN_OK CLUSTER_STATE WL_STATE WL_KINDS TOPA_STATE NS_SCAN_AT METRICS_NEXT IO_STATE IO_SRC IO_REASON IO_LAST IO_DETECT_AT IO_SAMPLE_AT IO_SRC_PATH; do
+        printf '%s\t%s\n' "$name" "${!name:-}"
+    done > "$job/state"
+    date +%s > "$job/finished"
+)
+
+fetch_adopt() {
+    [ -n "${FETCH_PID:-}" ] || return 0
+    kill -0 "$FETCH_PID" 2>/dev/null && return 0
+    wait "$FETCH_PID" 2>/dev/null || true; FETCH_PID=""
+    local job="$TMPD/fetch-job" name value
+    [ -f "$job/finished" ] || { FETCH_NEXT=$(( $(date +%s) + 5 )); return 0; }
+    for name in spec top topprev nodes topnode svc cluster workloads; do [ ! -f "$job/$name" ] || mv -f "$job/$name" "$TMPD/$name"; done
+    cp -f "$job"/*.updated "$TMPD/" 2>/dev/null || true
+    if [ -d "$job/io" ]; then rm -rf "$TMPD/io"; mv "$job/io" "$TMPD/io"; fi
+    while IFS=$'\t' read -r name value; do
+        case "$name" in SPEC_OK|SPEC_AT|TOP_OK|TOP_AT|NODES_STATE|SVC_STATE|TOPN_STATE|TOPN_OK|CLUSTER_STATE|WL_STATE|WL_KINDS|TOPA_STATE|NS_SCAN_AT|METRICS_NEXT|IO_STATE|IO_SRC|IO_REASON|IO_LAST|IO_DETECT_AT|IO_SAMPLE_AT|IO_SRC_PATH) printf -v "$name" '%s' "$value" ;; esac
+    done < "$job/state"
+    if [ "$SPEC_OK" = 1 ]; then FETCH_SUCCESS=$(cat "$job/finished"); FETCH_FAILURES=0
+    else FETCH_FAILURES=$(( FETCH_FAILURES + 1 )); fi
+    local delay="$INTERVAL"
+    [ "$FETCH_FAILURES" = 0 ] || delay=$(( 2 ** (FETCH_FAILURES > 5 ? 5 : FETCH_FAILURES) ))
+    FETCH_NEXT=$(( $(date +%s) + ${delay%.*} ))
+    build_model; session_tick; FETCH_AT=$(date +%s)
+}
+
+fetch() {
+    if [ "${INTERACTIVE:-0}" != 1 ]; then fetch_sync; return; fi
+    fetch_adopt
+    [ -z "${FETCH_PID:-}" ] || return 0
+    [ "$(date +%s)" -ge "${FETCH_NEXT:-0}" ] || return 0
+    fetch_worker & FETCH_PID=$!
+}
+
+toolkit_tick() {
+    if [ -n "${TOOLKIT_PID:-}" ] && ! kill -0 "$TOOLKIT_PID" 2>/dev/null; then
+        wait "$TOOLKIT_PID" 2>/dev/null || true; TOOLKIT_PID=""
+        if [ -d "$TMPD/toolkit-next" ]; then
+            rm -rf "$TOOLKIT_DIR"; mv "$TMPD/toolkit-next" "$TOOLKIT_DIR"
+        fi
+        TOOLKIT_NEXT=$(( $(date +%s) + 30 ))
+    fi
+    [ "${TOOLKIT_REQUESTED:-0}" = 1 ] || return 0
+    [ -z "${TOOLKIT_PID:-}" ] || return 0
+    [ "$(date +%s)" -ge "${TOOLKIT_NEXT:-0}" ] || return 0
+    (
+        trap - EXIT INT TERM HUP
+        local next="$TMPD/toolkit-next"
+        mkdir -p "$next"; cp -f "$TOOLKIT_DIR"/* "$next/" 2>/dev/null || true
+        TOOLKIT_DIR="$next"
+        events_collect; health_collect
+        doctor_run > "$TOOLKIT_DIR/doctor.txt"
+    ) & TOOLKIT_PID=$!
+}
+
+toolkit_cancel() {
+    local pid
+    for pid in "${FETCH_PID:-}" "${TOOLKIT_PID:-}"; do
+        [ -z "$pid" ] || { kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; }
+    done
+    FETCH_PID=""; TOOLKIT_PID=""
+    rm -rf "$TMPD/fetch-job" "$TMPD/toolkit-next"
+}
+
+toolkit_panel() {
+    local view="$1"
+    printf 'KDASH %s  %s\nContext %s | namespace %s\n' "$KDASH_VERSION" "$view" "$CTX_NAME" "$NS" > "$HDRF"
+    case "$view" in
+        services) health_render_services ;; storage) health_render_storage ;;
+        events) events_render ;; explain) explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}" ;;
+        doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
+    esac | toolkit_clean > "$BODYF"
+    printf '8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit\n' > "$FTRF"
+}
+
+render() {
+    case "$VIEW" in services|storage|events|explain|doctor) toolkit_panel "$VIEW" ;;
+        *) render_core ;;
+    esac
+    local age=never status=not-collected
+    [ "${SPEC_AT:-0}" = 0 ] || age="$(( $(date +%s) - SPEC_AT ))s"
+    [ "${SPEC_OK:-0}" != 1 ] || status=fresh
+    [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
+    printf 'Data pods=%s age=%s metrics=%s | Enter/i inspect | 8 services 9 storage E events ! explain : commands\n' \
+        "$status" "$age" "$([ "$TOP_OK" = 1 ] && echo available || echo unavailable)" >> "$HDRF"
+    local source updated
+    for source in nodes svc; do
+        updated="$(cat "$TMPD/$source.updated" 2>/dev/null || printf 0)"
+        case "$updated" in ''|*[!0-9]*) updated=0 ;; esac
+        if [ "$updated" != 0 ] && [ $(( $(date +%s) - updated )) -gt "$SPEC_TTL" ]; then
+            printf 'STALE %s: last successful read %ss ago\n' "$source" "$(( $(date +%s) - updated ))" >> "$HDRF"
+        fi
+    done
+}
+
+toolkit_filters_changed() {
+    local now="${KDASH_LABEL_SELECTOR:-}|${KDASH_STATUS_FILTER:-}|${KDASH_NODE_FILTER:-}|${KDASH_WORKLOAD_FILTER:-}|${KDASH_UNHEALTHY:-0}"
+    if [ "$now" != "${TOOLKIT_FILTER_STATE:-}" ]; then
+        toolkit_cancel; SPEC_AT=0; FETCH_NEXT=0; LAST=0
+        TOOLKIT_FILTER_STATE="$now"; build_model
+    fi
+}
+
+toolkit_export() {
+    local dir="$1" item
+    [ -d "$dir" ] || return 0
+    for item in services storage events explain; do
+        case "$item" in services) health_render_services ;; storage) health_render_storage ;;
+            events) events_render ;; explain) explain_render ;; esac | toolkit_clean > "$dir/$item.txt"
+    done
+    mkdir -p "$dir/diagnostics"
+    cp -f "$TOOLKIT_DIR"/*.tsv "$TOOLKIT_DIR"/*.status "$dir/diagnostics/" 2>/dev/null || true
+}
+
+# Kubernetes API Events and deterministic incident evidence. This source module
+# is embedded into the deployable Bash CLI; it adds no runtime dependencies.
+# events.tsv: NS KIND NAME UID TYPE REASON COUNT FIRST LAST MESSAGE (TSV).
+# UID is the involved resource UID, not the Event UID. API Event UIDs are used
+# internally to discard duplicate records, never to merge distinct Events.
+
+events_context() {
+    local value="${CTX_NAME:-${CTX:-}}" arg next=0
+    for arg in "${KC[@]}"; do
+        if [ "$next" = 1 ]; then value="$arg"; next=0; continue; fi
+        case "$arg" in
+            --context) next=1 ;;
+            --context=*) value="${arg#*=}" ;;
+        esac
+    done
+    printf '%s' "${value:-<selected-context>}"
+}
+
+events_scope_key() {
+    local arg next=0 config=""
+    for arg in "${KC[@]}"; do
+        if [ "$next" = 1 ]; then config="$arg"; next=0; continue; fi
+        case "$arg" in
+            --kubeconfig) next=1 ;;
+            --kubeconfig=*) config="${arg#*=}" ;;
+        esac
+    done
+    printf '%q|%q|%q|%q' "$(events_context)" "$config" "${NS:-}" "${ALL_NS:-0}"
+}
+
+events_text() {
+    # Prevent object/event strings from injecting terminal controls or rows.
+    LC_ALL=C awk 'BEGIN { ORS = "" } { gsub(/[[:cntrl:]]/, " "); if (NR > 1) printf " "; printf "%s", $0 }'
+}
+
+events_command() {    # namespace, verb/resource/arguments: printable Bash command
+    local namespace="$1" arg next=0 config=""
+    shift
+    for arg in "${KC[@]}"; do
+        if [ "$next" = 1 ]; then config="$arg"; next=0; continue; fi
+        case "$arg" in
+            --kubeconfig) next=1 ;;
+            --kubeconfig=*) config="${arg#*=}" ;;
+        esac
+    done
+    printf 'kubectl --context %q' "$(events_context)"
+    [ -z "$config" ] || printf ' --kubeconfig %q' "$config"
+    printf ' %q' "$@"
+    if [ -n "$namespace" ]; then printf ' -n %q' "$namespace"; fi
+    printf ' --request-timeout=10s\n'
+}
+
+events_empty_table() {
+    printf 'NS\tKIND\tNAME\tUID\tTYPE\tREASON\tCOUNT\tFIRST\tLAST\tMESSAGE\n'
+}
+
+events_collect() {
+    local directory="${TOOLKIT_DIR:?TOOLKIT_DIR must name a private directory}"
+    local stem="$directory/events.collect.${BASHPID:-$$}" scope status error template
+    mkdir -p -- "$directory" || return 1
+    scope="$(events_scope_key)"
+    if [ ! -f "$directory/events.scope" ] || [ "$(cat -- "$directory/events.scope")" != "$scope" ]; then
+        # A failed read after switching scope must not reveal an older scope.
+        events_empty_table > "$directory/events.tsv"
+        rm -f -- "$directory/events.updated"
+    fi
+    printf '%s\n' "$scope" > "$directory/events.scope"
+    date +%s > "$directory/events.checked"
+
+    # Go's quoted strings keep embedded newlines and tabs inside one field.
+    # The portable awk decoder below flattens controls without eval or JSON tools.
+    template='{{range .items}}{{printf "%q\t%q\t%q\t%q\t%q\t%q\t" .metadata.namespace .involvedObject.kind .involvedObject.name .involvedObject.uid .type .reason}}{{if .series.count}}{{.series.count}}{{else if .count}}{{.count}}{{else}}1{{end}}{{printf "\t"}}{{if .firstTimestamp}}{{printf "%q" .firstTimestamp}}{{else if .eventTime}}{{printf "%q" .eventTime}}{{else}}{{printf "%q" .metadata.creationTimestamp}}{{end}}{{printf "\t"}}{{if .series.lastObservedTime}}{{printf "%q" .series.lastObservedTime}}{{else if .lastTimestamp}}{{printf "%q" .lastTimestamp}}{{else if .eventTime}}{{printf "%q" .eventTime}}{{else}}{{printf "%q" .metadata.creationTimestamp}}{{end}}{{printf "\t%q\t%q\n" .message .metadata.uid}}{{end}}'
+
+    status=ok; error=""
+    if "${KC[@]}" get events "${SCOPE[@]}" --request-timeout=10s -o go-template="$template" > "$stem.raw" 2> "$stem.err"; then
+        if LC_ALL=C awk '
+            BEGIN { FS = "\t"; OFS = "\t" }
+            function clean(s,    i,c,e,n,out) {
+                if (s == "" || s == "<nil>" || s == "<no value>" || substr(s, 1, 3) == "%!q") return "-"
+                if (substr(s, 1, 1) == "\"" && substr(s, length(s), 1) == "\"") s = substr(s, 2, length(s) - 2)
+                out = ""
+                for (i = 1; i <= length(s); i++) {
+                    c = substr(s, i, 1)
+                    if (c == "\\" && i < length(s)) {
+                        e = substr(s, ++i, 1)
+                        if (e == "\\" || e == "\"") c = e
+                        else if (e ~ /^[abfnrtv]$/) c = " "
+                        else if (e == "x") { i += 2; c = " " }
+                        else if (e == "u" || e == "U") {
+                            n = (e == "u" ? 4 : 8); c = "\\" e substr(s, i + 1, n); i += n
+                        } else c = "\\" e
+                    }
+                    out = out c
+                }
+                gsub(/[[:cntrl:]]/, " ", out)
+                gsub(/[[:space:]]+/, " ", out)
+                sub(/^ /, "", out); sub(/ $/, "", out)
+                return out == "" ? "-" : out
+            }
+            function timekey(s,    fraction) {
+                if (s == "-") return ""
+                fraction = (substr(s, 20, 1) == "." ? substr(s, 21) : "")
+                sub(/[^0-9].*$/, "", fraction)
+                return substr(s, 1, 19) "." substr(fraction "000000000", 1, 9)
+            }
+            NF != 11 { bad = 1; next }
+            {
+                for (i = 1; i <= 11; i++) v[i] = clean($i)
+                if (v[7] !~ /^[0-9]+$/ || v[7] + 0 < 1) v[7] = 1
+                key = (v[11] == "-" ? "row:" NR : "uid:" v[11])
+                row = v[1]; for (i = 2; i <= 10; i++) row = row OFS v[i]
+                if (!(key in rows) || timekey(v[9]) >= last[key]) { rows[key] = row; last[key] = timekey(v[9]) }
+            }
+            END { if (bad) exit 2; for (key in rows) print last[key], rows[key] }
+        ' "$stem.raw" > "$stem.rows"; then
+            events_empty_table > "$stem.tsv"
+            if LC_ALL=C sort -t $'\t' -k1,1r -k2,2 -k4,4 "$stem.rows" | cut -f2- >> "$stem.tsv"; then
+                if [ "$(cat -- "$directory/events.scope")" != "$scope" ]; then
+                    rm -f -- "$stem.raw" "$stem.err" "$stem.rows" "$stem.tsv"
+                    return 1
+                fi
+                mv -f -- "$stem.tsv" "$directory/events.tsv"
+                date +%s > "$directory/events.updated"
+            else
+                status=error; error="Events could not be saved; check the local toolkit directory."
+            fi
+        else
+            status=error; error="Events response could not be parsed; coverage is unknown."
+        fi
+    elif LC_ALL=C grep -qiE 'forbidden|cannot (list|get).*events' "$stem.err"; then
+        status=forbidden; error="Events access denied; check list events permission for this scope."
+    elif LC_ALL=C grep -qiE "doesn.t have a resource type|could not find the requested resource|resource.*not found|not supported" "$stem.err"; then
+        status=unavailable; error="The Kubernetes Events API is unavailable for this connection."
+    else
+        status=error; error="Events request failed; check connection, TLS, authentication and timeout with --doctor."
+    fi
+    if [ "$(cat -- "$directory/events.scope")" != "$scope" ]; then
+        rm -f -- "$stem.raw" "$stem.err" "$stem.rows" "$stem.tsv"
+        return 1
+    fi
+    # Never publish raw kubectl stderr: authentication plugins can include secrets.
+    printf '%s\n' "$status" > "$directory/events.status"
+    printf '%s\n' "$error" > "$directory/events.error"
+    rm -f -- "$stem.raw" "$stem.err" "$stem.rows" "$stem.tsv"
+    [ "$status" = ok ]
+}
+
+events_cache_valid() {
+    [ -f "${TOOLKIT_DIR:-}/events.scope" ] &&
+        [ "$(cat -- "$TOOLKIT_DIR/events.scope")" = "$(events_scope_key)" ]
+}
+
+events_header() {    # filtered namespace (empty = all), optional pod
+    local namespace="${1:-}" pod="${2:-}" status=unknown updated="" now age
+    printf 'Context: %s | Scope: %s' "$(events_context | events_text)" "$(printf '%s' "${namespace:-all namespaces}" | events_text)"
+    [ -z "$pod" ] || printf ' | Pod: %s' "$(printf '%s' "$pod" | events_text)"
+    printf '\n'
+    if ! events_cache_valid; then
+        printf 'Coverage: unknown (no Events collected for this context and scope).\n'
+        return 0
+    fi
+    [ ! -f "$TOOLKIT_DIR/events.status" ] || IFS= read -r status < "$TOOLKIT_DIR/events.status" || true
+    [ ! -f "$TOOLKIT_DIR/events.updated" ] || IFS= read -r updated < "$TOOLKIT_DIR/events.updated" || true
+    printf 'Coverage: %s' "$(printf '%s' "$status" | events_text)"
+    case "$updated" in
+        ''|*[!0-9]*) printf ' | No successful Events observation.\n' ;;
+        *) now=$(date +%s); age=$((now - updated)); [ "$age" -ge 0 ] || age=0
+            printf ' | Last successful read: %s (%ss ago)%s\n' \
+                "$(date -d "@$updated" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf '%s' "$updated")" "$age" \
+                "$([ "$status" = ok ] || printf ' | STALE retained evidence')" ;;
+    esac
+    if [ "$status" != ok ] && [ -s "$TOOLKIT_DIR/events.error" ]; then
+        printf '  %s\n' "$(events_text < "$TOOLKIT_DIR/events.error")"
+    fi
+    printf 'These are Kubernetes API Events; local session change records are separate.\n'
+}
+
+events_rows() {    # namespace, pod, warnings-only (0/1); no API calls
+    local namespace="${1:-}" pod="${2:-}" warnings="${3:-0}"
+    events_cache_valid && [ -f "$TOOLKIT_DIR/events.tsv" ] || return 0
+    LC_ALL=C awk -F '\t' -v ns="$namespace" -v pod="$pod" -v warn="$warnings" '
+        NR > 1 && (ns == "" || $1 == ns) && (pod == "" || ($2 == "Pod" && $3 == pod)) && (!warn || $5 == "Warning") { print }
+    ' "$TOOLKIT_DIR/events.tsv"
+}
+
+events_render() {    # optional namespace, pod; rendering never calls the API
+    local namespace="${1:-}" pod="${2:-}" maximum="${KDASH_EVENTS_TOP:-100}"
+    if [ "$#" -eq 0 ] && [ "${ALL_NS:-0}" != 1 ]; then namespace="${NS:-}"; fi
+    case "$maximum" in ''|*[!0-9]*) maximum=100 ;; esac
+    [ "$maximum" -ge 1 ] && [ "$maximum" -le 500 ] || maximum=100
+    printf 'KUBERNETES EVENTS\n'
+    events_header "$namespace" "$pod"
+    events_rows "$namespace" "$pod" | LC_ALL=C awk -F '\t' -v limit="$maximum" '
+        {
+            count++
+            if (count > limit) next
+            printf "\n%s/%s %s | %s | %s | count %s\n", $1, $2, $3, $5, $6, $7
+            printf "  First: %s | Last: %s | Resource UID: %s\n  %s\n", $8, $9, $4, $10
+        }
+        END {
+            if (!count) print "No matching retained Kubernetes Events; this does not establish application health."
+            else if (count > limit) printf "\nShowing newest %d of %d matching events.\n", limit, count
+        }
+    '
+}
+
+explain_render() {    # optional namespace, pod; hypotheses never assert causation
+    local namespace="${1:-}" pod="${2:-}" ens kind name uid type reason count first last message
+    local shown=0 category key previous="|" object_kind
+    if [ "$#" -eq 0 ] && [ "${ALL_NS:-0}" != 1 ]; then namespace="${NS:-}"; fi
+    printf 'INCIDENT EVIDENCE AND POSSIBLE EXPLANATIONS\n'
+    events_header "$namespace" "$pod"
+    printf 'Events describe observations, including historical failures. Timing alone does not establish a cause.\n'
+    if [ -n "${MODEL:-}" ] && [ -f "$MODEL/pods.tsv" ]; then
+        LC_ALL=C awk -F '\t' -v ns="$namespace" -v pod="$pod" '
+            NR > 1 && (ns == "" || $2 == ns) && (pod == "" || $3 == pod) {
+                line = "Cached pod fact: " $2 "/" $3 " status=" $4 " ready=" $5 " cumulative restarts=" $6 " node=" $7
+                gsub(/[[:cntrl:]]/, " ", line); print line
+            }
+        ' "$MODEL/pods.tsv"
+        printf 'Pod facts use the dashboard model; their collection time can differ from Events.\n'
+    fi
+    while IFS=$'\t' read -r ens kind name uid type reason count first last message; do
+        [ -n "$ens" ] || continue
+        category=other
+        case "$reason" in
+            FailedScheduling|SchedulingGated) category=scheduling ;;
+            FailedMount|FailedAttachVolume|FailedBinding|ProvisioningFailed|FailedMapVolume|FailedUnmapVolume|VolumeFailedMount) category=storage ;;
+            Unhealthy|ProbeWarning) category=probe ;;
+            ErrImagePull|ImagePullBackOff|InvalidImageName|InspectFailed|ErrImageNeverPull) category=image ;;
+            BackOff) category=restart ;;
+            OOMKilling|OOMKilled) category=memory ;;
+        esac
+        if printf '%s' "$message" | LC_ALL=C grep -qiE 'failed to pull|pull image|imagepull|manifest unknown|back-off pulling'; then category=image; fi
+        key="$ens/$kind/$name/$uid/$category"
+        case "$previous" in *"|$key|"*) continue ;; esac
+        previous="$previous$key|"; shown=$((shown + 1))
+        printf '\nObserved: %s/%s %s | %s | count %s | first %s | last %s | resource UID %s\n' "$ens" "$kind" "$name" "$reason" "$count" "$first" "$last" "$uid"
+        printf '  Event fact: %s\n' "$message"
+        case "$category" in
+            scheduling) printf '  Possible explanation: scheduler constraints, capacity or an unbound claim may block placement. Read the scheduler message before deciding which applies.\n' ;;
+            storage) printf '  Possible explanation: volume binding, provisioning, attachment or mounting may be blocking startup. This event does not establish volume fullness.\n' ;;
+            probe) printf '  Possible explanation: a readiness, liveness or startup probe may be failing. Check its configuration and application evidence; one event does not establish an ongoing outage.\n' ;;
+            image) printf '  Possible explanation: image reference, registry access or pull credentials may prevent container startup. Do not expose credentials when collecting evidence.\n' ;;
+            restart) printf '  Possible explanation: a container may be repeatedly exiting. The event alone does not identify why it exited.\n' ;;
+            memory) printf '  Possible explanation: the event reports memory pressure or a kill at its timestamp; it is not a current memory measurement.\n' ;;
+            *) printf '  Possible explanation: this warning needs object-specific investigation; its presence alone does not establish the underlying cause.\n' ;;
+        esac
+        object_kind="$(printf '%s' "$kind" | LC_ALL=C tr '[:upper:]' '[:lower:]')"
+        printf '  Next read-only check: '
+        events_command "$ens" describe "$object_kind" "$name"
+        if [ "$category" = storage ]; then
+            printf '  Next read-only check: '; events_command "$ens" get pvc
+        elif [ "$kind" = Pod ]; then
+            case "$category" in
+                restart|memory) printf '  Next read-only check: '; events_command "$ens" logs "$name" --all-containers --previous --tail=100 ;;
+                probe) printf '  Next read-only check: '; events_command "$ens" logs "$name" --all-containers --tail=100 --since=5m ;;
+            esac
+        fi
+        [ "$shown" -lt 20 ] || break
+    done < <(events_rows "$namespace" "$pod" 1)
+    if [ "$shown" = 0 ]; then
+        printf '\nNo matching retained warning event evidence. Coverage gaps, event expiry and failures without Events remain possible.\n'
+        if [ -n "$pod" ]; then
+            printf 'Next read-only check: '; events_command "$namespace" describe pod "$pod"
+        fi
+    fi
+    printf '\nCompare current readiness, resource identities, logs and workload conditions before deciding on a change.\n'
+}
+
+# Service and storage diagnostics. Embedded into kdash before main; also sourceable
+# by fixture tests. All Kubernetes reads use the caller's audited KC array.
+# Files live in the caller's private TOOLKIT_DIR. Missing/unreadable sources are
+# explicitly unknown. No cluster writes, shell evaluation, or automatic repair.
+
+health__status() {
+  local source="$1" state="$2" detail="$3"
+  printf '%s\t%s\t%s\n' "$state" "$(date +%s)" "$detail" > "$TOOLKIT_DIR/health-$source.status"
+}
+
+health__state() {
+  local source="$1" state epoch detail
+  if [ -r "$TOOLKIT_DIR/health-$source.status" ]; then
+    IFS=$'\t' read -r state epoch detail < "$TOOLKIT_DIR/health-$source.status"
+    printf '%s' "${state:-unknown}"
+  else printf unknown; fi
+}
+
+health__failure() {
+  local source="$1" err="$2" state=error detail='read failed; source unknown'
+  if grep -qiE 'forbidden|cannot (list|get)|returned error: 403' "$err"; then
+    state=forbidden; detail='read denied by RBAC; source unknown'
+  elif grep -qiE 'unauthorized|must be logged in|returned error: 401' "$err"; then
+    state=auth-error; detail='authentication failed; source unknown'
+  elif grep -qiE 'doesn.t have a resource type|could not find the requested resource|not found' "$err"; then
+    state=unavailable; detail='API or source unavailable; source unknown'
+  elif grep -qiE 'x509|certificate|TLS handshake' "$err"; then
+    state=tls-error; detail='TLS verification failed; source unknown'
+  elif grep -qiE 'timed out|timeout|deadline exceeded' "$err"; then
+    state=timeout; detail='read timed out; source unknown'
+  elif grep -qiE 'connection refused|no route|unable to connect|connection reset|no such host' "$err"; then
+    state=unreachable; detail='API or metrics endpoint unreachable; source unknown'
+  fi
+  health__status "$source" "$state" "$detail"
+}
+
+health__read() {
+  local source="$1" resource="$2" scoped="$3" template="$4"
+  local tmp="$TOOLKIT_DIR/health-$source.new" err="$TOOLKIT_DIR/health-$source.err" rc
+  if [ "$scoped" = yes ]; then
+    if "${KC[@]}" get "$resource" "${SCOPE[@]}" --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" -o "go-template=$template" > "$tmp" 2> "$err"; then rc=0; else rc=$?; fi
+  else
+    if "${KC[@]}" get "$resource" --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" -o "go-template=$template" > "$tmp" 2> "$err"; then rc=0; else rc=$?; fi
+  fi
+  if [ "$rc" = 0 ]; then
+    mv -f "$tmp" "$TOOLKIT_DIR/health-$source.raw"
+    health__status "$source" ok 'successful API read; empty means no objects in this scope'
+  else
+    rm -f "$tmp"; : > "$TOOLKIT_DIR/health-$source.raw"
+    health__failure "$source" "$err"
+  fi
+  return 0
+}
+
+health__volume_metrics() {
+  local url="${PROM_URL:-${KDASH_PROM_URL:-}}" service="${PROM_SVC:-${KDASH_PROM_SVC:-}}"
+  local path='' query selection ns_ s_ rc=1
+  local out="$TOOLKIT_DIR/health-volume-metrics.raw" err="$TOOLKIT_DIR/health-volume-metrics.err"
+  : > "$out"; : > "$TOOLKIT_DIR/health-volume-usage.tsv"; : > "$err"
+  # Only configured Prometheus or the existing IO collector's detected source.
+  # Do not scan services/nodes or introduce another metrics component.
+  if [ -z "$url" ] && [ -z "$service" ]; then
+    case "${IO_STATE:-}" in
+      prom-url) url="${PROM_URL:-}" ;;
+      prom-svc) path="${IO_SRC_PATH:-}" ;;
+    esac
+  fi
+  if [ -n "$service" ]; then
+    ns_="${NS:-default}"; s_="$service"
+    case "$s_" in */*) ns_="${s_%%/*}"; s_="${s_#*/}" ;; esac
+    if [ "${ALL_NS:-0}" = 1 ] && [ "$ns_" = "${NS:-}" ]; then
+      health__status volume-metrics unknown 'use namespace/service:port with --prom-svc for all-namespace collection'; return 0
+    fi
+    path="/api/v1/namespaces/$ns_/services/$s_/proxy"
+  fi
+  if [ -z "$url" ] && [ -z "$path" ]; then
+    health__status volume-metrics unknown 'no configured or existing Prometheus source; measured PVC usage unknown'; return 0
+  fi
+  # Namespace names cannot contain quotes; percent-encode the fixed selector.
+  if [ "${ALL_NS:-0}" = 1 ]; then selection='namespace!=""'; else selection="namespace=\"${NS:-default}\""; fi
+  query="{__name__=~\"kubelet_volume_stats_(used|capacity|available)_bytes\",$selection}"
+  query="$(printf '%s' "$query" | sed -e 's/%/%25/g' -e 's/{/%7B/g' -e 's/}/%7D/g' -e 's/"/%22/g' -e 's/|/%7C/g' -e 's/=/%3D/g' -e 's/~/%7E/g' -e 's/!/%21/g' -e 's/,/%2C/g' -e 's/(/%28/g' -e 's/)/%29/g')"
+  if [ -n "$url" ]; then
+    if ! command -v curl >/dev/null 2>&1; then
+      health__status volume-metrics unavailable 'configured URL requires optional curl; measured PVC usage unknown'; return 0
+    fi
+    if curl -fsS --connect-timeout 5 --max-time 12 --globoff "${url%/}/federate?match[]=$query" > "$out" 2> "$err"; then rc=0; else rc=$?; fi
+  else
+    if "${KC[@]}" get --raw "$path/federate?match[]=$query" --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" > "$out" 2> "$err"; then rc=0; else rc=$?; fi
+  fi
+  if [ "$rc" != 0 ]; then
+    : > "$out"; health__failure volume-metrics "$err"; return 0
+  fi
+  awk -v scope="${NS:-default}" -v all="${ALL_NS:-0}" -v now="$(date +%s)" '
+    function label(k, s,   p,r) { p=index("," s, "," k "=\""); if (!p) return ""; r=substr("," s,p+length(k)+3); return substr(r,1,index(r,"\"")-1) }
+    /^kubelet_volume_stats_(used|capacity|available)_bytes\{/ {
+      b=index($0,"{"); e=index($0,"}"); if (!b || !e) next
+      metric=substr($0,1,b-1); labels=substr($0,b+1,e-b-1)
+      ns=label("namespace",labels); pvc=label("persistentvolumeclaim",labels)
+      if (ns=="" || pvc=="" || (!all && ns!=scope)) next
+      rest=substr($0,e+1); sub(/^[ \t]+/,"",rest); split(rest,v,/[ \t]+/)
+      if (v[1] !~ /^[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?$/) next
+      ts=(v[2] ~ /^[0-9]+$/ ? v[2]/1000 : now); origin=(v[2] ~ /^[0-9]+$/ ? "exporter" : "collection")
+      k=ns SUBSEP pvc; mk=k SUBSEP metric
+      # Duplicate scrape series are never summed; use latest timestamp, max at a tie.
+      if (!(mk in seen) || ts>T[mk] || (ts==T[mk] && v[1]+0>V[mk])) { V[mk]=v[1]+0; T[mk]=ts; O[mk]=origin; seen[mk]=1 }
+      keys[k]=ns "\t" pvc
+    }
+    END { for (k in keys) {
+      printf "%s",keys[k]
+      split("used capacity available",names," ")
+      for(i=1;i<=3;i++) { mk=k SUBSEP "kubelet_volume_stats_" names[i] "_bytes"; printf "\t%s\t%s\t%s",(mk in seen ? sprintf("%.0f",V[mk]) : "?"),(mk in seen ? sprintf("%.0f",T[mk]) : "?"),(mk in seen ? O[mk] : "?") }
+      printf "\n"
+    } }
+  ' "$out" > "$TOOLKIT_DIR/health-volume-usage.tsv"
+  if [ -s "$TOOLKIT_DIR/health-volume-usage.tsv" ]; then
+    health__status volume-metrics ok 'kubelet PVC samples from Prometheus; duplicate scrape series use latest/max, never sum'
+  else health__status volume-metrics no-data 'source answered without usable PVC samples in scope; measured usage unknown'; fi
+}
+
+health_collect() {
+  [ -n "${TOOLKIT_DIR:-}" ] || return 1
+  mkdir -p "$TOOLKIT_DIR" || return 1
+  health__read services services yes '{{range .items}}{{$o := .}}S|{{.metadata.namespace}}|{{.metadata.name}}|{{.spec.type}}|{{.spec.externalName}}|{{.spec.clusterIP}}|{{range $k,$v := .spec.selector}}{{$k}}={{$v}},{{end}}{{"\n"}}{{range .spec.ports}}T|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{.name}}|{{.port}}|{{.targetPort}}|{{.protocol}}{{"\n"}}{{end}}{{end}}'
+  health__read pods pods yes '{{range .items}}{{$o := .}}P|{{.metadata.namespace}}|{{.metadata.name}}|{{.status.phase}}|{{range .status.conditions}}{{if eq .type "Ready"}}{{.status}}{{end}}{{end}}|{{range $k,$v := .metadata.labels}}{{$k}}={{$v}},{{end}}|{{.status.podIP}}|{{.metadata.deletionTimestamp}}{{"\n"}}{{range .spec.volumes}}{{if .persistentVolumeClaim}}V|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{.name}}|{{.persistentVolumeClaim.claimName}}{{"\n"}}{{end}}{{end}}{{range .spec.containers}}{{$c := .}}{{range .ports}}C|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}}|{{.name}}|{{.containerPort}}|{{.protocol}}{{"\n"}}{{end}}{{range .volumeMounts}}M|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}}|{{.name}}|{{.mountPath}}|{{.readOnly}}{{"\n"}}{{end}}{{end}}{{range .spec.initContainers}}{{$c := .}}{{range .volumeMounts}}M|{{$o.metadata.namespace}}|{{$o.metadata.name}}|init:{{$c.name}}|{{.name}}|{{.mountPath}}|{{.readOnly}}{{"\n"}}{{end}}{{end}}{{end}}'
+  health__read endpoints endpointslices.discovery.k8s.io yes '{{range .items}}{{$o := .}}{{$s := index .metadata.labels "kubernetes.io/service-name"}}E|{{.metadata.namespace}}|{{$s}}|{{.metadata.name}}|{{.addressType}}{{"\n"}}{{range .ports}}B|{{$o.metadata.namespace}}|{{$s}}|{{$o.metadata.name}}|{{.name}}|{{.port}}|{{.protocol}}{{"\n"}}{{end}}{{range .endpoints}}D|{{$o.metadata.namespace}}|{{$s}}|{{$o.metadata.name}}|{{.targetRef.namespace}}|{{.targetRef.name}}|{{.targetRef.kind}}|{{.conditions.ready}}|{{.conditions.serving}}|{{.conditions.terminating}}|{{range .addresses}}{{.}},{{end}}{{"\n"}}{{end}}{{end}}'
+  health__read ingresses ingresses.networking.k8s.io yes '{{range .items}}{{$o := .}}{{range .spec.rules}}{{$host := .host}}{{range .http.paths}}{{if .backend.service}}I|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$o.spec.ingressClassName}}|{{$host}}|{{.path}}|{{.backend.service.name}}|{{if .backend.service.port.name}}{{.backend.service.port.name}}{{else}}{{.backend.service.port.number}}{{end}}{{"\n"}}{{end}}{{end}}{{end}}{{with .spec.defaultBackend}}{{with .service}}I|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$o.spec.ingressClassName}}|*|default|{{.name}}|{{if .port.name}}{{.port.name}}{{else}}{{.port.number}}{{end}}{{"\n"}}{{end}}{{end}}{{end}}'
+  health__read pvcs persistentvolumeclaims yes '{{range .items}}{{$o := .}}Q|{{.metadata.namespace}}|{{.metadata.name}}|{{.status.phase}}|{{.spec.volumeName}}|{{.spec.storageClassName}}|{{.spec.resources.requests.storage}}|{{.status.capacity.storage}}|{{range .spec.accessModes}}{{.}},{{end}}|{{.spec.volumeMode}}{{"\n"}}{{range .status.conditions}}F|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{.type}}|{{.status}}|{{.reason}}{{"\n"}}{{end}}{{end}}'
+  health__read pvs persistentvolumes no '{{range .items}}Z|{{.metadata.name}}|{{.status.phase}}|{{.spec.storageClassName}}|{{.spec.capacity.storage}}|{{.spec.persistentVolumeReclaimPolicy}}|{{.spec.claimRef.namespace}}|{{.spec.claimRef.name}}|{{with .spec.csi}}{{.driver}}{{end}}{{"\n"}}{{end}}'
+  health__read storageclasses storageclasses.storage.k8s.io no '{{range .items}}K|{{.metadata.name}}|{{.provisioner}}|{{.volumeBindingMode}}|{{.allowVolumeExpansion}}|{{.reclaimPolicy}}{{"\n"}}{{end}}'
+  health__volume_metrics
+  return 0
+}
+
+health__sources() {
+  local source state epoch detail now stamp
+  now=$(date +%s)
+  for source in "$@"; do
+    state=unknown; epoch=''; detail='not collected'
+    if [ -r "$TOOLKIT_DIR/health-$source.status" ]; then
+      IFS=$'\t' read -r state epoch detail < "$TOOLKIT_DIR/health-$source.status"
+    fi
+    case "$epoch" in ''|*[!0-9]*) stamp='time unknown' ;;
+      *) stamp="$(date -d "@$epoch" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf '%s' "$epoch") ($((now-epoch))s ago)" ;;
+    esac
+    printf '  %s: %s; %s; %s\n' "$source" "${state:-unknown}" "$stamp" "${detail:-not collected}"
+  done
+}
+
+health_render_services() {
+  printf 'SERVICES AND BACKENDS\n'
+  printf 'Observed Kubernetes configuration and readiness; this does not test end-to-end reachability.\n'
+  health__sources services pods endpoints ingresses
+  local source
+  for source in services pods endpoints ingresses; do
+    [ -f "$TOOLKIT_DIR/health-$source.raw" ] || : > "$TOOLKIT_DIR/health-$source.raw"
+  done
+  awk -F'|' -v sf="$TOOLKIT_DIR/health-services.raw" -v pf="$TOOLKIT_DIR/health-pods.raw" \
+    -v ef="$TOOLKIT_DIR/health-endpoints.raw" -v inf="$TOOLKIT_DIR/health-ingresses.raw" \
+    -v ss="$(health__state services)" -v ps="$(health__state pods)" \
+    -v es="$(health__state endpoints)" -v ins="$(health__state ingresses)" '
+    function clean(s) { return (s=="<no value>" || s=="<nil>" || s=="null") ? "" : s }
+    function matches(sel, labels,   a,n,i) {
+      n=split(sel,a,","); for(i=1;i<=n;i++) if(a[i]!="" && !index("," labels,"," a[i] ",")) return 0
+      return 1
+    }
+    function proto(s) { return s=="" ? "TCP" : s }
+    function nocomma(s) { sub(/,$/,"",s); return s }
+    function endpoints(k) { return es=="ok" ? (ER[k]+0) " ready / " (EB[k]+0) " unready / " (EU[k]+0) " unknown" : "unknown" }
+    FILENAME==sf && $1=="S" { k=$2 SUBSEP $3; if(!(k in SN)) SK[++NS]=k; SN[k]=$2 "/" $3; ST[k]=clean($4); EXT[k]=clean($5); IP[k]=clean($6); SEL[k]=nocomma(clean($7)); next }
+    FILENAME==sf && $1=="T" { k=$2 SUBSEP $3; n=++NT[k]; TN[k,n]=clean($4); TP[k,n]=clean($5); TT[k,n]=clean($6); PT[k,n]=proto(clean($7)); next }
+    FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PK[++NP]=k; PN[k]=$2 "/" $3; PNS[k]=$2; READY[k]=$5; LABELS[k]=$6; DEL[k]=clean($8); next }
+    FILENAME==pf && $1=="C" && clean($5)!="" { PORT[$2 SUBSEP $3 SUBSEP $5 SUBSEP proto(clean($7))]=1; next }
+    FILENAME==ef && $1=="E" { k=$2 SUBSEP $3; EC[k]++; next }
+    FILENAME==ef && $1=="D" {
+      k=$2 SUBSEP $3; if($8=="true") ER[k]++; else if($8=="false") EB[k]++; else EU[k]++
+      if($7=="Pod") { ns=clean($5); if(ns=="") ns=$2; p=ns SUBSEP clean($6); EK[k,p]=1; if($8=="true" && $10!="true") EPR[k,p]=1 }
+      next
+    }
+    FILENAME==inf && $1=="I" { IR[++NI]=$0; next }
+    END {
+      for(si=1;si<=NS;si++) {
+        k=SK[si]; split(k,z,SUBSEP)
+        if(SEL[k]!="" && ST[k]!="ExternalName" && ps=="ok") for(pi=1;pi<=NP;pi++) {
+          p=PK[pi]; if(PNS[p]!=z[1] || !matches(SEL[k],LABELS[p])) continue
+          MATCH[k,p]=1; SELECTED[k]++; if(READY[p]=="True" && DEL[p]=="") { PR[k]++; if(PR[k]<=3) PLIST[k]=PLIST[k] (PLIST[k]=="" ? "" : ", ") PN[p] }
+          for(ti=1;ti<=NT[k];ti++) if(TT[k,ti]!="" && TT[k,ti]!~/^[0-9]+$/ && !((p SUBSEP TT[k,ti] SUBSEP PT[k,ti]) in PORT)) MISSING[k,ti]++
+        }
+      }
+      print "\nINGRESS -> SERVICE -> ENDPOINTS -> READY PODS"
+      if(ins!="ok") print "  Ingress routes unknown: optional source " ins "."
+      else if(NI==0) print "  No service-backed Ingress routes in this collected scope (resource backends are not expanded)."
+      else for(i=1;i<=NI;i++) {
+        split(IR[i],r,"|"); k=r[2] SUBSEP r[7]; host=clean(r[5]); if(host=="") host="*"
+        printf "  %s/%s  %s%s -> %s/%s:%s\n",r[2],r[3],host,r[6],r[2],r[7],r[8]
+        if(ss!="ok") { print "    Service and backend relationship unknown: services source " ss "."; continue }
+        if(!(k in SN)) { print "    Service missing from the successful service read."; continue }
+        found=0; for(j=1;j<=NT[k];j++) if(r[8]==TN[k,j] || r[8]==TP[k,j]) found=1
+        if(!found) print "    Ingress backend port does not match a Service port."
+        if(ST[k]=="ExternalName") print "    ExternalName DNS alias -> " EXT[k] "; pod backend readiness is not inferred."
+        else printf "    %s slices; endpoints %s; ready selected pods %s\n",(es=="ok" ? EC[k]+0 : "unknown"),endpoints(k),(ps=="ok" && SEL[k]!="" ? PR[k]+0 : "unknown")
+      }
+      print "\nSERVICE BACKEND DIAGNOSTICS"
+      printf "  %-36s %-13s %-10s %-10s %s\n","NAMESPACE/SERVICE","TYPE","SELECTED","READY PODS","ENDPOINT READINESS"
+      if(ss!="ok") { print "  Service inventory unknown: source " ss "."; exit }
+      if(NS==0) print "  No Services in this successful scoped read."
+      for(si=1;si<=NS;si++) {
+        k=SK[si]; selected=(ps=="ok" && SEL[k]!="" && ST[k]!="ExternalName")
+        printf "  %-36s %-13s %-10s %-10s %s\n",SN[k],ST[k],(selected ? SELECTED[k]+0 : "unknown"),(selected ? PR[k]+0 : "unknown"),endpoints(k)
+        if(ST[k]=="ExternalName") { print "    DNS alias -> " EXT[k] "; selectors and EndpointSlices are not required for this Service type."; continue }
+        if(SEL[k]=="") print "    Selectorless Service: backends can be managed manually; no selector mismatch is inferred."
+        else {
+          print "    selector: " SEL[k]
+          if(ps!="ok") print "    Pod selection and named target ports unknown: pods source " ps "."
+          else if(SELECTED[k]==0) print "    SELECTOR MISMATCH: selector matches no pods in this collected scope."
+          else if(PR[k]==0) print "    UNREADY: selected pods exist, but none are Ready and non-terminating."
+          else print "    Ready selected pods: " PLIST[k] (PR[k]>3 ? " (+" (PR[k]-3) " more)" : "")
+        }
+        for(ti=1;ti<=NT[k];ti++) {
+          printf "    port %s%s/%s -> targetPort %s\n",(TN[k,ti]!="" ? TN[k,ti] ":" : ""),TP[k,ti],PT[k,ti],(TT[k,ti]!="" ? TT[k,ti] : TP[k,ti])
+          if(selected && MISSING[k,ti]>0) printf "    NAMED PORT MISSING: %s/%s absent on %d/%d selected pods.\n",TT[k,ti],PT[k,ti],MISSING[k,ti],SELECTED[k]
+        }
+        if(es=="ok") {
+          if(EC[k]==0) print "    No EndpointSlices for this Service in the successful slice read."
+          else if(ER[k]==0) print "    No explicitly ready endpoints observed; unknown readiness remains unknown."
+          linked=0; readyLinked=0
+          for(ep in EK) { split(ep,pp,SUBSEP); if(pp[1] SUBSEP pp[2]!=k) continue; p=pp[3] SUBSEP pp[4]; linked++; if(EPR[k,p] && READY[p]=="True" && DEL[p]=="") readyLinked++ }
+          if(linked>0 && ps=="ok") printf "    EndpointSlice Pod references: %d unique; explicitly ready endpoints pointing to Ready pods: %d.\n",linked,readyLinked
+        } else print "    EndpointSlice backend state unknown: source " es "."
+        if(IP[k]=="None") print "    Headless Service: DNS/backend records apply; there is no virtual ClusterIP."
+      }
+      print "\nReadiness is an API observation. DNS, ingress controllers, NetworkPolicy, routing, TLS and application responses are not tested."
+    }
+  ' "$TOOLKIT_DIR/health-services.raw" "$TOOLKIT_DIR/health-pods.raw" "$TOOLKIT_DIR/health-endpoints.raw" "$TOOLKIT_DIR/health-ingresses.raw"
+}
+
+health__storage_events() {
+  local file=''
+  if [ -r "$TOOLKIT_DIR/events.tsv" ]; then file="$TOOLKIT_DIR/events.tsv"
+  elif [ -n "${MODEL:-}" ] && [ -r "$MODEL/events.tsv" ]; then file="$MODEL/events.tsv"; fi
+  printf '\nSTORAGE-RELATED RECORDED EVENTS\n'
+  if [ -z "$file" ]; then
+    printf '  Event data is unavailable in this snapshot; inspect the Events view for mount, attach and provisioning failures.\n'
+    return 0
+  fi
+  awk -F'\t' '
+    NR==1 { header=$0; if(tolower($0) ~ /message|reason/) { next } }
+    tolower($0) ~ /failedmount|failedattach|failedbinding|failedprovision|provisioningfailed|volume|persistentvolumeclaim|storageclass|claim/ {
+      if(n++==0 && header!="") print "  " header
+      if(n<=12) print "  " $0
+    }
+    END { if(n==0) print "  No matching storage entries in the available event file; scope and collection window apply."
+      else if(n>12) print "  Additional matching events are available in the Events view." }
+  ' "$file"
+}
+
+health_render_storage() {
+  printf 'PERSISTENT STORAGE\n'
+  printf 'PVC/PV capacity describes allocation; measured usage is shown only when PVC-labelled volume samples exist.\n'
+  health__sources pvcs pods pvs storageclasses volume-metrics
+  local source
+  for source in pvcs pods pvs storageclasses; do
+    [ -f "$TOOLKIT_DIR/health-$source.raw" ] || : > "$TOOLKIT_DIR/health-$source.raw"
+  done
+  [ -f "$TOOLKIT_DIR/health-volume-usage.tsv" ] || : > "$TOOLKIT_DIR/health-volume-usage.tsv"
+  awk -F'|' -v qf="$TOOLKIT_DIR/health-pvcs.raw" -v pf="$TOOLKIT_DIR/health-pods.raw" \
+    -v vf="$TOOLKIT_DIR/health-pvs.raw" -v cf="$TOOLKIT_DIR/health-storageclasses.raw" \
+    -v uf="$TOOLKIT_DIR/health-volume-usage.tsv" -v qs="$(health__state pvcs)" \
+    -v ps="$(health__state pods)" -v vs="$(health__state pvs)" \
+    -v cs="$(health__state storageclasses)" -v us="$(health__state volume-metrics)" -v now="$(date +%s)" '
+    function clean(s) { return (s=="<no value>" || s=="<nil>" || s=="null") ? "" : s }
+    function known(s) { return clean(s)=="" ? "unknown" : s }
+    function nocomma(s) { sub(/,$/,"",s); return s }
+    function bytes(s,   n,i,a) {
+      if(s=="?" || s=="") return "unknown"; n=s+0; split("B KiB MiB GiB TiB PiB",a," "); i=1
+      while(n>=1024 && i<6) { n/=1024; i++ } return sprintf("%.1f%s",n,a[i])
+    }
+    function sample(ts,origin,   age) {
+      if(ts=="?" || ts=="") return "unknown"; age=now-ts; if(age<0) return "clock ahead"
+      return sprintf("%ds ago (%s time)%s",age,origin,(age>300 ? " STALE" : ""))
+    }
+    FILENAME==qf && $1=="Q" { k=$2 SUBSEP $3; QK[++NQ]=k; QN[k]=$2 "/" $3; QPH[k]=clean($4); QPV[k]=clean($5); QC[k]=clean($6); QR[k]=clean($7); QCAP[k]=clean($8); QA[k]=nocomma(clean($9)); QM[k]=clean($10); next }
+    FILENAME==qf && $1=="F" && $5=="True" { k=$2 SUBSEP $3; COND[k]=COND[k] " " $4 ":" clean($6); next }
+    FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PP[k]=$4 "/" $5; next }
+    FILENAME==pf && $1=="V" { p=$2 SUBSEP $3; k=$2 SUBSEP $5; VCLAIM[p,$4]=k; REF[k,p]=1; next }
+    FILENAME==pf && $1=="M" { p=$2 SUBSEP $3; MK[++NM]=p SUBSEP $5; MC[NM]=$4; MP[NM]=$6; MRO[NM]=$7; next }
+    FILENAME==vf && $1=="Z" { PV[$2]=1; VPH[$2]=clean($3); VC[$2]=clean($4); VCAP[$2]=clean($5); VR[$2]=clean($6); VCLAIM[$2]=clean($7) "/" clean($8); DRIVER[$2]=clean($9); next }
+    FILENAME==cf && $1=="K" { SC[$2]=1; PROV[$2]=clean($3); BIND[$2]=clean($4); EXPAND[$2]=clean($5); RECLAIM[$2]=clean($6); next }
+    FILENAME==uf {
+      split($0,u,"\t"); k=u[1] SUBSEP u[2]; USED[k]=u[3]; UT[k]=u[4]; UO[k]=u[5]; CAP[k]=u[6]; CT[k]=u[7]; CO[k]=u[8]; AVAIL[k]=u[9]; AT[k]=u[10]; AO[k]=u[11]; next
+    }
+    END {
+      print "\nPVC BINDINGS AND POD REFERENCES"
+      printf "  %-34s %-10s %-20s %-13s %-13s %s\n","NAMESPACE/CLAIM","PHASE","PV","REQUEST","PVC CAPACITY","STORAGECLASS"
+      if(qs!="ok") print "  PVC inventory and binding completeness unknown: source " qs "."
+      else if(NQ==0) print "  No PVCs in this successful scoped read."
+      if(qs=="ok") for(i=1;i<=NQ;i++) {
+        k=QK[i]; v=QPV[k]; c=QC[k]
+        printf "  %-34s %-10s %-20s %-13s %-13s %s\n",QN[k],known(QPH[k]),(v!="" ? v : "unbound"),known(QR[k]),known(QCAP[k]),(c!="" ? c : "unspecified")
+        printf "    access=%s; volumeMode=%s\n",known(QA[k]),known(QM[k])
+        if(COND[k]!="") print "    PVC conditions:" COND[k]
+        if(v!="") {
+          if(vs!="ok") print "    PV details unknown: optional source " vs "."
+          else if(!(v in PV)) print "    BINDING CHECK: referenced PV missing from the successful PV read."
+          else {
+            printf "    PV phase=%s; capacity=%s; reclaim=%s; driver=%s\n",known(VPH[v]),known(VCAP[v]),known(VR[v]),known(DRIVER[v])
+            if(VCLAIM[v]!="/" && VCLAIM[v]!=QN[k]) print "    BINDING CHECK: PV claimRef points to " VCLAIM[v] ", not " QN[k] "."
+          }
+        }
+        if(c!="") {
+          if(cs!="ok") print "    StorageClass details unknown: optional source " cs "."
+          else if(!(c in SC)) print "    StorageClass missing from the successful class read."
+          else {
+            printf "    StorageClass provisioner=%s; binding=%s; expansion=%s\n",known(PROV[c]),known(BIND[c]),known(EXPAND[c])
+            if(QPH[k]=="Pending" && BIND[c]=="WaitForFirstConsumer") print "    Pending claim uses WaitForFirstConsumer; scheduling/consumer placement may be required before binding."
+          }
+        }
+        refs=0
+        if(ps!="ok") print "    Pod volume references and mounts unknown: pods source " ps "."
+        else {
+          for(r in REF) { split(r,a,SUBSEP); if(a[1] SUBSEP a[2]!=k) continue; p=a[3] SUBSEP a[4]; refs++
+            printf "    pod reference: %s/%s (%s)\n",a[3],a[4],known(PP[p])
+          }
+          if(refs==0) print "    No pod volume references in this collected scope; this does not establish that storage is unused."
+          for(m=1;m<=NM;m++) if(VCLAIM[MK[m]]==k) {
+            split(MK[m],a,SUBSEP); printf "    declared mount: %s/%s container=%s path=%s readOnly=%s\n",a[1],a[2],MC[m],MP[m],(MRO[m]=="true" ? "true" : "false")
+          }
+        }
+        if(us=="ok" && (k in USED)) {
+          printf "    measured used=%s; measured filesystem capacity=%s; available=%s",bytes(USED[k]),bytes(CAP[k]),bytes(AVAIL[k])
+          skew=UT[k]-CT[k]; if(skew<0) skew=-skew
+          if(USED[k]!="?" && CAP[k]!="?" && CAP[k]+0>0 && skew<=300) printf "; used/capacity=%.1f%%",100*USED[k]/CAP[k]
+          else if(USED[k]!="?" && CAP[k]!="?" && skew>300) printf "; percentage unknown (sample times differ by more than 5m)"
+          printf "\n    usage sample: %s; capacity sample: %s; available sample: %s\n",sample(UT[k],UO[k]),sample(CT[k],CO[k]),sample(AT[k],AO[k])
+        } else print "    Measured usage unknown: no usable PVC-labelled volume sample for this claim."
+      }
+      if(ps=="ok" && qs=="ok") for(r in REF) {
+        split(r,a,SUBSEP); k=a[1] SUBSEP a[2]
+        if(!(k in QN)) printf "  MISSING PVC REFERENCE: pod %s/%s refers to %s/%s, absent from the successful scoped PVC read.\n",a[3],a[4],a[1],a[2]
+      }
+      print "\nPod volume references and declared mount paths do not prove a volume mounted successfully."
+      print "Measured filesystem samples can differ from PVC/PV allocation; missing samples never mean zero usage."
+    }
+  ' "$TOOLKIT_DIR/health-pvcs.raw" "$TOOLKIT_DIR/health-pods.raw" "$TOOLKIT_DIR/health-pvs.raw" "$TOOLKIT_DIR/health-storageclasses.raw" "$TOOLKIT_DIR/health-volume-usage.tsv"
+  health__storage_events
+}
+
+# Interactive, read-only pod inspection. This source is embedded in the release
+# executable; all API reads use the audited, context-pinned KC argv array.
+# Logs live only in TMPD/inspector and never enter MODEL or report/session files.
+
+inspector_clean() {
+  # Preserve UTF-8, tabs and line endings, but remove terminal control bytes.
+  LC_ALL=C tr -d '\000-\010\013-\037\177'
+}
+
+inspector_identity_ok() {
+  [[ "${1:-}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] &&
+    [[ "${2:-}" =~ ^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$ ]] &&
+    [ "${#1}" -le 63 ] && [ "${#2}" -le 253 ]
+}
+
+inspector_limits() {
+  INSPECTOR_TAIL="${KDASH_LOG_TAIL:-200}"
+  INSPECTOR_BYTES="${KDASH_LOG_LIMIT_BYTES:-65536}"
+  case "$INSPECTOR_TAIL" in ''|*[!0-9]*) INSPECTOR_TAIL=200 ;; esac
+  case "$INSPECTOR_BYTES" in ''|*[!0-9]*) INSPECTOR_BYTES=65536 ;; esac
+  [ "${#INSPECTOR_TAIL}" -gt 4 ] && INSPECTOR_TAIL=2000
+  [ "${#INSPECTOR_BYTES}" -gt 7 ] && INSPECTOR_BYTES=1048576
+  INSPECTOR_TAIL=$((10#$INSPECTOR_TAIL)); INSPECTOR_BYTES=$((10#$INSPECTOR_BYTES))
+  [ "$INSPECTOR_TAIL" -lt 1 ] && INSPECTOR_TAIL=1
+  [ "$INSPECTOR_TAIL" -gt 2000 ] && INSPECTOR_TAIL=2000
+  [ "$INSPECTOR_BYTES" -lt 1024 ] && INSPECTOR_BYTES=1024
+  [ "$INSPECTOR_BYTES" -gt 1048576 ] && INSPECTOR_BYTES=1048576
+  return 0
+}
+
+inspector_query() { # output-file kubectl-args...; bounded text, preserved rc
+  local dest="$1" rc=0 cap="${INSPECTOR_QUERY_CAP:-262144}" reader; shift
+  "${KC[@]}" "$@" > "$dest.raw" 2> "$dest.err" & reader=$!
+  wait "$reader" || rc=$?
+  { head -c "$cap" "$dest.raw"; } | inspector_clean > "$dest"
+  if [ "$rc" != 0 ]; then
+    printf '\nRead failed (exit %s). Verify the namespace, pod and your RBAC permissions.\n' "$rc" >> "$dest"
+    head -c 4096 "$dest.err" | inspector_clean >> "$dest"
+  fi
+  if [ "$(wc -c < "$dest.raw")" -gt "$cap" ]; then
+    printf '\n[Output clipped at %s bytes.]\n' "$cap" >> "$dest"
+  fi
+  rm -f -- "$dest.raw" "$dest.err"
+  return "$rc"
+}
+
+inspector_containers() { # ns pod -> TYPE<TAB>NAME<TAB>IMAGE (including init/debug)
+  "${KC[@]}" get pod "$2" -n "$1" -o 'jsonpath={range .spec.containers[*]}regular{"\t"}{.name}{"\t"}{.image}{"\n"}{end}{range .spec.initContainers[*]}init{"\t"}{.name}{"\t"}{.image}{"\n"}{end}{range .spec.ephemeralContainers[*]}debug{"\t"}{.name}{"\t"}{.image}{"\n"}{end}' |
+    inspector_clean
+}
+
+inspector_summary() { # ns pod output-file
+  inspector_query "$3" get pod "$2" -n "$1" -o 'jsonpath=Name: {.metadata.name}{"\n"}Namespace: {.metadata.namespace}{"\n"}UID: {.metadata.uid}{"\n"}Created: {.metadata.creationTimestamp}{"\n"}Phase: {.status.phase}{"\n"}Reason: {.status.reason}{"\n"}Message: {.status.message}{"\n"}Node: {.spec.nodeName}{"\n"}Pod IP: {.status.podIP}{"\n"}Service account: {.spec.serviceAccountName}{"\n"}{range .metadata.ownerReferences[*]}Owner: {.kind}/{.name}{"\n"}{end}{"\nCONDITIONS\n"}{range .status.conditions[*]}{.type}{"\t"}{.status}{"\t"}{.reason}{"\t"}{.message}{"\n"}{end}{"\nCONTAINERS (requests / limits)\n"}{range .spec.containers[*]}{.name}{"\t"}{.image}{"\n"}  CPU: {.resources.requests.cpu} / {.resources.limits.cpu}{"\t"}Memory: {.resources.requests.memory} / {.resources.limits.memory}{"\n"}{end}{"\nCONTAINER STATUS\n"}{range .status.containerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\n"}  Waiting: {.state.waiting.reason} {.state.waiting.message}{"\n"}  Running since: {.state.running.startedAt}{"\n"}  Terminated: {.state.terminated.reason} exit={.state.terminated.exitCode}{"\n"}  Previous: {.lastState.terminated.reason} exit={.lastState.terminated.exitCode}{"\n"}{end}{"\nINIT CONTAINER STATUS\n"}{range .status.initContainerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\t"}{.state.waiting.reason}{.state.terminated.reason}{"\n"}{end}'
+}
+
+inspector_logs() { # ns pod container current|previous output-file
+  local ns="$1" pod="$2" container="$3" mode="$4" dest="$5" rc=0
+  local flags=()
+  case "$mode" in current) ;; previous) flags+=(--previous) ;; *) printf 'Invalid log mode: current or previous required.\n' > "$dest"; return 2 ;; esac
+  [[ "$container" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || {
+    printf 'Choose a valid container before reading logs.\n' > "$dest"; return 2;
+  }
+  inspector_limits
+  printf 'Container: %s | %s logs | last %s lines | maximum %s bytes | timestamps\n\n' "$container" "$mode" "$INSPECTOR_TAIL" "$INSPECTOR_BYTES" > "$dest"
+  INSPECTOR_QUERY_CAP="$INSPECTOR_BYTES" inspector_query "$dest.body" logs "$pod" -n "$ns" -c "$container" \
+    --tail="$INSPECTOR_TAIL" --limit-bytes="$INSPECTOR_BYTES" --timestamps=true "${flags[@]}" || rc=$?
+  cat "$dest.body" >> "$dest"; rm -f -- "$dest.body"
+  [ "$mode" != previous ] || [ "$rc" = 0 ] || printf '\nPrevious logs require a previously terminated instance of this container.\n' >> "$dest"
+  return "$rc"
+}
+
+inspector_events() { # ns pod output-file
+  if declare -F events_render >/dev/null; then
+    events_render "$1" "$2" | inspector_clean > "$3"
+  else
+    inspector_query "$3" get events -n "$1" --field-selector="involvedObject.kind=Pod,involvedObject.name=$2" \
+      --sort-by=.metadata.creationTimestamp -o wide
+  fi
+}
+
+inspector_explain() { # ns pod output-file
+  if declare -F explain_render >/dev/null; then
+    explain_render "$1" "$2" | inspector_clean > "$3"
+  else
+    printf 'Failure explanations are unavailable. Inspect conditions, Events and previous logs for evidence.\n' > "$3"
+  fi
+}
+
+inspector_render() { # ns pod: plain bounded CLI output; logs require explicit opt-in
+  local ns="${1:-${NS:-default}}" pod="${2:-}" d container="${KDASH_INSPECT_CONTAINER:-}" rc=0 mode="${KDASH_INSPECT_LOGS:-}"
+  inspector_identity_ok "$ns" "$pod" || { printf 'kdash: inspect requires a valid namespace and pod name.\n' >&2; return 2; }
+  d="${TMPD:?}/inspector/cli"; (umask 077; mkdir -p "$d") || return 1
+  printf 'Context: %s | Namespace: %s | Pod: %s\n\n' "${CTX_NAME:-${CTX:-current}}" "$ns" "$pod" | inspector_clean
+  if [ -n "$mode" ]; then
+    if [ -z "$container" ]; then
+      if ! inspector_containers "$ns" "$pod" > "$d/containers" 2> "$d/container.err"; then
+        printf 'Cannot discover containers.\n' >&2
+        head -c 4096 "$d/container.err" | inspector_clean >&2
+        rm -rf -- "$d"; return 1
+      fi
+      container="$(awk -F '\t' 'NF >= 2 {print $2; exit}' "$d/containers")"
+    fi
+    inspector_logs "$ns" "$pod" "$container" "$mode" "$d/output" || rc=$?
+  else
+    inspector_summary "$ns" "$pod" "$d/output" || rc=$?
+  fi
+  cat "$d/output"
+  rm -rf -- "$d"
+  return "$rc"
+}
+
+inspector_model_rows() { # MODEL has already applied the dashboard/API filters
+  [ -r "${MODEL:?}/pods.tsv" ] || return 0
+  awk -F '\t' '
+    NR > 1 {printf "%s\t%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $5, $6, $7}
+  ' "$MODEL/pods.tsv" | inspector_clean
+}
+
+inspector_size() {
+  INSPECTOR_ROWS="${KDASH_LINES:-${LINES:-24}}"; INSPECTOR_COLS="${KDASH_COLUMNS:-${COLUMNS:-100}}"
+  if command -v tput >/dev/null 2>&1; then
+    [ -n "${KDASH_LINES:-}" ] || INSPECTOR_ROWS="$(tput lines 2>/dev/null || printf 24)"
+    [ -n "${KDASH_COLUMNS:-}" ] || INSPECTOR_COLS="$(tput cols 2>/dev/null || printf 100)"
+  fi
+  case "$INSPECTOR_ROWS" in ''|*[!0-9]*) INSPECTOR_ROWS=24 ;; esac
+  case "$INSPECTOR_COLS" in ''|*[!0-9]*) INSPECTOR_COLS=100 ;; esac
+  [ "$INSPECTOR_ROWS" -ge 12 ] || INSPECTOR_ROWS=12
+  [ "$INSPECTOR_COLS" -ge 40 ] || INSPECTOR_COLS=40
+  return 0
+}
+
+inspector_key() {
+  INSPECTOR_KEY=""; local seq=""
+  IFS= read -rsn1 INSPECTOR_KEY </dev/tty || return 1
+  if [ "$INSPECTOR_KEY" = $'\033' ]; then
+    IFS= read -rsn2 -t 0.05 seq </dev/tty || true
+    case "$seq" in '[A') INSPECTOR_KEY=k ;; '[B') INSPECTOR_KEY=j ;; '[C') INSPECTOR_KEY=l ;; '[D') INSPECTOR_KEY=b ;; esac
+  fi
+}
+
+inspector_detail() { # nested UI, q returns to picker without losing identity
+  local ns="$1" pod="$2" d="$3" pane=summary oldpane="" offset=0 count=0 container="${KDASH_INSPECT_CONTAINER:-}"
+  local body="$3/body" name type image i=0 current=0 containers=() msg="" rows pid rc
+  local INSPECTOR_REFRESH_EVENTS=0
+  # Existing model inventory avoids an extra blocking API read before showing
+  # summary. Include live init/debug containers when inventory is unavailable.
+  if [ -r "${MODEL:-}/containers.tsv" ]; then
+    awk -F '\t' -v key="$ns/$pod" -v pod="$pod" 'NR>1 && ($1==key || $1==pod) {print "regular\t" $3 "\t-"}' "${MODEL}/containers.tsv" > "$d/containers"
+  else : > "$d/containers"; fi
+  while IFS=$'\t' read -r type name image; do
+    [[ "$name" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || continue
+    containers+=("$name"); [ "$name" != "$container" ] || current=$i; i=$((i + 1))
+  done < "$d/containers"
+  if [ "${#containers[@]}" -gt 0 ]; then container="${containers[$current]}"; else container=""; fi
+  while :; do
+    inspector_size; rows=$((INSPECTOR_ROWS - 8))
+    if [ "$pane" != "$oldpane" ]; then
+      offset=0
+      printf '\033[H\033[2J Context: %s | Namespace: %s | Pod: %s\n\n Reading %s... (q/Esc cancels)\n' "${CTX_NAME:-current}" "$ns" "$pod" "$pane"
+      # Keep navigation available during a slow read. KC supplies request-timeout.
+      (
+        trap 'for inspector_child in $(jobs -pr); do kill "$inspector_child" 2>/dev/null || true; done; exit 130' TERM INT
+        if { [ "$pane" = events ] || [ "$pane" = explain ]; } && declare -F events_collect >/dev/null; then
+          if [ ! -f "${TOOLKIT_DIR:-}/events.status" ] || [ "$INSPECTOR_REFRESH_EVENTS" = 1 ]; then events_collect; fi
+        fi
+        case "$pane" in
+          summary)
+            inspector_summary "$ns" "$pod" "$body"
+            inspector_containers "$ns" "$pod" > "$d/containers.new" 2> "$d/container.err" &
+            if wait "$!"; then mv -f -- "$d/containers.new" "$d/containers"; fi ;;
+          describe) inspector_query "$body" describe pod "$pod" -n "$ns" ;;
+          events) inspector_events "$ns" "$pod" "$body" ;;
+          explain) inspector_explain "$ns" "$pod" "$body" ;;
+          current|previous)
+            if [ -z "$container" ]; then
+              inspector_containers "$ns" "$pod" > "$d/containers" 2> "$d/container.err" || true
+              container="$(awk -F '\t' 'NF >= 2 {print $2;exit}' "$d/containers")"
+            fi
+            inspector_logs "$ns" "$pod" "$container" "$pane" "$body" ;;
+        esac
+      ) & pid=$!
+      while kill -0 "$pid" 2>/dev/null; do
+        INSPECTOR_KEY=""; IFS= read -rsn1 -t 0.1 INSPECTOR_KEY </dev/tty || true
+        case "$INSPECTOR_KEY" in q|b|$'\033')
+          kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+          return 0 ;;
+        esac
+      done
+      wait "$pid" 2>/dev/null || true
+      INSPECTOR_REFRESH_EVENTS=0
+      containers=(); i=0; current=0
+      while IFS=$'\t' read -r type name image; do
+        [[ "$name" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || continue
+        containers+=("$name"); [ "$name" != "$container" ] || current=$i; i=$((i + 1))
+      done < "$d/containers"
+      [ "${#containers[@]}" = 0 ] || container="${containers[$current]}"
+      oldpane="$pane"
+      count="$(wc -l < "$body" 2>/dev/null || printf 0)"
+      declare -F audit >/dev/null && audit INSPECT "namespace=$ns pod=$pod pane=$pane container=$container"
+    fi
+    [ "$offset" -lt 0 ] && offset=0
+    [ "$offset" -le "$((count > rows ? count - rows : 0))" ] || offset=$((count > rows ? count - rows : 0))
+    printf '\033[H\033[2J Context: %s\n Namespace: %s | Pod: %s\n Pane: %s | Container: %s | rows %s-%s/%s\n\n' \
+      "${CTX_NAME:-current}" "$ns" "$pod" "$pane" "${container:-(unavailable)}" "$((offset + 1))" "$((offset + rows < count ? offset + rows : count))" "$count"
+    awk -v first="$((offset + 1))" -v last="$((offset + rows))" -v w="$INSPECTOR_COLS" 'NR >= first && NR <= last {print substr($0,1,w)}' "$body"
+    printf '\033[%s;1H s summary | d describe | e events | ! why | l logs | p previous\n c next container | r reload | j/k scroll | space/b page | q/Esc back\033[J' "$((INSPECTOR_ROWS - 2))"
+    inspector_key || return 0
+    case "$INSPECTOR_KEY" in
+      q|$'\033') return 0 ;;
+      s) pane=summary ;; d) pane=describe ;; e) pane=events ;; '!') pane=explain ;; l) pane=current ;; p) pane=previous ;;
+      j) offset=$((offset + 1)) ;; k) offset=$((offset - 1)) ;; ' ') offset=$((offset + rows)) ;; b) offset=$((offset - rows)) ;;
+      r) if [ "$pane" = events ] || [ "$pane" = explain ]; then
+           # Collection runs in the same cancellable worker on the next pass.
+           rm -f -- "$d/events-refreshed"; INSPECTOR_REFRESH_EVENTS=1
+         fi
+         oldpane="" ;;
+      c) if [ "${#containers[@]}" -gt 0 ]; then current=$(((current + 1) % ${#containers[@]})); container="${containers[$current]}"; oldpane=""; fi ;;
+    esac
+  done
+}
+
+inspector_open() { # optional explicit ns/pod; otherwise a persistent pod picker
+  local d="${TMPD:?}/inspector/live" chosen=0 first=0 rows i n line ns pod status ready restarts node
+  local items=() picked="${POD_PICK:-}"
+  if [ ! -t 0 ] || [ ! -t 1 ]; then
+    [ -n "${2:-}" ] && { inspector_render "$1" "$2"; return $?; }
+    printf 'kdash: the pod picker requires a terminal; use --inspect POD for text output.\n' >&2; return 2
+  fi
+  (umask 077; mkdir -p "$d") || return 1
+  if [ -n "${2:-}" ]; then
+    inspector_identity_ok "$1" "$2" || return 2
+    POD_PICK="$1/$2"; inspector_detail "$1" "$2" "$d"
+    rm -rf -- "$d"; return 0
+  fi
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    items+=("$line")
+    IFS=$'\t' read -r ns pod _ <<< "$line"
+    [ "$ns/$pod" != "$picked" ] || chosen=$((${#items[@]} - 1))
+  done < <(inspector_model_rows)
+  n=${#items[@]}
+  while :; do
+    inspector_size; rows=$((INSPECTOR_ROWS - 8))
+    [ "$chosen" -ge "$first" ] || first=$chosen
+    [ "$chosen" -lt "$((first + rows))" ] || first=$((chosen - rows + 1))
+    printf '\033[H\033[2J Select pod | Context: %s\n Namespace: %s | %s matching pods\n Selected identity: %s\n\n' "${CTX_NAME:-current}" "${NS:-default}" "$n" "${POD_PICK:-(none)}"
+    if [ "$n" = 0 ]; then printf ' No pods match. F edits structured filters; q returns.\n'; fi
+    for ((i=first; i<n && i<first+rows; i++)); do
+      IFS=$'\t' read -r ns pod status ready restarts node <<< "${items[$i]}"
+      line="$(printf '%s %s/%s  %s  ready=%s  restarts=%s  node=%s' "$([ "$i" = "$chosen" ] && printf '>' || printf ' ')" "$ns" "$pod" "$status" "$ready" "$restarts" "$node")"
+      printf '%s\n' "${line:0:$INSPECTOR_COLS}"
+    done
+    printf '\033[%s;1H j/k or arrows select | Enter/i inspect | F filters | q/Esc dashboard\n Logs are fetched only when you open l/p; they are excluded from reports.\033[J' "$((INSPECTOR_ROWS - 1))"
+    inspector_key || break
+    case "$INSPECTOR_KEY" in
+      q|$'\033') break ;;
+      j) [ "$n" = 0 ] || chosen=$(((chosen + 1) % n)) ;;
+      k) [ "$n" = 0 ] || chosen=$(((chosen + n - 1) % n)) ;;
+      ''|i) if [ "$n" -gt 0 ]; then
+        IFS=$'\t' read -r ns pod _ <<< "${items[$chosen]}"; POD_PICK="$ns/$pod"
+        inspector_detail "$ns" "$pod" "$d"
+      fi ;;
+      F) inspector_filter_prompt; break ;;
+    esac
+  done
+  rm -rf -- "$d"
+  printf '\033[2J'
+  return 0
+}
+
+inspector_filter_apply() { # semicolon separated fields, atomically assigned
+  local value="$1" pair key val regex_rc
+  local label="${KDASH_LABEL_SELECTOR:-}" status="${KDASH_STATUS_FILTER:-}" node="${KDASH_NODE_FILTER:-}"
+  local workload="${KDASH_WORKLOAD_FILTER:-}" unhealthy="${KDASH_UNHEALTHY:-0}" fields=()
+  if [ "$value" = clear ]; then
+    KDASH_LABEL_SELECTOR=""; KDASH_STATUS_FILTER=""; KDASH_NODE_FILTER=""; KDASH_WORKLOAD_FILTER=""; KDASH_UNHEALTHY=0
+    return 0
+  fi
+  IFS=';' read -r -a fields <<< "$value"
+  for pair in "${fields[@]}"; do
+    pair="${pair#"${pair%%[![:space:]]*}"}"; pair="${pair%"${pair##*[![:space:]]}"}"
+    [ -n "$pair" ] || continue
+    case "$pair" in *=*) ;; *) printf 'Each filter must be key=value.\n' >&2; return 2 ;; esac
+    key="${pair%%=*}"; val="${pair#*=}"
+    [[ "$val" != *[$'\001'-$'\037'$'\177']* ]] || { printf 'Control bytes are not allowed in filters.\n' >&2; return 2; }
+    [ "${#val}" -le 1024 ] || { printf 'Filter values must be at most 1024 characters.\n' >&2; return 2; }
+    case "$key" in
+      label) label="$val" ;; status) status="$val" ;; node) node="$val" ;; workload) workload="$val" ;;
+      unhealthy) case "$val" in 1|true|yes) unhealthy=1 ;; 0|false|no|'') unhealthy=0 ;; *) printf 'unhealthy must be 0 or 1.\n' >&2; return 2 ;; esac ;;
+      *) printf 'Unknown filter %s. Use label, status, node, workload, unhealthy.\n' "$key" >&2; return 2 ;;
+    esac
+  done
+  for val in "$status" "$workload"; do
+    if printf '' | grep -E -- "$val" >/dev/null 2>&1; then :
+    else
+      regex_rc=$?
+      [ "$regex_rc" = 1 ] || { printf 'Status and workload must be valid extended regular expressions.\n' >&2; return 2; }
+    fi
+  done
+  KDASH_LABEL_SELECTOR="$label"; KDASH_STATUS_FILTER="$status"; KDASH_NODE_FILTER="$node"
+  KDASH_WORKLOAD_FILTER="$workload"; KDASH_UNHEALTHY="$unhealthy"
+  return 0
+}
+
+inspector_filter_prompt() {
+  local line="" msg=""
+  while :; do
+    printf '\033[H\033[2J Structured pod filters | Context: %s | Namespace: %s\n\n' "${CTX_NAME:-current}" "${NS:-default}"
+    printf ' label=%s\n status=%s\n node=%s\n workload=%s\n unhealthy=%s\n\n' \
+      "${KDASH_LABEL_SELECTOR:-}" "${KDASH_STATUS_FILTER:-}" "${KDASH_NODE_FILTER:-}" "${KDASH_WORKLOAD_FILTER:-}" "${KDASH_UNHEALTHY:-0}"
+    printf ' Enter semicolon-separated fields; omitted fields stay unchanged.\n Example: label=app in (api,worker);status=Pending|CrashLoop;unhealthy=1\n Node uses an exact match; status and workload use extended regex.\n Empty value clears a field. Type clear to reset all; Enter cancels.\n%s\n\033[?25h filters > ' "$msg"
+    IFS= read -r line </dev/tty || { printf '\033[?25l'; return 1; }
+    printf '\033[?25l'
+    [ -n "$line" ] || return 1
+    if msg="$(inspector_filter_apply "$line" 2>&1)"; then
+      # Apply in this shell too: command substitution above isolated assignments.
+      inspector_filter_apply "$line" || return 2
+      declare -F audit >/dev/null && audit FILTER_STRUCTURED "label=$KDASH_LABEL_SELECTOR status=$KDASH_STATUS_FILTER node=$KDASH_NODE_FILTER workload=$KDASH_WORKLOAD_FILTER unhealthy=$KDASH_UNHEALTHY"
+      return 0
+    fi
+  done
+}
+
+inspector_palette() {
+  local command=""
+  printf '\033[H\033[2J Command palette | Context: %s | Namespace: %s\n\n' "${CTX_NAME:-current}" "${NS:-default}"
+  printf ' inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n services / storage / events / explain / doctor\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
+  case "$command" in
+    '') return 0 ;; inspect|i) inspector_open ;; filter|F) inspector_filter_prompt ;;
+    pods|nodes|workloads|ip|mem|io|alerts) VIEW="$command"; SCROLL=0; HSCROLL=0 ;;
+    services|storage|events|explain|doctor) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    help|'?') if declare -F show_help >/dev/null; then show_help; else printf '\n Use ? on the dashboard for help.\n'; fi ;;
+    *) declare -F flash >/dev/null && flash "Unknown command: ${command:0:70}" 5; return 2 ;;
+  esac
+}
+
+# END KDASH MODULES
 #-- main ------------------------------------------------------------------------
+toolkit_init
+if [ "$DO_DOCTOR" = 1 ]; then doctor_run; exit $?; fi
+if [ "$DO_EVENTS" = 1 ] || [ "$DO_EXPLAIN" = 1 ]; then
+    events_collect
+    if [ "$DO_EVENTS" = 1 ]; then events_render; else explain_render "${NS/\(all namespaces\)/}" "$EXPLAIN_POD"; fi
+    [ "$(cat "$TOOLKIT_DIR/events.status" 2>/dev/null)" = ok ]; exit $?
+fi
+if [ -n "$INSPECT_POD" ]; then
+    [ "$ALL_NS" = 0 ] || die "--inspect requires an explicit namespace"
+    events_collect; inspector_render "$NS" "$INSPECT_POD"; exit $?
+fi
+case "$VIEW" in services|storage|events|explain)
+    if [ "$ONCE" = 1 ]; then
+        events_collect; health_collect
+        case "$VIEW" in services) health_render_services ;; storage) health_render_storage ;; events) events_render ;; explain) explain_render ;; esac
+        exit 0
+    fi ;;
+esac
 [ "$DO_SREP" = 1 ] && { session_report_main "$SREP_ARG"; exit 0; }
 if [ "$PICK_NS" = 1 ]; then
   [ "$ALTSCR" = 1 ] && printf '\033[?1049h'
@@ -5368,7 +6609,7 @@ if [ "$PICK_NS" = 1 ]; then
   while ns_pick start; do
     if [ "$PICKED" = "*" ]; then sc=(--all-namespaces); else sc=(-n "$PICKED"); fi
     printf '\033[H\033[2J opening %s ...\n' "${PICKED/#\*/all namespaces}"
-    if "${KC[@]}" "${sc[@]}" get pods --request-timeout=20s -o name > /dev/null 2> "$TMPD/pick.err"; then picked_ok=1; audit NS_PICK "namespace=${PICKED/#\*/all-namespaces}"; break; fi
+    if "${KC[@]}" get pods "${sc[@]}" --request-timeout=20s -o name > /dev/null 2> "$TMPD/pick.err"; then picked_ok=1; audit NS_PICK "namespace=${PICKED/#\*/all-namespaces}"; break; fi
     audit NS_PICK_DENIED "namespace=${PICKED/#\*/all-namespaces} reason=$(sed -n '1{s/^Error from server ([A-Za-z]*): //;p}' "$TMPD/pick.err" | cut -c1-140)"
     [ "$PICKED" != "*" ] && NSACC["$PICKED"]=no
     PICK_MSG="cannot open ${PICKED/#\*/all namespaces}: $(sed -n '1{s/^Error from server ([A-Za-z]*): //;p}' "$TMPD/pick.err" | cut -c1-140)"
@@ -5381,8 +6622,8 @@ if [ "$PICK_NS" = 1 ]; then
   [ "$ALTSCR" = 1 ] && printf '\033[?1049l'
   printf '\033[?25h'
 fi
-refresh_spec; refresh_top
-[ -s "$SPEC" ] || [ "$SPEC_OK" = 1 ] || {
+if [ "$INTERACTIVE" = 1 ]; then fetch; else refresh_spec; refresh_top; fi
+[ "$INTERACTIVE" = 1 ] || [ -s "$SPEC" ] || [ "$SPEC_OK" = 1 ] || {
   [ -s "$TMPD/spec.err" ] && sed 's/^/kdash: /' "$TMPD/spec.err" >&2
   fail "could not read pods (context ${CTX_NAME}, namespace ${NS}). Check access and kubeconfig."
 }
@@ -5392,7 +6633,7 @@ build_model || fail "could not build the data model (awk failed)"
 if [ "$ONCE" = 1 ] || [ "$DO_SNAP" = 1 ] || [ "$DO_REPORT" = 1 ]; then
   [ "$IO_WAIT" -gt 0 ] && { io_wait_once; build_model; }
 else
-  io_tick                     # live: detect the IO source and take the first sample
+  [ "$INTERACTIVE" = 1 ] || io_tick  # live: detect the IO source and take the first sample
 fi
 NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv")
 
@@ -5462,17 +6703,26 @@ exec 3>&2 2>"$ERRLOG"
 [ "$ALTSCR" = 1 ] && printf '\033[?1049h'
 printf '\033[?25l\033[2J'
 LAST=$(date +%s); check_alerts
+case "$VIEW" in services|storage|events|explain|doctor) TOOLKIT_REQUESTED=1 ;; esac
 while :; do
   now=$(date +%s)
   if [ "$PAUSED" = 0 ] && [ $((now - LAST)) -ge "${INTERVAL%.*}" ]; then fetch; LAST=$now; check_alerts; fi
+  fetch_adopt; toolkit_filters_changed; toolkit_tick
   render; paint
   if [ "${BASH_VERSINFO[0]:-3}" -lt 4 ]; then sleep "$INTERVAL"; continue; fi
-  IFS= read -rsn1 -t 0.4 key || key=""
+  if IFS= read -rsn1 -t 0.4 key; then [ -n "$key" ] || key=$'\n'; else key=""; fi
   out=""; AK_NS="$NS"
   case "$key" in
     1) VIEW=pods; SCROLL=0; HSCROLL=0 ;; 2) VIEW=nodes; SCROLL=0; HSCROLL=0 ;; 3) VIEW=workloads; SCROLL=0; HSCROLL=0 ;;
     4) VIEW=ip; SCROLL=0; HSCROLL=0 ;; 5) VIEW=mem; SCROLL=0; HSCROLL=0 ;; 6) VIEW=io; SCROLL=0; HSCROLL=0 ;;
     7) VIEW=alerts; SCROLL=0; HSCROLL=0 ;;
+    8) VIEW=services; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    9) VIEW=storage; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    E) VIEW=events; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    '!') VIEW=explain; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    i|$'\n') inspector_open; printf '\033[2J' ;;
+    ':') inspector_palette; printf '\033[2J' ;;
+    F) inspector_filter_prompt; SPEC_AT=0; FETCH_NEXT=0; toolkit_cancel; build_model; LAST=0; printf '\033[2J' ;;
     $'\t'|v) next_view; SCROLL=0; HSCROLL=0 ;;
     j) SCROLL=$((SCROLL+1)) ;;
     k) SCROLL=$((SCROLL-1)) ;;

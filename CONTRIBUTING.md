@@ -41,7 +41,10 @@ owns the code, the releases and the published evidence:
 4. **Bash style.** Four-space indent, `local` for function variables, quoted
    expansions, `set -uo pipefail` in scripts, no `eval` on data.
 5. **Keep the installer and the CLI in step.** `kdash-bundle.sh` embeds `kdash`
-   byte for byte; after editing one, run the check below.
+   byte for byte. The runtime, Events, service/storage and inspector code lives in
+   `src/*.sh`; edit those, then run `bash scripts/build.sh`, which regenerates the
+   marked module block in `kdash` and re-embeds it in `kdash-bundle.sh`. Never edit
+   the generated block between `# BEGIN KDASH MODULES` and `# END KDASH MODULES`.
 6. **Never commit environment data.** No kubeconfig, no tokens, no host names,
    no internal namespace or product names, no personal paths. The published
    screenshots and evidence must stay generic - `scripts/redact-run.sh` and
@@ -55,8 +58,9 @@ bash scripts/validate-all.sh
 ```
 
 That one command checks the Bash syntax of every shipped script, that the
-installer embeds `kdash` byte for byte, the 11 uninstall integration tests, every
-checksum, the recorded run and its captures, the published samples, that no
+installer embeds `kdash` byte for byte, every fixture test under `tests/` (the 11
+uninstall tests plus runtime, events, health and inspector; none needs a cluster),
+every checksum, the recorded run and its captures, the published samples, that no
 environment, product, site or personal name and no credential is in the tree, that
 every README reference resolves, and that the working tree is clean. CI runs the
 same script ([.github/workflows/ci.yml](.github/workflows/ci.yml)), so a red build
