@@ -14,6 +14,13 @@ the detailed per-release notes.
   Metrics API is reported as a capability gap, not as an outage.
 - Pod inspector (`Enter` / `i`, `--inspect POD`): summary, containers, Events, `describe`
   and opt-in, bounded current / previous logs. Logs never reach reports or sessions.
+- Inspector find and drill-down: `/` finds in the current pane (context kept, matches
+  highlighted, count in the header), `n`/`N` jump between matches, `&` keeps only the
+  matching lines, `L` filters by log level, `f` follows a log pane, and `w` exports the
+  pane you are looking at to `$KDASH_REPORT_DIR/inspector/`.
+- Container picker (`c`): every container including init/debug with readiness, restarts,
+  state, last exit reason and image; `1`-`9` opens one directly, `l`/`p` opens its logs.
+  The header shows the selected container's live state.
 - Command palette (`:`) with fixed handlers, and structured pod filters (`F`,
   `--selector`, `--status`, `--node`, `--workload`, `--unhealthy`).
 - Kubernetes Events (`E`, `--events`) and evidence-backed explanations (`!`, `--explain`):

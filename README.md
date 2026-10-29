@@ -258,7 +258,8 @@ kdash -s mem --reverse                  # smallest memory first
 | `w` | PODS grouped by workload / flat | `?` | help for the view on screen |
 | `r` | re-read spec now | | |
 | `8` `9` | services / storage | `E` `!` | Kubernetes Events / explanations |
-| `Enter` `i` | inspect a pod | `:` | command palette |
+| `Enter` `i` | inspect a pod: panes, find, containers, logs, export | `:` | command palette |
+| ↳ inspector | `s` `d` `e` `!` `l` `p` panes · `/` find · `&` only matches · `n` `N` next/prev · `L` level · `f` follow · `c` container · `w` export · `?` keys | | |
 | `F` | structured filters (label, status, node, workload, unhealthy) | | |
 | `n` | pick another namespace | `a` | NODE POOLS: every node / hosting nodes only |
 | `T` | colour theme | `z` | time-chart window: all since start, 15m, 1h, 6h, 24h |
@@ -731,6 +732,15 @@ From an alert to evidence to the next read-only check, without leaving kdash.
   same summary. Logs are opt-in (`--container NAME --logs current|previous`), bounded by
   `KDASH_LOG_TAIL` (200, max 2000) and `KDASH_LOG_LIMIT_BYTES` (64 KiB, max 1 MiB), and are never
   written to reports or session files.
+- **Inspector: find, containers and follow.** `/` finds in the pane you are in (context kept,
+  matches highlighted, count in the header), `n`/`N` jump between matches, `&` shows only the
+  matching lines, `L` filters by log level (ERROR, WARN, INFO, DEBUG), `f` follows a log pane
+  (reload every `KDASH_INSPECT_FOLLOW`, default 5 s), and `w` exports exactly what you see to
+  `$KDASH_REPORT_DIR/inspector/` for a ticket. `c` opens the container picker: every container
+  of the pod, including init and debug containers, with readiness, restarts, current state, last
+  exit reason and image; `1`-`9` opens one directly and `l`/`p` go straight to its logs. A
+  lowercase pattern ignores case (`/error` finds `ERROR` and `error`); anything with an uppercase
+  letter or a regex character is used exactly as written.
 - **Command palette and structured filters:** `:` opens a palette of fixed handlers (it never runs
   shell text). `F` or `--selector`, `--status`, `--node`, `--workload`, `--unhealthy` filter pods.
 - **Events and explanations:** `E` / `--events` list real Kubernetes Events (reason, object, count,

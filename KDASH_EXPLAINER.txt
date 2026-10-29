@@ -296,7 +296,12 @@ Version 4.13.0:
     PVC/PV capacity is allocation, not usage.
   * the services view reports API objects and readiness. It does not test DNS,
     ingress controllers, NetworkPolicy, routing, TLS or application responses.
-  * the inspector never writes logs to reports or session files.
+  * the inspector never writes logs to reports or session files. Searching, the log level
+    filter and following are local: they read nothing from the cluster. `w` exports exactly
+    what is on screen, because you asked for it, into $KDASH_REPORT_DIR/inspector/ - review
+    that file before sharing it, since describe output and logs can contain sensitive values.
+  * the container picker lists what the pod reports: readiness, restarts, state and the last
+    exit reason. A container that has never started shows "no status yet", not failure.
   * IO (view 6) needs a reachable Prometheus/cAdvisor endpoint or the kubelet
     proxy. metrics-server supplies CPU and memory only. Where no source is
     reachable, IO is reported as unavailable, never as zero.

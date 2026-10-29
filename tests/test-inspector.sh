@@ -24,14 +24,20 @@ fake_kubectl() {
   [ -n "$ns" ] || { printf 'Missing explicit namespace\n' >&2; return 96; }
   case "$verb" in
     get)
-      if [[ "$output" == *'.spec.containers'* && "$output" != *'Name:'* ]]; then
-        printf 'regular\tweb\tweb:v2\nregular\tsidecar\tsidecar:v1\ninit\tinit-db\tdb:v1\n'
-      else printf 'Name: same-name\nNamespace: %s\nPhase: Running\nCONTAINERS\nweb image=web:v2\n\033[31mcontrol\033[0m\007\r\n' "$ns"; fi
+      case "$output" in
+        *'Name:'*) printf 'Name: same-name\nNamespace: %s\nPhase: Running\nCONTAINERS\nweb image=web:v2\n\033[31mcontrol\033[0m\007\r\n' "$ns" ;;
+        *'.status.containerStatuses'*) printf 'web\ttrue\t3\t\t\t2026-10-29T03:00:00Z\tOOMKilled\t137\nsidecar\ttrue\t0\t\t\t2026-10-29T03:00:00Z\t\t\n' ;;
+        *'.spec.containers'*) printf 'regular\tweb\tweb:v2\nregular\tsidecar\tsidecar:v1\ninit\tinit-db\tdb:v1\n' ;;
+        *) printf 'Name: same-name\nNamespace: %s\n' "$ns" ;;
+      esac
       ;;
     logs)
       [ -n "$container" ] && [ -n "$tail" ] && [ -n "$limit" ] || return 95
       if [ "$container" = missing ]; then printf 'previous terminated container not found\n' >&2; return 1; fi
       printf '2026-10-29T03:00:00Z namespace=%s container=%s previous=%s\n' "$ns" "$container" "$previous"
+      printf '2026-10-29T03:00:01Z INFO started container=%s\n' "$container"
+      printf '2026-10-29T03:00:02Z WARN retrying container=%s\n' "$container"
+      printf '2026-10-29T03:00:03Z ERROR boom container=%s\n' "$container"
       if [ "${FAKE_HUGE:-0}" = 1 ]; then awk 'BEGIN {for(i=0;i<10000;i++) print "a long application log line to test clipping and limits"}'; fi
       ;;
     describe) printf 'Name: same-name\nNamespace: %s\nEvents: none\n' "$ns" ;;
@@ -127,6 +133,60 @@ assert_lacks "$TEST_ROOT/events" $'\033'
 assert_has "$TEST_ROOT/explain" 'namespace=beta pod=same-name'
 [ ! -s "$CALLS" ] || fail 'cached renderers contacted the API'
 
+# ---- container inventory with live state (spec + status merged) --------------------
+reset_calls
+inspector_container_rows beta same-name "$TEST_ROOT/rows.spec" "$TEST_ROOT/rows.status" > "$TEST_ROOT/rows"
+assert_has "$TEST_ROOT/rows" $'regular\tweb\tready\t3\tRunning\tOOMKilled exit=137\tweb:v2'
+assert_has "$TEST_ROOT/rows" $'regular\tsidecar\tready\t0\tRunning\t-\tsidecar:v1'
+assert_has "$TEST_ROOT/rows" $'init\tinit-db\t?\t?\tno status yet\t-\tdb:v1'
+[ "$(grep -c '.status.containerStatuses' "$CALLS")" = 1 ] || fail 'status read missing'
+assert_has "$CALLS" $'get\tpod\tsame-name\t-n\tbeta\t'
+
+# ---- search, highlighting, level filter and export ---------------------------------
+INSPECTOR_SEARCH=""; INSPECTOR_LEVEL_NAME=all; INSPECTOR_LEVEL_PAT=""
+printf 'plain line\nINFO ok\nERROR boom\nwarning: slow\n' > "$TEST_ROOT/body"
+inspector_view_build "$TEST_ROOT/body" "$TEST_ROOT/view" "$TEST_ROOT/matches"
+[ "$INSPECTOR_VIEW_LINES" = 4 ] && [ "$INSPECTOR_MATCHES" = 0 ] || fail 'unfiltered view counts'
+INSPECTOR_SEARCH=error      # lowercase pattern ignores case
+inspector_view_build "$TEST_ROOT/body" "$TEST_ROOT/view" "$TEST_ROOT/matches"
+[ "$INSPECTOR_MATCHES" = 1 ] || fail "case-insensitive search found $INSPECTOR_MATCHES"
+INSPECTOR_SEARCH=ERROR      # uppercase pattern is exact
+inspector_view_build "$TEST_ROOT/body" "$TEST_ROOT/view" "$TEST_ROOT/matches"
+[ "$INSPECTOR_MATCHES" = 1 ] || fail 'case-sensitive search'
+case "$(COLOR=1 inspector_show "$TEST_ROOT/view" 1 10 200 1)" in
+  *$'\033[1;31mERROR'*) ;;
+  *) fail 'matches are not highlighted' ;;
+esac
+case "$(COLOR=0 inspector_show "$TEST_ROOT/view" 1 10 200 0)" in
+  *$'\033'*) fail 'colour off still emitted escape codes' ;;
+esac
+INSPECTOR_SEARCH=''; INSPECTOR_LEVEL_NAME=ERROR
+INSPECTOR_LEVEL_PAT='(^|[^A-Za-z])(ERROR|FATAL|SEVERE|Exception|exception|panic)'
+inspector_view_build "$TEST_ROOT/body" "$TEST_ROOT/view" "$TEST_ROOT/matches"
+[ "$INSPECTOR_VIEW_LINES" = 1 ] || fail 'level filter did not narrow the view'
+inspector_level_cycle
+[ "$INSPECTOR_LEVEL_NAME" = WARN ] || fail 'level cycle order'
+inspector_level_cycle; inspector_level_cycle; inspector_level_cycle
+[ "$INSPECTOR_LEVEL_NAME" = all ] && [ -z "$INSPECTOR_LEVEL_PAT" ] || fail 'level cycle did not reset'
+inspector_pattern_ok 'a[' && fail 'invalid regex accepted'
+inspector_pattern_ok $'a\033b' && fail 'control bytes accepted in a search'
+inspector_pattern_ok 'error|OOMKilled' || fail 'valid regex rejected'
+[ "$(inspector_icase error)" = 1 ] && [ "$(inspector_icase OOMKilled)" = 0 ] \
+  && [ "$(inspector_icase 'a|b')" = 0 ] || fail 'case-sensitivity rule'
+INSPECTOR_SEARCH=ERROR; INSPECTOR_LEVEL_NAME=all; INSPECTOR_LEVEL_PAT=""
+inspector_view_build "$TEST_ROOT/body" "$TEST_ROOT/view" "$TEST_ROOT/matches"
+exported="$(KDASH_REPORT_DIR="$TEST_ROOT/reports" inspector_export "$TEST_ROOT/view" beta same-name web current 4 1)"
+[ -n "$exported" ] && [ -f "$exported" ] || fail 'export did not write a file'
+case "$exported" in *"$TEST_ROOT/reports/inspector/"*) ;; *) fail 'export ignored KDASH_REPORT_DIR' ;; esac
+assert_has "$exported" '# kdash inspector export'
+assert_has "$exported" 'namespace: beta | pod: same-name | container: web | pane: current'
+assert_has "$exported" 'search: ERROR'
+assert_has "$exported" 'lines exported: 4 of 4 | matching lines: 1'
+assert_has "$exported" 'ERROR boom'
+assert_lacks "$exported" $'\033'
+assert_has "$exported" 'Review before sharing'
+INSPECTOR_SEARCH=""; INSPECTOR_LEVEL_NAME=all; INSPECTOR_LEVEL_PAT=""
+
 # Exercise actual terminal navigation when the standard CI Python is available.
 # The application itself continues to require only Bash/awk/coreutils/kubectl.
 if command -v python3 >/dev/null 2>&1; then
@@ -142,7 +202,9 @@ import time
 
 pid, fd = pty.fork()
 if pid == 0:
-    os.environ.update(TERM="xterm", KDASH_LINES="26", KDASH_COLUMNS="120")
+    os.environ.update(TERM="xterm", KDASH_LINES="26", KDASH_COLUMNS="120",
+                      KDASH_REPORT_DIR=os.path.join(os.environ["TEST_ROOT"], "reports-live"),
+                      KDASH_INSPECT_FOLLOW="1")
     os.execvp("bash", ["bash", "-c", '''
       set -uo pipefail
       source "$REPO/src/inspector.sh"
@@ -184,11 +246,64 @@ try:
     os.write(fd, b"l")
     expect("Pane: current")
     expect("Container: web | current logs")
+    expect("INFO started container=web")
+    # find keeps the context, counts the matches and highlights them
+    os.write(fd, b"/")
+    expect("Find in the current pane")
+    os.write(fd, b"ERROR\n")
+    expect("rows 1-6/6")
+    expect("search /ERROR (1 matching)")
+    expect("\x1b[1;31mERROR")
+    expect("boom container=web")
+    os.write(fd, b"n")
+    expect("match 1/1")
+    # & hides everything that does not match
+    os.write(fd, b"&")
+    expect("Show only matching lines")
+    os.write(fd, b"ERROR\n")
+    expect("rows 1-1/1")
+    expect("only /ERROR: 1 of 6 lines")
+    # clearing the search brings the whole pane back
+    os.write(fd, b"/")
+    os.write(fd, b"\n")
+    expect("rows 1-6/6")
+    expect("INFO started container=web")
+    # previous logs of the same container
     os.write(fd, b"p")
     expect("Pane: previous")
     expect("previous=1")
+    # the container picker: every container with readiness, restarts and last exit
     os.write(fd, b"c")
+    expect("Containers of beta/same-name")
+    expect("OOMKilled")
+    expect("init-db")
+    os.write(fd, b"2")
     expect("Container: sidecar | previous logs")
+    expect("previous=1")
+    # follow mode reloads the pane on the interval; any key stops it
+    os.write(fd, b"f")
+    expect("follow every 1s")
+    time.sleep(2.5)
+    expect("Pane: previous")
+    os.write(fd, b"f")
+    expect("follow off")
+    # export what is on screen, then cycle the log level back to all
+    os.write(fd, b"w")
+    expect("exported ")
+    expect("/inspector/")
+    os.write(fd, b"L")
+    expect("log level: ERROR")
+    os.write(fd, b"L")
+    expect("log level: WARN")
+    os.write(fd, b"L")
+    expect("log level: INFO")
+    os.write(fd, b"L")
+    expect("log level: DEBUG")
+    os.write(fd, b"L")
+    expect("log level: all")
+    os.write(fd, b"?")
+    expect("kdash inspector - keys")
+    os.write(fd, b" ")
     os.write(fd, b"q")
     expect("Select pod")
     expect("Selected identity: beta/same-name")
@@ -203,5 +318,17 @@ except BaseException:
 finally:
     os.close(fd)
 PY
+  # The explicit export must land in KDASH_REPORT_DIR, keep the filtered lines and
+  # never contain terminal escape codes.
+  found=0
+  for f in "$TEST_ROOT"/reports-live/inspector/kdash_inspect_*; do
+    [ -f "$f" ] || continue
+    found=1
+    assert_has "$f" '# kdash inspector export'
+    assert_has "$f" 'ERROR boom'
+    assert_has "$f" 'Review before sharing'
+    assert_lacks "$f" $'\033'
+  done
+  [ "$found" = 1 ] || fail 'no inspector export was written'
 fi
-printf 'PASS: inspector context/namespace identity, opt-in bounded logs, failures, filters, cached evidence and report isolation\n'
+printf 'PASS: inspector identity, bounded opt-in logs, search and highlighting, level filter, container drill-down, export, failures, filters and report isolation\n'
