@@ -1,4 +1,4 @@
-# Interactive, read-only pod inspection. This source is embedded in the release
+# Interactive pod inspection (read-only reads) plus the opt-in container shell and file copy. This source is embedded in the release
 # executable; all API reads use the audited, context-pinned KC argv array.
 # Logs live only in TMPD/inspector and never enter MODEL or report/session files.
 
@@ -382,6 +382,8 @@ inspector_help() {
   printf '     WARN, INFO, DEBUG         l  current logs             c  choose container\n'
   printf '  f  follow logs               p  previous logs            r  reload now\n'
   printf '  w  export what you see       q Esc  back                ?  this help\n\n'
+  printf ' S  shell in the container    U  upload a file             D  download a file\n'
+  printf ' S/U/D need --allow-interactive: they run in your name and are audited writes.\n'
   printf ' / keeps the context around every match and highlights it; & hides everything else.\n'
   printf ' A lowercase pattern ignores case: /error finds ERROR and error.\n'
   printf ' n and N wrap around and put the match at the top of the pane.\n'
@@ -462,8 +464,8 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     printf '\033[H\033[2J Context: %s\n Namespace: %s | Pod: %s\n Container: %s\n %s\n\n' \
       "${CTX_NAME:-current}" "$ns" "$pod" "${cline:0:$INSPECTOR_COLS}" "${pinfo:0:$INSPECTOR_COLS}"
     inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}"
-    printf '\033[%s;1H s summary | d describe | e events | ! why | l logs | p previous | c container | ? keys\033[J' "$((INSPECTOR_ROWS - 2))"
-    printf '\033[%s;1H / find | & only matches | n N match | L level | f follow(%s) | w export | r reload | q back\033[K' \
+    printf '\033[%s;1H s summary | d describe | e events | ! why | l logs | p previous | c container | S shell U/D copy\033[J' "$((INSPECTOR_ROWS - 2))"
+    printf '\033[%s;1H / find | & only matches | n N match | L level | f follow(%s) | w export | r reload | ? keys | q back\033[K' \
       "$((INSPECTOR_ROWS - 1))" "$([ "$follow" = 1 ] && printf on || printf off)"
     if [ -n "$msg" ]; then
       printf '\033[%s;1H\033[1;33m %s\033[0m\033[K' "$INSPECTOR_ROWS" "${msg:0:$((INSPECTOR_COLS - 2))}"
@@ -484,6 +486,10 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     case "$INSPECTOR_KEY" in
       q|$'\033') return 0 ;;
       s) pane=summary ;; d) pane=describe ;; e) pane=events ;; '!') pane=explain ;; l) pane=current ;; p) pane=previous ;;
+      # Interactive attachments (opt-in): the pod and container you are looking at.
+      S) interactive_attach shell "$ns" "$pod" "$d"; msg="shell rc=$? (logged as EXEC)" ;;
+      U) interactive_attach up "$ns" "$pod" "$d"; msg="upload rc=$? (logged as CP_UP)" ;;
+      D) interactive_attach down "$ns" "$pod" "$d"; msg="download rc=$? (logged as CP_DOWN)" ;;
       j) offset=$((offset + 1)) ;; k) offset=$((offset - 1)) ;; ' ') offset=$((offset + rows)) ;; b) offset=$((offset - rows)) ;;
       g) offset=0 ;; G) offset=999999 ;;
       '/') if inspector_search_prompt "$pane" find; then viewdirty=1; fi ;;
@@ -555,15 +561,23 @@ inspector_open() { # optional explicit ns/pod; otherwise a persistent pod picker
       line="$(printf '%s %s/%s  %s  ready=%s  restarts=%s  node=%s' "$([ "$i" = "$chosen" ] && printf '>' || printf ' ')" "$ns" "$pod" "$status" "$ready" "$restarts" "$node")"
       printf '%s\n' "${line:0:$INSPECTOR_COLS}"
     done
-    printf '\033[%s;1H j/k or arrows select | Enter/i inspect | c containers | F filters | q/Esc dashboard\n Logs are fetched only when you open l/p; search and follow stay inside the pod.\033[J' "$((INSPECTOR_ROWS - 1))"
+    printf '\033[%s;1H j/k or arrows select | Enter/i inspect | c containers | S shell U/D copy | F filters | q/Esc dashboard\n Logs are fetched only when you open l/p; search and follow stay inside the pod.\033[J' "$((INSPECTOR_ROWS - 1))"
     inspector_key || break
     case "$INSPECTOR_KEY" in
       q|$'\033') break ;;
       j) [ "$n" = 0 ] || chosen=$(((chosen + 1) % n)) ;;
       k) [ "$n" = 0 ] || chosen=$(((chosen + n - 1) % n)) ;;
-      ''|i) if [ "$n" -gt 0 ]; then
+      S|U|D|''|i) if [ "$n" -gt 0 ]; then     # S/U/D attach, Enter/i inspect
         IFS=$'\t' read -r ns pod _ <<< "${items[$chosen]}"; POD_PICK="$ns/$pod"
-        inspector_detail "$ns" "$pod" "$d"
+        if [ -n "${KDASH_ATTACH_ACTION:-}" ]; then
+          # The dashboard asked for S/U/D: attach once, then go back to the dashboard.
+          local action="$KDASH_ATTACH_ACTION"; KDASH_ATTACH_ACTION=""
+          interactive_attach "$action" "$ns" "$pod" "$d"; printf '\033[2J'; break
+        elif [ "$INSPECTOR_KEY" = S ] || [ "$INSPECTOR_KEY" = U ] || [ "$INSPECTOR_KEY" = D ]; then
+          interactive_attach "$INSPECTOR_KEY" "$ns" "$pod" "$d"; printf '\033[2J'
+        else
+          inspector_detail "$ns" "$pod" "$d"
+        fi
       fi ;;
       c) if [ "$n" -gt 0 ]; then
         # Go straight into one container of the highlighted pod.

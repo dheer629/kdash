@@ -59,7 +59,7 @@ bash scripts/validate-all.sh
 
 That one command checks the Bash syntax of every shipped script, that the
 installer embeds `kdash` byte for byte, every fixture test under `tests/` (the 11
-uninstall tests plus runtime, events, health and inspector; none needs a cluster),
+uninstall tests plus runtime, events, health, inspector and interactive; none needs a cluster),
 every checksum (root, `samples/`, `samples/html/`, `samples/cli_413/`), the recorded
 run and its captures, the feature-screen run and its 22 captures plus manifest, the
 published samples, that no environment, product, site or personal name and no

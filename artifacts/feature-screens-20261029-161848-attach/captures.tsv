@@ -1,0 +1,8 @@
+file	columns	rows	title	png
+raw/03-attach-blocked-off.ansi	170	50	03-attach-blocked-off	samples/cli_414/03-attach-blocked-off.png
+raw/05-attach-picker-on.ansi	170	50	05-attach-picker-on	samples/cli_414/05-attach-picker-on.png
+raw/06-shell-inside.ansi	170	50	06-shell-inside	samples/cli_414/06-shell-inside.png
+raw/08-back-in-dashboard.ansi	170	50	08-back-in-dashboard	samples/cli_414/08-back-in-dashboard.png
+raw/10-download-prompt.ansi	170	50	10-download-prompt	samples/cli_414/10-download-prompt.png
+raw/11-download-done.ansi	170	50	11-download-done	samples/cli_414/11-download-done.png
+raw/12-upload-prompt.ansi	170	50	12-upload-prompt	samples/cli_414/12-upload-prompt.png

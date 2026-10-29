@@ -61,7 +61,7 @@ for f in tests/*.sh; do
 done
 
 echo "=== 3. checksums"
-for dir in . samples samples/html samples/cli_413; do
+for dir in . samples samples/html samples/cli_413 samples/cli_414; do
   file=SHA256SUMS
   want=$(awk 'NF {n++} END {print n+0}' "$dir/$file" 2>/dev/null)
   if [ "${want:-0}" -gt 0 ] && (cd "$dir" && sha256sum -c "$file") > "$VALIDATE_TMP/checksums" 2>&1; then
@@ -92,7 +92,7 @@ else
 fi
 
 echo "=== 5. the published samples"
-i=$(find samples -name '*.png' | wc -l); [ "$i" = 69 ] && ok "69 screenshots" || bad "$i screenshots"
+i=$(find samples -name '*.png' | wc -l); [ "$i" = 76 ] && ok "76 screenshots" || bad "$i screenshots"
 h=$(find samples/html -name '*.html' | wc -l); [ "$h" = 33 ] && ok "33 HTML reports" || bad "$h HTML reports"
 c=$(find samples/html -name '*.csv' | wc -l); [ "$c" = 3 ] && ok "3 audit CSVs" || bad "$c audit CSVs"
 for f in samples/cli_7_alerts_170col.png samples/html_overview.png \
@@ -102,8 +102,8 @@ for f in samples/cli_7_alerts_170col.png samples/html_overview.png \
          samples/cli_413/18-inspector-containers.png; do
   [ -s "$f" ] && ok "present $f" || bad "missing $f"
 done
-FEATURE=$(find artifacts -maxdepth 1 -type d -name 'feature-screens-*' 2>/dev/null | sort | tail -1)
-if [ -n "$FEATURE" ]; then
+FEATURE=artifacts/feature-screens-20261029-151233
+if [ -d "$FEATURE" ]; then
   a=$(ls -1 "$FEATURE"/raw/*.ansi 2>/dev/null | wc -l)
   t=$(ls -1 "$FEATURE"/raw/*.txt 2>/dev/null | wc -l)
   m=$(awk 'NF {n++} END {print n+0}' "$FEATURE/captures.tsv" 2>/dev/null)
@@ -112,6 +112,15 @@ if [ -n "$FEATURE" ]; then
     || bad "feature captures: $a ansi, $t txt, $m manifest rows"
 else
   bad "no artifacts/feature-screens-* directory"
+fi
+ATTACH=$(find artifacts -maxdepth 1 -type d -name 'feature-screens-*-attach' 2>/dev/null | sort | tail -1)
+if [ -n "$ATTACH" ]; then
+  a=$(ls -1 "$ATTACH"/raw/*.ansi 2>/dev/null | wc -l)
+  m=$(awk 'NF {n++} END {print n+0}' "$ATTACH/captures.tsv" 2>/dev/null)
+  [ "$a" = 7 ] && [ "$m" = 8 ] && ok "attachment captures 7 pairs, $m manifest rows" \
+    || bad "attachment captures: $a ansi, $m manifest rows"
+else
+  bad "no artifacts/feature-screens-*-attach directory"
 fi
 
 echo "=== 6. no environment, product, site or personal names"
@@ -138,16 +147,16 @@ done < <({ grep -o 'src="[^"]*"' README.md | sed 's/^src="//; s/"$//'
 
 echo "=== 7b. versioned downloads in the README"
 vbad=0; vers=0
-for v in 4.13.1 4.13.0; do
+for v in 4.14.0 4.13.1 4.13.0; do
   for asset in kdash kdash-bundle.sh "kdash-$v.tar.gz" SHA256SUMS; do
     grep -q "releases/download/v$v/$asset" README.md || { vbad=$((vbad + 1)); echo "   missing link: v$v/$asset"; }
   done
   grep -q "^| \*\*$v\*\* |" README.md && vers=$((vers + 1))
 done
-[ "$vbad" = 0 ] && ok "direct download links for 4.13.1 and 4.13.0" || bad "$vbad download links missing"
-[ "$vers" = 2 ] && ok "the release table lists both versions" || bad "release table lists $vers of 2 versions"
+[ "$vbad" = 0 ] && ok "direct download links for 4.14.0, 4.13.1 and 4.13.0" || bad "$vbad download links missing"
+[ "$vers" = 3 ] && ok "the release table lists all three versions" || bad "release table lists $vers of 3 versions"
 grep -q 'archive/refs/tags/v4.12.0.tar.gz' README.md && ok "the older version stays reachable" || bad "no link for 4.12.0"
-grep -q 'releases/download/v4.13.1/kdash-4.13.1.tar.gz' README.md && grep -q 'RELEASES.md' README.md \
+grep -q 'releases/download/v4.14.0/kdash-4.14.0.tar.gz' README.md && grep -q 'RELEASES.md' README.md \
   && ok "install-one-version recipe documented" || bad "no one-version install recipe"
 
 echo "=== 8. git state"

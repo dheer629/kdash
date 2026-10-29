@@ -5,6 +5,36 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.14.0] - 2026-10-29
+
+### Added
+- Opt-in interactive attachments: `S` opens a shell in a container (`bash` when the image
+  has it, else `sh`), `U` uploads a file into a container, `D` downloads a file out of
+  one. They work from the pod list (pick a pod, then its container when it has several),
+  from the inspector (the pod and container on screen) and from the container picker.
+  Enabled with `--allow-interactive` / `-X` / `KDASH_ALLOW_INTERACTIVE=1`.
+- The kubectl guard gained exactly two exceptions: `exec` and `cp`, only while
+  interactive mode is on, running without the 12 s command cap, recorded as
+  `WRITE ...` and counted as `writes` in the `KUBECTL` audit summary. While the mode is
+  off both are refused with exit 126 and a hint, and the attempt is audited as
+  `INTERACTIVE_BLOCKED`.
+- New audit events for an attachment: `EXEC`, `EXEC_END`, `CP_UP`, `CP_DOWN`, `CP_END`
+  with pod, container, direction, paths (credential-looking paths masked), bytes and exit
+  code. Shell output and copied files never enter the model, a report, a bundle, a session
+  or an export.
+- `tests/test-interactive.sh`: the guard on and off, the exact kubectl argv of a shell, an
+  upload and a download, write accounting, the timeout difference between a read and an
+  attachment, the default remote path, the overwrite prompt, credential-path masking,
+  relative-path and control-byte rejection, and the published flag, keys and help.
+- README section "Shell and file copy (opt-in)": the exact commands kdash runs and the
+  caveats (`pods/exec`, `tar` for `cp`, distroless images, what is audited).
+- `?` help, the inspector key map, the footers and the status bar advertise the three keys.
+
+### Changed
+- The disclaimer now says that kdash only reads the cluster unless interactive mode is
+  enabled explicitly, and that an attachment runs with the user's rights and is not
+  read-only.
+
 ## [4.13.1] - 2026-10-29
 
 ### Fixed

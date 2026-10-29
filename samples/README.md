@@ -30,6 +30,16 @@ manifest are in `../artifacts/feature-screens-20261029-151233/`, and
 [`cli_413/README.md`](cli_413/README.md) for the file list and for the placeholder
 names that `../scripts/redact-run.sh` substituted.
 
+## 4.14.0 attachments - the opt-in shell and file copy
+
+`samples/cli_414/` holds 7 screens from **kdash 4.14.0** that show the new interactive
+mode end to end: `S` refused while it is off (with the audit line that proves it), the
+pod picker that carries `S shell U/D copy`, a real shell prompt inside the container, the
+dashboard after `exit`, the `D` download prompt and the finished download (with
+`CP_DOWN`/`CP_END` in the audit), and the `U` upload prompt. Raw captures: 
+`../artifacts/feature-screens-20261029-161848-attach/`. See
+[`cli_414/README.md`](cli_414/README.md).
+
 ## CLI screenshots - views 1-7 for each namespace
 
 `samples/cli/<namespace>/01-pods.png` ... `07-alerts.png` - 21 images, seven per

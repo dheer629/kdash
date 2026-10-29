@@ -13,17 +13,18 @@ shopt -s nullglob
            README.md DEVOPS_USER_GUIDE.md KDASH_EXPLAINER.txt CHANGELOG.md \
            CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md LICENSE RELEASES.md \
            ENHANCEMENT_ROADMAP.md artifacts/README.md samples/README.md \
-           samples/cli_413/README.md \
+           samples/cli_413/README.md samples/cli_414/README.md \
            src/*.sh tests/*.sh scripts/*.sh .github/workflows/*.yml samples/*.png; do
     [ -f "$f" ] || continue
     sha256sum "$f"
   done
 } > SHA256SUMS
 
-# The 4.13.x screenshot set carries its own manifest, like samples/cli did for 4.12.0.
-if [ -d samples/cli_413 ]; then
-  ( cd samples/cli_413 && sha256sum ./*.png > SHA256SUMS )
-  printf 'samples/cli_413/SHA256SUMS written: %s entries\n' "$(wc -l < samples/cli_413/SHA256SUMS)"
-fi
+# Each published screenshot set carries its own manifest.
+for set in samples/cli_413 samples/cli_414; do
+  [ -d "$set" ] || continue
+  ( cd "$set" && sha256sum ./*.png > SHA256SUMS )
+  printf '%s/SHA256SUMS written: %s entries\n' "$set" "$(wc -l < "$set/SHA256SUMS")"
+done
 
 printf 'SHA256SUMS written: %s entries\n' "$(wc -l < SHA256SUMS)"

@@ -7,7 +7,7 @@ trap 'rm -f "$tmp" "$bundle"' EXIT
 awk '/^# BEGIN KDASH MODULES$/ {skip=1; next} /^# END KDASH MODULES$/ {skip=0; next} !skip {print}' kdash > "$tmp"
 awk '/^#-- main / {exit} {print}' "$tmp" > "$bundle"
 printf '# BEGIN KDASH MODULES\n' >> "$bundle"
-for module in runtime events health inspector; do
+for module in runtime events health inspector interactive; do
     [ -f "src/$module.sh" ] || { printf 'missing src/%s.sh\n' "$module" >&2; exit 1; }
     cat "src/$module.sh" >> "$bundle"; printf '\n' >> "$bundle"
 done

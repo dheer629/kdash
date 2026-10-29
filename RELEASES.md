@@ -6,6 +6,7 @@ download the exact version you want, or an older one, at any time:
 
 | Version | Tag | What it adds | Download |
 |---|---|---|---|
+| 4.14.0 | `v4.14.0` | opt-in shell in a container (`S`), upload (`U`) and download (`D`), audited as writes | [release](https://github.com/dheer629/kdash/releases/tag/v4.14.0) |
 | 4.13.1 | `v4.13.1` | installer summary names every view and key (no code change to the CLI) | [release](https://github.com/dheer629/kdash/releases/tag/v4.13.1) |
 | 4.13.0 | `v4.13.0` | doctor, inspector, command palette, Events and explanations, services, storage, `-A` fix, inspector find/containers/export | [release](https://github.com/dheer629/kdash/releases/tag/v4.13.0) |
 | 4.12.0 | `v4.12.0` | ALERTS view (kept for reference; the `-A` limitation applies) | [source archive](https://github.com/dheer629/kdash/archive/refs/tags/v4.12.0.tar.gz) |

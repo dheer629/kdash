@@ -1,0 +1,50 @@
+ Download from default/platform-kafka-65c6d4dcfd-l7mqq (container kafka) | Context: devops-admin@local-cluster
+
+ kubectl cp runs in your name; it needs a copy helper (tar) inside the
+ container, which distroless and scratch images do not have.
+
+ remote path inside the container (e.g. /var/log/app/app.log):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

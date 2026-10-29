@@ -1,6 +1,6 @@
 # kdash DevOps user guide
 
-This guide describes the kdash 4.12.0 implementation in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. It does not install workloads, change resource limits, restart pods, or repair the cluster. Its reports preserve observations so an operator can investigate and decide what to do next.
+This guide describes the kdash 4.14.0 implementation in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. It does not install workloads, change resource limits, restart pods, or repair the cluster. Its reports preserve observations so an operator can investigate and decide what to do next. Two actions are the exception, and both are off until you switch them on: a shell inside a container and copying a file in or out of one (`--allow-interactive`, keys `S`/`U`/`D`). They run in your name with your rights, they are audited as writes, and nothing they produce enters a report - see the section on them below.
 
 ## What the recorded run actually produced
 
@@ -325,8 +325,57 @@ Logs are hash-chained. `--audit-verify` detects broken links in the available fi
 | Terminal is narrow or glyphs look broken | Enlarge the terminal, pan with `h`/`l`, or use `--ascii`. Use `--theme light` for light terminals and `-N` for plain text. |
 | Export fails | Verify the selected report directory is writable and has space. Preserve stderr and the exit code. |
 | Audit verification fails | Retain the original file, identify the reported line/session, and compare available central/syslog evidence. Do not edit it merely to make validation pass. |
+| You need a shell or a file out of a pod | Start kdash with `--allow-interactive` and press `S` (shell), `U` (upload) or `D` (download) - in the pod list, in the inspector, or in the container picker. Without the flag the same keys explain that interactive mode is off and audit `INTERACTIVE_BLOCKED`. |
 
 Exit codes: `0` success, `1` runtime failure, `2` usage error, `3` no pods matched, `5` disclaimer not accepted, `6` required audit file not writable. The kubectl read-only wrapper returns `126` for refused verbs. A supervising `timeout` normally returns `124` when its deadline expires, even when kdash handles the signal and finalizes its own logs; distinguish the supervisor status from the dashboard's audit `END` record.
+
+## Shell in a container and file copy (opt-in, audited writes)
+
+kdash reads the cluster and writes nothing. A shell inside a container and a file copy in
+or out of one are the two actions that change that, so they are off until you enable them:
+
+```bash
+kdash --allow-interactive -k /path/kubeconfig -c my-context -n default
+KDASH_ALLOW_INTERACTIVE=1 kdash            # or KDASH_ALLOW_INTERACTIVE=1 in kdash.conf
+```
+
+| Key | In the pod list | In the inspector | In the container picker |
+|---|---|---|---|
+| `S` | pick a pod, then its container when it has several, then a shell | shell in the container on screen | shell in the highlighted pod |
+| `U` | upload: pick the pod/container, type the local file and the remote path | upload into the container on screen | same, for the highlighted pod |
+| `D` | download: type the remote path; the local path defaults to `./<name>` | download from the container on screen | same, for the highlighted pod |
+
+Commands kdash runs (audited with the same shape):
+
+```bash
+kubectl exec -it <pod> [-c <container>] -- sh -c 'command -v bash >/dev/null 2>&1 && exec bash || exec sh'
+kubectl cp -c <container> ./local.conf <namespace>/<pod>:/tmp/local.conf
+kubectl cp -c <container> <namespace>/<pod>:/var/log/app.log ./app.log
+```
+
+What to expect, and what to record:
+
+1. **Permission first.** `kubectl auth can-i create pods/exec` must say yes; `cp` also
+   needs a `tar` inside the image, so distroless and scratch containers cannot be copied
+   from - use `kubectl debug --copy-to`, or read their logs in the inspector instead.
+2. **The terminal is handed over.** kdash leaves its screen, kubectl gets the real
+   terminal (so `-it` and job control work, inside tmux as well), and the dashboard
+   repaints when you leave the shell with `exit` or Ctrl-D.
+3. **It is your identity, not kdash's read-only path.** Everything you do in that shell
+   happens with your RBAC and is not covered by the read-only guarantee. Treat it like
+   any other `kubectl exec` session and record it in the change/incident notes.
+4. **The audit log is the record.** `EXEC` and `EXEC_END` (pod, container), `CP_UP` and
+   `CP_DOWN` (pod, container, direction, both paths, with credential-looking paths masked)
+   and `CP_END` (bytes, exit code) are written to the local log, the central log when
+   configured, and syslog. The `KUBECTL` summary line counts them as `writes=N`, and a
+   refused or blocked attempt is `INTERACTIVE_BLOCKED`. Verify with
+   `kdash --audit-grep 'EXEC|CP_'`.
+5. **Nothing else is kept.** No shell output, no copied file, no command history of the
+   session enters the model, a report, a bundle, a session directory or an export. The
+   automatic evidence bundle still contains no logs.
+6. **When it is off, it stays off.** The keys and the flag are visible, the guard still
+   refuses `exec` and `cp` with exit 126 and a hint, and a refusal is audited. Do not
+   enable the mode for a run that must stay provably read-only.
 
 ## 10. Share and commit the evidence
 

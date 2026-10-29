@@ -1,0 +1,50 @@
+[1m════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════[0m
+ [1m[94mKDASH 4.14.0[0m  [1;7m 1 PODS [0m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-29 16:16:53[0m[90m UTC[39m
+ [90mctx[39m devops-admin@local-cluster   [90mns[39m default   [90mmatch[39m .*   [90mpoll 2s  spec 26s/30s  session [39m16:16:27[90m up [39m26s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m7m [32m░░░░░░[39m [32m0%[90m lim  mem [39m448Mi [32m█░░░░░[39m [32m18%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mPOD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)[0m
+                                                   [90m│[39m [1m[94m  ACTUAL (live)   [0m [90m│[39m [1m[35m   ASSIGNED (req / limit)    [0m [90m│[39m [1m[35m     UTILISATION (used vs req / lim)      [0m
+WORKLOAD / POD / CONTAINER                 RDY RST [90m│[39m   CPUm T  MEM Mi T [90m│[39m CPUreq CPUlim  MEMreq  MEMlim [90m│[39m c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+[90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+Data pods=fresh age=26s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1m[94m►[0m [1mTIMELINE  16:16:27 -> 16:16:53 UTC  (all since kdash started, z window, c hides graphs)[0m [90m─────────────────────────────────────────────────────────[39m
+  [1mCPU used - namespace                           [0m[90m                        [39m    [1mMEMORY used - namespace                        [0m[90m                        [39m
+  [90m    8m┤[39m               [90m·[39m               [90m·[39m               [90m·[39m                    [90m 806Mi┤[35m────────────────────────────────────────────────────────────────[39m
+  [90m      │[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m    [90m      │[39m               [90m·[39m               [90m·[39m               [90m·[39m
+  [90m      │[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m    [90m      │[39m               [90m·[39m               [90m·[39m       [32m▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[39m
+  [90m    4m┤[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m    [90m 403Mi┤[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m
+  [90m      │[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m    [90m      │[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m
+  [90m      │[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m    [90m      │[39m               [90m·[39m               [90m·[39m       [32m█████████████████████████[39m
+  [90m    0m└┴──────────────┴───────────────┴───────────────┴───────────────┴[39m    [90m   0Mi└┴──────────────┴───────────────┴───────────────┴───────────────┴[39m
+  [90m       16:16:27                   16:16:40                     16:16:53[39m    [90m       16:16:27                   16:16:40                     16:16:53[39m
+  [90mevents [39m                                                                    [90mevents [39m
+  [90mnow [1m[94m7m[0m[90m  min [39m7m[90m  avg [39m7m[90m  max [1m[39m7m[0m[90m @ 16:16:53[39m                                  [90mnow [1m[94m448Mi[0m[90m  min [39m448Mi[90m  avg [39m448Mi[90m  max [1m[39m448Mi[0m[90m @ 16:16:53[39m
+  [90mrequest [39m300m[90m (above)[39m  [90mlimit [39m2500m[90m (above)[39m  [32m0%[90m of limit[39m                     [90mrequest [39m768Mi [35m─[39m  [90mlimit [39m2560Mi[90m (above)[39m  [32m18%[90m of limit[39m
+
+[1m[94m►[0m [1mPODS[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1m[35m► Deployment platform-kafka  (1 pod)      [0m [32m1/1[39m [35m  3[39m [90m│[39m      5 [90m·[39m     412 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  2.5[39m [32m  0.3[39m [32m░░░░░░░░[39m [35m 80.5[39m [32m 26.8[39m [32m██░░░░░░[39m
+[32m  platform-kafka-65c6d4dcfd-l7mqq         [39m [32m1/1[39m [35m  3[39m [90m│[39m      5 [90m·[39m     412 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  2.5[39m [32m  0.3[39m [32m░░░░░░░░[39m [35m 80.5[39m [32m 26.8[39m [32m██░░░░░░[39m
+      [90mcpu [32m░░              [90m  mem [32m░░              [90m  pk 412Mi [39m  [90mnode dev   pool role:control-plane,master   ip 10.244.0.165   qos Burstable   status Running   last-exit Unk[2m[39m›
+[0m    └─ kafka                               [32mY  [39m [35m  3[39m [90m│[39m      5 [90m·[39m     412 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  2.5[39m [32m  0.3[39m [32m░░░░░░░░[39m [35m 80.5[39m [32m 26.8[39m [32m██░░░░░░[39m
+        [35mlast-exit Unknown[39m
+[90m....................................................................................................................................................[39m
+[1m[35m► Deployment platform-postgres  (1 pod)   [0m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  1.0[39m [32m  0.1[39m [32m░░░░░░░░[39m [32m  7.8[39m [32m  2.0[39m [32m░░░░░░░░[39m
+[32m  platform-postgres-74699cf6db-69g4h      [39m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  1.0[39m [32m  0.1[39m [32m░░░░░░░░[39m [32m  7.8[39m [32m  2.0[39m [32m░░░░░░░░[39m
+      [90mcpu [32m░░              [90m  mem [32m░░              [90m  pk 20Mi [39m  [90mnode dev   pool role:control-plane,master   ip 10.244.0.158   qos Burstable   status Running   last-exit Unkn[2m[39m›
+[0m    └─ postgres                            [32mY  [39m [35m  3[39m [90m│[39m      1 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  1.0[39m [32m  0.1[39m [32m░░░░░░░░[39m [32m  7.8[39m [32m  2.0[39m [32m░░░░░░░░[39m
+        [35mlast-exit Unknown[39m
+[90m....................................................................................................................................................[39m
+[1m[35m► Deployment platform-web  (1 pod)        [0m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[39m [90m    -[39m [90mn/a     [39m [90m    -[39m [90m    -[39m [90mn/a     [39m
+[32m  platform-web-fb5754c79-vstz8            [39m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[39m [90m    -[39m [90mn/a     [39m [90m    -[39m [90m    -[39m [90mn/a     [39m
+      [90mcpu [32m░░              [90m  mem [94m░░              [90m  pk 16Mi [39m  [90mnode dev   pool role:control-plane,master   ip 10.244.0.150   qos BestEffort   status Running   last-exit Unk[2m[39m›
+[0m    └─ web                                 [32mY  [39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[39m [90m    -[39m [90mn/a     [39m [90m    -[39m [90m    -[39m [90mn/a     [39m
+        [35mlast-exit Unknown[39m
+
+
+
+
+
+[90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1mTOTAL (3 pods, 3 workloads)               [0m     [35m  9[39m [90m│[39m      7 [90m·[39m     448 [90m·[39m [90m│[39m    300   2500     768    2560 [90m│[39m [32m  2.3[39m [32m  0.3[39m [32m░░░░░░░░[39m [94m 58.3[39m [32m 17.5[39m [32m█░░░░░░░[39m
+ [90mlegend[39m cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+[7m interactive actions are off: kdash is read-only by default. Restart with --allow-interactive (or KDASH_ALLOW_INTERACTIVE=1) to open a shell or copy files. | ○ LIVE 16:1>

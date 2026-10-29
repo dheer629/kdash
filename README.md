@@ -1,4 +1,4 @@
-# kdash 4.13
+# kdash 4.14
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -48,6 +48,7 @@ downloadable after a newer one ships. [All releases](https://github.com/dheer629
 
 | Version | Released | Highlights | Download |
 |---|---|---|---|
+| **4.14.0** | 2026-10-29 | opt-in shell in a container (`S`), file upload (`U`) and download (`D`), all audited as writes | [kdash](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash-4.14.0.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.14.0/SHA256SUMS) |
 | **4.13.1** | 2026-10-29 | installer summary lists every view and key | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-4.13.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.1/SHA256SUMS) |
 | **4.13.0** | 2026-10-29 | doctor, inspector (find, containers, export), services, storage, Events, `-A` fix | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-4.13.0.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.0/SHA256SUMS) |
 | 4.12.0 | 2026-10-18 | ALERTS view (the `-A` limitation applies) | [source archive](https://github.com/dheer629/kdash/archive/refs/tags/v4.12.0.tar.gz) · assets can be generated from that commit |
@@ -55,12 +56,12 @@ downloadable after a newer one ships. [All releases](https://github.com/dheer629
 Download and install one exact version:
 
 ```bash
-v=4.13.1
+v=4.14.0
 base=https://github.com/dheer629/kdash/releases/download/v$v
 curl -fsSLO "$base/kdash-$v.tar.gz" -O "$base/SHA256SUMS"
-sha256sum --ignore-missing -c SHA256SUMS          # must print: kdash-4.13.1.tar.gz: OK
+sha256sum --ignore-missing -c SHA256SUMS          # must print: kdash-4.14.0.tar.gz: OK
 tar -xzf "kdash-$v.tar.gz" && bash kdash-bundle.sh
-kdash --version                                    # kdash 4.13.1
+kdash --version                                    # kdash 4.14.0
 ```
 
 ## Screenshots
@@ -327,9 +328,12 @@ kdash -s mem --reverse                  # smallest memory first
 | `T` | colour theme | `z` | time-chart window: all since start, 15m, 1h, 6h, 24h |
 | `Z` | NODE POOLS auto zoom / true scale | `P` | pause / resume live refresh (data frozen) |
 | `+` `-` | poll interval 1, 2, 3, 5, 10, 15, 30, 60 s | | |
+| `S` `U` `D` | **opt-in:** shell in a container, upload a file, download a file | | |
 | `q` | quit | | |
 
 Keys repaint from the local model and cost no API calls (`n`, `r` and the HTML keys read the cluster).
+`S`/`U`/`D` are the only keys that can change something, and they do nothing until
+interactive mode is on - see [Shell and file copy](#shell-and-file-copy-opt-in).
 
 ## The views
 
@@ -680,6 +684,69 @@ TSV / CSV tables: `pods`, `containers`, `nodes`, `pools`, `wl_node`, `workloads`
 `memory`, `ip`, `subnets`, `ipblocks`, `services`, `meta`. Unknown values are `-` in
 TSV and empty in CSV. CPU is millicores, memory MiB.
 
+## Shell and file copy (opt-in)
+
+kdash is read-only unless you say otherwise. Three keys leave the dashboard and run
+`kubectl` in your name: `S` opens a shell inside a container, `U` uploads a file into
+one, `D` downloads a file out of one. They are refused until interactive mode is on:
+
+```bash
+kdash --allow-interactive            # or -X
+KDASH_ALLOW_INTERACTIVE=1 kdash      # or KDASH_ALLOW_INTERACTIVE=1 in ~/.config/kdash.conf
+```
+
+| Where | Key | What happens |
+|---|---|---|
+| PODS (or any view) | `S` | pick a pod, then its container when it has several, then a shell |
+| PODS (or any view) | `U` | pick a pod and container, type the local file and the remote path |
+| PODS (or any view) | `D` | pick a pod and container, type the remote path (local defaults to `./<name>`) |
+| Inspector | `S` `U` `D` | act on the pod **and the container you are looking at** - no picker |
+| Container picker (`c`) | `S` `U` `D` | act on the highlighted pod |
+
+What each one runs (the audit log records the same shape):
+
+```bash
+kubectl exec -it <pod> [-c <container>] -- sh -c 'command -v bash >/dev/null 2>&1 && exec bash || exec sh'
+kubectl cp -c <container> ./local.conf <namespace>/<pod>:/tmp/local.conf   # U, host to container
+kubectl cp -c <container> <namespace>/<pod>:/var/log/app.log ./app.log     # D, container to host
+```
+
+Live proof, kdash 4.14.0 on a local vcluster (names redacted):
+
+| | |
+|---|---|
+| **`S` while interactive mode is off** - the dashboard says why, and the attempt is audited as `INTERACTIVE_BLOCKED`<br><img src="samples/cli_414/03-attach-blocked-off.png" width="450" alt="S refused while interactive mode is off"> | **`S` while it is on** - pick the pod; the footer carries `S shell U/D copy`<br><img src="samples/cli_414/05-attach-picker-on.png" width="450" alt="pod picker with the attach keys"> |
+| **inside the container** - a real shell: the dashboard handed its terminal over<br><img src="samples/cli_414/06-shell-inside.png" width="450" alt="shell prompt inside the container"> | **after `exit`** - back on the dashboard, `attach shell … exited rc=0`<br><img src="samples/cli_414/08-back-in-dashboard.png" width="450" alt="dashboard after the shell exited"> |
+| **`D`** - the download prompt<br><img src="samples/cli_414/10-download-prompt.png" width="450" alt="download prompt"> | **`D` done** - `/etc/hostname` copied out, `CP_DOWN` + `CP_END rc=0 bytes=32`<br><img src="samples/cli_414/11-download-done.png" width="450" alt="download completed"> |
+
+The raw capture of every step is in
+[`artifacts/feature-screens-20261029-161848-attach`](artifacts/feature-screens-20261029-161848-attach),
+redacted with [`scripts/redact-run.sh`](scripts/redact-run.sh) like the rest of `samples/`
+(see [`samples/cli_414/README.md`](samples/cli_414/README.md) for the audit lines that
+back each image).
+
+Worth knowing:
+
+- **Permissions.** Both need `pods/exec` (`create`) under your own identity:
+  `kubectl auth can-i create pods/exec`.
+- **`cp` needs `tar` inside the image.** Distroless and scratch images have neither tar
+  nor a shell, so `U`/`D` fail there; use `kubectl debug --copy-to`, or copy from a
+  container that has tar.
+- **The shell prefers `bash`** and falls back to `sh`. An image with no shell at all
+  needs `kubectl debug -it <pod> --image=busybox:1.36 --target=<container>`.
+- **Nothing enters the reports.** A shell's output and any copied file stay out of the
+  model, the HTML report, the bundle, the session files and the exports. Only the fact
+  that it happened is audited - `EXEC` `EXEC_END` `CP_UP` `CP_DOWN` `CP_END` with pod,
+  container, direction, paths (credential-looking ones masked), bytes and exit code.
+- **It is a write action** for Kubernetes: it runs with your RBAC, it is outside kdash's
+  read-only guarantee, and it is not cut off by the 12 s request cap.
+- **The terminal is handed over cleanly:** kdash leaves the alternate screen, gives the
+  real terminal to kubectl (so `-it` works, inside tmux too), and repaints afterwards.
+  `exit` or Ctrl-D returns you to the dashboard.
+- **Still refused while it is off**, with a hint:
+  `kdash: refused "kubectl exec exec" - kdash is read-only (interactive mode is off:
+  restart with --allow-interactive)`, and the audit gets `INTERACTIVE_BLOCKED`.
+
 ## Configuration
 
 Later sources override earlier: `/etc/kdash.conf` -> `$XDG_CONFIG_HOME/kdash.conf` ->
@@ -696,6 +763,7 @@ KDASH_KUBECTL="kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml"
 Also honoured: `KDASH_NS`, `KDASH_CONTEXT`, `KDASH_KUBECONFIG`, `KDASH_FILTER`,
 `KDASH_COLUMNS`, `KDASH_LINES`, `KDASH_WINDOW` (chart window), `KDASH_FORECAST_WINDOW`
 (seconds of samples behind the memory forecast, default 1800), `KDASH_SAMPLE_EVERY`,
+`KDASH_ALLOW_INTERACTIVE` (enables `S`/`U`/`D`; the same as `--allow-interactive`),
 `TZ` (time zone of every clock), `NO_COLOR`, `KDASH_BELL=1` (bell on new critical events, same as `--bell`), `KDASH_ALERT_MEM` / `KDASH_ALERT_NET_MBPS` / `KDASH_ALERT_IOPS` (ALERTS view thresholds).
 
 ## Design notes
@@ -724,14 +792,24 @@ Every run is audited. Nothing to enable, and no option switches it off.
 | Namespace switches and picks, allowed or denied (with the API reason) | `NS_SWITCH` `NS_SWITCH_DENIED` `NS_PICK*` |
 | Critical alerts raised while live | `ALERT` |
 | Every HTML report / bundle / audit export written, with path, size and sha256 | `REPORT_HTML` `REPORT_BUNDLE` `AUDIT_EXPORT` |
-| kubectl calls: total, failed, refused, and the most used command shapes (templates shortened) | `KUBECTL` |
+| kubectl calls: total, failed, refused, writes, and the most used command shapes (templates shortened) | `KUBECTL` |
 | Usage errors and runtime failures | `USAGE_ERROR` `FAIL` |
 | Reading or verifying the audit log | `AUDIT_VIEW` `AUDIT_VERIFY` |
+| **Interactive attachments** (opt-in): a shell, an upload, a download - pod, container, direction, paths (credential-looking paths masked), result | `EXEC` `EXEC_END` `CP_UP` `CP_DOWN` `CP_END` |
+| An attachment refused or blocked while interactive mode is off | `INTERACTIVE_BLOCKED` |
 
 **Read-only guard.** Every kubectl call goes through a wrapper that allows only reads:
 `get`, `top`, `describe`, `logs`, `version`, `api-resources`, `auth can-i`, and the
 read-only `config` subcommands. Any other verb (`delete`, `apply`, `patch`,
 `config set-context` ...) is refused with exit 126 and recorded as refused.
+
+`exec` and `cp` are the only exceptions, and only when interactive mode is on
+(`--allow-interactive` / `KDASH_ALLOW_INTERACTIVE=1`): while it is off they are refused
+like any other verb, and the refusal says how to enable it. When it is on, the two of
+them run without the 12 s command cap (an interactive session cannot live inside a
+request timeout), every use is counted as a write in the audit summary, and reads stay
+capped. Nothing else changes: no other verb is ever allowed, and kdash itself never runs
+`edit`, `apply`, `delete` or `patch`.
 
 **Where it is stored**
 
@@ -773,6 +851,22 @@ journalctl -t kdash --since today # syslog copy
 | 5 | disclaimer not accepted |
 | 6 | `KDASH_AUDIT_REQUIRED=1` and no audit file writable |
 | 126 | (kubectl wrapper) a verb that could change the cluster was refused |
+
+## Changes in 4.14.0
+
+New: **opt-in interactive attachments.** `S` opens a shell in a container, `U` uploads a
+file into one, `D` downloads a file out of one - from the pod list (pick the pod, then
+its container), from the inspector (the pod and container on screen) and from the
+container picker. They are off by default and enabled with `--allow-interactive` (`-X`)
+or `KDASH_ALLOW_INTERACTIVE=1`; while they are off the guard still refuses `exec` and
+`cp` with exit 126 and a hint. See [Shell and file copy](#shell-and-file-copy-opt-in).
+
+Everything about the mode is written down: the guard's only two exceptions, the missing
+12 s cap for an attachment, the `writes` counter in the `KUBECTL` audit summary, and the
+new `EXEC` `EXEC_END` `CP_UP` `CP_DOWN` `CP_END` events with pod, container, direction,
+paths (credential-looking ones masked) and exit code. `INTERACTIVE_BLOCKED` records an
+attempt made while the mode was off. Shell output and copied files never enter the model,
+a report, a bundle, a session or an export.
 
 ## Changes in 4.13.0
 

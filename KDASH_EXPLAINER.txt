@@ -322,6 +322,10 @@ This run and this environment:
     marked as unavailable and the namespace-only numbers remain valid.
   * the PNG screenshots in samples/cli/ and samples/cli_413/ are renders of the saved
     tmux screens. The captured screens themselves are in artifacts/ as .ansi and .txt.
+  * kdash reads the cluster. The two exceptions are a shell inside a container (`S`) and
+    copying a file in or out of one (`U`/`D`): they run kubectl exec/cp in your name, only
+    when the run was started with --allow-interactive, they are audited as writes (EXEC,
+    CP_UP, CP_DOWN) and their output never enters a model, report, bundle or session.
 
 DATA COVERAGE ACTUALLY OBSERVED IN THIS RUN
   * node metrics and the cluster-wide pod read were both permitted, so NODE POOLS
