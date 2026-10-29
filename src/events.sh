@@ -156,7 +156,11 @@ events_header() {    # filtered namespace (empty = all), optional pod
     [ -z "$pod" ] || printf ' | Pod: %s' "$(printf '%s' "$pod" | events_text)"
     printf '\n'
     if ! events_cache_valid; then
-        printf 'Coverage: unknown (no Events collected for this context and scope).\n'
+        if [ -n "${TOOLKIT_PID:-}" ]; then
+            printf 'Coverage: collecting (first read in progress; values appear when it completes).\n'
+        else
+            printf 'Coverage: unknown (no Events collected for this context and scope).\n'
+        fi
         return 0
     fi
     [ ! -f "$TOOLKIT_DIR/events.status" ] || IFS= read -r status < "$TOOLKIT_DIR/events.status" || true

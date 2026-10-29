@@ -248,7 +248,7 @@ kdash -s mem --reverse                  # smallest memory first
 
 | Key | Action | Key | Action |
 |---|---|---|---|
-| `1`-`6`, `Tab` | switch view | `x` | HTML report: all tabs + history since start |
+| `1`-`9`, `E`, `!`, `Tab` | switch view | `x` | HTML report: all tabs + history since start |
 | `e` | HTML menu (all-tabs report, current view, views 1-6, all, bundle) | | |
 | `j` `k`, arrows | scroll | `/` | change pod regex live (empty = all) |
 | `h` `l`, arrows | pan left / right | `0` | back to column 1 |
@@ -748,6 +748,12 @@ From an alert to evidence to the next read-only check, without leaving kdash.
   `unknown`, never zero. Allocation and usage are always labelled separately.
 - **Fixed:** `-A` / `--all-namespaces` was placed before the verb, so kubectl rejected it. It now
   follows the resource (`get pods --all-namespaces`).
+- **One dashboard, one header.** Views 8, 9, `E`, `!` and doctor now draw the same header and
+  status bar as views 1-7: the tab bar, the host clock, the context / namespace / poll line, the
+  health line and the `AUDITED` marker. The tab bar lists every view when the terminal has room
+  (`8 SVCS 9 STOR E EVENTS ! WHY` at 170 columns, full names from 200), keeps the previous
+  seven-tab bar when it does not, and the author credit gives way instead of wrapping the line.
+  `?` still explains the view on screen.
 - Requires nothing new: Bash 4+, `kubectl`, `awk`. Still read-only; the wrapper refuses any verb
   that could change the cluster.
 

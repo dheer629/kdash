@@ -229,4 +229,28 @@ extract_function() {
   toolkit_cancel
 )
 
-printf 'PASS: runtime doctor, CLI scoping/filters, missing metrics, empty/error transitions, command deadline and asynchronous recovery\n'
+# The panel views (services / storage / events / explain) must reuse the standard
+# header - tab bar, clock, context line, health line - and replace only the body and
+# the footer, so they look like every other view.
+(
+  set -uo pipefail
+  source "$REPO/src/runtime.sh"
+  TMPD="$TEST_ROOT/panel"; mkdir -p "$TMPD"
+  HDRF="$TMPD/hdr"; BODYF="$TMPD/body"; FTRF="$TMPD/ftr"
+  TOOLKIT_DIR="$TMPD/toolkit"; mkdir -p "$TOOLKIT_DIR"
+  NS=default; CTX_NAME=fixture-context
+  render_core() { printf 'STANDARD-HEADER 1 PODS 8 SERVICES\n' > "$HDRF"; }
+  health_render_services() { printf 'SERVICES AND BACKENDS\n'; }
+  health_render_storage() { printf 'PERSISTENT STORAGE\n'; }
+  events_render() { printf 'KUBERNETES EVENTS\n'; }
+  explain_render() { printf 'INCIDENT EVIDENCE\n'; }
+  for panel in services storage events explain; do
+    toolkit_panel "$panel"
+    assert_has "$HDRF" 'STANDARD-HEADER'
+    assert_has "$FTRF" '9 storage'
+    assert_has "$BODYF" "$(case "$panel" in services) printf 'SERVICES AND BACKENDS' ;; storage) printf 'PERSISTENT STORAGE' ;; events) printf 'KUBERNETES EVENTS' ;; explain) printf 'INCIDENT EVIDENCE' ;; esac)"
+  done
+  printf 'panel views keep the standard header and their own body and footer\n'
+)
+
+printf 'PASS: runtime doctor, CLI scoping/filters, missing metrics, empty/error transitions, command deadline, panel wiring and asynchronous recovery\n'

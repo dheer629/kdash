@@ -167,7 +167,8 @@ toolkit_cancel() {
 
 toolkit_panel() {
     local view="$1"
-    printf 'KDASH %s  %s\nContext %s | namespace %s\n' "$KDASH_VERSION" "$view" "$CTX_NAME" "$NS" > "$HDRF"
+    # Standard header (tab bar, clock, context, health line, warnings), then the panel body.
+    HEADER_ONLY=1 render_core
     case "$view" in
         services) health_render_services ;; storage) health_render_storage ;;
         events) events_render ;; explain) explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}" ;;

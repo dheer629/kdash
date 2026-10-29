@@ -653,7 +653,8 @@ case "${KDASH_INSPECT_LOGS:-}" in ''|current|previous) ;; *) die "--logs must be
 for _filter in "$KDASH_STATUS_FILTER" "$KDASH_WORKLOAD_FILTER"; do
     printf '' | grep -E -- "$_filter" >/dev/null 2>&1; [ $? -le 1 ] || die "invalid structured filter regex"
 done
-VIEW="$(norm_view "$VIEW")" || die "unknown view (use pods | nodes | workloads | ip | mem | io | all)"
+_norm="$(norm_view "$VIEW")" || die "unknown view '$VIEW' (use pods | nodes | workloads | ip | mem | io | alerts | services | storage | events | explain | all)"
+VIEW="$_norm"
 case "$OUTFMT" in text|tsv|csv) ;; *) die "unknown output format '$OUTFMT' (text | tsv | csv)" ;; esac
 case "$SORT" in cpu|mem|cpupct|mempct|name|restarts) ;; *) die "unknown sort key '$SORT' (cpu | mem | cpupct | mempct | name | restarts)" ;; esac
 case "$BARCHR" in safe|unicode) BARCHR=unicode ;; full|ascii) ;; *) die "unknown glyph set '$BARCHR' (safe | full | ascii)" ;; esac
@@ -1186,13 +1187,27 @@ function trend(cur, old) {
   if (cur < old * 0.98) return C("94", DNA)
   return C("90", FLAT)
 }
-function tabs(v,   names, keys, i, s, t) {
-  split("pods nodes workloads ip mem io alerts", keys, " ")
-  split((termw + 0 > 0 && termw + 0 < 130) ? "PODS|NODES|WLOADS|IP|MEM|IO|ALERTS" : "PODS|NODE POOLS|WORKLOADS|IP POOL|MEMORY|NET & DISK IO|ALERTS", names, "|")
+function tabs(v, budget,   names, keys, lbl, i, s, t, n, ext, wide) {
+  split("pods nodes workloads ip mem io alerts services storage events explain", keys, " ")
+  wide = (termw + 0 <= 0 || termw + 0 >= 130)
+  if (termw + 0 > 0 && termw + 0 < 130) { n = 7; split("PODS|NODES|WLOADS|IP|MEM|IO|ALERTS", names, "|") }
+  else if (termw + 0 < 200) { n = 11; split("PODS|NODE POOLS|WORKLOADS|IP POOL|MEMORY|NET & DISK IO|ALERTS|SVCS|STOR|EVENTS|WHY", names, "|") }
+  else { n = 11; split("PODS|NODE POOLS|WORKLOADS|IP POOL|MEMORY|NET & DISK IO|ALERTS|SERVICES|STORAGE|EVENTS|EXPLAIN", names, "|") }
+  split("1 2 3 4 5 6 7 8 9 E !", lbl, " ")
   s = ""
   for (i = 1; i <= 7; i++) {
-    t = " " i " " names[i] " "
+    t = " " lbl[i] " " names[i] " "
     s = s ((keys[i] == v) ? C("7;1", t) : C("90", t)) " "
+  }
+  # the four newer views are added only when they all fit, so the bar never shows a
+  # random subset; on narrow terminals the footer still names them
+  if (n > 7) {
+    ext = ""
+    for (i = 8; i <= n; i++) {
+      t = " " lbl[i] " " names[i] " "
+      ext = ext ((keys[i] == v) ? C("7;1", t) : C("90", t)) " "
+    }
+    if (budget <= 0 || vlen(s) + vlen(ext) <= budget) s = s ext
   }
   return s
 }
@@ -1208,16 +1223,22 @@ function pack(s, w, f,   n, a, i, ln, lw, sw) {
     ln = ln a[i]; lw += sw }
   if (lw > 0) print ln > f
 }
-function header(title, w) {
+function header(title, w,   tstr, tw, sauth) {
   SG = "\037"; NAR = (termw + 0 > 0 && termw + 0 < 110)
+  # the tab bar needs roughly 15 characters for the version and 25 for the clock
+  tstr = tabs(view, (termw + 0 > 0) ? termw - 40 : 0)
+  tw = vlen(tstr)
+  # the author credit yields to the tab bar: it appears only when it still fits on the
+  # same line, so the header stays on one line at every width
+  sauth = (author != "" && termw + 0 >= 150 && termw + 0 - tw - 42 >= vlen("    by " author "  " VB " AUDITED"))
   print C("1", rule(DHR, w)) > hdrf
-  pack(" " C("1;94", "KDASH " ver) "  " SG tabs(view) SG " " C("1", (now > 0) ? ((termw + 0 < 100) ? thms(now) : tymd(now) " " thms(now)) : ts) C("90", (now > 0) ? " " tzname : "") ((termw + 0 >= 150 && author != "") ? SG C("90", "    by " author "  " VB " AUDITED") : ""), termw, hdrf)
-  pack(" " C("90", "ctx") " " ctxn SG "   " C("90", "ns") " " ns SG "   " C("90", "match") " " filt SG (NAR ? "" : "   " C("90", sprintf("poll %ss  spec %ss/%ss", iv, specage, ttl))) \
+  pack(" " C("1;94", "KDASH " ver) "  " SG tstr SG " " C("1", (now > 0) ? ((termw + 0 < 100) ? thms(now) : tymd(now) " " thms(now)) : ts) C("90", (now > 0) ? " " tzname : "") (sauth ? SG C("90", "    by " author "  " VB " AUDITED") : ""), termw, hdrf)
+  pack(" " C("90", "ctx") " " ctxn SG "   " C("90", "ns") " " ns SG "   " C("90", "match") " " filt SG (NAR ? "" : "   " C("90", spectxt)) \
        SG ((sstart > 0 && now > 0 && !NAR) ? C("90", "  session ") thms(sstart) C("90", " up ") tdur(now - sstart) : "") SG "   " C("1;94", view == "ip" ? "sorted by IP address" : sortlabel()), termw, hdrf)
   if (M["pods"] + 0 > 0) healthline()
   if (nswarn)  print C("35", " ! your context binds no namespace - showing \"default\". Use: kdash -n <namespace>") > hdrf
   if (!topok)  print C("35", " ! kubectl top unavailable - live usage shows \"-\", requests / limits still live") > hdrf
-  printf " %s\n", C("1;35", title) > hdrf
+  if (title != "") printf " %s\n", C("1;35", title) > hdrf
 }
 # one line of health for every view: readiness, restarts, memory risks, CPU / memory
 # against limits, workloads and critical / warning events of the last 15 minutes
@@ -2610,15 +2631,27 @@ END {
 BEGIN { while ((getline ln < iohistf) > 0) { split(ln, a, "\t"); IOH = IOH (IOH == "" ? "" : " ") (a[2] + a[3]) } close(iohistf) }
 '
 
+# The panel views (services / storage / events / explain / doctor) reuse the standard
+# header - tab bar, clock, context line, health line, warnings - and supply their own
+# body and footer, so they look like every other view.
+VIEW_HEADER='
+BEGIN { LINEW = W; if (LINEW > 220) LINEW = 220; header("", LINEW) }
+'
+
 render_core() {
-  local cols age prog
+  local cols age prog spec_txt
   cols="${KDASH_COLUMNS:-$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )}"
   [ "${RENDER_COLS:-}" ] && cols="$RENDER_COLS"
   host_clock; age=$(( NOW_S - SPEC_AT ))
+  # an invalidated spec (r, a filter change, a namespace switch) has no age yet:
+  # say so instead of printing seconds since the epoch.
+  if [ "${SPEC_AT:-0}" -gt 0 ]; then spec_txt="poll ${INTERVAL}s  spec ${age}s/${SPEC_TTL}s"
+  else spec_txt="poll ${INTERVAL}s  spec re-reading"; fi
   case "$VIEW" in
     pods) prog="$VIEW_PODS" ;; nodes) prog="$VIEW_NODES" ;; workloads) prog="$VIEW_WL" ;;
     ip) prog="$VIEW_IP" ;; mem) prog="$VIEW_MEM" ;; io) prog="$VIEW_IO" ;; alerts) prog="$VIEW_ALERTS" ;; *) prog="$VIEW_PODS" ;;
   esac
+  [ "${HEADER_ONLY:-0}" = 1 ] && prog="$VIEW_HEADER"
   awk -v md="$MODEL" -v ns="$NS" -v ctxn="$CTX_NAME" -v filt="$FILTER" -v color="$COLOR" -v bar="$BARCHR" -v theme="$THEME" -v allnodes="$ALL_NODES" -v zoom="${ZOOM:-1}" \
       -v podsonly="$PODS_ONLY" -v detail="$DETAIL" -v sortkey="$SORT" -v sortrev="$SORT_REV" -v group="$GROUP" -v termw="$cols" -v topok="$TOP_OK" \
       -v iv="$INTERVAL" -v ttl="$SPEC_TTL" -v specage="$age" -v allns="$ALL_NS" -v nswarn="${NS_FALLBACK:-0}" \
@@ -2628,7 +2661,7 @@ render_core() {
       -v now="$NOW_S" -v tzoff="$TZ_OFF" -v tzname="$TZ_NAME" -v win="$WIN_S" -v sstart="${SESSION_T0:-0}" -v smp="${SAMPLE_EVERY:-15}" \
       -v sesf="$([ "${SESSION_ON:-0}" = 1 ] && printf '%s' "$SDIR/ns.tsv")" -v evf="$([ "${SESSION_ON:-0}" = 1 ] && printf '%s' "$SDIR/events.tsv")" \
       -v fcf="$TMPD/forecast.tsv" -v fcwin="${FC_WIN:-1800}" -v heatf="$TMPD/heat.tsv" -v graphs="${POD_GRAPHS:-1}" -v author="$KDASH_AUTHOR" -v alstate="${ALERT_STATE:-}" -v tsvout="${ALERT_TSV:-}" -v thr_mem="${KDASH_ALERT_MEM:-}" -v thr_net="${KDASH_ALERT_NET_MBPS:-}" -v thr_iops="${KDASH_ALERT_IOPS:-}" -v sparkf="$([ -s "$TMPD/podspark.tsv" ] && printf '%s' "$TMPD/podspark.tsv")" \
-      -v hdrf="$HDRF" -v bodyf="$BODYF" -v ftrf="$FTRF" "$AWKLIB$VIEW_COMMON$prog" < /dev/null
+      -v hdrf="$HDRF" -v bodyf="$BODYF" -v ftrf="$FTRF" -v spectxt="$spec_txt" "$AWKLIB$VIEW_COMMON$prog" < /dev/null
 }
 
 #---- 7 ALERTS: one live page of every critical / warning signal with its action ----
@@ -5016,8 +5049,9 @@ paint() {
   [ "$HSCROLL" -lt 0 ] && HSCROLL=0
   shown=$(( bn - SCROLL )); [ "$shown" -gt "$budget" ] && shown=$budget; [ "$shown" -lt 0 ] && shown=0
   local i=$shown; while [ "$i" -lt "$budget" ]; do pad="${pad}"$'\033[K\n'; i=$((i+1)); done
-  local now age nxt spin live bg="7" lt
+  local now age nxt spin live bg="7" lt speck
   now=$(date +%s); printf -v lt '%(%H:%M:%S)T' "$now" 2>/dev/null || lt="$(date +%H:%M:%S)"
+  if [ "${SPEC_AT:-0}" -gt 0 ]; then speck="$(( now - SPEC_AT ))"; else speck='-'; fi
   # live clock: data age, next refresh, spec age, fetch time; stale data turns the bar red,
   # a paused dashboard magenta
   age=$(( TOP_AT > 0 ? now - TOP_AT : -1 )); nxt=$(( ${INTERVAL%.*} - (now - LAST) )); [ "$nxt" -lt 0 ] && nxt=0
@@ -5030,16 +5064,16 @@ paint() {
     elif [ "$age" -ge 0 ]; then live="$live  data ${age}s old"
       [ "$age" -gt $(( ${INTERVAL%.*} * 3 + 10 )) ] && bg="41;97"; fi
   fi
-  live="$live  spec $(( now - SPEC_AT ))/${SPEC_TTL}s  fetch $(( FETCH_MS / 1000 )).$(( FETCH_MS % 1000 / 100 ))s  poll ${INTERVAL}s  AUDITED"
+  live="$live  spec ${speck}/${SPEC_TTL}s  fetch $(( FETCH_MS / 1000 )).$(( FETCH_MS % 1000 / 100 ))s  poll ${INTERVAL}s  AUDITED"
   local view_seg keys seg k hs=""
   [ "$HSCROLL" -gt 0 ] && hs=" | col +$HSCROLL (h/l)"
   if [ "$bn" -gt "$budget" ]; then view_seg="$VIEW | rows $((SCROLL+1))-$((SCROLL+shown))/$bn$hs"; else view_seg="$VIEW$hs"; fi
-  keys=("? help" "1-7 view" "n ns" "s sort($SORT$([ "$SORT_REV" = 1 ] && echo ' rev'))" "/ filter" "P pause" "x html" "q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme")
+  keys=("? help" "1-9 view" "n ns" "s sort($SORT$([ "$SORT_REV" = 1 ] && echo ' rev'))" "/ filter" "P pause" "x html" "q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme" "8/9 svc" "E events" "! why" "i inspect" ": commands")
   if [ -n "$FLASH" ] && [ "$now" -le "$FLASH_UNTIL" ]; then
     status=" $FLASH | $live"; [ -n "$FLASH_BG" ] && bg="$FLASH_BG"
   else FLASH_BG=""; status=" $live"; fi
   # drop the least useful live details first when the terminal is narrow
-  if [ "${#status}" -gt $(( cols - ${#view_seg} - 3 )) ]; then status="${status/  spec $(( now - SPEC_AT ))\/${SPEC_TTL}s/}"; fi
+  if [ "${#status}" -gt $(( cols - ${#view_seg} - 3 )) ]; then status="${status/  spec ${speck}\/${SPEC_TTL}s/}"; fi
   if [ "${#status}" -gt $(( cols - ${#view_seg} - 3 )) ]; then status="${status/  poll ${INTERVAL}s/}"; fi
   [ $(( ${#status} + ${#view_seg} + 3 )) -le "$cols" ] && status="$status | $view_seg"
   seg=" |"; for k in "${keys[@]}"; do [ $(( ${#status} + ${#seg} + ${#k} + 2 )) -le "$cols" ] || break; seg="$seg $k "; done
@@ -5579,7 +5613,8 @@ toolkit_cancel() {
 
 toolkit_panel() {
     local view="$1"
-    printf 'KDASH %s  %s\nContext %s | namespace %s\n' "$KDASH_VERSION" "$view" "$CTX_NAME" "$NS" > "$HDRF"
+    # Standard header (tab bar, clock, context, health line, warnings), then the panel body.
+    HEADER_ONLY=1 render_core
     case "$view" in
         services) health_render_services ;; storage) health_render_storage ;;
         events) events_render ;; explain) explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}" ;;
@@ -5785,7 +5820,11 @@ events_header() {    # filtered namespace (empty = all), optional pod
     [ -z "$pod" ] || printf ' | Pod: %s' "$(printf '%s' "$pod" | events_text)"
     printf '\n'
     if ! events_cache_valid; then
-        printf 'Coverage: unknown (no Events collected for this context and scope).\n'
+        if [ -n "${TOOLKIT_PID:-}" ]; then
+            printf 'Coverage: collecting (first read in progress; values appear when it completes).\n'
+        else
+            printf 'Coverage: unknown (no Events collected for this context and scope).\n'
+        fi
         return 0
     fi
     [ ! -f "$TOOLKIT_DIR/events.status" ] || IFS= read -r status < "$TOOLKIT_DIR/events.status" || true
@@ -6038,6 +6077,9 @@ health__sources() {
     state=unknown; epoch=''; detail='not collected'
     if [ -r "$TOOLKIT_DIR/health-$source.status" ]; then
       IFS=$'\t' read -r state epoch detail < "$TOOLKIT_DIR/health-$source.status"
+    elif [ -n "${TOOLKIT_PID:-}" ]; then
+      # the first background read is still running: say so instead of "not collected"
+      state=collecting; detail='first read in progress; values appear when it completes'
     fi
     case "$epoch" in ''|*[!0-9]*) stamp='time unknown' ;;
       *) stamp="$(date -d "@$epoch" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf '%s' "$epoch") ($((now-epoch))s ago)" ;;

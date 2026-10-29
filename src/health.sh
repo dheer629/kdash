@@ -139,6 +139,9 @@ health__sources() {
     state=unknown; epoch=''; detail='not collected'
     if [ -r "$TOOLKIT_DIR/health-$source.status" ]; then
       IFS=$'\t' read -r state epoch detail < "$TOOLKIT_DIR/health-$source.status"
+    elif [ -n "${TOOLKIT_PID:-}" ]; then
+      # the first background read is still running: say so instead of "not collected"
+      state=collecting; detail='first read in progress; values appear when it completes'
     fi
     case "$epoch" in ''|*[!0-9]*) stamp='time unknown' ;;
       *) stamp="$(date -d "@$epoch" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf '%s' "$epoch") ($((now-epoch))s ago)" ;;

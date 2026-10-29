@@ -32,6 +32,13 @@ the detailed per-release notes.
 - Cluster reads run in a background worker; a snapshot is adopted only when complete, so a
   slow API call no longer blocks the keyboard. Failed reads keep the last good inventory,
   back off and recover automatically; the header shows data age and `STALE`.
+- The tab bar lists the newer views too (`8 SVCS  9 STOR  E EVENTS  ! WHY`, full names from
+  200 columns) and the panel views share the standard header and status bar, so every view
+  shows the tab bar, the clock, the health line and the `AUDITED` marker. The author credit
+  yields to the tab bar instead of wrapping the header line, and the status bar hint reads
+  `1-9 view`.
+- A first background read now reports `collecting` instead of `not collected`, and an
+  invalidated spec shows `spec re-reading` instead of seconds since the epoch.
 - `scripts/validate-all.sh` runs every test under `tests/`, counts checksum entries from
   the files themselves and compares against the matching remote branch.
 
@@ -41,6 +48,7 @@ the detailed per-release notes.
 - A successful read that returned no pods kept the previous pods on screen.
 - Slow collection could block key handling.
 - Service selectors and PVC access modes no longer print a trailing comma.
+- `-v <unknown>` now lists every view in its error message.
 
 ## [Unreleased]
 
