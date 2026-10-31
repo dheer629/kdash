@@ -12,39 +12,41 @@ doctor_classify() {
 }
 
 doctor_run() {
-    local endpoint code=0 probe="$TMPD/doctor.out" err="$TMPD/doctor.err"
-    printf 'KDASH %s DOCTOR\nContext: %s\nNamespace: %s\nKubeconfig: %s\n' "$KDASH_VERSION" "$CTX_NAME" "$NS" "$KUBECONF_SHOWN"
+    local endpoint code=0 probe="$TMPD/doctor.out" err="$TMPD/doctor.err" rows="$TMPD/doctor.rows" resource why
+    tk_title "KDASH $KDASH_VERSION DOCTOR" "read-only capability checks - no cluster changes are made"
     endpoint="$("${KC[@]}" config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null)"
     # Only display an endpoint without user info or query parameters.
     endpoint="${endpoint%%\?*}"; case "$endpoint" in *@*) endpoint='(endpoint contains user information; hidden)' ;; esac
-    printf 'Endpoint: %s\n' "${endpoint:-not configured}" | toolkit_clean
+    { printf 'SETTING\tVALUE\n'
+      printf 'context\t%s\nnamespace\t%s\nkubeconfig\t%s\nAPI endpoint\t%s\naudit log\t%s\n' "$CTX_NAME" "$NS" "$KUBECONF_SHOWN" "${endpoint:-not configured}" "${AUDIT_FILE:-$AUDIT_DIR}"
+    } | toolkit_clean | TK_COUNT=0 tk_table "CONNECTION"
+    printf 'CHECK\tRESULT*\tDETAIL\tNEXT STEP~\n' > "$rows"
     if "${KC[@]}" get pods "${SCOPE[@]}" -o name > "$probe" 2> "$err"; then
-        printf 'PASS pods: readable (an empty namespace is valid)\n'
+        printf 'pods\t{g}PASS\treadable (an empty namespace is valid)\t-\n' >> "$rows"
     else
-        printf 'FAIL pods: %s\n' "$(doctor_classify "$err")"; code=1
-        printf 'Next: kubectl --context %q -n %q get pods --request-timeout=%ss\n' "$CTX_NAME" "${NS/\(all namespaces\)/default}" "$REQUEST_TIMEOUT"
-        printf 'For a local vcluster, check its existing runtime and connection; keep recovery kubeconfigs separate.\n'
+        printf 'pods\t{r}FAIL\t%s\tkubectl --context %q -n %q get pods --request-timeout=%ss\n' "$(doctor_classify "$err")" "$CTX_NAME" "${NS/\(all namespaces\)/default}" "$REQUEST_TIMEOUT" >> "$rows"; code=1
     fi
-    local resource
     for resource in nodes services endpointslices.discovery.k8s.io persistentvolumeclaims events; do
         if [ "$resource" = nodes ]; then
             "${KC[@]}" get "$resource" -o name > "$probe" 2> "$err"
         else
             "${KC[@]}" get "$resource" "${SCOPE[@]}" -o name > "$probe" 2> "$err"
         fi
-        if [ $? = 0 ]; then printf 'PASS %s: readable\n' "$resource"
-        else printf 'INFO %s: %s (capability unavailable)\n' "$resource" "$(doctor_classify "$err")"; fi
+        if [ $? = 0 ]; then printf '%s\t{g}PASS\treadable\t-\n' "$resource" >> "$rows"
+        else why="$(doctor_classify "$err")"; printf '%s\t{y}INFO\t%s - this view shows "unknown"\t%s\n' "$resource" "$why" \
+               "$([ "$why" = 'RBAC denied' ] && printf 'ask for list on %s' "$resource" || printf -- '-')" >> "$rows"; fi
     done
     if "${KC[@]}" top pod "${SCOPE[@]}" --no-headers > "$probe" 2> "$err"; then
-        printf 'PASS metrics: pod CPU/memory readable\n'
+        printf 'metrics\t{g}PASS\tpod CPU / memory readable\t-\n' >> "$rows"
     else
-        printf 'INFO metrics: %s; requests/limits and object health remain available\n' "$(doctor_classify "$err")"
-        printf 'Next: inspect the existing Metrics API/metrics-server and your metrics permissions.\n'
+        printf 'metrics\t{y}INFO\t%s; requests / limits and object health remain available\tcheck metrics-server and your metrics.k8s.io permissions\n' "$(doctor_classify "$err")" >> "$rows"
     fi
     if [ -d "$REPORT_DIR" ] && [ -w "$REPORT_DIR" ] || { mkdir -p "$REPORT_DIR" 2>/dev/null && [ -w "$REPORT_DIR" ]; }; then
-        printf 'PASS local reports: writable\n'
-    else printf 'FAIL local reports: directory is not writable\n'; code=1; fi
-    printf 'Audit: %s\nRead-only checks complete; no cluster changes made.\n' "${AUDIT_FILE:-$AUDIT_DIR}"
+        printf 'local reports\t{g}PASS\twritable: %s\t-\n' "$REPORT_DIR" >> "$rows"
+    else printf 'local reports\t{r}FAIL\tdirectory is not writable: %s\tset KDASH_REPORT_DIR to a writable directory\n' "$REPORT_DIR" >> "$rows"; code=1; fi
+    toolkit_clean < "$rows" | tk_table "CHECKS" "$([ "$code" = 0 ] && printf 'all required checks passed' || printf 'a required check failed')" "" check checks
+    rm -f "$rows"
+    printf '\n'; tk_note "Read-only checks complete; no cluster changes made."
     audit DOCTOR "result=$code context=$CTX_NAME namespace=$NS"
     return "$code"
 }
@@ -54,23 +56,74 @@ toolkit_init() {
     FETCH_PID=""; FETCH_NEXT=0; FETCH_FAILURES=0; FETCH_SUCCESS=0
     TOOLKIT_PID=""; TOOLKIT_NEXT=0
     TOOLKIT_REQUESTED=0
+    case "${KDASH_UNHEALTHY:-0}" in 1|true|yes|on) KDASH_UNHEALTHY=1 ;; *) KDASH_UNHEALTHY=0 ;; esac
+    # Remember the filters the run started with, so the first loop iteration does
+    # not mistake them for a change and cancel the initial background read.
+    TOOLKIT_FILTER_STATE="$(filter_state)"
 }
 
+filter_state() {
+    printf '%s|%s|%s|%s|%s' "${KDASH_LABEL_SELECTOR:-}" "${KDASH_STATUS_FILTER:-}" "${KDASH_NODE_FILTER:-}" \
+        "${KDASH_WORKLOAD_FILTER:-}" "${KDASH_UNHEALTHY:-0}"
+}
+# any filter narrowing the pod set (pod regex, label, status, node, workload, unhealthy)
+filters_active() {
+    case "${FILTER:-.*}" in ''|'.*') ;; *) return 0 ;; esac
+    [ -n "${KDASH_LABEL_SELECTOR:-}${KDASH_STATUS_FILTER:-}${KDASH_NODE_FILTER:-}${KDASH_WORKLOAD_FILTER:-}" ] && return 0
+    [ "${KDASH_UNHEALTHY:-0}" = 1 ]
+}
+# human readable filter set, for headers, "no pods match" lines and reports
+filter_desc() {
+    local d="${FILTER:-.*}"
+    [ -z "${KDASH_LABEL_SELECTOR:-}" ] || d="$d label=$KDASH_LABEL_SELECTOR"
+    [ -z "${KDASH_STATUS_FILTER:-}" ] || d="$d status=$KDASH_STATUS_FILTER"
+    [ -z "${KDASH_NODE_FILTER:-}" ] || d="$d node=$KDASH_NODE_FILTER"
+    [ -z "${KDASH_WORKLOAD_FILTER:-}" ] || d="$d workload=$KDASH_WORKLOAD_FILTER"
+    [ "${KDASH_UNHEALTHY:-0}" != 1 ] || d="$d unhealthy"
+    printf '%s' "$d"
+}
+
+# Structured filters on the raw pod spec. Status and workload are derived exactly
+# like the model does (MODEL_AWK), so a value shown in a table always filters:
+#   status   deletionTimestamp -> Terminating, status.reason (Evicted ...), a waiting
+#            reason (CrashLoopBackOff ...), Running with unready containers -> NotReady
+#   workload ReplicaSet -> its Deployment, Job with a timestamp suffix -> its CronJob,
+#            otherwise the owner name (StatefulSet / DaemonSet / Job), no owner -> pod.
+#            The regex is matched against "name" and "Kind/name".
+#   node     exact node name, "(unscheduled)" for pods without one
+# Regexes come in through ENVIRON: awk -v would rewrite backslash escapes (\. \-).
 filter_spec() {
-    awk -F'|' -v sf="${KDASH_STATUS_FILTER:-}" -v nf="${KDASH_NODE_FILTER:-}" \
-        -v wf="${KDASH_WORKLOAD_FILTER:-}" -v uh="${KDASH_UNHEALTHY:-0}" '
-    function flush(  a,st,w,ok,i) {
-        if (!n) return
-        split(row[1],a,"|"); st=a[3]; if (waiting!="") st=waiting
-        if (st=="Running" && !ready) st="NotReady"
-        w=a[10]; sub(/-[a-z0-9]+$/, "", w)
-        ok=(sf=="" || st~sf) && (nf=="" || a[4]==nf) && (wf=="" || w~wf)
-        if (uh==1 && (st=="Succeeded" || st=="Completed" || (st=="Running" && ready))) ok=0
-        if(ok) for(i=1;i<=n;i++) print row[i]
+    KDF_SF="${KDASH_STATUS_FILTER:-}" KDF_NF="${KDASH_NODE_FILTER:-}" KDF_WF="${KDASH_WORKLOAD_FILTER:-}" \
+    KDF_UH="${KDASH_UNHEALTHY:-0}" awk -F'|' '
+    BEGIN { sf = ENVIRON["KDF_SF"]; nf = ENVIRON["KDF_NF"]; wf = ENVIRON["KDF_WF"]; uh = ENVIRON["KDF_UH"] }
+    function wl(kind, name, pod,   suf) {
+        if (kind == "") { WK = "Pod"; return pod }
+        if (kind == "ReplicaSet") {
+            WK = "Deployment"
+            if (match(name, /-[a-z0-9]+$/)) { suf = substr(name, RSTART + 1); if (length(suf) >= 5 && length(suf) <= 10) return substr(name, 1, RSTART - 1) }
+            WK = "ReplicaSet"; return name
+        }
+        if (kind == "Job" && match(name, /-[0-9]+$/) && RLENGTH >= 9) { WK = "CronJob"; return substr(name, 1, RSTART - 1) }
+        WK = kind; return name
     }
-    $1=="P" {flush(); n=0; waiting=""; ready=1}
-    {row[++n]=$0; if($1=="S") {if($3!="true")ready=0; if($6!="")waiting=$6}}
-    END {flush()}' "$1"
+    function flush(   a, o, st, w, nd, ok, i, healthy) {
+        if (!n) return
+        split(row[1], a, "|")
+        st = a[3]
+        if (a[12] != "") st = "Terminating"; else if (a[13] != "") st = a[13]; else if (waiting != "") st = waiting
+        else if (st == "Running" && nready < nctr) st = "NotReady"
+        split(a[9], o, " "); k_ = o[1]; split(a[10], o, " "); w = wl(k_, o[1], a[2])
+        nd = (a[4] == "") ? "(unscheduled)" : a[4]
+        ok = (sf == "" || st ~ sf) && (nf == "" || nd == nf) && (wf == "" || w ~ wf || (WK "/" w) ~ wf)
+        healthy = (st == "Succeeded" || st == "Completed" || (st == "Running" && nready >= nctr))
+        if (uh == "1" && healthy) ok = 0
+        if (ok) for (i = 1; i <= n; i++) print row[i]
+    }
+    $1 == "P" { flush(); n = 0; waiting = ""; nready = 0; nctr = 0 }
+    { row[++n] = $0
+      if ($1 == "C") nctr++
+      if ($1 == "S") { if ($3 == "true") nready++; if ($6 != "" && waiting == "") waiting = $6 } }
+    END { flush() }' "$1"
 }
 
 build_model() {
@@ -152,14 +205,20 @@ toolkit_tick() {
         mkdir -p "$next"; cp -f "$TOOLKIT_DIR"/* "$next/" 2>/dev/null || true
         TOOLKIT_DIR="$next"
         events_collect; health_collect
-        doctor_run > "$TOOLKIT_DIR/doctor.txt"
+        TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}" doctor_run > "$TOOLKIT_DIR/doctor.txt"
     ) & TOOLKIT_PID=$!
 }
 
 toolkit_cancel() {
-    local pid
+    local pid kids
     for pid in "${FETCH_PID:-}" "${TOOLKIT_PID:-}"; do
-        [ -z "$pid" ] || { kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; }
+        # its children too (kubectl, cp, mv): left running they would write into the
+        # removed temp dir and print "No such file or directory" after kdash quit
+        [ -n "$pid" ] || continue
+        kids=""; command -v pgrep >/dev/null 2>&1 && kids="$(pgrep -P "$pid" 2>/dev/null | tr '\n' ' ')"
+        kill "$pid" 2>/dev/null || true                    # the worker first: it then reports nothing
+        [ -z "$kids" ] || kill $kids 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
     done
     FETCH_PID=""; TOOLKIT_PID=""
     rm -rf "$TMPD/fetch-job" "$TMPD/toolkit-next"
@@ -169,12 +228,16 @@ toolkit_panel() {
     local view="$1"
     # Standard header (tab bar, clock, context, health line, warnings), then the panel body.
     HEADER_ONLY=1 render_core
+    # tables fit the window and carry colour markers (made into escapes after cleaning)
+    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}"
+    export TK_COLOR TK_COLS TK_GLYPH
     case "$view" in
         services) health_render_services ;; storage) health_render_storage ;;
         events) events_render ;; explain) explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}" ;;
         doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
-    esac | toolkit_clean > "$BODYF"
-    printf '8 services | 9 storage | E events | ! explain | i inspect | : commands | q quit\n' > "$FTRF"
+    esac | toolkit_clean | tk_colorize > "$BODYF"
+    export -n TK_COLOR TK_COLS TK_GLYPH
+    printf '8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF"
 }
 
 render() {
@@ -198,10 +261,17 @@ render() {
 }
 
 toolkit_filters_changed() {
-    local now="${KDASH_LABEL_SELECTOR:-}|${KDASH_STATUS_FILTER:-}|${KDASH_NODE_FILTER:-}|${KDASH_WORKLOAD_FILTER:-}|${KDASH_UNHEALTHY:-0}"
+    local now; now="$(filter_state)"
     if [ "$now" != "${TOOLKIT_FILTER_STATE:-}" ]; then
-        toolkit_cancel; SPEC_AT=0; FETCH_NEXT=0; LAST=0
+        local old_label="${TOOLKIT_FILTER_STATE%%|*}"
+        toolkit_cancel; FETCH_NEXT=0; LAST=0
+        # Only a label selector changes what the API returns; the other filters
+        # run locally on the spec already read, so the view updates immediately.
+        [ "$old_label" = "${KDASH_LABEL_SELECTOR:-}" ] || SPEC_AT=0
         TOOLKIT_FILTER_STATE="$now"; build_model
+        declare -F session_reset_state >/dev/null && session_reset_state
+        NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv" 2>/dev/null)
+        declare -F flash >/dev/null && flash "filters: $(filter_desc) - ${NPODS:-0} pod(s)" 6
     fi
 }
 

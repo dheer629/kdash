@@ -126,6 +126,11 @@ assert_backup_contains() {
 
 assert_removed() {
   assert_absent "$PREFIX/kdash"
+  for shortcut in kdx kdsh; do
+    if [ -f "$PREFIX/$shortcut" ] && grep -qF '# kdash-shortcut: written by kdash-bundle.sh' "$PREFIX/$shortcut"; then
+      fail "owned shortcut remains: $PREFIX/$shortcut"
+    fi
+  done
   assert_absent "$TEST_HOME/.kdash-completion.bash"
   assert_absent "$TEST_HOME/.kdash-shell.bash"
   if grep -qFx '# >>> kdash setup >>>' "$TEST_HOME/.bashrc" "$TEST_HOME/.bash_profile"; then
@@ -141,6 +146,8 @@ test_installer_roundtrip() {
   # --keep-old prevents the installer from moving any existing host binary.
   run_ok "$INSTALL" --prefix "$PREFIX" --keep-old
   assert_exists "$PREFIX/kdash"
+  assert_exists "$PREFIX/kdx"
+  assert_exists "$PREFIX/kdsh"
   assert_exists "$TEST_HOME/.kdash-completion.bash"
   assert_exists "$TEST_HOME/.kdash-shell.bash"
   cmp -s -- "$REPO/kdash" "$PREFIX/kdash" || fail 'installer payload differs from kdash'
@@ -159,6 +166,32 @@ test_installer_roundtrip() {
   cp -a -- "$TEST_HOME" "$CASE_DIR/after-first-uninstall"
   run_ok "$UNINSTALL" --prefix "$PREFIX"
   diff -r -- "$CASE_DIR/after-first-uninstall" "$TEST_HOME" || fail 'repeated uninstall changed files'
+}
+
+test_shortcut_preservation() {
+  fixture shortcuts
+  printf '#!/bin/sh\nprintf "existing kdx\\n"\n' > "$PREFIX/kdx"
+  chmod 755 "$PREFIX/kdx"
+  cp -- "$PREFIX/kdx" "$CASE_DIR/kdx.before"
+  run_ok "$INSTALL" --prefix "$PREFIX" --keep-old
+  assert_same "$CASE_DIR/kdx.before" "$PREFIX/kdx"
+  assert_exists "$PREFIX/kdsh"
+  grep -qF '# kdash-shortcut: written by kdash-bundle.sh' "$PREFIX/kdsh" || fail 'kdsh lacks its ownership marker'
+  # Shell integration preserves unrelated functions and aliases, including the
+  # common platform alias kd=kubectl-describe. A free shortcut still runs kdash.
+  run_ok -c 'function kd { printf "existing kd\n"; }; alias kdsh="printf existing-kdsh"; source "$HOME/.kdash-shell.bash"; kd; alias kdsh; printf "kdx-type=%s\n" "$(type -t kdx)"; kdx; printf "skipped=%s\n" "$KDASH_SKIPPED"; kdpods --version'
+  grep -qF 'existing kd' "$LOG" || fail 'existing kd function was replaced'
+  grep -qF "alias kdsh='printf existing-kdsh'" "$LOG" || fail 'existing kdsh alias was replaced'
+  grep -qE 'skipped=.*kdx.*kdsh.*kd' "$LOG" || fail 'taken shortcut names were not reported'
+  grep -qF 'kdx-type=file' "$LOG" || fail 'unrelated kdx executable was shadowed by a shell function'
+  grep -qF 'existing kdx' "$LOG" || fail 'unrelated kdx executable no longer resolves'
+  grep -qF '4.19.2' "$LOG" || fail 'a free shortcut did not launch the installed CLI'
+  run_ok -c 'source "$HOME/.kdash-shell.bash"; declare -f kdsh'
+  grep -qF '_kdash_run -X --shell-picker' "$LOG" || fail 'owned kdsh launcher prevented its shell shortcut'
+  run_ok "$UNINSTALL" --prefix "$PREFIX"
+  assert_removed
+  assert_same "$CASE_DIR/kdx.before" "$PREFIX/kdx"
+  assert_absent "$PREFIX/kdsh"
 }
 
 test_dry_run() {
@@ -298,7 +331,8 @@ test_bundle_compatibility() {
 passed=0
 for test in test_installer_roundtrip test_dry_run test_binary_only test_other_prefix_integration \
   test_default_prefix test_malformed_markers test_symlink_and_text_preservation \
-  test_permission_failure test_binary_symlinks test_cli_validation test_bundle_compatibility; do
+  test_permission_failure test_binary_symlinks test_cli_validation test_bundle_compatibility \
+  test_shortcut_preservation; do
   ( "$test" )
   passed=$((passed + 1))
   printf 'PASS %s\n' "$test"

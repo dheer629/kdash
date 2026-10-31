@@ -16,11 +16,13 @@ assignees: ''
 
 **Environment**
 - kdash version (`kdash --version`):
+- launch command (`kdash`, `kdx`, `kdsh`, flags) and whether interactive mode was enabled:
 - operating system and shell (`uname -sr`, `bash --version | head -1`):
 - terminal (`echo $TERM`, columns x rows) and whether you use tmux or screen:
 - `awk --version | head -1` (gawk, mawk or busybox):
 - `kubectl version --client | head -1`:
 - Kubernetes version and whether it is a managed cluster or a vcluster:
+- for shell/copy problems: selected pod/container, shell and `tar` availability in the image:
 
 **What the evidence says**
 <!-- A text export is worth more than a description:

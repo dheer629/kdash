@@ -1,4 +1,4 @@
-KDASH 4.12.0 - EXPLAINER: THE DASHBOARD, ITS SEVEN VIEWS AND ITS EVIDENCE
+KDASH 4.19.2 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
 =========================================================================
 
 WHAT THIS FILE IS
@@ -8,25 +8,104 @@ exercise in this repository produced. It explains what every view answers, how t
 read the numbers without over-claiming, where the proof of each statement lives,
 and which limitations must be stated whenever this output is shared. It is
 deliberately plain text: it can be read in the same terminal as the dashboard.
+The source version is now 4.19.2. The detailed exercise below used 4.12.0, and
+later feature captures used 4.13.1 / 4.14.0. Those captures retain their original
+versions; they are not live-cluster validation of 4.19.2 or its new screens.
+
+CURRENT SOURCE: INSTALL AND NAVIGATE
+------------------------------------
+  git clone https://github.com/dheer629/kdash.git
+  cd kdash
+  sha256sum -c SHA256SUMS
+  bash kdash-bundle.sh
+  exec bash -l
+  kdash --version                         # kdash 4.19.2
+
+The bundle installs without a build or a cluster connection. Published historical
+releases and the separate release-publishing workflow are described in RELEASES.md;
+committing this source does not itself publish a 4.19.2 Release or download assets.
+
+The current CLI has nine resource views: 1 Pods, 2 Node Pools, 3 Workloads, 4 IP,
+5 Memory, 6 Network/Disk IO, 7 Alerts, 8 Services and 9 Storage. E opens Kubernetes
+Events, ! gives evidence-backed hypotheses and --doctor checks connection and
+capabilities. Services and storage show object relationships and coverage gaps;
+they do not prove application reachability or measured disk usage without data.
+
+Enter/i opens a live pod list and inspector. In the list, j/k or arrows move,
+digits jump to a row, / matches every word against pod/status/node, u limits it
+to pods needing attention, s changes sort and ? shows the keys. The list refreshes
+while idle. Inspector panes keep bounded logs separate from automatic reports.
+
+F opens structured filters, AND-combined with the pod-name regex. Status matches
+the effective displayed status (NotReady, Terminating, Evicted, waiting reasons).
+Node is an exact name, including (unscheduled). Workload matches an extended regex
+against the resolved owner name or Kind/name, including Deployment and CronJob.
+--unhealthy excludes ready Running and successfully completed pods. Headers and
+reports show the active filters. Changing labels triggers a new API read; other
+filters rebuild the retained inventory. A workload-only filter also keeps matching
+workloads with zero pods.
+
+Interactive mode is explicit: kdx (= kdash -X) enables it, kdsh [FILTER] opens the
+shell-mode pod list, and X switches it during a run (y confirmation to enable,
+immediate disable). The palette (: key) accepts shell [FILTER] through a fixed
+handler. A single matching pod opens directly. Container choices are refreshed
+for each pod and remembered only for that pod; several attachable containers ask
+for confirmation unless an explicit --container NAME names one that exists.
+
+In Bash containers the shell has a pinned identity panel with context, namespace,
+pod, container, node and the metrics observed at attachment time. These values
+are not refreshed cluster telemetry. exit/Ctrl-D returns to kdash, kdswitch shows
+related pods of the same workload, and kdquit leaves kdash. The sh fallback prints
+connection information once and has no Bash helpers. Q quits from kdash navigation
+screens; use exit or kdquit inside a container shell.
+
+U and D open local/container file browsers. Mark files or directories with Space,
+use u (upload) or d (download), then review and confirm. / filters, Enter opens a
+directory, h/Backspace goes up, p takes a path and v previews the first 64 KiB.
+Marks belong to one directory. Uploads select a destination and confirm existing
+names before overwrite; downloads offer ZIP, tar.gz or plain files. They start in
+the launch directory, overridden by KDASH_LAUNCH_DIR. ZIP uses zip or optional
+python3 on the host; otherwise tar.gz is the default. Browser copies stream tar
+through kubectl exec; the typed-path kubectl cp flow is a fallback if browsing is
+unavailable. The container needs tar, and browsing also needs sh.
+
+Transfers show progress; q cancels. A partial download stream is removed, while
+files already uploaded remain in the container. Upload verification compares du
+sizes with a filesystem tolerance, not hashes; an archive download displays its
+local SHA256. Shell output and copied content stay outside the automatic model,
+reports, evidence bundles and session history. Remote browser listings/previews
+and size checks use exec and count as writes in the guard, even when they only
+read. Read-request and command timeouts do not cap interactive exec/cp streams.
+X switches record INTERACTIVE_ON/OFF; EXEC/EXEC_END and CP_UP/CP_DOWN/CP_END record
+attachments, and a transfer summary cancellation records CP_CANCEL.
+
+The installer preserves user aliases and occupied shortcut names. A kdash alias
+can still take precedence; command kdash reaches the installed CLI. kdx/kdsh
+commands work immediately when the installation directory is on PATH; other
+shortcuts and completion load after the shell reload. --check reports resolution
+and skipped names. Uninstall removes only its marked shortcuts and keeps reports,
+configuration and audit history.
 
 1. WHAT KDASH IS
 ----------------
-kdash is a read-only Kubernetes namespace operations dashboard written as a single
+kdash is a Kubernetes namespace operations dashboard, read-only by default, written as a single
 Bash file. It reads objects and metrics through kubectl, joins them locally with
-awk, and renders seven live terminal views plus HTML, text, TSV and CSV reports.
-It installs no agent, needs no build step, no jq and no Python, and it never
-creates, changes or deletes a cluster object: every kubectl call goes through a
-wrapper that refuses mutation verbs with exit 126.
+awk, and renders nine resource views and diagnostics plus HTML, text, TSV and CSV
+reports. It installs no agent, needs no build step, no jq and no Python for the
+dashboard. A wrapper refuses mutation verbs with exit 126; exec/cp are exceptions
+only in explicit interactive mode. Container shells and uploads can change the
+application or files with the operator's permissions.
 
 Two consequences follow from "read-only":
 
-  * kdash cannot fix anything. Every suggested action in view 7 is a command for
-    an operator to inspect and run deliberately.
+  * the default dashboard does not repair the cluster. Suggested actions in view
+    7 are commands for an operator to inspect and run deliberately. Interactive
+    actions are separate, explicit and audited as writes.
   * kdash shows only what the credentials and APIs of the current context allow.
     A blank field, a "-" or a coverage warning means unknown or not permitted, and
     must never be reported as zero.
 
-2. WHAT THIS EXERCISE DID
+2. WHAT THE HISTORICAL 4.12.0 EXERCISE DID
 -------------------------
 The run recorded in artifacts/wsl-validation-20261018-134816 did the following on
 the local Ubuntu WSL distribution, against the local vcluster context:
@@ -62,7 +141,7 @@ samples/     the shareable result: rendered screenshots of CLI views 1-7 and the
 DEVOPS_USER_GUIDE.md   how to install, run, capture, export and troubleshoot
 KDASH_EXPLAINER.txt    this file
 
-4. THE SEVEN VIEWS, ONE BY ONE
+4. THE SEVEN VIEWS CAPTURED IN 4.12.0, ONE BY ONE
 ------------------------------
 Every view is live: the header and footer stay pinned, the body scrolls, and each
 view can be printed once as text, TSV or CSV with --once -o, and exported to HTML
@@ -197,9 +276,12 @@ them together.
   * x, while live: one HTML file with every tab (0 Overview, 1 Pods, 2 Node Pools,
     3 Workloads, 4 IP Pool, 5 Memory, 6 Net & Disk IO, 7 History) plus the history
     recorded since that run started. This is the flagship report of a live run.
-  * --snapshot all: separate standalone HTML files, one per view, plus an
+  * --snapshot all: six standalone HTML files (views 1-6), plus an
     index.html that lists every snapshot in the report directory (newest first).
-  * --snapshot with no selection or --snapshot current: one combined report.
+  * --snapshot with no selection: one combined namespace report.
+  * --snapshot current: one standalone report for the current supported resource
+    view (1-6); Alerts maps to the namespace report. Services/storage/Events/why
+    are exported as text and diagnostic tables in --report, not extra HTML tabs.
   * --session-report latest | DIR: rebuilds the all-tabs report from a recorded
     session, without touching the cluster. Use the exact session directory when
     several runs exist.
@@ -285,7 +367,7 @@ Two practical findings are baked into it:
     its own. Without that, captures come back with a status line and the wrong height.
 12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
 --------------------------------------------------
-Version 4.13.0:
+Current behavior (4.19.2, including the diagnostic features added in 4.13.0):
   * the all-namespaces route (-A) is fixed: the flag now follows the resource
     (get pods --all-namespaces). Version 4.12.0 had an argument-order defect there;
     on that version use an explicit -n NAME. Never read a failed -A as "the
@@ -323,8 +405,8 @@ This run and this environment:
   * the PNG screenshots in samples/cli/ and samples/cli_413/ are renders of the saved
     tmux screens. The captured screens themselves are in artifacts/ as .ansi and .txt.
   * kdash reads the cluster. The two exceptions are a shell inside a container (`S`) and
-    copying a file in or out of one (`U`/`D`): they run kubectl exec/cp in your name, only
-    when the run was started with --allow-interactive, they are audited as writes (EXEC,
+    copying files or directories in or out (`U`/`D`): they run kubectl exec/cp in your name,
+    only while interactive mode is explicitly enabled, and are audited as writes (EXEC,
     CP_UP, CP_DOWN) and their output never enters a model, report, bundle or session.
 
 DATA COVERAGE ACTUALLY OBSERVED IN THIS RUN

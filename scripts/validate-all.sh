@@ -5,10 +5,10 @@
 #
 # Checks, in order:
 #   1. Bash syntax of every shipped script
-#   2. the installer embeds kdash byte for byte
+#   2. CLI, modules, installer, uninstaller and version synchronization
 #   3. every fixture/integration test under tests/
 #   4. every checksum in SHA256SUMS, samples/SHA256SUMS and samples/html/SHA256SUMS
-#   5. the recorded run named by artifacts/latest-run.txt: status, failures, the
+#   5. historical evidence named by artifacts/latest-run.txt: status, failures, the
 #      seven captures per namespace and the exit status of each namespace
 #   6. the published samples: counts and a few files that must exist
 #   7. no environment, product, site or personal names in the tree (the author's
@@ -50,9 +50,34 @@ if awk '
 else
   bad "the installer payload differs from kdash"
 fi
+if awk '
+  /<<\047KDASH_UNINSTALL_EOF\047$/ { capture=1; starts++; next }
+  capture && /^KDASH_UNINSTALL_EOF$/ { capture=0; ends++; next }
+  capture { print }
+  END { if (starts != 1 || ends != 1 || capture) exit 1 }
+' kdash-bundle.sh > "$VALIDATE_TMP/uninstaller" &&
+   cmp -s "$VALIDATE_TMP/uninstaller" kdash-uninstall.sh; then
+  ok "kdash-bundle.sh embeds kdash-uninstall.sh byte for byte"
+else
+  bad "the installer uninstaller differs from kdash-uninstall.sh"
+fi
+if bash scripts/build.sh --check > "$VALIDATE_TMP/build-check" 2>&1; then
+  ok "CLI, source modules, installer and versions are synchronized"
+else
+  bad "source/build synchronization"
+  cat "$VALIDATE_TMP/build-check"
+fi
+version="$(sed -n 's/^KDASH_VERSION="\([^"]*\)"$/\1/p' kdash)"
+if [ -n "$version" ] && grep -Fq "$version" README.md &&
+   grep -Fq "## [$version]" CHANGELOG.md && grep -Fq "$version" RELEASES.md; then
+  ok "current version $version documented in README, changelog and releases"
+else
+  bad "current version missing from release documentation"
+fi
+
 echo "=== 2. fixture and integration tests (no live cluster)"
 for f in tests/*.sh; do
-  if bash "$f" > "$VALIDATE_TMP/test-output" 2>&1; then
+  if timeout --kill-after=5s "${KDASH_TEST_TIMEOUT:-180}s" bash "$f" > "$VALIDATE_TMP/test-output" 2>&1; then
     ok "$f: $(tail -1 "$VALIDATE_TMP/test-output")"
   else
     bad "$f"
@@ -73,7 +98,7 @@ for dir in . samples samples/html samples/cli_413 samples/cli_414; do
   fi
 done
 
-echo "=== 4. the recorded run"
+echo "=== 4. historical recorded run (not validation of the current runtime)"
 RUN="$(cat artifacts/latest-run.txt 2>/dev/null || true)"
 if [ -n "$RUN" ] && [ -d "artifacts/$RUN" ]; then
   ok "latest run $RUN"

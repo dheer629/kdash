@@ -105,14 +105,14 @@ if ! grep -q '^# BEGIN KDASH MODULES$' "$REPO/kdash"; then
 fi
 
 SCENARIO=normal run_cli --doctor -n default > "$TEST_ROOT/doctor" 2> "$TEST_ROOT/doctor.err"
-assert_has "$TEST_ROOT/doctor" 'PASS pods: readable'
-assert_has "$TEST_ROOT/doctor" 'INFO metrics: API or metrics unavailable'
-assert_has "$TEST_ROOT/doctor" 'requests/limits and object health remain available'
+grep -Eq 'pods[[:space:]]+.*PASS[[:space:]]+readable' "$TEST_ROOT/doctor" || fail 'doctor did not classify pods as readable'
+grep -Eq 'metrics[[:space:]]+.*INFO[[:space:]]+API or metrics unavailable' "$TEST_ROOT/doctor" || fail 'doctor did not classify unavailable metrics'
+assert_has "$TEST_ROOT/doctor" 'requests / limits'
 assert_has "$TEST_ROOT/doctor" 'Read-only checks complete'
 if SCENARIO=tls run_cli --doctor -n default > "$TEST_ROOT/tls" 2>&1; then fail 'doctor TLS failure returned success'; fi
-assert_has "$TEST_ROOT/tls" 'FAIL pods: TLS certificate validation failed'
+grep -Eq 'pods[[:space:]]+.*FAIL[[:space:]]+TLS certificate validation failed' "$TEST_ROOT/tls" || fail 'doctor lost TLS classification'
 if SCENARIO=rbac run_cli --doctor -n default > "$TEST_ROOT/rbac" 2>&1; then fail 'doctor RBAC failure returned success'; fi
-assert_has "$TEST_ROOT/rbac" 'FAIL pods: RBAC denied'
+grep -Eq 'pods[[:space:]]+.*FAIL[[:space:]]+RBAC denied' "$TEST_ROOT/rbac" || fail 'doctor lost RBAC classification'
 
 : > "$FIXTURE_CALLS"
 run_once > "$TEST_ROOT/pods" 2> "$TEST_ROOT/pods.err"
@@ -202,6 +202,7 @@ extract_function() {
 (
   set -uo pipefail
   source "$REPO/src/runtime.sh"
+  source "$REPO/src/events.sh"
   TMPD="$TEST_ROOT/async"; mkdir -p "$TMPD"
   for file in spec top topprev nodes topnode svc cluster workloads; do printf 'old\n' > "$TMPD/$file"; done
   SPEC="$TMPD/spec"; TOPC="$TMPD/top"; TOPP="$TMPD/topprev"; NODES="$TMPD/nodes"
@@ -235,6 +236,7 @@ extract_function() {
 (
   set -uo pipefail
   source "$REPO/src/runtime.sh"
+  source "$REPO/src/events.sh"
   TMPD="$TEST_ROOT/panel"; mkdir -p "$TMPD"
   HDRF="$TMPD/hdr"; BODYF="$TMPD/body"; FTRF="$TMPD/ftr"
   TOOLKIT_DIR="$TMPD/toolkit"; mkdir -p "$TOOLKIT_DIR"

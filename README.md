@@ -1,4 +1,4 @@
-# kdash 4.14
+# kdash 4.19.2
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -11,7 +11,8 @@
 > **Disclaimer.** kdash is provided as is, without warranty of any kind. The person running
 > this utility is solely responsible for its use, for having authorisation to access the
 > clusters and namespaces it reads, and for any decision or action taken on its output.
-> kdash only reads the cluster, and **every run is audited**: the user, host, origin,
+> kdash reads the cluster by default. Explicit interactive mode enables container shells
+> and file transfers with your permissions. **Every run is audited**: the user, host, origin,
 > context, namespace, every action taken in the dashboard, every report written and every
 > kubectl call are logged and stored (local audit log, central audit log, syslog).
 > The disclaimer is accepted once per user (`yes` at the first interactive run, or
@@ -19,7 +20,7 @@
 
 Live Kubernetes namespace operations dashboard for the terminal, built for DevOps teams
 running platform namespaces on management hosts. One Bash file, no build step, no jq,
-no Python. It reads `kubectl`, joins everything locally, and gives you seven views plus
+no mandatory Python. It reads `kubectl`, joins everything locally, and gives you seven views plus
 services, storage, events and an inspector.
 Press `?` in any view for an explanation of what is on screen.
 
@@ -36,15 +37,31 @@ Press `?` in any view for an explanation of what is on screen.
 | `9` | **STORAGE** | Pod -> PVC -> PV -> StorageClass: unbound claims, claim/PV mismatches, mounts, storage events, and measured usage only when a metrics source exists. |
 | `E` `!` | **EVENTS / EXPLAIN** | Real Kubernetes Events, then evidence-backed hypotheses with the next read-only check. `Enter`/`i` inspects a pod, `:` opens the command palette, `F` filters. |
 
-Every view is live (no flicker, header and footer pinned, body scrolls), can be printed
-once as text / TSV / CSV, and is exported to HTML. A live run records everything it
-sees, and `x` writes **one HTML file with every tab plus the history since kdash started**.
+The dashboard is live, with pinned header/footer and a scrolling body. Views 1-6
+export text, TSV, CSV and HTML; Alerts appear in the HTML Overview. The newer
+diagnostics export text and raw diagnostic tables with `--report`. A live run
+records its model history, and `x` writes **one HTML file with the six detailed
+resource tabs plus the history since kdash started**.
 
 ## Releases and downloads
 
-Every version is published as its own immutable GitHub Release, so an older version stays
-downloadable after a newer one ships. [All releases](https://github.com/dheer629/kdash/releases)
-| [how they are built](RELEASES.md).
+The current source version is **4.19.2**: a live pod picker, `kdsh` shell launcher,
+interactive mode switching, browsable file transfers and corrected structured filters.
+Install it from a checkout; no 4.19.2 release assets are claimed here:
+
+```bash
+git clone https://github.com/dheer629/kdash.git
+cd kdash
+sha256sum -c SHA256SUMS
+bash kdash-bundle.sh
+exec bash -l
+kdash --version                                    # kdash 4.19.2
+```
+
+Published releases remain downloadable by version. The table below records earlier
+releases; their screenshots and captures describe those versions.
+[All releases](https://github.com/dheer629/kdash/releases) |
+[how they are built](RELEASES.md).
 
 | Version | Released | Highlights | Download |
 |---|---|---|---|
@@ -53,7 +70,7 @@ downloadable after a newer one ships. [All releases](https://github.com/dheer629
 | **4.13.0** | 2026-10-29 | doctor, inspector (find, containers, export), services, storage, Events, `-A` fix | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-4.13.0.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.0/SHA256SUMS) |
 | 4.12.0 | 2026-10-18 | ALERTS view (the `-A` limitation applies) | [source archive](https://github.com/dheer629/kdash/archive/refs/tags/v4.12.0.tar.gz) · assets can be generated from that commit |
 
-Download and install one exact version:
+Download and install one exact historical release:
 
 ```bash
 v=4.14.0
@@ -66,7 +83,7 @@ kdash --version                                    # kdash 4.14.0
 
 ## Screenshots
 
-Every image here is a saved live screen from **kdash 4.13.1** on a local WSL vcluster
+The gallery below contains saved live screens from **kdash 4.13.1** on a local WSL vcluster
 (`kubectl` reads only, namespace `default`), rendered from the exact tmux capture with
 [`scripts/capture-terminal.py`](scripts/capture-terminal.py) - nothing is drawn by hand.
 The captures behind them and the full list are in
@@ -77,6 +94,8 @@ tenants of that shared development cluster were replaced by
 [`scripts/redact-run.sh`](scripts/redact-run.sh) before publication, exactly as described
 in [`samples/README.md`](samples/README.md).
 The earlier 4.12.0 validation run keeps its own gallery in [`samples/cli/`](samples/cli).
+The 4.14.0 shell/copy captures appear in the interactive section. These are historical
+evidence, not screenshots or live-cluster validation of the 4.19.2 interface.
 
 ### The views added in 4.13: services and storage
 
@@ -177,8 +196,11 @@ Re-running is safe and always leaves the CLI on v4:
   in the usual bin directories is moved to `~/.kdash-old/`. For a root-owned copy
   (for example an old `sudo` install in `/usr/local/bin`) the exact `sudo mv` command
   is printed.
-- **Old shell definitions:** `kdash()` functions or aliases from a platform CLI or the
-  3.x block are listed as `file:line` and overridden. The integration lives in
+- **Old shell definitions:** `kdash()` functions from a platform CLI or the 3.x block
+  are replaced at login. Your aliases are kept, and other shortcut names are added only
+  when they are free; `--check` reports skipped names. A `kdash` alias still takes
+  precedence: use `command kdash` to reach the installed CLI, or remove the alias
+  yourself. The integration lives in
   `~/.kdash-shell.bash`, sourced from a marker block at the **end** of both `~/.bashrc`
   and `~/.bash_profile`, so it loads after anything defined earlier. In it, `kdash`
   always calls the v4 binary, and that binary's directory is put first on PATH.
@@ -197,6 +219,10 @@ that heredoc so a regeneration keeps v4:
 [ -r "$HOME/.kdash-shell.bash" ] && . "$HOME/.kdash-shell.bash"
 ```
 
+`kdx` and `kdsh` commands are installed beside `kdash`, so they work immediately if
+that directory is already on PATH. Other shell shortcuts and completion load after
+`exec bash -l`. Unrelated existing commands named `kdx` or `kdsh` are preserved.
+
 Options: `--prefix DIR`, `--no-shell`, `--keep-old`, `--check`, `--uninstall`.
 
 ### Uninstall
@@ -210,7 +236,7 @@ sudo bash kdash-uninstall.sh               # system installation
 bash kdash-uninstall.sh --prefix /opt/bin   # same directory used for installation
 ```
 
-It removes the selected `kdash` binary, completion and the current user's shell
+It removes the selected `kdash` binary, its marked `kdx` / `kdsh` commands, completion and the current user's shell
 integration. The kdash setup blocks in `~/.bashrc` and `~/.bash_profile` are removed
 after backing up those files; unrelated content and startup-file symlinks are
 preserved. Malformed setup blocks stop removal with an error. Re-running is safe.
@@ -241,13 +267,19 @@ unless you pass `-n` or `-A`):
 | `kdwl` | 3 workloads per worker node + HA spread |
 | `kdip` | 4 namespace IP pool |
 | `kdmemlive` | 5 live memory dashboard |
+| `kdio` | 6 network and disk IO |
+| `kdx` | dashboard with interactive mode enabled (`kdash -X`) |
+| `kdsh [FILTER]` | shell-mode pod list; one matching pod opens a shell directly |
 | `kdsnap [sel]` | one HTML report per view: `all` (default), `2`, `25`, `nodes,mem` |
+| `kdhist [latest\|DIR]` | namespace report with the recorded session history |
+| `kdns` | namespace picker, then live dashboard |
 | `kdreport` | combined HTML + TSV/CSV report bundle |
 | `kdtop` `kdmem` `kdwatch` | sort by CPU % / memory % of limit, tight poll |
 | `kd` | pods view, **only if `kd` is free** - platform shells use `kd` for `kubectl describe`, which is left alone |
 
-All shortcuts accept the normal options, for example `kdnodes -i 5`,
+View shortcuts accept the normal options, for example `kdnodes -i 5`,
 `kdwl '^order-svc-1-' --once`, `kdmemlive -n demo-namespace-0001`.
+Shell shortcut names you already use are kept rather than replaced.
 
 **Requirements:** `kubectl`, `bash` 4+, any `awk` (tested identical on gawk, mawk,
 one-true-awk and busybox awk), coreutils.
@@ -269,7 +301,7 @@ kdash -v nodes                          # node pools, live
 kdash -v workloads '^order-svc-1-'      # where those pods run + HA spread
 kdash -v ip --once                      # IP pool snapshot
 kdash -v mem -i 5                       # memory dashboard, 5 s poll
-kdash -v all --once > snapshot.txt      # every view as plain text
+kdash -v all --once > snapshot.txt      # views 1-7 as plain text
 kdash -v nodes --once -o csv            # node pool table as CSV
 kdash --report                          # HTML + text + TSV + CSV bundle in ~/kdash_reports
 kdash -A -v mem                         # every readable namespace
@@ -283,7 +315,7 @@ kdash -s mem --reverse                  # smallest memory first
 
 | Flag | Meaning |
 |---|---|
-| `-v, --view VIEW` | `pods` `nodes` `workloads` `ip` `mem` `io` `all` (aliases: `pool`, `wl`, `ippool`, `memory`, `net`, `1`-`6`) |
+| `-v, --view VIEW` | `pods` `nodes` `workloads` `ip` `mem` `io` `alerts` `services` `storage` `events` `explain` `doctor` `all` |
 | `-o, --output FMT` | with `--once`: `text` (default), `tsv`, `csv` - the view's tables with `# name` headers |
 | `--report [DIR]` | write the evidence bundle and an HTML dashboard, then exit (default `~/kdash_reports`) |
 | `--pool-label KEY` | node label that names the pool (default: auto-detect) |
@@ -305,7 +337,19 @@ kdash -s mem --reverse                  # smallest memory first
 | `--events` `--explain [POD]` | Kubernetes Events / evidence-backed explanations, then exit |
 | `--inspect POD` `--container NAME` `--logs current\|previous` | pod summary; logs only when asked, bounded |
 | `--selector` `--status` `--node` `--workload` `--unhealthy` | structured pod filters |
-| `--request-timeout SEC` | per-request seconds (default 5; every kubectl call is also capped by `KDASH_CMD_TIMEOUT`, default 12) |
+| `-X, --allow-interactive` | enable container shell, upload and download for this run |
+| `--shell-picker` | enable interactive mode and start at the shell-mode pod list (`kdsh`) |
+| `--request-timeout SEC` | read-request seconds (default 5); reads also have a `KDASH_CMD_TIMEOUT` cap (default 12). Interactive `exec` / `cp` streams are exempt from both. |
+
+Structured filters are combined with the pod regex using AND. `--status` matches
+the displayed effective status, including `NotReady`, `Terminating`, `Evicted` and
+waiting reasons such as `CrashLoopBackOff`. `--node` is an exact node name (or
+`(unscheduled)`). `--workload` matches an extended regex against the owner name or
+`Kind/name`, resolving ReplicaSets to Deployments and timestamped Jobs to CronJobs.
+`--unhealthy` excludes ready Running and successfully completed pods. Headers and
+reports show the active filter set. Label changes trigger a new API read; other
+structured filters reuse the retained inventory. With only a workload filter, a
+matching workload scaled to zero remains visible.
 
 ### Keys
 
@@ -317,7 +361,7 @@ kdash -s mem --reverse                  # smallest memory first
 | `h` `l`, arrows | pan left / right | `0` | back to column 1 |
 | `space` `b` | page | `g` `G` | top / bottom |
 | `d` | detail lines (pod names in WORKLOADS) | `p` | pods-only (PODS) |
-| `s` | cycle sort key (every view) | `o` | reverse sort order |
+| `s` | cycle resource sort key | `o` | reverse sort order |
 | `w` | PODS grouped by workload / flat | `?` | help for the view on screen |
 | `r` | re-read spec now | | |
 | `8` `9` | services / storage | `E` `!` | Kubernetes Events / explanations |
@@ -329,10 +373,12 @@ kdash -s mem --reverse                  # smallest memory first
 | `Z` | NODE POOLS auto zoom / true scale | `P` | pause / resume live refresh (data frozen) |
 | `+` `-` | poll interval 1, 2, 3, 5, 10, 15, 30, 60 s | | |
 | `S` `U` `D` | **opt-in:** shell in a container, upload a file, download a file | | |
-| `q` | quit | | |
+| `X` | interactive mode on (confirm `y`) / off | | |
+| `q` | quit dashboard / back from a picker | `Q` | quit kdash from dashboard, pod list, inspector or browser |
 
-Keys repaint from the local model and cost no API calls (`n`, `r` and the HTML keys read the cluster).
-`S`/`U`/`D` are the only keys that can change something, and they do nothing until
+Navigation, scrolling, sort and theme changes use the local model. Namespace changes,
+refreshes, inspectors and exports can read the cluster; attachment browsers also use
+`exec` to list and preview files. `S`/`U`/`D` do nothing until
 interactive mode is on - see [Shell and file copy](#shell-and-file-copy-opt-in).
 
 ## The views
@@ -514,7 +560,7 @@ critical / warning events (hover for the event). The range bar (15m / 1h / 6h / 
 ## Sorting, grouping, help
 
 `s` cycles the sort key (`cpu`, `mem`, `cpupct`, `mempct`, `restarts`, `name`) and `o`
-reverses it; the header shows the active order. It applies to every view: pods and their
+reverses it; the header shows the active order. It applies to resource lists: pods and their
 workload groups, nodes inside each pool and the pools, workloads, the memory lists (CPU keys
 map to memory there), namespaces, and the IO lists (cpu = network, mem = disk, restarts =
 IOPS). Flags: `-s KEY`, `--reverse`. PODS groups pods under their workload (`w` or `--flat`
@@ -591,13 +637,17 @@ While kdash runs live it records the namespace into a session folder
 
 Press `x` (or `e` then Enter) at any time to write
 `kdash_namespace_report_<context>_<namespace>_<stamp>.html`. One file, tabs switched
-in the page (click, or keys `0`-`6`, `/` to search, link with `#nodes`, `#history`...):
+in the page (click, or keys `0`-`7`, `/` to search, link with `#nodes`, `#history`...):
 
 | Tab | Content |
 |---|---|
 | `0` OVERVIEW | executive summary (verdict + plain-sentence findings), health cards for the whole namespace, Action Required across every table (critical first, with a copyable kubectl next step), memory and pod charts for the session, latest 15 events |
-| `1`-`5` | the five views exactly as in the CLI (cards that filter, tables, data tables with CSV, original text view); the MEMORY trend covers the whole session |
-| `6` HISTORY | charts since kdash started: namespace memory and CPU (used / request / limit), memory per worker node, top 10 pods by peak memory, pods / healthy / restarts, risk counters; pod history table (min / avg / max / last memory, peak % of limit, CPU, restarts during the session, trend) - click a pod to chart it against its limit; full event timeline with severity filter and CSV |
+| `1`-`6` | Pods, Node Pools, Workloads, IP, Memory and Net/Disk IO: cards, searchable tables, CSV and original text; the MEMORY trend covers the whole session |
+| `7` HISTORY | charts since kdash started: namespace memory and CPU (used / request / limit), memory per worker node, top 10 pods by peak memory, pods / healthy / restarts, risk counters; pod history table (min / avg / max / last memory, peak % of limit, CPU, restarts during the session, trend) - click a pod to chart it against its limit; full event timeline with severity filter and CSV |
+
+HTML tab `7` is History; CLI key `7` is Alerts, represented by the Overview's summary
+and action table. Services, storage, Kubernetes Events and explanations are included
+as text/diagnostic data in `--report`, rather than additional namespace HTML tabs.
 
 Charts have hover read-outs and click-to-hide legends; the file is self-contained
 (no internet needed), works in dark / light and prints every tab.
@@ -622,7 +672,7 @@ a 300-pod, 8-hour session builds in about 3-13 s (mawk / gawk / busybox) and ope
 
 ## HTML snapshots (one report per view)
 
-Each view can be saved as its own HTML report, in the same layout as the
+Each of views 1-6 can be saved as its own HTML report, in the same layout as the
 HTML reports: header with context / namespace / result / signals,
 meta chips (generated, output lines, tables, rows, operator, SHA256), clickable
 metric cards that filter the main table, an **Action Required** table that collects
@@ -632,14 +682,14 @@ in a collapsible block.
 
 | While running | |
 |---|---|
-| `e` | HTML menu: Enter (all-tabs report), `c` (view on screen), `2`, `25`, `135`... (one HTML per view), `a` (all five, one HTML each), `b` (combined bundle) |
+| `e` | HTML menu: Enter (namespace report), `c` (current supported view), `2`, `25`, `135`... (one HTML per view), `a` (all six), `b` (combined bundle) |
 
 ```bash
 kdash -v nodes --snapshot current  # node pools only
-kdash --snapshot all               # five separate reports
+kdash --snapshot all               # six separate reports, plus index.html
 kdash --snapshot 25                # node pools + memory
 kdash --snapshot nodes,mem,ip      # by name
-kdsnap all                         # shortcut: five separate reports
+kdsnap all                         # shortcut: six separate reports
 ```
 
 Files are written to `~/kdash_reports` (or `$KDASH_REPORT_DIR`), named like the
@@ -651,6 +701,7 @@ kdash_node_pools_worker_nodes_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html
 kdash_workloads_per_worker_node_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html
 kdash_namespace_ip_pool_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html
 kdash_memory_dashboard_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html
+kdash_network_disk_io_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html
 ```
 
 | Report | Cards | Tables |
@@ -660,6 +711,7 @@ kdash_memory_dashboard_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html
 | Workloads | workloads, nodes hosting, one card per VERDICT (HA_RISK, SKEWED, ...) | Workload Spread and HA, Pods per Worker Node |
 | IP pool | pod IPs, no IP, host network, duplicates, subnets, services | Pod IP Assignments, Node IP Blocks, Pod Subnets, Services |
 | Memory | used vs limit, OOM risk, OOMKilled before, no limit, over request | Memory and OOM Risk, Memory by Worker Node, Memory by Workload |
+| Net & Disk IO | source, availability and measured traffic / disk rates | Worker Nodes, Pod Network and Disk IO |
 
 Tip: `KDASH_REPORT_DIR=$HOME/shared_reports` puts them next to your other reports.
 
@@ -670,7 +722,9 @@ Tip: `KDASH_REPORT_DIR=$HOME/shared_reports` puts them next to your other report
 ```
 ~/kdash_reports/kdash_<context>_<namespace>_<YYYYmmdd_HHMMSS>.html     # dashboard
 ~/kdash_reports/kdash_<context>_<namespace>_<YYYYmmdd_HHMMSS>/
-    pods.txt nodes.txt workloads.txt ip.txt mem.txt   # plain text views
+    pods.txt nodes.txt workloads.txt ip.txt mem.txt io.txt alerts.txt
+    services.txt storage.txt events.txt explain.txt  # diagnostics
+    diagnostics/                                     # raw diagnostic TSV and read status
     tsv/  csv/                                        # every model table
     report.html  SHA256SUMS
 ```
@@ -681,37 +735,71 @@ pods and containers. Every table has a live filter, click-to-sort headers and a 
 button; percentage columns carry bars; risk values are colour-badged. Light and dark mode.
 
 TSV / CSV tables: `pods`, `containers`, `nodes`, `pools`, `wl_node`, `workloads`,
-`memory`, `ip`, `subnets`, `ipblocks`, `services`, `meta`. Unknown values are `-` in
+`memory`, `ip`, `subnets`, `ipblocks`, `services`, `cluster_ns`, `io_pods`, `io_nodes`,
+`meta`. Unknown values are `-` in
 TSV and empty in CSV. CPU is millicores, memory MiB.
 
 ## Shell and file copy (opt-in)
 
-kdash is read-only unless you say otherwise. Three keys leave the dashboard and run
-`kubectl` in your name: `S` opens a shell inside a container, `U` uploads a file into
-one, `D` downloads a file out of one. They are refused until interactive mode is on:
+kdash reads the cluster by default. Interactive mode allows `kubectl exec` and `cp`
+with your permissions: `S` opens a shell, `U` uploads and `D` downloads files or
+directories. Enable it for the run, or press `X` and confirm `y`; `X` again turns
+it off. The header shows the mode, and switches are audited as `INTERACTIVE_ON` /
+`INTERACTIVE_OFF`.
 
 ```bash
-kdash --allow-interactive            # or -X
+kdx -n default                      # kdash -X: dashboard, with S / U / D enabled
+kdsh -n default                     # kdash -X --shell-picker: Enter opens a shell
+kdsh api -n default                 # one matching pod opens directly; otherwise a filtered list
+kdsh api --container app -n default # choose a named container explicitly
+kdash --allow-interactive            # same as -X
 KDASH_ALLOW_INTERACTIVE=1 kdash      # or KDASH_ALLOW_INTERACTIVE=1 in ~/.config/kdash.conf
 ```
 
-| Where | Key | What happens |
+| Where | Action | What happens |
 |---|---|---|
-| PODS (or any view) | `S` | pick a pod, then its container when it has several, then a shell |
-| PODS (or any view) | `U` | pick a pod and container, type the local file and the remote path |
-| PODS (or any view) | `D` | pick a pod and container, type the remote path (local defaults to `./<name>`) |
-| Inspector | `S` `U` `D` | act on the pod **and the container you are looking at** - no picker |
-| Container picker (`c`) | `S` `U` `D` | act on the highlighted pod |
+| Any dashboard view | `S` / `U` / `D` | select a pod in the live list, then a container when needed |
+| Inspector / container picker | `S` / `U` / `D` | act on that pod, preselecting its remembered container |
+| Command palette (`:`) | `shell [FILTER]` | shell-mode list; one matching pod opens directly |
 
-What each one runs (the audit log records the same shape):
+The pod list refreshes while idle. Use arrows or `j`/`k`, digits to jump to a row,
+`/` to match every typed word against pod/status/node, `u` for pods needing attention,
+`s` to sort, `F` for structured filters and `?` for all keys. Plain words supplied to
+`kdsh` filter this list; an extended regex retains the dashboard's pod filter.
+Container selection is fetched for each pod. With multiple attachable containers,
+the remembered choice is highlighted for confirmation; `--container NAME` skips that
+choice when the named container exists.
 
-```bash
-kubectl exec -it <pod> [-c <container>] -- sh -c 'command -v bash >/dev/null 2>&1 && exec bash || exec sh'
-kubectl cp -c <container> ./local.conf <namespace>/<pod>:/tmp/local.conf   # U, host to container
-kubectl cp -c <container> <namespace>/<pod>:/var/log/app.log ./app.log     # D, container to host
-```
+The shell prefers Bash, falling back to `sh`. In Bash it pins a five-row identity
+panel above the terminal, showing context, namespace, pod, container, node and the
+resource values observed when attaching; those values are not a live metrics stream.
+`exit` / Ctrl-D returns to the list or inspector, `kdswitch` returns to related pods
+of the same workload, and `kdquit` quits kdash. The last two helpers and pinned panel
+are Bash features; the `sh` fallback prints the connection information once.
 
-Live proof, kdash 4.14.0 on a local vcluster (names redacted):
+Uploads start in the directory where you launched kdash. Browse local files, mark
+files or directories with Space, press `u`, choose the container destination and
+review the summary before confirming. Existing destination names require an overwrite
+confirmation. Downloads browse the container: mark items, press `d`, then choose ZIP,
+tar.gz or plain files, the output directory and an optional archive name. They default
+to the launch directory (`KDASH_LAUNCH_DIR` overrides it). ZIP uses host `zip`, or
+optional `python3`; without either the default is tar.gz.
+
+The file browser supports `/` name filtering, Enter/right to open a directory,
+`h`/Backspace to go up, `p` for a path and `v` to preview the first 64 KiB of a file.
+Changing directories clears marks. Transfers show progress and can be cancelled with
+`q`; cancelled downloads remove the partial stream, while files already uploaded stay
+in the container. Upload verification compares `du` sizes with a filesystem tolerance,
+not file hashes. Archive downloads display a local SHA256 checksum.
+
+Browsed transfers stream `tar` through `kubectl exec`; listings, previews and size
+checks also use `exec` and count as writes under the guard. If browsing is unavailable,
+kdash offers the typed-path `kubectl cp` flow. Both routes need `tar` in the image;
+the browser also needs a usable `sh`. Names and paths are passed as arguments rather
+than evaluated as host shell commands.
+
+Historical proof, kdash 4.14.0 on a local vcluster (names redacted; the typed-path
+dialogs below predate the 4.19.2 browser):
 
 | | |
 |---|---|
@@ -729,9 +817,8 @@ Worth knowing:
 
 - **Permissions.** Both need `pods/exec` (`create`) under your own identity:
   `kubectl auth can-i create pods/exec`.
-- **`cp` needs `tar` inside the image.** Distroless and scratch images have neither tar
-  nor a shell, so `U`/`D` fail there; use `kubectl debug --copy-to`, or copy from a
-  container that has tar.
+- **Transfers need `tar` inside the image.** Images without the required tools cannot
+  use these flows. Reading logs in the inspector remains available when permitted.
 - **The shell prefers `bash`** and falls back to `sh`. An image with no shell at all
   needs `kubectl debug -it <pod> --image=busybox:1.36 --target=<container>`.
 - **Nothing enters the reports.** A shell's output and any copied file stay out of the
@@ -739,13 +826,12 @@ Worth knowing:
   that it happened is audited - `EXEC` `EXEC_END` `CP_UP` `CP_DOWN` `CP_END` with pod,
   container, direction, paths (credential-looking ones masked), bytes and exit code.
 - **It is a write action** for Kubernetes: it runs with your RBAC, it is outside kdash's
-  read-only guarantee, and it is not cut off by the 12 s request cap.
+  read-only guarantee, and it is not cut off by the read-request timeout or 12 s command cap.
 - **The terminal is handed over cleanly:** kdash leaves the alternate screen, gives the
   real terminal to kubectl (so `-it` works, inside tmux too), and repaints afterwards.
-  `exit` or Ctrl-D returns you to the dashboard.
-- **Still refused while it is off**, with a hint:
-  `kdash: refused "kubectl exec exec" - kdash is read-only (interactive mode is off:
-  restart with --allow-interactive)`, and the audit gets `INTERACTIVE_BLOCKED`.
+  `exit` or Ctrl-D returns you to the list or inspector you came from.
+- **Still refused while it is off.** The keys explain how to enable interactive mode;
+  the kubectl guard refuses `exec` and `cp` with exit 126.
 
 ## Configuration
 
@@ -764,6 +850,7 @@ Also honoured: `KDASH_NS`, `KDASH_CONTEXT`, `KDASH_KUBECONFIG`, `KDASH_FILTER`,
 `KDASH_COLUMNS`, `KDASH_LINES`, `KDASH_WINDOW` (chart window), `KDASH_FORECAST_WINDOW`
 (seconds of samples behind the memory forecast, default 1800), `KDASH_SAMPLE_EVERY`,
 `KDASH_ALLOW_INTERACTIVE` (enables `S`/`U`/`D`; the same as `--allow-interactive`),
+`KDASH_LAUNCH_DIR` (local starting directory for uploads and default download destination),
 `TZ` (time zone of every clock), `NO_COLOR`, `KDASH_BELL=1` (bell on new critical events, same as `--bell`), `KDASH_ALERT_MEM` / `KDASH_ALERT_NET_MBPS` / `KDASH_ALERT_IOPS` (ALERTS view thresholds).
 
 ## Design notes
@@ -771,7 +858,7 @@ Also honoured: `KDASH_NS`, `KDASH_CONTEXT`, `KDASH_KUBECONFIG`, `KDASH_FILTER`,
 - **API cost.** Per poll: `top pod` (+ `top node` when permitted; a Forbidden answer
   stops further attempts). Pods, nodes and services are re-read every `-R` seconds.
   Everything else is local.
-- **One model, many outputs.** Each fetch is joined once into TSV tables; the five views,
+- **One model, many outputs.** Each fetch is joined once into TSV tables; the resource views,
   `-o tsv/csv`, the text bundle and the HTML all read the same tables, so numbers agree.
 - **Safe joins.** Pipe-delimited jsonpath keeps a missing request / limit as an empty
   field, so values never shift onto the wrong container.
@@ -797,6 +884,7 @@ Every run is audited. Nothing to enable, and no option switches it off.
 | Reading or verifying the audit log | `AUDIT_VIEW` `AUDIT_VERIFY` |
 | **Interactive attachments** (opt-in): a shell, an upload, a download - pod, container, direction, paths (credential-looking paths masked), result | `EXEC` `EXEC_END` `CP_UP` `CP_DOWN` `CP_END` |
 | An attachment refused or blocked while interactive mode is off | `INTERACTIVE_BLOCKED` |
+| Interactive mode switched with `X`; transfer cancelled before copying | `INTERACTIVE_ON` `INTERACTIVE_OFF` `CP_CANCEL` |
 
 **Read-only guard.** Every kubectl call goes through a wrapper that allows only reads:
 `get`, `top`, `describe`, `logs`, `version`, `api-resources`, `auth can-i`, and the
@@ -804,7 +892,7 @@ read-only `config` subcommands. Any other verb (`delete`, `apply`, `patch`,
 `config set-context` ...) is refused with exit 126 and recorded as refused.
 
 `exec` and `cp` are the only exceptions, and only when interactive mode is on
-(`--allow-interactive` / `KDASH_ALLOW_INTERACTIVE=1`): while it is off they are refused
+(`-X` / `--allow-interactive` / `--shell-picker` / the `X` key / `KDASH_ALLOW_INTERACTIVE=1`): while it is off they are refused
 like any other verb, and the refusal says how to enable it. When it is on, the two of
 them run without the 12 s command cap (an interactive session cannot live inside a
 request timeout), every use is counted as a write in the audit summary, and reads stay
@@ -851,6 +939,30 @@ journalctl -t kdash --since today # syslog copy
 | 5 | disclaimer not accepted |
 | 6 | `KDASH_AUDIT_REQUIRED=1` and no audit file writable |
 | 126 | (kubectl wrapper) a verb that could change the cluster was refused |
+
+## Changes in 4.19.2
+
+- `kdx` enables interactive mode; `kdsh [FILTER]` starts the live shell-mode pod list.
+  One matching pod opens directly, and `: shell FILTER` uses the same flow.
+- The live pod list supports word search, attention filtering, sorting, row jumps and
+  direct inspector actions. Container choices are refreshed and remembered per pod.
+- `X` switches interactive mode during a run; `Q` quits from navigation screens.
+  Container Bash sessions show a pinned identity panel and provide `kdswitch` / `kdquit`.
+- Upload/download browsers select multiple files or directories, preview files,
+  review destinations and overwrite cases, show progress and expose cancellation.
+  Downloads support ZIP, tar.gz and plain files; uploads show a size comparison.
+- Structured filters follow the effective pod status and resolved workload names.
+  Filter changes update the retained model, active filters appear in exports, and a
+  workload-only filter retains matching workloads with zero pods.
+- Shared title bars and width-aware diagnostic tables cover the dashboard, pickers,
+  Events, explanations, doctor, services and storage. Session exit shows context,
+  namespace, duration and the retained report location.
+- Installer shortcuts preserve occupied shell names and user aliases. The guard runs
+  through Bash on hosts with a `noexec` temporary directory; interactive streams drop
+  read-request timeouts, and worker shutdown terminates child processes.
+
+See [CHANGELOG.md](CHANGELOG.md) for the source update and [RELEASES.md](RELEASES.md)
+for publishing it as a versioned release. Existing galleries remain historical evidence.
 
 ## Changes in 4.14.0
 
@@ -1149,7 +1261,7 @@ HTML reports: clearer data, easier hand-off.
 | Raw evidence | [artifacts/](artifacts/README.md) - the recorded run: logs, captures, sessions, reports and audit trail |
 | Changes | [CHANGELOG.md](CHANGELOG.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) - issues and pull requests are welcome; `main` is protected and only the maintainer merges |
-| Security | [SECURITY.md](SECURITY.md) - read-only by design; report problems privately |
+| Security | [SECURITY.md](SECURITY.md) - default read-only guard and explicit interactive exceptions; report problems privately |
 | Code of conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Ownership | [.github/CODEOWNERS](.github/CODEOWNERS) - every path is owned by [@dheer629](https://github.com/dheer629) |
 | Continuous integration | [.github/workflows/ci.yml](.github/workflows/ci.yml) - Bash syntax, installer payload, uninstall tests, checksums, no credentials, README links |
@@ -1160,8 +1272,8 @@ HTML reports: clearer data, easier hand-off.
 kdash                 the whole CLI (one Bash file)
 kdash-bundle.sh       installer (embeds kdash byte for byte) + the uninstaller
 kdash-uninstall.sh    standalone uninstaller
-src/                  source modules built into kdash (runtime, events, health, inspector)
-tests/                fixture tests: uninstall (11), runtime, events, health, inspector
+src/                  source modules built into kdash (runtime, events, health, inspector, interactive)
+tests/                fixture tests for the installer and runtime features
 RELEASES.md           how versions are published and downloaded
 scripts/              capture, render, redact, validate and checksum helpers
                        (scripts/validate-all.sh checks everything in one go)
@@ -1182,13 +1294,13 @@ MIT.
 
 ## Author
 
-**Dheeraj V** - *Dheeraj Vishwakarma* - GitHub: [@demo629](https://github.com/demo629)
+**Dheeraj V** - *Dheeraj Vishwakarma* - GitHub: [@dheer629](https://github.com/dheer629)
 
-- Author of kdash: one Bash file, seven views, read-only through `kubectl`, and every
+- Author of kdash: one Bash file, nine resource views plus diagnostics, read-only by default through `kubectl`, and every
   run audited. The dashboard header (`by Dheeraj V`), `kdash --about`, the installer
   and the HTML reports all name the same author.
-- Repository: <https://github.com/demo629/kdash> - issues and pull requests:
-  <https://github.com/demo629/kdash/issues>
+- Repository: <https://github.com/dheer629/kdash> - issues and pull requests:
+  <https://github.com/dheer629/kdash/issues>
 - The screenshots in this README come from the recorded runs published in
   [`artifacts/`](artifacts/README.md); how they were captured, and what was redacted
   before publication, is documented in [`samples/README.md`](samples/README.md) and

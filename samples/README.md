@@ -1,5 +1,11 @@
 # kdash samples
 
+This gallery preserves historical output from kdash 4.12.0, 4.13.1 and 4.14.0.
+The current source and bundle are 4.19.2, whose shell picker, file browsers and
+updated layouts are described in the [README](../README.md) and
+[DevOps guide](../DEVOPS_USER_GUIDE.md). These images are not current-version
+screenshots and should not be relabeled as such.
+
 The names in these samples are placeholders. Before publication the cluster
 context, the namespaces, the namespace-derived pod prefixes, the operator and host
 names, the home-directory paths and the product / organisation wording were

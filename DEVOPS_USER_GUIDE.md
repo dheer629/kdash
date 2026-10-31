@@ -1,10 +1,20 @@
 # kdash DevOps user guide
 
-This guide describes the kdash 4.14.0 implementation in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. It does not install workloads, change resource limits, restart pods, or repair the cluster. Its reports preserve observations so an operator can investigate and decide what to do next. Two actions are the exception, and both are off until you switch them on: a shell inside a container and copying a file in or out of one (`--allow-interactive`, keys `S`/`U`/`D`). They run in your name with your rights, they are audited as writes, and nothing they produce enters a report - see the section on them below.
+This guide describes the kdash 4.19.2 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
+
+The current source can be installed with `git clone https://github.com/dheer629/kdash.git`,
+`cd kdash`, `sha256sum -c SHA256SUMS`, then `bash kdash-bundle.sh`.
+Run `exec bash -l` to load shell shortcuts and completion. Versioned downloads in
+[RELEASES.md](RELEASES.md) describe already published releases; committing 4.19.2 source
+does not itself publish new release assets.
 
 ## What the recorded run actually produced
 
-Everything below was exercised on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
+The captured validation run below used 4.12.0; the later feature galleries used
+4.13.1 and 4.14.0. They remain evidence of those versions and do not validate the
+4.19.2 terminal layout or interactive browser against a live cluster.
+
+The following evidence table describes the exercise on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
 
 | Step | Measured result | Evidence |
 |---|---|---|
@@ -17,7 +27,7 @@ Everything below was exercised on 2026-10-18 in the WSL Ubuntu distribution as u
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. Every claim in this guide can be traced to one of those files.
+`artifacts/` holds that raw evidence, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. Those files support the historical observations; current usage instructions follow the 4.19.2 source.
 
 ## 1. Open the correct environment
 
@@ -170,7 +180,7 @@ Repeat with `ns='ml-service-prod'` and `ns='gitops-core'`, or run them in separa
 
 **Version note:** kdash 4.12.0 had a kubectl argument-order defect on the all-namespaces `-A` route, so use `-n NAME` there. It is fixed in 4.13.0 (`kdash -A` now runs `get pods --all-namespaces`). On any version, do not interpret a failed `-A` command as evidence that every namespace is empty or inaccessible; run `kdash --doctor` first. Some older README/help examples also say that `--snapshot all` generates five files; the implementation now generates six standalone view reports.
 
-## 4. Read the seven CLI views
+## 4. Read the CLI views
 
 | Key / `-v` name | What to inspect | How to interpret it |
 |---|---|---|
@@ -181,6 +191,24 @@ Repeat with `ns='ml-service-prod'` and `ns='gitops-core'`, or run them in separa
 | `5` / `mem` | Namespace CPU/memory charts, request/limit lines, pod risk, memory by node/workload, OOMKilled history, growth forecast | A past OOMKilled observation is historical evidence, not proof of a current OOM. Forecasts extrapolate recent samples; they are not a guarantee that a pod will hit its limit. Five minutes is a short diagnostic window. |
 | `6` / `io` | Network ingress/egress, disk read/write and IOPS, node totals and namespace/pod shares | Rates need two counter samples. The source is Prometheus/cAdvisor, not metrics-server. A missing source or denied proxy is unavailable data, not zero traffic. A pod's large share of very small traffic may be operationally harmless. |
 | `7` / `alerts` | Overall verdict, section health, active/cleared alerts, age, trend and suggested investigation commands | Start here for triage, then use the detailed views. Warnings include missing limits and topology concentration. `HEALTHY` means no rule fired on visible data; it is not a complete service health test. Suggested commands are displayed for an operator to inspect and run. |
+| `8` / `services` | Ingress, Service, EndpointSlice and pod relationships | Selectors and readiness are configuration evidence; they do not prove DNS or end-to-end connectivity. Denied reads give unknown coverage. |
+| `9` / `storage` | PVC, PV, StorageClass, mounts and storage Events | Declared capacity is allocation. Measured usage is available only when the metrics source supplies it. |
+| `E` / `events`, `!` / `explain` | Kubernetes Events and possible explanations with next checks | Events can expire or be incomplete; a hypothesis is not a proven cause. |
+
+Use `kdash --doctor` for read-only connection and capability checks. Services,
+storage, Events, explanations and doctor use tables fitted to the terminal width.
+Their status colours distinguish failures, warnings, unknown coverage and healthy
+observations. The shared title bar shows context, namespace and the current mode.
+
+Structured filters (`F` or `--selector`, `--status`, `--node`, `--workload`,
+`--unhealthy`) are AND-combined with the pod regex. Status uses the effective value
+shown in the table: `Terminating`, `Evicted`, waiting reasons and `NotReady` all
+match. Node is exact, including `(unscheduled)`. Workload accepts an extended regex
+against a name or `Kind/name`, with Deployment/CronJob ownership resolved from pod
+owners. A workload-only filter can still show a matching workload scaled to zero.
+`--unhealthy` excludes ready Running and successfully completed pods. Labels require
+a fresh API read; other filter changes reuse the retained inventory and rebuild the
+model. Active filter descriptions appear in headers and generated reports.
 
 ### Requests, limits, usage, and missing values
 
@@ -194,19 +222,23 @@ CPU values such as `250m` mean 250 millicores, or 0.25 of a CPU core. Memory use
 
 | Key | Action |
 |---|---|
-| `1`-`7`, `Tab` | Choose or cycle the CLI view |
+| `1`-`9`, `E`, `!`, `Tab` | Choose or cycle the CLI view |
 | `?` | Explain the current view |
 | `j` / `k`, arrows; `space` / `b`; `g` / `G` | Scroll, page down/up, jump to top/bottom |
 | `h` / `l`, left/right arrows; `0` | Pan horizontally; return to the first column |
 | `s`, `o` | Cycle sort key; reverse sort order |
 | `/` | Change the pod-name regular expression; empty restores all matches |
+| `F`, `:` | Structured filters; fixed-command palette (`shell [FILTER]` opens shell mode) |
+| `Enter`, `i` | Live pod list and inspector: summary, containers, Events, describe, bounded logs |
 | `p`, `d`, `w` | Pod totals only, detail lines, grouped/flat pod listing |
 | `r`, `n` | Re-read specifications; choose another namespace |
 | `a`, `Z` | In Node Pools: all/hosting nodes; auto zoom/true scale |
 | `P`, `+`, `-` | Pause/resume data refresh; adjust the poll interval |
 | `T`, `z` | Cycle theme; select chart time window |
 | `x`, `e` | Export an all-tabs namespace report; open the export menu |
-| `q` | Quit and finalize the session/audit records |
+| `X` | Enable interactive mode after `y` confirmation, or disable it immediately |
+| `S`, `U`, `D` | In interactive mode: shell, upload, download |
+| `q`, `Q` | `q` quits the dashboard or returns from a picker; `Q` quits kdash from navigation screens and finalizes session/audit records |
 
 Screenshots capture only the visible viewport. For long tables, scroll for extra captures or use the complete text/HTML export. The report and raw tables provide the evidence beyond the terminal frame.
 
@@ -292,7 +324,7 @@ Previous-container logs may not exist. Application logs may contain sensitive da
 
 ## 8. Audit evidence
 
-The utility audits run start/end, the operator and context, namespace changes, view and export actions, alerts, failures, and a summary of kubectl calls. Its kubectl wrapper refuses mutation verbs. This is utility activity logging; it is not a replacement for Kubernetes API server auditing or application logs.
+The utility audits run start/end, the operator and context, namespace changes, view and export actions, alerts, failures, and a summary of kubectl calls. Its kubectl wrapper refuses mutation verbs, with `exec` / `cp` allowed only in explicit interactive mode and counted as writes. This is utility activity logging; it is not a replacement for Kubernetes API server auditing or application logs.
 
 ```bash
 kdash --about
@@ -316,7 +348,7 @@ Logs are hash-chained. `--audit-verify` detects broken links in the available fi
 | Usage is `-` | Try `kubectl --context "$ctx" -n "$ns" top pods`. Check metrics-server availability and permissions. Structural requests/limits can remain visible without usage. |
 | Nodes or whole-cluster comparison missing | Inspect coverage notes and `kubectl --context "$ctx" auth can-i list nodes`. `--no-cluster` can skip cluster-wide pod reads when deliberately limiting scope. |
 | IO is missing | Wait for two samples; use `--io-wait 20` for one-shot reports. Check the stated source and proxy permission. `--prom-svc namespace/service:port` or `--prom-url URL` selects an existing source. Do not invent traffic values. |
-| `-A` fails | On 4.12.0 use explicit `-n NAME` runs (known argument-order defect, fixed in 4.13.0). On 4.13.0 run `kdash --doctor`: a failure usually means cluster-wide list RBAC is missing. |
+| `-A` fails | On 4.12.0 use explicit `-n NAME` runs (known argument-order defect, fixed in 4.13.0). On the current source run `kdash --doctor`: check cluster-wide list RBAC and the reported connection failures. |
 | Nothing loads, or the header says `STALE` | Run `kdash --doctor`. It separates an unreachable endpoint, TLS, expired credentials, RBAC and a missing Metrics API, and prints the next read-only check for each. kdash keeps the last good pods on screen and retries by itself. |
 | CPU / memory show `-` | The Metrics API is not answering. This is a capability gap, not an outage: requests, limits, readiness, services, storage and Events are still read. `--doctor` reports it as `INFO metrics`. |
 | A pod is failing and you want evidence | Select it with `Enter` / `i` (summary, containers, Events, describe, opt-in logs), or `kdash --explain POD -n NS`. Inside the inspector: `/` finds in the pane (`n`/`N` jump between matches, `&` shows only matching lines), `L` filters by log level, `f` follows a log pane, `c` switches container, `w` exports what you see for a ticket. Explanations are hypotheses with their supporting Event; they do not prove a cause. |
@@ -325,55 +357,79 @@ Logs are hash-chained. `--audit-verify` detects broken links in the available fi
 | Terminal is narrow or glyphs look broken | Enlarge the terminal, pan with `h`/`l`, or use `--ascii`. Use `--theme light` for light terminals and `-N` for plain text. |
 | Export fails | Verify the selected report directory is writable and has space. Preserve stderr and the exit code. |
 | Audit verification fails | Retain the original file, identify the reported line/session, and compare available central/syslog evidence. Do not edit it merely to make validation pass. |
-| You need a shell or a file out of a pod | Start kdash with `--allow-interactive` and press `S` (shell), `U` (upload) or `D` (download) - in the pod list, in the inspector, or in the container picker. Without the flag the same keys explain that interactive mode is off and audit `INTERACTIVE_BLOCKED`. |
+| You need a shell or a file out of a pod | Use `kdx`, `kdash -X`, or press `X` and confirm. `kdsh [FILTER]` opens the shell-mode pod list. `S` / `U` / `D` open shell / upload / download flows; the kubectl guard refuses `exec` / `cp` until interactive mode is enabled. |
 
 Exit codes: `0` success, `1` runtime failure, `2` usage error, `3` no pods matched, `5` disclaimer not accepted, `6` required audit file not writable. The kubectl read-only wrapper returns `126` for refused verbs. A supervising `timeout` normally returns `124` when its deadline expires, even when kdash handles the signal and finalizes its own logs; distinguish the supervisor status from the dashboard's audit `END` record.
 
 ## Shell in a container and file copy (opt-in, audited writes)
 
-kdash reads the cluster and writes nothing. A shell inside a container and a file copy in
-or out of one are the two actions that change that, so they are off until you enable them:
+kdash reads the cluster by default. Shells and file transfers require explicit
+interactive mode. Use `X` and confirm `y` during a run, or start with:
 
 ```bash
-kdash --allow-interactive -k /path/kubeconfig -c my-context -n default
+kdx -k /path/kubeconfig -c my-context -n default     # dashboard, interactive mode on
+kdsh api --container app -n default                # shell list; one matching pod attaches
+kdash --allow-interactive -n default                # same as -X
 KDASH_ALLOW_INTERACTIVE=1 kdash            # or KDASH_ALLOW_INTERACTIVE=1 in kdash.conf
 ```
 
-| Key | In the pod list | In the inspector | In the container picker |
-|---|---|---|---|
-| `S` | pick a pod, then its container when it has several, then a shell | shell in the container on screen | shell in the highlighted pod |
-| `U` | upload: pick the pod/container, type the local file and the remote path | upload into the container on screen | same, for the highlighted pod |
-| `D` | download: type the remote path; the local path defaults to `./<name>` | download from the container on screen | same, for the highlighted pod |
+`S` selects a pod and opens a shell; `U` / `D` select the same pod/container and
+open the file browser. Container inventory is refreshed for each pod. A remembered
+container belongs to that pod, and is highlighted for confirmation when several are
+available. An explicit `--container NAME` skips that list if the name exists.
 
-Commands kdash runs (audited with the same shape):
+The pod list refreshes when idle. `/` matches all typed words against pod, status or
+node; `u` keeps pods needing attention, `s` sorts, digits jump to rows and `?` shows
+the keys. `kdsh` and `: shell FILTER` use shell mode: Enter attaches and a single
+match opens directly. Leaving the shell returns to this list or the inspector.
 
-```bash
-kubectl exec -it <pod> [-c <container>] -- sh -c 'command -v bash >/dev/null 2>&1 && exec bash || exec sh'
-kubectl cp -c <container> ./local.conf <namespace>/<pod>:/tmp/local.conf
-kubectl cp -c <container> <namespace>/<pod>:/var/log/app.log ./app.log
-```
+In a container with Bash, a pinned identity panel shows context, namespace, pod,
+container, node and the metrics observed at attachment time. It is not refreshed
+cluster telemetry. `exit` / Ctrl-D returns to kdash, `kdswitch` returns to related
+pods of the same workload, and `kdquit` leaves kdash. Without Bash the `sh` fallback
+prints a one-time header and has no `kdswitch` / `kdquit` helpers.
+
+For an upload, browse local files and directories (starting in the launch directory),
+mark with Space, press `u`, select the container destination and review the summary.
+It asks before overwriting existing destination names. For a download, browse the
+container, mark items and press `d`. Review the output directory and format: ZIP,
+tar.gz or plain files. ZIP uses host `zip`, or optional `python3`; otherwise tar.gz
+is the default. Local output starts in the launch directory; `KDASH_LAUNCH_DIR`
+overrides it. `/` filters names, Enter opens directories, `h` / Backspace goes up,
+`p` accepts a path and `v` previews the first 64 KiB of a file. Marks are scoped to
+one directory. Summaries let you go back or cancel before copying.
+
+Browsed copies stream `tar` through `kubectl exec`; remote listings, previews and
+size checks also use `exec`. When the browser cannot run, kdash falls back to the
+typed-path `kubectl cp` dialog. Transfers show bytes/rate and accept `q` to cancel.
+Cancelled downloads discard the partial stream; already-uploaded files remain in
+the container. Upload verification compares `du` sizes with a filesystem tolerance,
+not hashes; archive downloads display a local SHA256 checksum.
 
 What to expect, and what to record:
 
 1. **Permission first.** `kubectl auth can-i create pods/exec` must say yes; `cp` also
-   needs a `tar` inside the image, so distroless and scratch containers cannot be copied
-   from - use `kubectl debug --copy-to`, or read their logs in the inspector instead.
+   needs a `tar` inside the image. The browser also needs `sh`. Images without those
+   tools cannot use these flows; reading permitted logs in the inspector remains an option.
 2. **The terminal is handed over.** kdash leaves its screen, kubectl gets the real
    terminal (so `-it` and job control work, inside tmux as well), and the dashboard
-   repaints when you leave the shell with `exit` or Ctrl-D.
+   repaints when you leave the shell with `exit` or Ctrl-D. Interactive streams run
+   without the read-request timeout or the 12-second read-command cap.
 3. **It is your identity, not kdash's read-only path.** Everything you do in that shell
    happens with your RBAC and is not covered by the read-only guarantee. Treat it like
    any other `kubectl exec` session and record it in the change/incident notes.
 4. **The audit log is the record.** `EXEC` and `EXEC_END` (pod, container), `CP_UP` and
    `CP_DOWN` (pod, container, direction, both paths, with credential-looking paths masked)
    and `CP_END` (bytes, exit code) are written to the local log, the central log when
-   configured, and syslog. The `KUBECTL` summary line counts them as `writes=N`, and a
-   refused or blocked attempt is `INTERACTIVE_BLOCKED`. Verify with
-   `kdash --audit-grep 'EXEC|CP_'`.
+   configured, and syslog. The `KUBECTL` summary line counts every `exec` / `cp`
+   invocation as a write, including browser reads. Mode switches record
+   `INTERACTIVE_ON` / `INTERACTIVE_OFF`; cancelling in a transfer summary records
+   `CP_CANCEL`. Verify with `kdash --audit-grep 'EXEC|CP_|INTERACTIVE_'`.
 5. **Nothing else is kept.** No shell output, no copied file, no command history of the
    session enters the model, a report, a bundle, a session directory or an export. The
    automatic evidence bundle still contains no logs.
-6. **When it is off, it stays off.** The keys and the flag are visible, the guard still
+6. **You can turn it off again.** `X` disables interactive mode immediately and records
+   the change. The keys and the flag remain visible, and the guard
    refuses `exec` and `cp` with exit 126 and a hint, and a refusal is audited. Do not
    enable the mode for a run that must stay provably read-only.
 

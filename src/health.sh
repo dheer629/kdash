@@ -132,36 +132,38 @@ health_collect() {
   return 0
 }
 
-health__sources() {
-  local source state epoch detail now stamp
+health__sources() { # source... -> a table of where the data came from and how old it is
+  local source state epoch detail now age
   now=$(date +%s)
-  for source in "$@"; do
-    state=unknown; epoch=''; detail='not collected'
-    if [ -r "$TOOLKIT_DIR/health-$source.status" ]; then
-      IFS=$'\t' read -r state epoch detail < "$TOOLKIT_DIR/health-$source.status"
-    elif [ -n "${TOOLKIT_PID:-}" ]; then
-      # the first background read is still running: say so instead of "not collected"
-      state=collecting; detail='first read in progress; values appear when it completes'
-    fi
-    case "$epoch" in ''|*[!0-9]*) stamp='time unknown' ;;
-      *) stamp="$(date -d "@$epoch" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || printf '%s' "$epoch") ($((now-epoch))s ago)" ;;
-    esac
-    printf '  %s: %s; %s; %s\n' "$source" "${state:-unknown}" "$stamp" "${detail:-not collected}"
-  done
+  {
+    printf 'SOURCE\tSTATE*\t>READ\tDETAIL~\n'
+    for source in "$@"; do
+      state=unknown; epoch=''; detail='not collected'
+      if [ -r "$TOOLKIT_DIR/health-$source.status" ]; then
+        IFS=$'\t' read -r state epoch detail < "$TOOLKIT_DIR/health-$source.status"
+      elif [ -n "${TOOLKIT_PID:-}" ]; then
+        state=collecting; detail='first read in progress; values appear when it completes'
+      fi
+      case "$epoch" in ''|*[!0-9]*) age='-' ;; *) age="$((now - epoch))s ago" ;; esac
+      [ "$state" != ok ] || detail='read succeeded'
+      printf '%s\t%s\t%s\t%s\n' "$source" "${state:-unknown}" "$age" "${detail:-not collected}"
+    done
+  } | TK_COUNT=0 tk_table "DATA SOURCES" "" "" source sources
 }
 
 health_render_services() {
-  printf 'SERVICES AND BACKENDS\n'
-  printf 'Observed Kubernetes configuration and readiness; this does not test end-to-end reachability.\n'
+  local source d="$TOOLKIT_DIR/svc-view"
+  tk_title "SERVICES AND BACKENDS" "observed configuration and readiness - reachability is not tested"
   health__sources services pods endpoints ingresses
-  local source
   for source in services pods endpoints ingresses; do
     [ -f "$TOOLKIT_DIR/health-$source.raw" ] || : > "$TOOLKIT_DIR/health-$source.raw"
   done
-  awk -F'|' -v sf="$TOOLKIT_DIR/health-services.raw" -v pf="$TOOLKIT_DIR/health-pods.raw" \
+  mkdir -p "$d"
+  LC_ALL=C awk -F'|' -v sf="$TOOLKIT_DIR/health-services.raw" -v pf="$TOOLKIT_DIR/health-pods.raw" \
     -v ef="$TOOLKIT_DIR/health-endpoints.raw" -v inf="$TOOLKIT_DIR/health-ingresses.raw" \
     -v ss="$(health__state services)" -v ps="$(health__state pods)" \
-    -v es="$(health__state endpoints)" -v ins="$(health__state ingresses)" '
+    -v es="$(health__state endpoints)" -v ins="$(health__state ingresses)" -v scope="${NS:-}" -v all="${ALL_NS:-0}" \
+    -v arw="$([ "${BARCHR:-unicode}" = ascii ] && printf '%s' '->' || printf '\342\206\222')" -v of="$d/svc.tsv" -v bf="$d/backends.tsv" -v ff="$d/findings.tsv" -v rf="$d/routes.tsv" '
     function clean(s) { return (s=="<no value>" || s=="<nil>" || s=="null") ? "" : s }
     function matches(sel, labels,   a,n,i) {
       n=split(sel,a,","); for(i=1;i<=n;i++) if(a[i]!="" && !index("," labels,"," a[i] ",")) return 0
@@ -169,181 +171,193 @@ health_render_services() {
     }
     function proto(s) { return s=="" ? "TCP" : s }
     function nocomma(s) { sub(/,$/,"",s); return s }
-    function endpoints(k) { return es=="ok" ? (ER[k]+0) " ready / " (EB[k]+0) " unready / " (EU[k]+0) " unknown" : "unknown" }
-    FILENAME==sf && $1=="S" { k=$2 SUBSEP $3; if(!(k in SN)) SK[++NS]=k; SN[k]=$2 "/" $3; ST[k]=clean($4); EXT[k]=clean($5); IP[k]=clean($6); SEL[k]=nocomma(clean($7)); next }
+    function nm(ns, n) { return (all=="1" || ns!=scope) ? ns "/" n : n }
+    function eps(k) { if(es!="ok") return "unknown"; if(EC[k]==0) return "none"
+      return (ER[k]+0) "/" (ER[k]+EB[k]+EU[k]) " ready" (EU[k]+0 ? " (" EU[k] " unknown)" : "") }
+    function find(sv, k, f, t) { printf "%s\t%s\t%s\n", sv, k, f >> ff; if (sv ~ /CRIT/) NCRIT++ }
+    FILENAME==sf && $1=="S" { k=$2 SUBSEP $3; if(!(k in SN)) SK[++NS]=k; SN[k]=nm($2,$3); ST[k]=clean($4); EXT[k]=clean($5); IP[k]=clean($6); SEL[k]=nocomma(clean($7)); next }
     FILENAME==sf && $1=="T" { k=$2 SUBSEP $3; n=++NT[k]; TN[k,n]=clean($4); TP[k,n]=clean($5); TT[k,n]=clean($6); PT[k,n]=proto(clean($7)); next }
-    FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PK[++NP]=k; PN[k]=$2 "/" $3; PNS[k]=$2; READY[k]=$5; LABELS[k]=$6; DEL[k]=clean($8); next }
+    FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PK[++NP]=k; PN[k]=nm($2,$3); PNS[k]=$2; READY[k]=$5; LABELS[k]=$6; DEL[k]=clean($8); next }
     FILENAME==pf && $1=="C" && clean($5)!="" { PORT[$2 SUBSEP $3 SUBSEP $5 SUBSEP proto(clean($7))]=1; next }
     FILENAME==ef && $1=="E" { k=$2 SUBSEP $3; EC[k]++; next }
     FILENAME==ef && $1=="D" {
       k=$2 SUBSEP $3; if($8=="true") ER[k]++; else if($8=="false") EB[k]++; else EU[k]++
-      if($7=="Pod") { ns=clean($5); if(ns=="") ns=$2; p=ns SUBSEP clean($6); EK[k,p]=1; if($8=="true" && $10!="true") EPR[k,p]=1 }
       next
     }
     FILENAME==inf && $1=="I" { IR[++NI]=$0; next }
     END {
+      printf "" > ff
       for(si=1;si<=NS;si++) {
         k=SK[si]; split(k,z,SUBSEP)
         if(SEL[k]!="" && ST[k]!="ExternalName" && ps=="ok") for(pi=1;pi<=NP;pi++) {
           p=PK[pi]; if(PNS[p]!=z[1] || !matches(SEL[k],LABELS[p])) continue
-          MATCH[k,p]=1; SELECTED[k]++; if(READY[p]=="True" && DEL[p]=="") { PR[k]++; if(PR[k]<=3) PLIST[k]=PLIST[k] (PLIST[k]=="" ? "" : ", ") PN[p] }
+          SELECTED[k]++; if(READY[p]=="True" && DEL[p]=="") { PR[k]++; if(PR[k]<=3) PLIST[k]=PLIST[k] (PLIST[k]=="" ? "" : ", ") PN[p] }
           for(ti=1;ti<=NT[k];ti++) if(TT[k,ti]!="" && TT[k,ti]!~/^[0-9]+$/ && !((p SUBSEP TT[k,ti] SUBSEP PT[k,ti]) in PORT)) MISSING[k,ti]++
         }
       }
-      print "\nINGRESS -> SERVICE -> ENDPOINTS -> READY PODS"
-      if(ins!="ok") print "  Ingress routes unknown: optional source " ins "."
-      else if(NI==0) print "  No service-backed Ingress routes in this collected scope (resource backends are not expanded)."
-      else for(i=1;i<=NI;i++) {
-        split(IR[i],r,"|"); k=r[2] SUBSEP r[7]; host=clean(r[5]); if(host=="") host="*"
-        printf "  %s/%s  %s%s -> %s/%s:%s\n",r[2],r[3],host,r[6],r[2],r[7],r[8]
-        if(ss!="ok") { print "    Service and backend relationship unknown: services source " ss "."; continue }
-        if(!(k in SN)) { print "    Service missing from the successful service read."; continue }
-        found=0; for(j=1;j<=NT[k];j++) if(r[8]==TN[k,j] || r[8]==TP[k,j]) found=1
-        if(!found) print "    Ingress backend port does not match a Service port."
-        if(ST[k]=="ExternalName") print "    ExternalName DNS alias -> " EXT[k] "; pod backend readiness is not inferred."
-        else printf "    %s slices; endpoints %s; ready selected pods %s\n",(es=="ok" ? EC[k]+0 : "unknown"),endpoints(k),(ps=="ok" && SEL[k]!="" ? PR[k]+0 : "unknown")
-      }
-      print "\nSERVICE BACKEND DIAGNOSTICS"
-      printf "  %-36s %-13s %-10s %-10s %s\n","NAMESPACE/SERVICE","TYPE","SELECTED","READY PODS","ENDPOINT READINESS"
-      if(ss!="ok") { print "  Service inventory unknown: source " ss "."; exit }
-      if(NS==0) print "  No Services in this successful scoped read."
+      # services
+      print "SERVICE\tSTATUS*\tTYPE\t>SELECTED\t>READY\tENDPOINTS\tCLUSTER-IP~\tPORTS (name:port"arw"target)" > of
+      print "SERVICE\tREADY BACKEND PODS\tSELECTOR~" > bf
       for(si=1;si<=NS;si++) {
         k=SK[si]; selected=(ps=="ok" && SEL[k]!="" && ST[k]!="ExternalName")
-        printf "  %-36s %-13s %-10s %-10s %s\n",SN[k],ST[k],(selected ? SELECTED[k]+0 : "unknown"),(selected ? PR[k]+0 : "unknown"),endpoints(k)
-        if(ST[k]=="ExternalName") { print "    DNS alias -> " EXT[k] "; selectors and EndpointSlices are not required for this Service type."; continue }
-        if(SEL[k]=="") print "    Selectorless Service: backends can be managed manually; no selector mismatch is inferred."
-        else {
-          print "    selector: " SEL[k]
-          if(ps!="ok") print "    Pod selection and named target ports unknown: pods source " ps "."
-          else if(SELECTED[k]==0) print "    SELECTOR MISMATCH: selector matches no pods in this collected scope."
-          else if(PR[k]==0) print "    UNREADY: selected pods exist, but none are Ready and non-terminating."
-          else print "    Ready selected pods: " PLIST[k] (PR[k]>3 ? " (+" (PR[k]-3) " more)" : "")
-        }
-        for(ti=1;ti<=NT[k];ti++) {
-          printf "    port %s%s/%s -> targetPort %s\n",(TN[k,ti]!="" ? TN[k,ti] ":" : ""),TP[k,ti],PT[k,ti],(TT[k,ti]!="" ? TT[k,ti] : TP[k,ti])
-          if(selected && MISSING[k,ti]>0) printf "    NAMED PORT MISSING: %s/%s absent on %d/%d selected pods.\n",TT[k,ti],PT[k,ti],MISSING[k,ti],SELECTED[k]
-        }
-        if(es=="ok") {
-          if(EC[k]==0) print "    No EndpointSlices for this Service in the successful slice read."
-          else if(ER[k]==0) print "    No explicitly ready endpoints observed; unknown readiness remains unknown."
-          linked=0; readyLinked=0
-          for(ep in EK) { split(ep,pp,SUBSEP); if(pp[1] SUBSEP pp[2]!=k) continue; p=pp[3] SUBSEP pp[4]; linked++; if(EPR[k,p] && READY[p]=="True" && DEL[p]=="") readyLinked++ }
-          if(linked>0 && ps=="ok") printf "    EndpointSlice Pod references: %d unique; explicitly ready endpoints pointing to Ready pods: %d.\n",linked,readyLinked
-        } else print "    EndpointSlice backend state unknown: source " es "."
-        if(IP[k]=="None") print "    Headless Service: DNS/backend records apply; there is no virtual ClusterIP."
+        ports=""
+        for(ti=1;ti<=NT[k];ti++) { t=TT[k,ti]; pp=(TN[k,ti]!="" ? TN[k,ti] ":" : "") TP[k,ti] (t!="" && t!=TP[k,ti] ? arw t : "") (PT[k,ti]!="TCP" ? "/" PT[k,ti] : "")
+          ports=ports (ports=="" ? "" : ", ") pp }
+        type=ST[k]; if(IP[k]=="None") type="Headless"; cip=(IP[k]=="" || IP[k]=="None" ? "-" : IP[k])
+        st="OK"
+        if(ss!="ok") st="unknown"
+        else if(ST[k]=="ExternalName") { st="EXTERNAL"; cip=arw " " EXT[k] }
+        else if(SEL[k]=="") { st=(es=="ok" && ER[k]+0>0) ? "OK" : "SELECTORLESS"; find("{d}INFO", SN[k], "no selector: backends are managed manually (EndpointSlices " eps(k) ")") }
+        else if(ps!="ok") st="unknown"
+        else if(SELECTED[k]+0==0) { st="NO MATCH"; find("{r}CRITICAL", SN[k], "selector " SEL[k] " matches no pod in this scope") }
+        else if(PR[k]+0==0) { st="NOT READY"; find("{r}CRITICAL", SN[k], SELECTED[k] " selected pod(s), none Ready and serving") }
+        for(ti=1;ti<=NT[k];ti++) if(selected && MISSING[k,ti]>0) { if(st=="OK") st="PORT MISSING"
+          find("{y}WARNING", SN[k], "named targetPort " TT[k,ti] "/" PT[k,ti] " is not declared on " MISSING[k,ti] " of " SELECTED[k] " selected pod(s)") }
+        if(es=="ok" && ST[k]!="ExternalName" && SEL[k]!="" && EC[k]==0) { if(st=="OK") st="NO ENDPOINTS"; find("{y}WARNING", SN[k], "no EndpointSlice exists for this Service") }
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", SN[k], st, type, (selected ? SELECTED[k]+0 : "-"), (selected ? PR[k]+0 : "-"), (ST[k]=="ExternalName" ? "-" : eps(k)), cip, (ports=="" ? "-" : ports) > of
+        if(SEL[k]!="" && ST[k]!="ExternalName") printf "%s\t%s\t%s\n", SN[k], (ps!="ok" ? "unknown" : PR[k]+0==0 ? "{r}none ready" : PLIST[k] (PR[k]>3 ? "  (+" (PR[k]-3) " more)" : "")), SEL[k] > bf
       }
-      print "\nReadiness is an API observation. DNS, ingress controllers, NetworkPolicy, routing, TLS and application responses are not tested."
+      # ingress routes
+      print "INGRESS\tSTATUS*\t>READY PODS\tCLASS~\tHOST / PATH\tBACKEND SERVICE" > rf
+      if(ins=="ok") for(i=1;i<=NI;i++) {
+        split(IR[i],r,"|"); k=r[2] SUBSEP r[7]; host=clean(r[5]); if(host=="") host="*"
+        st="OK"; rp="-"
+        if(ss!="ok") st="unknown"
+        else if(!(k in SN)) { st="SERVICE MISSING"; find("{r}CRITICAL", nm(r[2],r[3]), "backend Service " r[7] " does not exist") }
+        else {
+          found=0; for(j=1;j<=NT[k];j++) if(r[8]==TN[k,j] || r[8]==TP[k,j]) found=1
+          if(!found) { st="PORT MISMATCH"; find("{r}CRITICAL", nm(r[2],r[3]), "backend port " r[8] " is not a port of Service " r[7]) }
+          if(ST[k]=="ExternalName") rp="external"
+          else { rp=(ps=="ok" && SEL[k]!="" ? PR[k]+0 : "-"); if(st=="OK" && es=="ok" && ER[k]+0==0) st="NO READY ENDPOINTS" }
+        }
+        printf "%s\t%s\t%s\t%s\t%s\t%s\n", nm(r[2],r[3]), st, rp, clean(r[4]), host clean(r[6]), r[7] ":" r[8] > rf
+      }
     }
   ' "$TOOLKIT_DIR/health-services.raw" "$TOOLKIT_DIR/health-pods.raw" "$TOOLKIT_DIR/health-endpoints.raw" "$TOOLKIT_DIR/health-ingresses.raw"
+  [ -s "$d/svc.tsv" ] || printf 'SERVICE\n' > "$d/svc.tsv"
+  tk_table "SERVICES" "$([ "$(health__state services)" = ok ] || printf 'source %s' "$(health__state services)")" \
+    "no Services in this scope$([ "$(health__state services)" = ok ] || printf ' (source %s)' "$(health__state services)")" service services < "$d/svc.tsv"
+  { printf 'SEVERITY*\tOBJECT\tFINDING\n'; tk_by_severity < "$d/findings.tsv"; } |
+    tk_table "FINDINGS" "critical first" "nothing wrong found in the collected Services and routes" finding findings
+  [ ! -s "$d/backends.tsv" ] || tk_table "BACKENDS" "selector and the Ready pods it selects (first 3)" "no selector-based Services" service services < "$d/backends.tsv"
+  if [ "$(health__state ingresses)" = ok ]; then
+    tk_table "INGRESS ROUTES" "service-backed rules" "no service-backed Ingress routes in this scope" route routes < "$d/routes.tsv"
+  else
+    printf 'INGRESS\n' | tk_table "INGRESS ROUTES" "" "unknown - ingresses source $(health__state ingresses)"
+  fi
+  printf '\n'
+  tk_note "Readiness is what the API reports. DNS, ingress controllers, NetworkPolicy, routing, TLS and application responses are not tested."
+  rm -rf "$d"
 }
 
 health__storage_events() {
   local file=''
   if [ -r "$TOOLKIT_DIR/events.tsv" ]; then file="$TOOLKIT_DIR/events.tsv"
   elif [ -n "${MODEL:-}" ] && [ -r "$MODEL/events.tsv" ]; then file="$MODEL/events.tsv"; fi
-  printf '\nSTORAGE-RELATED RECORDED EVENTS\n'
   if [ -z "$file" ]; then
-    printf '  Event data is unavailable in this snapshot; inspect the Events view for mount, attach and provisioning failures.\n'
+    printf 'EVENT\n' | tk_table "STORAGE EVENTS" "" "event data unavailable in this snapshot - see the Events view (E)"
     return 0
   fi
-  awk -F'\t' '
-    NR==1 { header=$0; if(tolower($0) ~ /message|reason/) { next } }
-    tolower($0) ~ /failedmount|failedattach|failedbinding|failedprovision|provisioningfailed|volume|persistentvolumeclaim|storageclass|claim/ {
-      if(n++==0 && header!="") print "  " header
-      if(n<=12) print "  " $0
-    }
-    END { if(n==0) print "  No matching storage entries in the available event file; scope and collection window apply."
-      else if(n>12) print "  Additional matching events are available in the Events view." }
-  ' "$file"
+  # events.tsv: NS KIND NAME UID TYPE REASON COUNT FIRST LAST MESSAGE
+  LC_ALL=C awk -F'\t' -v now="$(date +%s)" "$TK_TIME_AWK"'
+    BEGIN { NOW = now; print "LAST SEEN\tTYPE*\tOBJECT\tREASON\t>COUNT\tMESSAGE" }
+    NR == 1 && $1 == "NS" { next }
+    tolower($2 " " $6 " " $10) ~ /failedmount|failedattach|failedbinding|failedprovision|provisioningfailed|volume|persistentvolumeclaim|storageclass|claim|waitforfirstconsumer|resiz/ {
+      if (++n <= 15) printf "%s\t%s\t%s\t%s\t%s\t%s\n", ago($9), $5, $2 "/" $3, $6, $7, $10 }
+  ' "$file" | tk_table "STORAGE EVENTS" "newest first, up to 15" "no storage-related events in the collected window" event events
 }
 
 health_render_storage() {
-  printf 'PERSISTENT STORAGE\n'
-  printf 'PVC/PV capacity describes allocation; measured usage is shown only when PVC-labelled volume samples exist.\n'
+  local source d="$TOOLKIT_DIR/sto-view"
+  tk_title "PERSISTENT STORAGE" "claims, volumes and classes - capacity is allocation; usage only from kubelet volume samples"
   health__sources pvcs pods pvs storageclasses volume-metrics
-  local source
   for source in pvcs pods pvs storageclasses; do
     [ -f "$TOOLKIT_DIR/health-$source.raw" ] || : > "$TOOLKIT_DIR/health-$source.raw"
   done
   [ -f "$TOOLKIT_DIR/health-volume-usage.tsv" ] || : > "$TOOLKIT_DIR/health-volume-usage.tsv"
-  awk -F'|' -v qf="$TOOLKIT_DIR/health-pvcs.raw" -v pf="$TOOLKIT_DIR/health-pods.raw" \
+  mkdir -p "$d"
+  LC_ALL=C awk -F'|' -v qf="$TOOLKIT_DIR/health-pvcs.raw" -v pf="$TOOLKIT_DIR/health-pods.raw" \
     -v vf="$TOOLKIT_DIR/health-pvs.raw" -v cf="$TOOLKIT_DIR/health-storageclasses.raw" \
     -v uf="$TOOLKIT_DIR/health-volume-usage.tsv" -v qs="$(health__state pvcs)" \
     -v ps="$(health__state pods)" -v vs="$(health__state pvs)" \
-    -v cs="$(health__state storageclasses)" -v us="$(health__state volume-metrics)" -v now="$(date +%s)" '
+    -v cs="$(health__state storageclasses)" -v us="$(health__state volume-metrics)" -v now="$(date +%s)" \
+    -v scope="${NS:-}" -v all="${ALL_NS:-0}" \
+    -v cf_out="$d/claims.tsv" -v mf="$d/mounts.tsv" -v vf_out="$d/volumes.tsv" -v kf="$d/classes.tsv" -v ff="$d/findings.tsv" '
     function clean(s) { return (s=="<no value>" || s=="<nil>" || s=="null") ? "" : s }
-    function known(s) { return clean(s)=="" ? "unknown" : s }
+    function known(s) { return clean(s)=="" ? "-" : s }
     function nocomma(s) { sub(/,$/,"",s); return s }
+    function nm(ns, n) { return (all=="1" || ns!=scope) ? ns "/" n : n }
+    function acc(s) { gsub(/ReadWriteOncePod/,"RWOP",s); gsub(/ReadWriteOnce/,"RWO",s); gsub(/ReadWriteMany/,"RWX",s); gsub(/ReadOnlyMany/,"ROX",s); gsub(/,/," ",s); return s }
     function bytes(s,   n,i,a) {
-      if(s=="?" || s=="") return "unknown"; n=s+0; split("B KiB MiB GiB TiB PiB",a," "); i=1
+      if(s=="?" || s=="") return "-"; n=s+0; split("B KiB MiB GiB TiB PiB",a," "); i=1
       while(n>=1024 && i<6) { n/=1024; i++ } return sprintf("%.1f%s",n,a[i])
     }
-    function sample(ts,origin,   age) {
-      if(ts=="?" || ts=="") return "unknown"; age=now-ts; if(age<0) return "clock ahead"
-      return sprintf("%ds ago (%s time)%s",age,origin,(age>300 ? " STALE" : ""))
-    }
-    FILENAME==qf && $1=="Q" { k=$2 SUBSEP $3; QK[++NQ]=k; QN[k]=$2 "/" $3; QPH[k]=clean($4); QPV[k]=clean($5); QC[k]=clean($6); QR[k]=clean($7); QCAP[k]=clean($8); QA[k]=nocomma(clean($9)); QM[k]=clean($10); next }
-    FILENAME==qf && $1=="F" && $5=="True" { k=$2 SUBSEP $3; COND[k]=COND[k] " " $4 ":" clean($6); next }
-    FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PP[k]=$4 "/" $5; next }
+    function find(sv, k, f) { printf "%s\t%s\t%s\n", sv, k, f >> ff }
+    FILENAME==qf && $1=="Q" { k=$2 SUBSEP $3; QK[++NQ]=k; QN[k]=nm($2,$3); QPH[k]=clean($4); QPV[k]=clean($5); QC[k]=clean($6); QR[k]=clean($7); QCAP[k]=clean($8); QA[k]=nocomma(clean($9)); QM[k]=clean($10); next }
+    FILENAME==qf && $1=="F" && $5=="True" { k=$2 SUBSEP $3; COND[k]=COND[k] (COND[k]=="" ? "" : ", ") $4 (clean($6)!="" ? " (" clean($6) ")" : ""); next }
+    FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PP[k]=$4 ($5=="True" ? "" : $5=="False" ? ", not ready" : ""); next }
     FILENAME==pf && $1=="V" { p=$2 SUBSEP $3; k=$2 SUBSEP $5; VCLAIM[p,$4]=k; REF[k,p]=1; next }
     FILENAME==pf && $1=="M" { p=$2 SUBSEP $3; MK[++NM]=p SUBSEP $5; MC[NM]=$4; MP[NM]=$6; MRO[NM]=$7; next }
-    FILENAME==vf && $1=="Z" { PV[$2]=1; VPH[$2]=clean($3); VC[$2]=clean($4); VCAP[$2]=clean($5); VR[$2]=clean($6); VCLAIM[$2]=clean($7) "/" clean($8); DRIVER[$2]=clean($9); next }
-    FILENAME==cf && $1=="K" { SC[$2]=1; PROV[$2]=clean($3); BIND[$2]=clean($4); EXPAND[$2]=clean($5); RECLAIM[$2]=clean($6); next }
+    FILENAME==vf && $1=="Z" { PV[$2]=1; VK[++NV]=$2; VPH[$2]=clean($3); VC[$2]=clean($4); VCAP[$2]=clean($5); VR[$2]=clean($6); VCL[$2]=clean($7) "/" clean($8); VCLNS[$2]=clean($7); DRIVER[$2]=clean($9); next }
+    FILENAME==cf && $1=="K" { SC[$2]=1; SCK[++NSC]=$2; PROV[$2]=clean($3); BIND[$2]=clean($4); EXPAND[$2]=clean($5); RECLAIM[$2]=clean($6); next }
     FILENAME==uf {
-      split($0,u,"\t"); k=u[1] SUBSEP u[2]; USED[k]=u[3]; UT[k]=u[4]; UO[k]=u[5]; CAP[k]=u[6]; CT[k]=u[7]; CO[k]=u[8]; AVAIL[k]=u[9]; AT[k]=u[10]; AO[k]=u[11]; next
+      split($0,u,"\t"); k=u[1] SUBSEP u[2]; USED[k]=u[3]; UT[k]=u[4]; CAP[k]=u[6]; CT[k]=u[7]; AVAIL[k]=u[9]; next
     }
     END {
-      print "\nPVC BINDINGS AND POD REFERENCES"
-      printf "  %-34s %-10s %-20s %-13s %-13s %s\n","NAMESPACE/CLAIM","PHASE","PV","REQUEST","PVC CAPACITY","STORAGECLASS"
-      if(qs!="ok") print "  PVC inventory and binding completeness unknown: source " qs "."
-      else if(NQ==0) print "  No PVCs in this successful scoped read."
+      printf "" > ff
+      print "CLAIM\tSTATUS*\t>REQUEST\t>CAPACITY\t>USED\t>USE%\tACCESS\tCLASS\tPODS\tVOLUME~" > cf_out
+      print "CLAIM\tPOD\tPOD STATUS*\tCONTAINER\tMOUNT PATH\tMODE" > mf
       if(qs=="ok") for(i=1;i<=NQ;i++) {
-        k=QK[i]; v=QPV[k]; c=QC[k]
-        printf "  %-34s %-10s %-20s %-13s %-13s %s\n",QN[k],known(QPH[k]),(v!="" ? v : "unbound"),known(QR[k]),known(QCAP[k]),(c!="" ? c : "unspecified")
-        printf "    access=%s; volumeMode=%s\n",known(QA[k]),known(QM[k])
-        if(COND[k]!="") print "    PVC conditions:" COND[k]
-        if(v!="") {
-          if(vs!="ok") print "    PV details unknown: optional source " vs "."
-          else if(!(v in PV)) print "    BINDING CHECK: referenced PV missing from the successful PV read."
-          else {
-            printf "    PV phase=%s; capacity=%s; reclaim=%s; driver=%s\n",known(VPH[v]),known(VCAP[v]),known(VR[v]),known(DRIVER[v])
-            if(VCLAIM[v]!="/" && VCLAIM[v]!=QN[k]) print "    BINDING CHECK: PV claimRef points to " VCLAIM[v] ", not " QN[k] "."
-          }
-        }
-        if(c!="") {
-          if(cs!="ok") print "    StorageClass details unknown: optional source " cs "."
-          else if(!(c in SC)) print "    StorageClass missing from the successful class read."
-          else {
-            printf "    StorageClass provisioner=%s; binding=%s; expansion=%s\n",known(PROV[c]),known(BIND[c]),known(EXPAND[c])
-            if(QPH[k]=="Pending" && BIND[c]=="WaitForFirstConsumer") print "    Pending claim uses WaitForFirstConsumer; scheduling/consumer placement may be required before binding."
-          }
-        }
-        refs=0
-        if(ps!="ok") print "    Pod volume references and mounts unknown: pods source " ps "."
-        else {
-          for(r in REF) { split(r,a,SUBSEP); if(a[1] SUBSEP a[2]!=k) continue; p=a[3] SUBSEP a[4]; refs++
-            printf "    pod reference: %s/%s (%s)\n",a[3],a[4],known(PP[p])
-          }
-          if(refs==0) print "    No pod volume references in this collected scope; this does not establish that storage is unused."
-          for(m=1;m<=NM;m++) if(VCLAIM[MK[m]]==k) {
-            split(MK[m],a,SUBSEP); printf "    declared mount: %s/%s container=%s path=%s readOnly=%s\n",a[1],a[2],MC[m],MP[m],(MRO[m]=="true" ? "true" : "false")
-          }
-        }
-        if(us=="ok" && (k in USED)) {
-          printf "    measured used=%s; measured filesystem capacity=%s; available=%s",bytes(USED[k]),bytes(CAP[k]),bytes(AVAIL[k])
+        k=QK[i]; v=QPV[k]; c=QC[k]; split(k,kk,SUBSEP)
+        pods=""; refs=0
+        if(ps=="ok") for(r in REF) { split(r,a,SUBSEP); if(a[1] SUBSEP a[2]!=k) continue; refs++; if(refs<=2) pods=pods (pods=="" ? "" : ", ") nm(a[3],a[4]) }
+        if(refs>2) pods=pods " +" (refs-2)
+        if(ps!="ok") pods="unknown"; else if(refs==0) pods="{d}none"
+        used="-"; pct="-"
+        if(us=="ok" && (k in USED)) { used=bytes(USED[k])
           skew=UT[k]-CT[k]; if(skew<0) skew=-skew
-          if(USED[k]!="?" && CAP[k]!="?" && CAP[k]+0>0 && skew<=300) printf "; used/capacity=%.1f%%",100*USED[k]/CAP[k]
-          else if(USED[k]!="?" && CAP[k]!="?" && skew>300) printf "; percentage unknown (sample times differ by more than 5m)"
-          printf "\n    usage sample: %s; capacity sample: %s; available sample: %s\n",sample(UT[k],UO[k]),sample(CT[k],CO[k]),sample(AT[k],AO[k])
-        } else print "    Measured usage unknown: no usable PVC-labelled volume sample for this claim."
+          if(USED[k]!="?" && CAP[k]!="?" && CAP[k]+0>0 && skew<=300) { p=100*USED[k]/CAP[k]; pct=(p>=90 ? "{r}" : p>=80 ? "{y}" : "") sprintf("%.0f%%",p)
+            if(p>=90) find("{r}CRITICAL", QN[k], sprintf("volume %.0f%% full (%s of %s)", p, bytes(USED[k]), bytes(CAP[k])))
+            else if(p>=80) find("{y}WARNING", QN[k], sprintf("volume %.0f%% full (%s of %s)", p, bytes(USED[k]), bytes(CAP[k]))) } }
+        st=known(QPH[k]); if(COND[k]!="") st=st " (" COND[k] ")"
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", QN[k], st, known(QR[k]), known(QCAP[k]), used, pct, acc(known(QA[k])) (QM[k]=="Block" ? " block" : ""), (c!="" ? c : "-"), pods, (v!="" ? v : "{y}unbound") > cf_out
+        if(COND[k]!="") find("{y}WARNING", QN[k], "condition " COND[k])
+        if(QPH[k]=="Pending") find((c in SC && BIND[c]=="WaitForFirstConsumer") ? "{y}WARNING" : "{r}CRITICAL", QN[k], "claim is Pending" ((c in SC && BIND[c]=="WaitForFirstConsumer") ? " - class " c " binds only when a consuming pod is scheduled" : " - not bound to a volume"))
+        if(QPH[k]=="Lost") find("{r}CRITICAL", QN[k], "claim is Lost - its volume no longer exists")
+        if(v!="" && vs=="ok" && !(v in PV)) find("{r}CRITICAL", QN[k], "bound volume " v " is missing from the volume list")
+        if(v!="" && vs=="ok" && (v in PV) && VCL[v]!="/" && VCL[v]!=kk[1] "/" kk[2]) find("{r}CRITICAL", QN[k], "volume " v " claimRef points to " VCL[v])
+        if(c!="" && cs=="ok" && !(c in SC)) find("{y}WARNING", QN[k], "storage class " c " does not exist")
+        if(ps=="ok" && refs==0) find("{d}INFO", QN[k], "no pod in this scope references the claim")
+        if(c!="") USEDC[c]=1; if(v!="") MINE[v]=1
       }
-      if(ps=="ok" && qs=="ok") for(r in REF) {
-        split(r,a,SUBSEP); k=a[1] SUBSEP a[2]
-        if(!(k in QN)) printf "  MISSING PVC REFERENCE: pod %s/%s refers to %s/%s, absent from the successful scoped PVC read.\n",a[3],a[4],a[1],a[2]
+      if(ps=="ok") for(m=1;m<=NM;m++) if(MK[m] in VCLAIM) {
+        k=VCLAIM[MK[m]]; split(MK[m],a,SUBSEP); split(k,kk,SUBSEP)
+        printf "%s\t%s\t%s\t%s\t%s\t%s\n", nm(kk[1],kk[2]), nm(a[1],a[2]), known(PP[a[1] SUBSEP a[2]]), MC[m], MP[m], (MRO[m]=="true" ? "read-only" : "read-write") > mf
       }
-      print "\nPod volume references and declared mount paths do not prove a volume mounted successfully."
-      print "Measured filesystem samples can differ from PVC/PV allocation; missing samples never mean zero usage."
+      if(ps=="ok" && qs=="ok") for(r in REF) { split(r,a,SUBSEP); k=a[1] SUBSEP a[2]
+        if(!(k in QN)) find("{r}CRITICAL", nm(a[3],a[4]), "pod refers to claim " a[2] ", which does not exist") }
+      print "VOLUME\tSTATUS*\t>CAPACITY\tRECLAIM\tCLASS\tCLAIM\tDRIVER~" > vf_out
+      if(vs=="ok") for(i=1;i<=NV;i++) { v=VK[i]; if(!(v in MINE) && !(all=="1") && VCLNS[v]!=scope) continue
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", v, known(VPH[v]), known(VCAP[v]), known(VR[v]), known(VC[v]), (VCL[v]=="/" ? "-" : VCL[v]), known(DRIVER[v]) > vf_out
+        if(VPH[v]=="Released") find("{y}WARNING", v, "volume is Released: its claim was deleted and the data is retained") }
+      print "CLASS\tPROVISIONER\tBINDING\tEXPANSION\tRECLAIM\tUSED HERE" > kf
+      if(cs=="ok") for(i=1;i<=NSC;i++) { c=SCK[i]
+        printf "%s\t%s\t%s\t%s\t%s\t%s\n", c, known(PROV[c]), known(BIND[c]), (EXPAND[c]=="true" ? "allowed" : "{d}no"), known(RECLAIM[c]), (c in USEDC ? "{g}yes" : "{d}no") > kf }
     }
   ' "$TOOLKIT_DIR/health-pvcs.raw" "$TOOLKIT_DIR/health-pods.raw" "$TOOLKIT_DIR/health-pvs.raw" "$TOOLKIT_DIR/health-storageclasses.raw" "$TOOLKIT_DIR/health-volume-usage.tsv"
+  local q; q="$(health__state pvcs)"
+  tk_table "PERSISTENT VOLUME CLAIMS" "$([ "$(health__state volume-metrics)" = ok ] || printf 'USED / USE%% need kubelet volume samples (Prometheus) - none here')" \
+    "$([ "$q" = ok ] && printf 'no claims in this scope' || printf 'unknown - pvcs source %s' "$q")" claim claims < "$d/claims.tsv"
+  { printf 'SEVERITY*\tOBJECT\tFINDING\n'; tk_by_severity < "$d/findings.tsv"; } |
+    tk_table "FINDINGS" "critical first" "nothing wrong found in the collected claims and volumes" finding findings
+  tk_table "MOUNTS" "declared in pod specs - a declaration does not prove the mount succeeded" \
+    "$([ "$(health__state pods)" = ok ] && printf 'no pod mounts a claim in this scope' || printf 'unknown - pods source %s' "$(health__state pods)")" mount mounts < "$d/mounts.tsv"
+  tk_table "PERSISTENT VOLUMES" "bound to the claims above" \
+    "$([ "$(health__state pvs)" = ok ] && printf 'no volumes' || printf 'unknown - pvs source %s (cluster-scoped, often not readable)' "$(health__state pvs)")" volume volumes < "$d/volumes.tsv"
+  tk_table "STORAGE CLASSES" "" \
+    "$([ "$(health__state storageclasses)" = ok ] && printf 'no storage classes' || printf 'unknown - storageclasses source %s' "$(health__state storageclasses)")" class classes < "$d/classes.tsv"
   health__storage_events
+  printf '\n'
+  tk_note "Allocation (request / capacity) and measured filesystem usage can differ; a missing sample never means zero usage."
+  rm -rf "$d"
 }

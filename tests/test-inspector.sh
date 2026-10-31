@@ -3,6 +3,7 @@
 set -euo pipefail
 REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$REPO/src/inspector.sh"
+source "$REPO/src/interactive.sh"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/kdash-inspector-tests.XXXXXXXX")"
 cleanup() {
   case "$TEST_ROOT" in "${TMPDIR:-/tmp}"/kdash-inspector-tests.*) rm -rf -- "$TEST_ROOT" ;; esac
@@ -61,7 +62,7 @@ assert_lacks "$TEST_ROOT/summary" $'\007'
 reset_calls
 KDASH_INSPECT_LOGS=current inspector_render beta same-name > "$TEST_ROOT/current"
 assert_has "$CALLS" $'logs\tsame-name\t-n\tbeta\t-c\tweb\t'
-assert_has "$CALLS" $'--tail=200\t--limit-bytes=65536\t--timestamps=true\t'
+assert_has "$CALLS" $'--tail=5000\t--limit-bytes=8388608\t--timestamps=true\t'
 assert_lacks "$CALLS" --previous
 assert_has "$TEST_ROOT/current" 'namespace=beta container=web previous=0'
 
@@ -78,10 +79,13 @@ FAKE_HUGE=1 KDASH_LOG_LIMIT_BYTES=2048 KDASH_LOG_TAIL=0009 KDASH_INSPECT_LOGS=cu
   KDASH_INSPECT_CONTAINER=web inspector_render beta same-name > "$TEST_ROOT/bounded"
 assert_has "$CALLS" --tail=9
 assert_has "$CALLS" --limit-bytes=2048
-assert_has "$TEST_ROOT/bounded" '[Output clipped at 2048 bytes.]'
+# A log cap is metadata, so the saved pane contains only the log itself.
+assert_lacks "$TEST_ROOT/bounded" '[Output clipped'
 [ "$(wc -c < "$TEST_ROOT/bounded")" -lt 2600 ] || fail 'log output is unbounded'
 KDASH_LOG_LIMIT_BYTES=9999999999999999999 KDASH_LOG_TAIL=9999999999 inspector_limits
-[ "$INSPECTOR_BYTES" = 1048576 ] && [ "$INSPECTOR_TAIL" = 2000 ] || fail 'maximum log caps not enforced'
+[ "$INSPECTOR_BYTES" = 268435456 ] && [ "$INSPECTOR_TAIL" = 1000000 ] || fail 'maximum log caps not enforced'
+KDASH_LOG_TAIL=-1 inspector_limits
+[ "$INSPECTOR_TAIL" = -1 ] || fail 'explicit all-log tail setting was lost'
 
 reset_calls
 if KDASH_INSPECT_LOGS=previous KDASH_INSPECT_CONTAINER=missing inspector_render beta same-name > "$TEST_ROOT/error"; then fail 'failed log request reported success'; fi
@@ -196,6 +200,7 @@ if command -v python3 >/dev/null 2>&1; then
 import errno
 import os
 import pty
+import re
 import select
 import signal
 import time
@@ -208,8 +213,10 @@ if pid == 0:
     os.execvp("bash", ["bash", "-c", '''
       set -uo pipefail
       source "$REPO/src/inspector.sh"
+      source "$REPO/src/interactive.sh"
       CTX_NAME=production-west; NS='(all namespaces)'; ALL_NS=1
       KC=(fake_kubectl --context production-west --request-timeout=6s)
+      fetch() { :; }
       POD_PICK=beta/same-name
       inspector_open
       printf '\nINSPECTOR_EXIT identity=%s\n' "$POD_PICK"
@@ -235,56 +242,57 @@ def expect(needle, timeout=8):
                     raise
             if not chunk:
                 raise AssertionError("terminal exited waiting for %r: %r" % (needle, buffer[-3000:]))
-            buffer += chunk
+            buffer += re.sub(rb'\x1b\[[0-?]*[ -/]*[@-~]', b'', chunk)
     buffer = buffer[buffer.index(needle) + len(needle):]
 
 try:
-    expect("Select pod")
+    expect("SELECT POD")
     os.write(fd, b"\n")
-    expect("Pane: summary")
-    expect("Namespace: beta")
+    expect("POD DETAIL")
+    expect("namespace beta")
+    expect("? keys")
     os.write(fd, b"l")
-    expect("Pane: current")
-    expect("Container: web | current logs")
+    expect("LOGS")
     expect("INFO started container=web")
     # find keeps the context, counts the matches and highlights them
     os.write(fd, b"/")
-    expect("Find in the current pane")
+    expect("FIND")
+    expect("Current: none")
     os.write(fd, b"ERROR\n")
-    expect("rows 1-6/6")
-    expect("search /ERROR (1 matching)")
-    expect("\x1b[1;31mERROR")
+    expect("rows 1-4 / 4")
+    expect("/ERROR (1 matching)")
     expect("boom container=web")
     os.write(fd, b"n")
     expect("match 1/1")
     # & hides everything that does not match
     os.write(fd, b"&")
-    expect("Show only matching lines")
+    expect("SHOW ONLY MATCHES")
+    expect("Current: ERROR")
     os.write(fd, b"ERROR\n")
-    expect("rows 1-1/1")
-    expect("only /ERROR: 1 of 6 lines")
+    expect("rows 1-1 / 1")
+    expect("only /ERROR (1)")
     # clearing the search brings the whole pane back
     os.write(fd, b"/")
     os.write(fd, b"\n")
-    expect("rows 1-6/6")
+    expect("rows 1-4 / 4")
     expect("INFO started container=web")
     # previous logs of the same container
     os.write(fd, b"p")
-    expect("Pane: previous")
+    expect("PREVIOUS LOGS")
     expect("previous=1")
     # the container picker: every container with readiness, restarts and last exit
     os.write(fd, b"c")
-    expect("Containers of beta/same-name")
+    expect("SELECT CONTAINER")
     expect("OOMKilled")
     expect("init-db")
     os.write(fd, b"2")
-    expect("Container: sidecar | previous logs")
+    expect("sidecar")
     expect("previous=1")
     # follow mode reloads the pane on the interval; any key stops it
     os.write(fd, b"f")
     expect("follow every 1s")
     time.sleep(2.5)
-    expect("Pane: previous")
+    expect("PREVIOUS LOGS")
     os.write(fd, b"f")
     expect("follow off")
     # export what is on screen, then cycle the log level back to all
@@ -302,11 +310,11 @@ try:
     os.write(fd, b"L")
     expect("log level: all")
     os.write(fd, b"?")
-    expect("kdash inspector - keys")
+    expect("POD DETAIL")
+    expect("S  shell in the container")
     os.write(fd, b" ")
     os.write(fd, b"q")
-    expect("Select pod")
-    expect("Selected identity: beta/same-name")
+    expect("SELECT POD")
     os.write(fd, b"q")
     expect("INSPECTOR_EXIT identity=beta/same-name")
     _, status = os.waitpid(pid, 0)

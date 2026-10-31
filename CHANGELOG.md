@@ -5,6 +5,63 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.19.2] - Unreleased
+
+This is the current source version. A source commit does not publish a GitHub
+Release or its download assets; the published 4.14.0 and older releases remain
+available separately.
+
+### Added
+- `kdx` (`kdash -X`) and `kdsh [FILTER]` (`kdash -X --shell-picker`) commands beside
+  the installed binary, plus shell integration and completion for the new options.
+  `kdsh` and the fixed command palette's `shell [FILTER]` open the live shell-mode
+  pod list; one matching pod attaches directly.
+- A live pod picker with word search across pod/status/node, attention filtering,
+  status/restart/resource sorting, numeric row jumps, resize handling and shortcuts
+  into inspector panes or interactive actions.
+- Runtime `X` toggles interactive mode, confirming before enabling it and auditing
+  `INTERACTIVE_ON` / `INTERACTIVE_OFF`. `Q` exits from navigation screens.
+- Container Bash identity panel and `kdswitch` / `kdquit` helpers; the panel survives
+  clear and resize and shows the pod/container identity and resource values observed
+  at attachment. The `sh` fallback prints connection information once.
+- Local and container file browsers for multi-file/directory transfers, name
+  filtering, file previews, path navigation, destination review and overwrite
+  confirmation. Downloads offer ZIP, tar.gz or plain files in the launch directory
+  (`KDASH_LAUNCH_DIR` overrides it); ZIP uses `zip` or optional `python3` on the host.
+- Transfer progress and cancellation, partial-download cleanup, local archive
+  checksums and upload verification by `du` size comparison with a filesystem
+  tolerance. Typed-path `kubectl cp` remains the fallback if browsing is unavailable.
+- Shared title bars and width-aware diagnostic tables for doctor, services,
+  storage, Kubernetes Events and explanations; a session-close summary with
+  context, namespace, duration and the retained report location.
+- `scripts/build.sh --from-bundle` imports an updated authoritative bundle into
+  the standalone CLI and source modules; `--check` verifies synchronization.
+
+### Changed
+- Installer shell shortcuts preserve occupied aliases/functions/commands, report
+  skipped names and retain a user's `kdash` alias. Marked `kdx` / `kdsh` commands
+  are managed with the matching installation and removed by uninstall.
+- Container selection is refreshed for each pod and remembered per pod. Multiple
+  attachable containers require confirmation unless `--container NAME` supplies
+  an existing name explicitly.
+- Browsed transfers use `kubectl exec` with a tar stream. Remote browser listings,
+  previews and size checks also count as writes under the interactive guard.
+- Source, build/release helpers and documentation are synchronized with 4.19.2;
+  historical 4.12.0, 4.13.1 and 4.14.0 screenshots retain their recorded versions.
+
+### Fixed
+- Status filters now use the model's effective status, including Terminating,
+  Evicted, waiting reasons and Running-but-NotReady. Workload filters resolve
+  Deployment/CronJob ownership, accept `Kind/name`, and preserve regex escapes.
+- Filter changes rebuild the retained model immediately; only label selectors
+  force a new specification read. Headers and exports show all active filters,
+  and workload-only selection keeps matching workloads with zero pods.
+- Interactive streams remove `--request-timeout` as well as the read-command
+  timeout, preventing a shell or transfer from ending after a few seconds.
+- The kubectl guard runs through Bash so a `noexec` temporary directory does not
+  prevent guarded reads. Worker cancellation also stops child processes before
+  temporary directories are removed.
+
 ## [4.14.0] - 2026-10-29
 
 ### Added

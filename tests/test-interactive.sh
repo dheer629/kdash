@@ -4,6 +4,7 @@
 # and no user data: kubectl is a fixture and the prompts are injected.
 set -euo pipefail
 REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$REPO/src/inspector.sh"
 source "$REPO/src/interactive.sh"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/kdash-interactive-tests.XXXXXXXX")"
 cleanup() {
@@ -40,7 +41,7 @@ echo "== 1. with interactive mode off (the default) exec and cp are refused"
   set -uo pipefail
   source <(extract_function audit_wrap_kubectl)
   TMPD="$TEST_ROOT/guard-off"; mkdir -p "$TMPD"
-  KC=("$TEST_ROOT/kubectl" --context production-west)
+  KC=("$TEST_ROOT/kubectl" --request-timeout=5s --context production-west)
   unset KDASH_ALLOW_INTERACTIVE
   audit_wrap_kubectl
   rc=0
@@ -52,6 +53,10 @@ echo "== 1. with interactive mode off (the default) exec and cp are refused"
   [ "$rc" = 126 ] || fail "cp was not refused while interactive mode is off (rc=$rc)"
   assert_has "$AUDIT_KLOG" REFUSED
   "${KC[@]}" get pods -n alpha > /dev/null || fail 'a read no longer works'
+  # Invoking the guard through Bash works even when its file is not executable,
+  # as on hosts where temporary directories are mounted noexec.
+  chmod 600 "$TMPD/kubectl"
+  "${KC[@]}" get pods -n alpha > /dev/null || fail 'the guard requires executable temporary files'
 )
 assert_lacks "$CALLS" 'exec -it api-ready'
 
@@ -61,13 +66,16 @@ echo "== 2. with --allow-interactive the same two verbs run, marked as writes"
   source <(extract_function audit_wrap_kubectl)
   source <(extract_function audit_kubectl_summary)
   TMPD="$TEST_ROOT/guard-on"; mkdir -p "$TMPD"
-  KC=("$TEST_ROOT/kubectl" --context production-west)
+  KC=("$TEST_ROOT/kubectl" --request-timeout=5s --context production-west)
   KDASH_ALLOW_INTERACTIVE=1
   audit_wrap_kubectl
   : > "$CALLS"
   "${KC[@]}" exec -it api-ready -c main -n alpha -- sh -c 'id' > /dev/null || fail 'exec failed while interactive mode is on'
   "${KC[@]}" cp /etc/hostname alpha/api-ready:/tmp/x -n alpha > /dev/null || fail 'cp failed while interactive mode is on'
   "${KC[@]}" get pods -n alpha > /dev/null || fail 'a read failed while interactive mode is on'
+  assert_lacks "$CALLS" '--request-timeout=5s exec'
+  grep 'exec -it' "$CALLS" | grep -q -- '--request-timeout' && fail 'HTTP request timeout remained on an attachment'
+  grep 'get pods' "$CALLS" | grep -q -- '--request-timeout=5s' || fail 'HTTP request timeout was removed from a read'
   assert_has "$CALLS" 'exec -it api-ready -c main -n alpha -- sh -c id'
   assert_has "$CALLS" 'cp /etc/hostname alpha/api-ready:/tmp/x -n alpha'
   # The kcall log marks the verb as a write; the shape carries the global flags first.
@@ -77,6 +85,15 @@ echo "== 2. with --allow-interactive the same two verbs run, marked as writes"
   summary="$(audit_kubectl_summary)"
   case "$summary" in *writes=2*) ;; *) fail "the audit summary did not count the writes: $summary" ;; esac
   case "$summary" in *refused=0*) ;; *) fail "the guard refused something it allows: $summary" ;; esac
+  : > "$CALLS"
+  "${KC[@]}" --request-timeout 7s exec api-ready -- app --request-timeout=9s --request-timeout 11s || fail 'separate request timeout was misread as a verb'
+  assert_has "$CALLS" 'exec api-ready -- app --request-timeout=9s --request-timeout 11s'
+  assert_lacks "$CALLS" '--request-timeout 7s'
+  interactive_toggle
+  [ "$KDASH_ALLOW_INTERACTIVE" = 0 ] || fail 'X did not disable interactive mode'
+  rc=0
+  "${KC[@]}" exec api-ready -- id > /dev/null 2>&1 || rc=$?
+  [ "$rc" = 126 ] || fail 'the already-created guard ignored the interactive toggle'
 )
 
 echo "== 3. the 12s command cap applies to reads, never to an attachment"
@@ -109,6 +126,12 @@ echo "== 4. the shell: the exact argv, and the audit events around it"
 # everything else (argv, audit, validation) is the shipped code.
 interactive_run() { printf 'TTY %s\n' "$*" >> "$TEST_ROOT/tty"; "$@"; }
 interactive_pause() { :; }
+# The typed-path copy dialog has a final one-key acknowledgement. Inject it while
+# keeping all data reads (including process substitutions) on Bash's builtin.
+read() {
+  if [ "$#" = 2 ] && [ "$1" = -rsn1 ] && [ "$2" = _k ]; then return 0; fi
+  builtin read "$@"
+}
 : > "$CALLS"; : > "$TEST_ROOT/$AUD"
 KDASH_ALLOW_INTERACTIVE=1
 interactive_shell alpha api-ready main > "$TEST_ROOT/shell1.out" 2>&1 || fail 'interactive_shell reported failure'
@@ -173,19 +196,20 @@ unset KDASH_ALLOW_INTERACTIVE
 : > "$CALLS"; : > "$TEST_ROOT/$AUD"; : > "$TEST_ROOT/flash"
 if interactive_attach shell alpha api-ready "$TMPD/inspector/live"; then fail 'the shell opened while interactive mode is off'; fi
 assert_has "$TEST_ROOT/$AUD" 'INTERACTIVE_BLOCKED'
-assert_has "$TEST_ROOT/flash" '--allow-interactive'
+assert_has "$TEST_ROOT/flash" 'Press X'
 assert_lacks "$CALLS" 'exec'
 interactive_hint > "$TEST_ROOT/hint"
-assert_has "$TEST_ROOT/hint" 'read-only by default'
+assert_has "$TEST_ROOT/hint" 'read-only'
 
 echo "== 8. the wiring is published: flag, keys, help and the embedded module"
 assert_has "$REPO/kdash" 'interactive_attach'
 assert_has "$REPO/kdash" '-X|--allow-interactive)'
-assert_has "$REPO/kdash" 'S|U|D) KDASH_ATTACH_ACTION='
-assert_has "$REPO/src/inspector.sh" 'S) interactive_attach shell'
+assert_has "$REPO/kdash" 'S|U|D) if interactive_enabled; then'
+assert_has "$REPO/src/inspector.sh" 'S  shell in the container'
 grep -q 'allow-interactive' "$REPO/README.md" || fail 'the README does not document the opt-in'
 bash "$REPO/kdash" --help > "$TEST_ROOT/help" || fail 'kdash --help failed'
 assert_has "$TEST_ROOT/help" '--allow-interactive'
+assert_has "$TEST_ROOT/help" '--shell-picker'
 assert_has "$TEST_ROOT/help" 'INTERACTIVE (opt-in, audited writes)'
 assert_has "$TEST_ROOT/help" 'open a shell in the selected container'
 

@@ -30,11 +30,15 @@ owns the code, the releases and the published evidence:
 
 ## Ground rules for code
 
-1. **Read-only, always.** kdash must never create, change or delete a cluster
-   object. Every `kubectl` call goes through the read-only wrapper; a new verb
-   needs a very good reason and a test.
+1. **Read-only by default.** Every `kubectl` call goes through the audited guard.
+   Only explicit interactive mode permits `exec` and `cp` for container shells and
+   file transfers. Keep that opt-in boundary and write auditing intact; cluster
+   mutations such as `apply`, `patch` and `delete` remain refused. Add regression
+   coverage for changes to this boundary.
 2. **No new runtime dependency** beyond Bash 4+, `kubectl`, `awk` and coreutils.
-   No `jq`, no Python, no build step, no compiled binary.
+   No `jq`, no mandatory Python, no runtime build step, no compiled binary.
+   Transfer archives may use optional `zip` or Python 3 when installed, with a
+   tar.gz fallback. Document optional tools and container requirements.
 3. **Portability.** It must run on busybox `awk` and on old terminals: avoid
    `%*s`, `\x` escapes and glyphs a PuTTY font cannot draw (use `--glyphs ascii`
    paths where in doubt).
@@ -45,6 +49,11 @@ owns the code, the releases and the published evidence:
    `src/*.sh`; edit those, then run `bash scripts/build.sh`, which regenerates the
    marked module block in `kdash` and re-embeds it in `kdash-bundle.sh`. Never edit
    the generated block between `# BEGIN KDASH MODULES` and `# END KDASH MODULES`.
+   If importing an updated bundle, run `bash scripts/build.sh --from-bundle`
+   **first**: it extracts the CLI and modules from that bundle. Running the normal
+   build first would replace its new code with the old local sources. Use
+   `bash scripts/build.sh --check` to verify synchronization without rewriting files.
+   The standalone `kdash-uninstall.sh` must also match the installer's uninstaller.
 6. **Never commit environment data.** No kubeconfig, no tokens, no host names,
    no internal namespace or product names, no personal paths. The published
    screenshots and evidence must stay generic - `scripts/redact-run.sh` and
@@ -54,13 +63,17 @@ owns the code, the releases and the published evidence:
 ## Before you open a pull request
 
 ```bash
+bash scripts/build.sh --check
+bash scripts/update-checksums.sh
+KDASH_VALIDATE_ALLOW_DIRTY=1 bash scripts/validate-all.sh
+# After committing and pushing, run the strict publication check:
 bash scripts/validate-all.sh
 ```
 
 That one command checks the Bash syntax of every shipped script, that the
-installer embeds `kdash` byte for byte, every fixture test under `tests/` (the 11
-uninstall tests plus runtime, events, health, inspector and interactive; none needs a cluster),
-every checksum (root, `samples/`, `samples/html/`, `samples/cli_413/`), the recorded
+installer embeds `kdash` and the uninstaller byte for byte, source-module and version
+synchronization, and every fixture test under `tests/` (none needs a cluster),
+every checksum (root, `samples/`, `samples/html/`, `samples/cli_413/`, `samples/cli_414/`), the recorded
 run and its captures, the feature-screen run and its 22 captures plus manifest, the
 published samples, that no environment, product, site or personal name and no
 credential is in the tree, that every README reference resolves, that the README keeps

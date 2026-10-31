@@ -83,6 +83,10 @@ if [ "$DO_SHELL" = 1 ] && [ "$KEEP_INTEGRATION" = 0 ]; then
     EDIT+=("$target")
   done
 fi
+# kdx / kdsh shortcuts, only when they are ours
+for shortcut in "$PREFIX/kdx" "$PREFIX/kdsh"; do
+  [ -f "$shortcut" ] && grep -qF '# kdash-shortcut: written by kdash-bundle.sh' "$shortcut" 2>/dev/null && REMOVE+=("$shortcut")
+done
 # Unlink only named installation files, with the binary last. Never recurse.
 REMOVE+=("$BIN")
 for target in "${REMOVE[@]}"; do

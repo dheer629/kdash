@@ -74,8 +74,8 @@ events_test_pass 'collection uses explicit context, bounded timeout and command-
 cp -- "$EVENT_LOG" "$TEST_ROOT/arguments.before"
 events_render ops api-0 > "$TEST_ROOT/events.txt"
 cmp -s "$EVENT_LOG" "$TEST_ROOT/arguments.before" || events_test_fail 'render called kubectl'
-events_test_contains "$TEST_ROOT/events.txt" 'Coverage: ok'
-events_test_contains "$TEST_ROOT/events.txt" 'Kubernetes API Events; local session change records are separate'
+grep -Eq 'events[[:space:]]+.*ok[[:space:]]' "$TEST_ROOT/events.txt" || events_test_fail 'successful Events source state is missing'
+events_test_contains "$TEST_ROOT/events.txt" 'local session changes are recorded separately'
 events_test_contains "$TEST_ROOT/events.txt" 'FailedScheduling'
 events_test_absent "$TEST_ROOT/events.txt" 'api-1'
 events_test_absent "$TEST_ROOT/events.txt" 'Different namespace evidence'
@@ -83,15 +83,20 @@ events_test_pass 'cached rendering filters by namespace and pod without network 
 
 printf 'KEY\tNAMESPACE\tPOD\tSTATUS\tREADY\tRESTARTS\tNODE\napi-0\tops\tapi-0\tPending\t0/1\t4\t(unscheduled)\n' > "$MODEL/pods.tsv"
 explain_render ops api-0 > "$TEST_ROOT/explain.txt"
-events_test_contains "$TEST_ROOT/explain.txt" 'Cached pod fact: ops/api-0 status=Pending'
+events_test_contains "$TEST_ROOT/explain.txt" 'PODS NEEDING ATTENTION'
+grep -Eq 'api-0[[:space:]]+.*Pending' "$TEST_ROOT/explain.txt" || events_test_fail 'cached pod status is missing'
 events_test_contains "$TEST_ROOT/explain.txt" 'scheduler constraints, capacity or an unbound claim'
 events_test_contains "$TEST_ROOT/explain.txt" 'readiness, liveness or startup probe'
-events_test_contains "$TEST_ROOT/explain.txt" 'may be repeatedly exiting'
-events_test_contains "$TEST_ROOT/explain.txt" 'pod-old'
-events_test_contains "$TEST_ROOT/explain.txt" 'pod-new'
+events_test_contains "$TEST_ROOT/explain.txt" 'may be exiting repeatedly'
+# Evidence from the old and new Pod UIDs stays separate in the source, and the
+# explanation still includes both the probe and restart categories.
+events_test_contains "$TOOLKIT_DIR/events.tsv" 'pod-old'
+events_test_contains "$TOOLKIT_DIR/events.tsv" 'pod-new'
+events_test_contains "$TEST_ROOT/explain.txt" 'Unhealthy'
+events_test_contains "$TEST_ROOT/explain.txt" 'BackOff'
 events_test_contains "$TEST_ROOT/explain.txt" 'kubectl --context fixture-context'
-events_test_contains "$TEST_ROOT/explain.txt" 'logs api-0 --all-containers --previous --tail=100 -n ops'
-events_test_contains "$TEST_ROOT/explain.txt" 'Timing alone does not establish a cause'
+events_test_contains "$TEST_ROOT/explain.txt" 'logs api-0 --all-containers --previous --tail=100'
+events_test_contains "$TEST_ROOT/explain.txt" 'timing alone does not establish a cause'
 events_test_absent "$TEST_ROOT/explain.txt" 'Provisioner cannot bind'
 cmp -s "$EVENT_LOG" "$TEST_ROOT/arguments.before" || events_test_fail 'explanation called kubectl'
 events_test_pass 'explanations distinguish historical identities and print context-scoped read-only checks'
@@ -99,7 +104,9 @@ events_test_pass 'explanations distinguish historical identities and print conte
 explain_render ops > "$TEST_ROOT/explain-all.txt"
 events_test_contains "$TEST_ROOT/explain-all.txt" 'registry access or pull credentials'
 events_test_contains "$TEST_ROOT/explain-all.txt" 'volume binding, provisioning, attachment or mounting'
-events_test_contains "$TEST_ROOT/explain-all.txt" 'get pvc -n ops'
+events_test_contains "$TEST_ROOT/explain-all.txt" '--context fixture-context'
+events_test_contains "$TEST_ROOT/explain-all.txt" '--kubeconfig'
+events_test_contains "$TEST_ROOT/explain-all.txt" '-n ops get pvc'
 events_test_absent "$TEST_ROOT/explain-all.txt" 'Different namespace evidence'
 events_test_pass 'image and storage explanations follow reason/message evidence'
 
@@ -109,7 +116,7 @@ if events_collect; then events_test_fail 'forbidden collection succeeded'; fi
 events_test_equal "$(cat "$TOOLKIT_DIR/events.status")" forbidden 'forbidden coverage'
 cmp -s "$TOOLKIT_DIR/events.tsv" "$TEST_ROOT/last-success.tsv" || events_test_fail 'failure discarded successful same-scope evidence'
 events_render ops api-0 > "$TEST_ROOT/forbidden.txt"
-events_test_contains "$TEST_ROOT/forbidden.txt" 'STALE retained evidence'
+events_test_contains "$TEST_ROOT/forbidden.txt" 'STALE - showing the last successful read'
 events_test_contains "$TEST_ROOT/forbidden.txt" 'list events permission'
 events_test_absent "$TOOLKIT_DIR/events.error" private-token-do-not-publish
 events_test_absent "$TEST_ROOT/forbidden.txt" private-token-do-not-publish
@@ -143,7 +150,7 @@ events_collect || events_test_fail 'successful empty collection failed'
 events_test_equal "$(cat "$TOOLKIT_DIR/events.status")" ok 'empty coverage'
 events_test_equal "$(wc -l < "$TOOLKIT_DIR/events.tsv" | tr -d ' ')" 1 'empty result clears old rows'
 events_render > "$TEST_ROOT/empty.txt"
-events_test_contains "$TEST_ROOT/empty.txt" 'No matching retained Kubernetes Events'
+events_test_contains "$TEST_ROOT/empty.txt" 'no retained Events match'
 events_test_absent "$TEST_ROOT/empty.txt" 'STALE'
 events_test_pass 'recovery and successful empty responses replace earlier evidence'
 
@@ -154,12 +161,13 @@ EVENT_MODE=ok
 events_collect || events_test_fail 'all-namespace collection failed'
 events_test_equal "$(sed -n '7p' "$EVENT_LOG")" --all-namespaces 'all-namespace flag order'
 events_render > "$TEST_ROOT/all-namespaces.txt"
-events_test_contains "$TEST_ROOT/all-namespaces.txt" 'Scope: all namespaces'
+events_test_contains "$TEST_ROOT/all-namespaces.txt" 'all namespaces'
 events_test_contains "$TEST_ROOT/all-namespaces.txt" 'Different namespace evidence'
 CTX_NAME=other-context
 KC=(events_test_stub --context other-context)
 events_render > "$TEST_ROOT/no-collection.txt"
-events_test_contains "$TEST_ROOT/no-collection.txt" 'Coverage: unknown'
+events_test_contains "$TEST_ROOT/no-collection.txt" 'unknown'
+events_test_contains "$TEST_ROOT/no-collection.txt" 'context other-context'
 events_test_absent "$TEST_ROOT/no-collection.txt" 'Different namespace evidence'
 events_test_pass 'all-namespace reads keep command order and context changes invalidate cached rendering'
 

@@ -4,6 +4,7 @@
 set -euo pipefail
 REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$REPO/src/health.sh"
+. "$REPO/src/events.sh"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/kdash-health-tests.XXXXXXXX")"
 cleanup() { case "$TEST_ROOT" in "${TMPDIR:-/tmp}"/kdash-health-tests.*) rm -rf -- "$TEST_ROOT" ;; esac; }
 trap cleanup EXIT
@@ -127,11 +128,14 @@ kubelet_volume_stats_available_bytes{namespace="demo",persistentvolumeclaim="dat
 kubelet_volume_stats_used_bytes{namespace="other",persistentvolumeclaim="data"} 9999999999 $sample_ms
 kubelet_volume_stats_used_bytes{namespace="demo",persistentvolumeclaim="queued"} NaN $sample_ms
 DATA
-printf 'EPOCH\tSEVERITY\tKIND\tOBJECT\tMESSAGE\n1700000000\twarn\tPod\tdemo/web-1\tFailedMount: volume setup failed\n' > "$TOOLKIT_DIR/events.tsv"
+# Storage consumes the same Kubernetes API Event schema as the Events view,
+# rather than the separate five-column session-change timeline.
+printf 'NS\tKIND\tNAME\tUID\tTYPE\tREASON\tCOUNT\tFIRST\tLAST\tMESSAGE\ndemo\tPod\tweb-1\tweb-uid\tWarning\tFailedMount\t2\t2026-10-29T10:00:00Z\t2026-10-29T10:01:00Z\tvolume setup failed\n' > "$TOOLKIT_DIR/events.tsv"
 
 pass=0
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 contains() { grep -Fq -- "$2" "$1" || fail "$1 lacks: $2"; }
+matches() { grep -Eq -- "$2" "$1" || fail "$1 does not match: $2"; }
 absent() { if grep -Fq -- "$2" "$1"; then fail "$1 unexpectedly contains: $2"; fi; }
 ok() { pass=$((pass+1)); printf 'PASS %s\n' "$*"; }
 
@@ -144,35 +148,45 @@ contains "$HEALTH_CALLS" 'get persistentvolumes --request-timeout=12s'
 ok 'bounded read-only collector scopes namespace flags after the resource'
 
 health_render_services > "$TEST_ROOT/services.txt"
-contains "$TEST_ROOT/services.txt" 'INGRESS -> SERVICE -> ENDPOINTS -> READY PODS'
-contains "$TEST_ROOT/services.txt" 'web.example.invalid/ -> demo/web:http'
-contains "$TEST_ROOT/services.txt" '1 ready / 1 unready / 1 unknown'
-contains "$TEST_ROOT/services.txt" 'ready selected pods 1'
-contains "$TEST_ROOT/services.txt" 'SELECTOR MISMATCH: selector matches no pods'
-contains "$TEST_ROOT/services.txt" 'UNREADY: selected pods exist'
-contains "$TEST_ROOT/services.txt" 'NAMED PORT MISSING: missing-port/TCP absent on 2/2 selected pods'
-contains "$TEST_ROOT/services.txt" 'Selectorless Service: backends can be managed manually'
-contains "$TEST_ROOT/services.txt" 'ExternalName DNS alias -> database.example.invalid'
-contains "$TEST_ROOT/services.txt" 'Ingress backend port does not match a Service port'
-contains "$TEST_ROOT/services.txt" 'Service missing from the successful service read'
-contains "$TEST_ROOT/services.txt" 'Headless Service: DNS/backend records apply'
-contains "$TEST_ROOT/services.txt" 'explicitly ready endpoints pointing to Ready pods: 1'
-contains "$TEST_ROOT/services.txt" 'does not test end-to-end reachability'
+contains "$TEST_ROOT/services.txt" 'SERVICES AND BACKENDS'
+matches "$TEST_ROOT/services.txt" 'web.example.invalid/.*web:http'
+contains "$TEST_ROOT/services.txt" '1/3 ready (1 unknown)'
+matches "$TEST_ROOT/services.txt" 'web[[:space:]]+.*OK[[:space:]]+ClusterIP[[:space:]]+2[[:space:]]+1'
+contains "$TEST_ROOT/services.txt" 'selector app=typo matches no pod'
+contains "$TEST_ROOT/services.txt" 'selected pod(s), none Ready and serving'
+contains "$TEST_ROOT/services.txt" 'named targetPort missing-port/TCP is not declared on 2 of 2'
+contains "$TEST_ROOT/services.txt" 'no selector: backends are managed manually'
+contains "$TEST_ROOT/services.txt" 'database.example.invalid'
+contains "$TEST_ROOT/services.txt" 'backend port 4040 is not a port of Service web'
+contains "$TEST_ROOT/services.txt" 'backend Service missing does not exist'
+matches "$TEST_ROOT/services.txt" 'headless[[:space:]]+.*Headless'
+contains "$TEST_ROOT/services.txt" 'reachability is not tested'
 ok 'service and Ingress joins distinguish mismatch, unready, unknown, named ports and manual/DNS backends'
 
 health_render_storage > "$TEST_ROOT/storage.txt"
-contains "$TEST_ROOT/storage.txt" 'declared mount: demo/web-1 container=app path=/var/data'
-contains "$TEST_ROOT/storage.txt" 'container=init:prepare path=/prepare'
-contains "$TEST_ROOT/storage.txt" 'Pending claim uses WaitForFirstConsumer'
-contains "$TEST_ROOT/storage.txt" 'referenced PV missing from the successful PV read'
-contains "$TEST_ROOT/storage.txt" 'PV claimRef points to other/claim, not demo/badref'
-contains "$TEST_ROOT/storage.txt" 'MISSING PVC REFERENCE: pod demo/cold-1 refers to demo/missing-claim'
-contains "$TEST_ROOT/storage.txt" 'measured used=512.0MiB; measured filesystem capacity=1.0GiB'
-contains "$TEST_ROOT/storage.txt" 'used/capacity=50.0%'
-contains "$TEST_ROOT/storage.txt" '(exporter time)'
-contains "$TEST_ROOT/storage.txt" 'Measured usage unknown: no usable PVC-labelled volume sample for this claim'
-contains "$TEST_ROOT/storage.txt" 'FileSystemResizePending:NodeResizePending'
-contains "$TEST_ROOT/storage.txt" 'FailedMount: volume setup failed'
+matches "$TEST_ROOT/storage.txt" 'data[[:space:]]+web-1.*app[[:space:]]+/var/data'
+matches "$TEST_ROOT/storage.txt" 'init:prepare[[:space:]]+/prepare'
+contains "$TEST_ROOT/storage.txt" 'binds only when a consuming pod is scheduled'
+contains "$TEST_ROOT/storage.txt" 'bound volume pv-missing is missing'
+contains "$TEST_ROOT/storage.txt" 'volume pv-other claimRef points to other/claim'
+contains "$TEST_ROOT/storage.txt" 'pod refers to claim missing-claim, which does not exist'
+matches "$TEST_ROOT/storage.txt" 'data[[:space:]]+.*512.0MiB[[:space:]]+50%'
+contains "$TEST_ROOT/storage.txt" 'a missing sample never means zero usage'
+contains "$TEST_ROOT/storage.txt" 'FileSystemResizePending (NodeResizePending)'
+contains "$TEST_ROOT/storage.txt" 'FailedMount'
+contains "$TEST_ROOT/storage.txt" 'volume setup failed'
+# The compact UI no longer prints exporter timestamps or measured capacity in
+# prose. Keep those data semantics asserted on the retained sample itself.
+awk -F'\t' -v epoch="$((sample_ms / 1000))" '
+  $1 == "demo" && $2 == "data" {
+    found++; if (NF != 11 || $3 != 536870912 || $4 != epoch || $5 != "exporter" ||
+                 $6 != 1073741824 || $7 != epoch || $8 != "exporter" ||
+                 $9 != 536870912 || $10 != epoch || $11 != "exporter") exit 1
+  }
+  END { if (found != 1) exit 1 }
+' "$TOOLKIT_DIR/health-volume-usage.tsv" || fail 'measured capacity, timestamp origin or duplicate-series aggregation changed'
+matches "$TEST_ROOT/storage.txt" 'queued[[:space:]]+.*Pending[[:space:]]+1Gi[[:space:]]+-[[:space:]]+-[[:space:]]+-'
+absent "$TOOLKIT_DIR/health-volume-usage.tsv" $'demo\tqueued\t'
 ok 'storage joins bindings, class mode, pod mounts, recorded events and measured usage without equating allocation'
 
 ALL_NS=1; SCOPE=(--all-namespaces); NS='(all namespaces)'
@@ -190,19 +204,19 @@ health_render_services > "$TEST_ROOT/services-denied.txt"
 health_render_storage > "$TEST_ROOT/storage-denied.txt"
 [ "$(health__state pvs)" = forbidden ] || fail 'PV denial classification'
 [ "$(health__state ingresses)" = unavailable ] || fail 'optional API classification'
-contains "$TEST_ROOT/services-denied.txt" 'EndpointSlice backend state unknown: source forbidden'
-absent "$TEST_ROOT/services-denied.txt" 'No EndpointSlices for this Service'
-contains "$TEST_ROOT/storage-denied.txt" 'PV details unknown: optional source forbidden'
-absent "$TEST_ROOT/storage-denied.txt" 'referenced PV missing'
+matches "$TEST_ROOT/services-denied.txt" 'endpoints[[:space:]]+.*forbidden'
+absent "$TEST_ROOT/services-denied.txt" 'no EndpointSlice exists'
+contains "$TEST_ROOT/storage-denied.txt" 'unknown - pvs source forbidden'
+absent "$TEST_ROOT/storage-denied.txt" 'bound volume pv-missing is missing'
 ok 'optional API/RBAC failures stay unknown and do not become absent resources or zero endpoints'
 rm -f "$HEALTH_FIXTURE/pvs.fail" "$HEALTH_FIXTURE/ingresses.fail" "$HEALTH_FIXTURE/endpoints.fail"
 
 printf 'Unable to connect to the server: x509: certificate signed by unknown authority\n' > "$HEALTH_FIXTURE/pods.fail"
 health_collect; health_render_services > "$TEST_ROOT/services-tls.txt"; health_render_storage > "$TEST_ROOT/storage-tls.txt"
 [ "$(health__state pods)" = tls-error ] || fail 'TLS error classification'
-contains "$TEST_ROOT/services-tls.txt" 'Pod selection and named target ports unknown: pods source tls-error'
-absent "$TEST_ROOT/services-tls.txt" 'SELECTOR MISMATCH'
-contains "$TEST_ROOT/storage-tls.txt" 'Pod volume references and mounts unknown: pods source tls-error'
+matches "$TEST_ROOT/services-tls.txt" 'pods[[:space:]]+.*tls-error'
+absent "$TEST_ROOT/services-tls.txt" 'matches no pod'
+contains "$TEST_ROOT/storage-tls.txt" 'unknown - pods source tls-error'
 ok 'failed pod collection never becomes selector mismatch or zero mount references'
 rm -f "$HEALTH_FIXTURE/pods.fail"
 
@@ -210,8 +224,8 @@ PROM_SVC=''; IO_STATE=unavailable
 health_collect; health_render_storage > "$TEST_ROOT/storage-no-metrics.txt"
 [ "$(health__state volume-metrics)" = unknown ] || fail 'unconfigured volume source status'
 contains "$TEST_ROOT/storage-no-metrics.txt" 'no configured or existing Prometheus source'
-contains "$TEST_ROOT/storage-no-metrics.txt" 'Measured usage unknown'
-absent "$TEST_ROOT/storage-no-metrics.txt" 'measured used=0'
+contains "$TEST_ROOT/storage-no-metrics.txt" 'USED / USE% need kubelet volume samples'
+absent "$TEST_ROOT/storage-no-metrics.txt" '512.0MiB'
 ok 'unconfigured metrics remain unknown and do not trigger discovery or extra API permissions'
 
 PROM_URL=https://prometheus.example.invalid; IO_STATE=prom-url
@@ -225,8 +239,8 @@ printf 'context deadline exceeded\n' > "$HEALTH_FIXTURE/metrics.fail"
 health_collect
 [ "$(health__state volume-metrics)" = timeout ] || fail 'metrics timeout'
 health_render_storage > "$TEST_ROOT/storage-timeout.txt"
-contains "$TEST_ROOT/storage-timeout.txt" 'read timed out; source unknown'
-absent "$TEST_ROOT/storage-timeout.txt" 'measured used=512'
+matches "$TEST_ROOT/storage-timeout.txt" 'volume-metrics[[:space:]]+.*timeout'
+absent "$TEST_ROOT/storage-timeout.txt" '512.0MiB'
 ok 'configured URL/existing service proxy are reused and failed samples never reuse old measured data'
 
 rm -f "$HEALTH_FIXTURE/metrics.fail"
@@ -234,8 +248,8 @@ PROM_SVC=monitoring/prometheus:9090; IO_STATE=unavailable
 : > "$HEALTH_FIXTURE/metrics.raw"; : > "$HEALTH_FIXTURE/pvcs.raw"; : > "$HEALTH_FIXTURE/services.raw"
 health_collect; health_render_services > "$TEST_ROOT/services-empty.txt"; health_render_storage > "$TEST_ROOT/storage-empty.txt"
 [ "$(health__state volume-metrics)" = no-data ] || fail 'empty metrics source status'
-contains "$TEST_ROOT/services-empty.txt" 'No Services in this successful scoped read'
-contains "$TEST_ROOT/storage-empty.txt" 'No PVCs in this successful scoped read'
+contains "$TEST_ROOT/services-empty.txt" 'no Services in this scope'
+contains "$TEST_ROOT/storage-empty.txt" 'no claims in this scope'
 ok 'successful empty resource responses replace prior data while empty metrics stay no-data'
 
 printf '%s health fixture tests passed.\n' "$pass"
