@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ context devops-admin@local-cluster │ namespace default                                                                                       PREVIOUS LOGS
+[0m [90mpod[39m        [1mplatform-kafka-65c6d4dcfd-l7mqq[0m
+ [90mcontainer[39m  [1mkafka[0m   [32m● Running[39m   [90mready[39m   [90mrestarts[39m 3   [90mlast exit[39m [1m[31mUnknown exit=255[0m   [90mapache/kafka:3.9.1[39m
+[90m──[39m [1mrows 1-42 / 1692 · 823 of 1152 lines · wrap · only /INFO (823) · 1152 lines, 219.4 KiB - complete[0m [90m─────────────────────────────────────────────────────────[39m [90maudited[39m [90m──[39m
+2026-10-29T11:31:27.856361820Z [2026-10-29 11:31:27,855] [1m[31mINFO[0m Registered kafka:type=kafka.Log4jController MBean (kafka.utils.Log4jControllerRegistration$)
+2026-10-29T11:31:28.284698513Z [2026-10-29 11:31:28,284] [1m[31mINFO[0m Setting -D jdk.tls.rejectClientInitiatedRenegotiation=true to disable client-initiated TLS renegotiation (o
+    rg.apache.zookeeper.common.X509Util)
+2026-10-29T11:31:28.658119986Z [2026-10-29 11:31:28,657] [1m[31mINFO[0m Registered signal handlers for TERM, INT, HUP (org.apache.kafka.common.utils.LoggingSignalHandler)
+2026-10-29T11:31:28.664528045Z [2026-10-29 11:31:28,664] [1m[31mINFO[0m [ControllerServer id=1] Starting controller (kafka.server.ControllerServer)
+2026-10-29T11:31:29.306351830Z [2026-10-29 11:31:29,305] [1m[31mINFO[0m Updated connection-accept-rate max connection creation rate to 2147483647 (kafka.network.ConnectionQuotas)
+2026-10-29T11:31:29.356437323Z [2026-10-29 11:31:29,356] [1m[31mINFO[0m [SocketServer listenerType=CONTROLLER, nodeId=1] Created data-plane acceptor and processors for endpoint :
+    ListenerName(CONTROLLER) (kafka.network.SocketServer)
+2026-10-29T11:31:29.359659634Z [2026-10-29 11:31:29,359] [1m[31mINFO[0m CONTROLLER: resolved wildcard host to platform-kafka-65c6d4dcfd-l7mqq (org.apache.kafka.metadata.ListenerIn
+    fo)
+2026-10-29T11:31:29.369035550Z [2026-10-29 11:31:29,368] [1m[31mINFO[0m authorizerStart completed for endpoint CONTROLLER. Endpoint is now READY. (org.apache.kafka.server.network.
+    EndpointReadyFutures)
+2026-10-29T11:31:29.371746843Z [2026-10-29 11:31:29,371] [1m[31mINFO[0m [SharedServer id=1] Starting SharedServer (kafka.server.SharedServer)
+2026-10-29T11:31:29.461688904Z [2026-10-29 11:31:29,461] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Recovering unflushed segment 215819. 0/
+    2 recovered for __cluster_metadata-0. (kafka.log.LogLoader)
+2026-10-29T11:31:29.463388889Z [2026-10-29 11:31:29,463] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Loading producer state till offset 2158
+    19 with message format version 2 (kafka.log.UnifiedLog$)
+2026-10-29T11:31:29.464062336Z [2026-10-29 11:31:29,463] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Reloading from producer snapshot and re
+    building producer state from offset 215819 (kafka.log.UnifiedLog$)
+2026-10-29T11:31:29.464985893Z [2026-10-29 11:31:29,464] [1m[31mINFO[0m Deleted producer state snapshot /var/lib/kafka/data/__cluster_metadata-0/00000000000000263250.snapshot (org
+    .apache.kafka.storage.internals.log.SnapshotFile)
+2026-10-29T11:31:29.465293787Z [2026-10-29 11:31:29,465] [1m[31mINFO[0m Deleted producer state snapshot /var/lib/kafka/data/__cluster_metadata-0/00000000000000263423.snapshot (org
+    .apache.kafka.storage.internals.log.SnapshotFile)
+2026-10-29T11:31:29.465374423Z [2026-10-29 11:31:29,465] [1m[31mINFO[0m Deleted producer state snapshot /var/lib/kafka/data/__cluster_metadata-0/00000000000000263587.snapshot (org
+    .apache.kafka.storage.internals.log.SnapshotFile)
+2026-10-29T11:31:29.478744874Z [2026-10-29 11:31:29,478] [1m[31mINFO[0m [ProducerStateManager partition=__cluster_metadata-0] Wrote producer snapshot at offset 215819 with 0 produ
+    cer ids in 11 ms. (org.apache.kafka.storage.internals.log.ProducerStateManager)
+2026-10-29T11:31:29.479228479Z [2026-10-29 11:31:29,478] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Producer state recovery took 1ms for sn
+    apshot load and 13ms for segment recovery from offset 215819 (kafka.log.UnifiedLog$)
+2026-10-29T11:31:29.862542186Z [2026-10-29 11:31:29,862] [1m[31mINFO[0m [ProducerStateManager partition=__cluster_metadata-0] Wrote producer snapshot at offset 263250 with 0 produ
+    cer ids in 5 ms. (org.apache.kafka.storage.internals.log.ProducerStateManager)
+2026-10-29T11:31:29.863027841Z [2026-10-29 11:31:29,862] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Recovering unflushed segment 263250. 1/
+    2 recovered for __cluster_metadata-0. (kafka.log.LogLoader)
+2026-10-29T11:31:29.863562318Z [2026-10-29 11:31:29,863] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Loading producer state till offset 2632
+    50 with message format version 2 (kafka.log.UnifiedLog$)
+2026-10-29T11:31:29.863573626Z [2026-10-29 11:31:29,863] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Reloading from producer snapshot and re
+    building producer state from offset 263250 (kafka.log.UnifiedLog$)
+2026-10-29T11:31:29.863764635Z [2026-10-29 11:31:29,863] [1m[31mINFO[0m [ProducerStateManager partition=__cluster_metadata-0] Loading producer state from snapshot file 'SnapshotFi
+    le(offset=263250, file=/var/lib/kafka/data/__cluster_metadata-0/00000000000000263250.snapshot)' (org.apache.kafka.storage.internals.log.ProducerStateManager)
+2026-10-29T11:31:29.865644660Z [2026-10-29 11:31:29,865] [1m[31mINFO[0m [LogLoader partition=__cluster_metadata-0, dir=/var/lib/kafka/data] Producer state recovery took 2ms for sn
+    apshot load and 0ms for segment recovery from offset 263250 (kafka.log.UnifiedLog$)
+2026-10-29T11:31:29.872020446Z [2026-10-29 11:31:29,871] [1m[31mINFO[0m [ProducerStateManager partition=__cluster_metadata-0] Wrote producer snapshot at offset 263587 with 0 produ
+ [1ms[0m summary[90m · [1m[39md[0m describe[90m · [1m[39me[0m events[90m · [1m[39m![0m why[90m · [1m[39ml[0m logs[90m · [1m[39mp[0m previous logs[90m · [1m[39mc[0m container[90m · [1m[39mS[0m shell[90m · [1m[39mU[0m upload[90m · [1m[39mD[0m download
+ [1mW[0m wrap on[90m · [1m[39mJ[0m readable JSON off[90m · [1m[39m+[0m 4x more lines[90m · [1m[39mA[0m all lines[90m · [1m[39m<- ->[0m pan (wrap off)[90m · [1m[39mf[0m follow off[90m · [1m[39mL[0m level all[90m · [1m[39mw[0m export the view
+ [1mq[0m back[90m · [1m[39mQ[0m quit[90m · [1m[39m/[0m find[90m · [1m[39m&[0m only matches[90m · [1m[39mn/N[0m next / prev[90m · [1m[39mj/k Space/b g/G[0m scroll[90m · [1m[39mr[0m reload[90m · [1m[39m?[0m keys
+[1m[33m match 1/823[0m

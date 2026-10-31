@@ -135,9 +135,10 @@ for both the installed copy and the repository file.
 artifacts/   the run itself: step logs, per-namespace live terminal capture, the
              recorded session, the reports and the audit log, plus run-metadata.json,
              controller-actions.json and RUN_INVENTORY.md
-samples/     the shareable result: rendered screenshots of CLI views 1-7 and the
-             HTML reports, with checksums (samples/cli/), plus the 22 screens of
-             the 4.13.1 views and inspector in samples/cli_413/
+samples/     the shareable result: rendered screenshots of the current 4.19.2
+             interface (samples/cli_419/), the views of the 4.12.0 run and the
+             4.13.1 views and inspector (samples/cli_413/), and the HTML reports
+             with checksums (samples/html/)
 DEVOPS_USER_GUIDE.md   how to install, run, capture, export and troubleshoot
 KDASH_EXPLAINER.txt    this file
 
@@ -256,11 +257,12 @@ capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
   * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
     screen at one moment, including colours and the pinned header/footer. It is
     viewport evidence: a long table continues below the visible 50 rows.
-  * The rendered PNG screenshots in samples/cli/ (4.12.0 run) and samples/cli_413/
-    (4.13.1: services, storage, events, explanations, doctor, inspector) replay those
-    captures cell by cell. They are a faithful render of the captured screen, and each
-    image states its namespace, view and source file. They are not operating-system
-    window screenshots and must be described that way.
+  * The rendered PNG screenshots in samples/cli_419/ (the current 4.19.2 interface),
+    samples/cli/ (4.12.0 run) and samples/cli_413/ (4.13.1: services, storage, events,
+    explanations, doctor, inspector) replay those captures cell by cell. They are a
+    faithful render of the captured screen, and each image states its namespace, view
+    and source file. They are not operating-system window screenshots and must be
+    described that way.
   * The text/TSV/CSV exports and the session TSV files hold every row that was
     collected, so they are the right source for counts, sums and diffs.
   * The HTML report holds the same data with charts, filters, per-table CSV export
@@ -402,8 +404,9 @@ This run and this environment:
   * whole-node usage and other-namespace share depend on node metrics and on
     cluster-wide read permission; where that is denied, the corresponding panel is
     marked as unavailable and the namespace-only numbers remain valid.
-  * the PNG screenshots in samples/cli/ and samples/cli_413/ are renders of the saved
-    tmux screens. The captured screens themselves are in artifacts/ as .ansi and .txt.
+  * the PNG screenshots in samples/cli_419/, samples/cli/ and samples/cli_413/ are
+    renders of the saved tmux screens. The captured screens themselves are in
+    artifacts/ as .ansi and .txt.
   * kdash reads the cluster. The two exceptions are a shell inside a container (`S`) and
     copying files or directories in or out (`U`/`D`): they run kubectl exec/cp in your name,
     only while interactive mode is explicitly enabled, and are audited as writes (EXEC,

@@ -1,0 +1,50 @@
+[1;7m KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [1;7m 3 WORKLOADS [0m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-31 10:48:29[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 5s  spec 19s/30s  session [39m10:47:40[90m up [39m49s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m9m [32m░░░░░░[39m [32m0%[90m lim  mem [39m449Mi [32m█░░░░░[39m [32m18%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mWORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes[0m
+ [1mworkloads 3:[0m Deployment 3   pods 3 (3 ready)   [32m0[39m degraded  [32m0[39m rolling out  [32m0[39m HA risk  [32m0[39m skewed  [32m0[39m unscheduled
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=19s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1m[94m►[0m [1mWORKLOADS[0m[90m   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec[39m
+  KIND        WORKLOAD                   READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Deployment  [1mplatform-kafka          [0m [32m    1/1[39m    1     1     1     6m / 200m     413Mi /   512Mi / 1536Mi  [35m   3[39m [90mSINGLE[39m
+      [90m├─ cpu [32m███████_        [90m  mem [94m░░░░░░░░        [90m  last 8 samples, sum of its pods[39m
+      [90m├─ [39mplatform-kafka-65c6d4dcfd-l7mqq    [90mRunning           [39m [32m  1/1[39m dev                          cpu     6m  mem   413Mi  rst [35m3[39m  [90m10.244.0.165[39m
+      [90m└─ image apache/kafka:3.9.1[39m
+  Deployment  [1mplatform-postgres       [0m [32m    1/1[39m    1     1     1     2m / 100m      20Mi /   256Mi / 1024Mi  [35m   3[39m [90mSINGLE[39m
+      [90m├─ cpu [32m░░░░░░░░        [90m  mem [94m░░░░░░░░        [90m  last 8 samples, sum of its pods[39m
+      [90m├─ [39mplatform-postgres-74699cf6db-69g4h [90mRunning           [39m [32m  1/1[39m dev                          cpu     2m  mem    20Mi  rst [35m3[39m  [90m10.244.0.158[39m
+      [90m└─ image postgres:16-alpine[39m
+  Deployment  [1mplatform-web            [0m [32m    1/1[39m    1     1     1     1m / -         16Mi /       - / -       [35m   3[39m [90mSINGLE[39m
+      [90m├─ cpu [32m░░░░░░░░        [90m  mem [94m░░░░░░░░        [90m  last 8 samples, sum of its pods[39m
+      [90m├─ [39mplatform-web-fb5754c79-vstz8       [90mRunning           [39m [32m  1/1[39m dev                          cpu     1m  mem    16Mi  rst [35m3[39m  [90m10.244.0.150[39m
+      [90m└─ image ghcr.io/stefanprodan/podinfo:6.15.0[39m
+
+[1m[94m►[0m [1mSPREAD OVER WORKER NODES[0m[90m   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node[39m
+  KIND        WORKLOAD                   N1  VERDICT
+  Deployment  platform-kafka           [1m   1[0m  [90mSINGLE[39m
+  Deployment  platform-postgres        [1m   1[0m  [90mSINGLE[39m
+  Deployment  platform-web             [1m   1[0m  [90mSINGLE[39m
+              pods on node             [1m[94m   3[0m
+  [1m[94mN1  [0m dev                                      [90mpool role:control-plane,master   pods 3[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hi[2m›
+[0;7m ○ LIVE 10:48:29  next 1s  data 4s old  spec 19/30s  fetch 0.0s  poll 5s  AUDITED | workloads | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit [0m

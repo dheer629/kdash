@@ -1,0 +1,2 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1793424553	info	SESSION	default	kdash 4.19.2 started on node by demo - filter .*

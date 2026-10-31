@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 10:49:43 IST
+ match .*   poll 5s  spec 3s/30s  session 10:47:40 up 2m03s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 8m ░░░░░░ 0% lim  mem 449Mi █░░░░░ 18% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+Data pods=fresh age=3s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+ KDASH 4.19.2 DOCTOR   read-only capability checks - no cluster changes are made
+
+CONNECTION
+  SETTING       VALUE
+  context       devops-admin@local-cluster
+  namespace     default
+  kubeconfig    /home/demo/.kube/config
+  API endpoint  https://host:10093
+  audit log     /workspace/kdash/artifacts/view-screens-20261031-051739/audit/audit_202610.log
+
+CHECKS  8 checks   all required checks passed
+  CHECK                            RESULT  DETAIL                                                    NEXT STEP
+  pods                             ● PASS  readable (an empty namespace is valid)                    -
+  nodes                            ● PASS  readable                                                  -
+  services                         ● PASS  readable                                                  -
+  endpointslices.discovery.k8s.io  ● PASS  readable                                                  -
+  persistentvolumeclaims           ● PASS  readable                                                  -
+  events                           ● PASS  readable                                                  -
+  metrics                          ● PASS  pod CPU / memory readable                                 -
+  local reports                    ● PASS  writable: /home/demo/OneDrive/Desktop/AI Projec~  -
+
+  Read-only checks complete; no cluster changes made.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+ ○ LIVE 10:49:43  next 2s  data 3s old  spec 3/30s  fetch 0.0s  poll 5s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

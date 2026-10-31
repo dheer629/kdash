@@ -1,0 +1,50 @@
+[1;7m KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [1;7m 6 NET & DISK IO [0m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-31 10:48:50[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 5s  spec 10s/30s  session [39m10:47:40[90m up [39m1m10s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m10m [32m░░░░░░[39m [32m0%[90m lim  mem [39m449Mi [32m█░░░░░[39m [32m18%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mNETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod[0m
+[35m ! no IO source readable with your rights - metrics-server only has CPU and memory[39m
+[90m   tried: no Prometheus service in the namespace[39m
+[90m   to enable: --prom-url http://<prometheus>:9090 (curl from this host)  |  --prom-svc [ns/]<prometheus-service>:<port> (needs services/proxy)  |  nodes/proxy (kubelet)[39m
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=10s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[90m nothing to show yet[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[7m[39m ● LIVE 10:48:50  next 5s  data 0s old  spec 10/30s  fetch 0.0s  poll 5s  AUDITED | io | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit       [0m

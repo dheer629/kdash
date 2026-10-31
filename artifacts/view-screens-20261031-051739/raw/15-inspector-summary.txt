@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ context devops-admin@local-cluster │ namespace default                                                                                             SUMMARY
+ pod        platform-kafka-65c6d4dcfd-l7mqq
+ container  kafka   ● Running   ready   restarts 3   last exit Unknown exit=255   apache/kafka:3.9.1
+── rows 1-31 / 31 · 31 lines · wrap ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── audited ──
+Name: platform-kafka-65c6d4dcfd-l7mqq
+Namespace: default
+UID: d1f4308e-c788-48be-842e-49e038b9992b
+Created: 2026-10-04T10:44:20Z
+Phase: Running
+Reason:
+Message:
+Node: dev
+Pod IP: 10.244.0.165
+Service account: default
+Owner: ReplicaSet/platform-kafka-65c6d4dcfd
+
+CONDITIONS
+PodReadyToStartContainers       True
+Initialized     True
+Ready   True
+ContainersReady True
+PodScheduled    True
+
+CONTAINERS (requests / limits)
+kafka   apache/kafka:3.9.1
+  CPU: 200m / 1500m     Memory: 512Mi / 1536Mi
+
+CONTAINER STATUS
+kafka   ready=true      restarts=3
+  Waiting:
+  Running since: 2026-10-29T11:33:42Z
+  Terminated:  exit=
+  Previous: Unknown exit=255
+
+INIT CONTAINER STATUS
+
+
+
+
+
+
+
+
+
+
+
+ s summary · d describe · e events · ! why · l logs · p previous logs · c container · S shell · U upload · D download
+ W wrap on · J readable JSON off · + 4x more lines · A all lines · <- -> pan (wrap off) · f follow off · L level all · w export the view
+ q back · Q quit · / find · & only matches · n/N next / prev · j/k Space/b g/G scroll · r reload · ? keys
+

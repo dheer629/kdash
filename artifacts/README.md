@@ -1,10 +1,12 @@
 # kdash validation artifacts
 
-These are historical captures from versions 4.12.0, 4.13.1 and 4.14.0. They are
-kept with their original version labels and checksums; they do not establish live
-cluster validation of the current 4.19.2 utility. Run `bash scripts/validate-all.sh`
-for the current source, bundle, fixture and publication checks. A new live capture
-must record its own version and provenance before it can replace this evidence.
+These captures cover three interfaces: the **current 4.19.2 utility** in
+`view-screens-20261031-051739/`, and the historical 4.12.0, 4.13.1 and 4.14.0 runs
+below. Each one is kept with the version it was captured from and its own checksums;
+the 4.19.2 capture is the one that shows this source's interface. Run
+`bash scripts/validate-all.sh` for the current source, bundle, fixture and
+publication checks, and see `latest-run.txt` for the recorded five-minute validation
+cycle (4.12.0).
 
 Raw, unedited evidence of one kdash 4.12.0 validation cycle on the local Ubuntu WSL
 distribution against the local vcluster context `devops-admin@local-cluster`.
@@ -26,6 +28,22 @@ the redacted captures afterwards.
 The run was produced by `../scripts/wsl-validation.sh`, which is the reproducible
 form of the manual steps in `../DEVOPS_USER_GUIDE.md`. Nothing in this directory was
 edited by hand: every log, capture, report and checksum was written by the run.
+
+## The current interface: `view-screens-20261031-051739/`
+
+31 raw screens of **kdash 4.19.2** - the file this repository ships - captured live
+against a local WSL vcluster (namespace `default`, 5 s poll) with
+`../scripts/capture-view-screens.sh`: every view (1-9 plus `E` events and `!`
+explanations), the `:` command palette, DOCTOR, the inspector (pod picker, summary,
+previous logs, `/` find, `&` only matches, `c` container picker, `?` key map), the
+dashboard help, two `100x40` layouts and the opt-in interactive mode (`S` refused,
+the `X` gate, the shell picker, a real shell inside the container, and the `D` / `U`
+browsers). Each screen is kept as `.ansi` (with colours) and `.txt` (plain text) and
+listed in `captures.tsv`; `../scripts/render-captures.ps1` rendered them into
+`../samples/cli_419/`, which carries their checksums. It was redacted with
+`../scripts/redact-run.sh` and the same private mapping as the other runs, and the
+images were re-rendered from the redacted captures afterwards. It is one screen per
+view, not a five-minute cycle, so it makes no claim about long-run behaviour.
 
 ## What the run did
 

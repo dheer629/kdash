@@ -1,0 +1,40 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default      audited
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-10-31 10:57:40 IST
+ match .*   sort cpu ▼ high first
+ pods 3/3 ready rst 9 oom 0 oomk 0 nolim 1 cpu 12m 0% lim mem 450Mi 18% lim wl 3 ev15m ! 0 ^ 0
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat lis›
+                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILI›
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ›
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=29s metrics=available | Enter/i inspect | 8 services 9 storage E events ! expla›
+► TIMELINE  10:56:11 -> 10:57:40 IST  (all since kdash started, z window, c hides graphs) ─────────
+  CPU used - namespace                                                              zoomed: from 10m
+     15m┤                     ·         ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄                ·
+        │                     ·         ████████████████████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+     13m┤                ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄████████████████████████████████████████               ▄▄▄▄▄
+        │                ███████████████████████████████████████████████████████████████████████████
+     10m└┴────────────────────┴───────────────────────┴─────────────────────┴──────────────────────┴
+         10:56:11                                 10:56:55                                  10:57:40
+  events
+  now 12m  min 11m  avg 12m  max 14m @ 10:56:42
+  request 300m (above)  limit 2500m (above)  0% of limit
+  MEMORY used - namespace
+   806Mi┤───────────────────────────────────────────────────────────────────────────────────────────
+        │                     ·                       ·                     ·
+   403Mi┤                ███████████████████████████████████████████████████████████████████████████
+        │                ███████████████████████████████████████████████████████████████████████████
+     0Mi└┴────────────────────┴───────────────────────┴─────────────────────┴──────────────────────┴
+         10:56:11                                 10:56:55                                  10:57:40
+  events
+  now 450Mi  min 450Mi  avg 450Mi  max 450Mi @ 10:57:40
+  request 768Mi ─  limit 2560Mi (above)  18% of limit
+
+► PODS ────────────────────────────────────────────────────────────────────────────────────────────
+► Deployment platform-kafka  ~ 1/1   3 │      9 ·     414 · │    200   1500     512    1536 │   4.5›
+  platform-kafka-65c6d4dcfd-l~ 1/1   3 │      9 ·     414 · │    200   1500     512    1536 │   4.5›
+      cpu ███___            mem ░░░░░░            pk 414Mi   node dev   pool role:control-plane,mas›
+    └─ kafka                   Y     3 │      9 ·     414 · │    200   1500     512    1536 │   4.5›
+────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (3 pods, 3 workloads)          9 │     12 ·     450 · │    300   2500     768    2560 │   4.0›
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / O›
+ ● LIVE 10:57:40  next 1s  data 4s old  fetch 0.0s  poll 5s  AUDITED | pods | rows 1-27/40 | ? help

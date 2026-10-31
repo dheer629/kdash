@@ -1,0 +1,50 @@
+[1;7m KDASH │ SELECT POD │ context devops-admin@local-cluster │ namespace default                                                                             READ-ONLY │ 3 of 3 pods
+[0m [90mpods[39m    [32m●[39m Running [1m3[0m
+ [90m/ search[39m   [90mview[39m all (u)   [90mX[39m enables shell / upload / download   [90msort[39m name
+[1;4m   POD                                 STATUS   READY  RST     CPU     MEM  %LIM  NODE                                                                                   [0m
+ [1;7m▶ platform-kafka-65c6d4dcfd-l7mqq     Running    1/1    3      6m   413Mi   27%  dev  last-exit Unknown                                                                 [0m
+   platform-postgres-74699cf6db-69g4h  [32mRunning  [39m  1/1 [35m   3  [39m    1m    20Mi    2%  [90mdev  last-exit Unknown[39m
+   platform-web-fb5754c79-vstz8        [32mRunning  [39m  1/1 [35m   3  [39m    1m    16Mi     -  [90mdev  last-exit Unknown[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──[39m [1m1[0m[90m / 3[39m [90m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90mlive · refresh 5s[39m [90m──[39m
+ [1mEnter[0m summary[90m · [1m[39ml[0m logs[90m · [1m[39mp[0m prev logs[90m · [1m[39md[0m describe[90m · [1m[39me[0m events[90m · [1m[39mw[0m why[90m · [1m[39mc[0m containers[90m · [1m[39mS[0m shell[90m · [1m[39mU[0m upload[90m · [1m[39mD[0m download
+ [1mq[0m back[90m · [1m[39mQ[0m quit[90m · [1m[39m/[0m search[90m · [1m[39mu[0m attention[90m · [1m[39ms[0m sort[90m · [1m[39mF[0m filters[90m · [1m[39mr[0m refresh[90m · [1m[39m?[0m help[90m · [1m[39mj/k[0m move[90m · [1m[39m12[0m go to row

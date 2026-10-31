@@ -1,0 +1,50 @@
+[1;7m KDASH │ DOWNLOAD │ context devops-admin@local-cluster │ namespace default                                                               platform-kafka-65c6d4dcfd-l7mqq │ kafka
+[0m [90mpath[39m   [1m/[0m
+ [90m20 entries[39m   [90mselected[39m [1m0[0m
+[1;4m       TYPE  NAME                                                                                                                               SIZE  MODIFIED           [0m
+ [1;7m▶ [ ] dir   bin/                                                                                                                                  -  2025-05-12 12:09 [0m
+   [1m[94m[ ] dir   dev/                                                                                                                                  -  2026-10-29 17:03[0m
+   [1m[94m[ ] dir   etc/                                                                                                                                  -  2026-10-29 17:03[0m
+   [1m[94m[ ] dir   fixture/                                                                                                                              -  2026-10-04 16:14[0m
+   [1m[94m[ ] dir   home/                                                                                                                                 -  2025-05-12 12:09[0m
+   [1m[94m[ ] dir   lib/                                                                                                                                  -  2025-05-12 12:09[0m
+   [1m[94m[ ] dir   lib64/                                                                                                                                -  2025-05-12 12:09[0m
+   [1m[94m[ ] dir   media/                                                                                                                                -  2025-02-14 04:34[0m
+   [1m[94m[ ] dir   mnt/                                                                                                                                  -  2025-05-12 12:09[0m
+   [1m[94m[ ] dir   opt/                                                                                                                                  -  2025-05-12 12:09[0m
+   [1m[94m[ ] dir   proc/                                                                                                                                 -  2026-10-29 17:03[0m
+   [90m[ ] dir   root/                                                                                                                                 -  2025-05-12 12:09[39m
+   [1m[94m[ ] dir   run/                                                                                                                                  -  2025-02-14 04:34[0m
+   [1m[94m[ ] dir   sbin/                                                                                                                                 -  2025-05-12 12:09[0m
+   [1m[94m[ ] dir   srv/                                                                                                                                  -  2025-02-14 04:34[0m
+   [1m[94m[ ] dir   sys/                                                                                                                                  -  2026-10-29 17:03[0m
+   [1m[94m[ ] dir   tmp/                                                                                                                                  -  2026-10-29 21:48[0m
+   [1m[94m[ ] dir   usr/                                                                                                                                  -  2025-05-12 12:09[0m
+   [1m[94m[ ] dir   var/                                                                                                                                  -  2025-02-14 04:34[0m
+   [ ] file  __cacert_entrypoint.sh                                                                                                          5.2 KiB  2025-04-23 22:01
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──[39m [90mready[39m [90m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90m1 / 20 · remote · audited[39m [90m──[39m
+[1;4m  MOVE                      OPEN · VIEW                              SELECT                                 DOWNLOAD                                                    [0m
+  [1mj/k ↑↓[0m     move           [1mEnter[0m     open bin/                       [1mSpace[0m  mark bin                        [1md[0m        download bin
+  [1mPgUp/PgDn[0m  page           [90mh / Bksp  up (already at /)              [39m [1ma[0m      mark all files (1)              [90m         then: review, confirm or cancel                    [39m
+  [1mg / G[0m      first / last   [1mp[0m         go to a path                    [90mn      clear 0 marks                  [39m [1mq / Esc[0m  cancel, back to kdash
+  [1m/[0m          filter names   [90mv         view (files only)              [39m [1mr[0m      reload this list                [1mQ[0m        quit kdash

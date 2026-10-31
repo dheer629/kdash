@@ -86,7 +86,7 @@ for f in tests/*.sh; do
 done
 
 echo "=== 3. checksums"
-for dir in . samples samples/html samples/cli_413 samples/cli_414; do
+for dir in . samples samples/html samples/cli_419 samples/cli_413 samples/cli_414; do
   file=SHA256SUMS
   want=$(awk 'NF {n++} END {print n+0}' "$dir/$file" 2>/dev/null)
   if [ "${want:-0}" -gt 0 ] && (cd "$dir" && sha256sum -c "$file") > "$VALIDATE_TMP/checksums" 2>&1; then
@@ -117,14 +117,18 @@ else
 fi
 
 echo "=== 5. the published samples"
-i=$(find samples -name '*.png' | wc -l); [ "$i" = 76 ] && ok "76 screenshots" || bad "$i screenshots"
+i=$(find samples -name '*.png' | wc -l); [ "$i" = 107 ] && ok "107 screenshots" || bad "$i screenshots"
 h=$(find samples/html -name '*.html' | wc -l); [ "$h" = 33 ] && ok "33 HTML reports" || bad "$h HTML reports"
 c=$(find samples/html -name '*.csv' | wc -l); [ "$c" = 3 ] && ok "3 audit CSVs" || bad "$c audit CSVs"
 for f in samples/cli_7_alerts_170col.png samples/html_overview.png \
          samples/cli_413/01-pods.png samples/cli_413/08-services.png \
          samples/cli_413/09-storage.png samples/cli_413/10-events.png \
          samples/cli_413/12-doctor.png samples/cli_413/16-inspector-find.png \
-         samples/cli_413/18-inspector-containers.png; do
+         samples/cli_413/18-inspector-containers.png samples/cli_419/01-pods.png \
+         samples/cli_419/07-alerts.png samples/cli_419/08-services.png \
+         samples/cli_419/13-doctor.png samples/cli_419/17-inspector-find.png \
+         samples/cli_419/18-inspector-only-matches.png samples/cli_419/24-attach-blocked.png \
+         samples/cli_419/28-shell-inside.png samples/cli_419/30-download-prompt.png; do
   [ -s "$f" ] && ok "present $f" || bad "missing $f"
 done
 FEATURE=artifacts/feature-screens-20261029-151233
@@ -146,6 +150,22 @@ if [ -n "$ATTACH" ]; then
     || bad "attachment captures: $a ansi, $m manifest rows"
 else
   bad "no artifacts/feature-screens-*-attach directory"
+fi
+VIEWS=artifacts/view-screens-20261031-051739
+if [ -d "$VIEWS" ]; then
+  a=$(ls -1 "$VIEWS"/raw/*.ansi 2>/dev/null | wc -l)
+  t=$(ls -1 "$VIEWS"/raw/*.txt 2>/dev/null | wc -l)
+  m=$(awk 'NF {n++} END {print n+0}' "$VIEWS/captures.tsv" 2>/dev/null)
+  [ "$a" = 31 ] && [ "$t" = 31 ] && [ "$m" = 32 ] \
+    && ok "current-version captures 31 pairs, $m manifest rows" \
+    || bad "current-version captures: $a ansi, $t txt, $m manifest rows"
+  for s in 01-pods 13-doctor 17-inspector-find 18-inspector-only-matches \
+           24-attach-blocked 28-shell-inside; do
+    grep -q "raw/$s.ansi" "$VIEWS/captures.tsv" && ok "manifest lists $s" \
+      || bad "manifest is missing $s"
+  done
+else
+  bad "no artifacts/view-screens-* directory"
 fi
 
 echo "=== 6. no environment, product, site or personal names"

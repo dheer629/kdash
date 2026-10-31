@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 10:48:50 IST
+ match .*   poll 5s  spec 10s/30s  session 10:47:40 up 1m10s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 10m ░░░░░░ 0% lim  mem 449Mi █░░░░░ 18% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+ NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod
+ ! no IO source readable with your rights - metrics-server only has CPU and memory
+   tried: no Prometheus service in the namespace
+   to enable: --prom-url http://<prometheus>:9090 (curl from this host)  |  --prom-svc [ns/]<prometheus-service>:<port> (needs services/proxy)  |  nodes/proxy (kubelet)
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=10s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+ nothing to show yet
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ● LIVE 10:48:50  next 5s  data 0s old  spec 10/30s  fetch 0.0s  poll 5s  AUDITED | io | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

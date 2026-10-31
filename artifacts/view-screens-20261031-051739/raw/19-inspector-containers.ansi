@@ -1,0 +1,50 @@
+[1;7m KDASH │ SELECT CONTAINER │ context devops-admin@local-cluster │ namespace default                                                                                   1 container
+[0m [90mpod[39m        [1mplatform-kafka-65c6d4dcfd-l7mqq[0m   [32m●[39m [32mRunning[39m   [90mready[39m 1/1   [90mrestarts[39m 3
+ [90mnode[39m       dev   [90mcontainers[39m 1 app
+
+[1;4m    #  CONTAINER  TYPE  READY      RST  STATE    LAST EXIT         IMAGE                                                                                                 [0m
+ [1;7m▶  1  kafka      app   ready        3  Running  Unknown exit=255  apache/kafka:3.9.1                                                                                    [0m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──[39m [1m1[0m[90m / 1[39m [90m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90maudited[39m [90m──[39m
+ [1mEnter[0m inspect[90m · [1m[39ml[0m logs[90m · [1m[39mp[0m previous logs[90m · [1m[39m1-9[0m open[90m · [1m[39mq[0m back[90m · [1m[39mQ[0m quit kdash[90m · [1m[39mj/k[0m move
+ [1mall[0m containers of the pod, including init and debug
+

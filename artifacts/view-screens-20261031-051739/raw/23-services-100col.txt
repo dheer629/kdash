@@ -1,0 +1,40 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default      audited
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-10-31 10:57:48 IST
+ match .*   sort cpu ▼ high first
+ pods 3/3 ready rst 9 oom 0 oomk 0 nolim 1 cpu 9m 0% lim mem 450Mi 18% lim wl 3 ev15m ! 0 ^ 0
+Data pods=fresh age=7s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explai›
+ SERVICES AND BACKENDS   observed configuration and readiness - reachability is not tested
+
+DATA SOURCES
+  SOURCE     STATE    READ  DETAIL
+  services   ● ok   8s ago  read succeeded
+  pods       ● ok   8s ago  read succeeded
+  endpoints  ● ok   7s ago  read succeeded
+  ingresses  ● ok   7s ago  read succeeded
+
+SERVICES  6 services
+  SERVICE            STATUS  TYPE       SELECTED  READY  ENDPOINTS  CLUSTER-IP      PORTS (name:por~
+  kafka              ● OK    ClusterIP         1      1  1/1 ready  10.109.120.49   kafka:9092
+  kafka-nodeport     ● OK    NodePort          1      1  1/1 ready  10.108.89.68    kafka:9092
+  kubernetes         ● OK    ClusterIP         -      -  1/1 ready  10.96.0.1       https:443→6443
+  platform-web       ● OK    ClusterIP         1      1  1/1 ready  10.107.161.155  http:9898
+  postgres           ● OK    ClusterIP         1      1  1/1 ready  10.106.72.255   postgres:5432
+  postgres-nodeport  ● OK    NodePort          1      1  1/1 ready  10.103.57.209   postgres:5432
+
+FINDINGS  1 finding   critical first
+  SEVERITY  OBJECT      FINDING
+  ● INFO    kubernetes  no selector: backends are managed manually (EndpointSlices 1/1 ready)
+
+BACKENDS  5 services   selector and the Ready pods it selects (first 3)
+  SERVICE            READY BACKEND PODS                  SELECTOR
+  kafka              platform-kafka-65c6d4dcfd-l7mqq     app=platform-kafka
+  kafka-nodeport     platform-kafka-65c6d4dcfd-l7mqq     app=platform-kafka
+  platform-web       platform-web-fb5754c79-vstz8        app=platform-web
+  postgres           platform-postgres-74699cf6db-69g4h  app=platform-postgres
+  postgres-nodeport  platform-postgres-74699cf6db-69g4h  app=platform-postgres
+
+INGRESS ROUTES   service-backed rules
+  no service-backed Ingress routes in this scope
+
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+ ● LIVE 10:57:48  next 3s  data 2s old  fetch 0.0s  poll 5s  AUDITED | services | rows 1-33/34

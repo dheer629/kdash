@@ -1,0 +1,50 @@
+[1;7m KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [1;7m E EVENTS [0m [90m ! WHY [39m  [1m2026-10-31 10:49:19[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 5s  spec 9s/30s  session [39m10:47:40[90m up [39m1m39s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m8m [32m░░░░░░[39m [32m0%[90m lim  mem [39m449Mi [32m█░░░░░[39m [32m18%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+Data pods=fresh age=9s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1;7m KUBERNETES EVENTS [0m  [90mAPI events, newest first - local session changes are recorded separately[39m
+
+[1mDATA SOURCES[0m[90m   context devops-admin@local-cluster[39m
+[1;4m  SOURCE  STATE     READ  SCOPE    DETAIL        [0m
+  events  [32m● ok [39m  21s ago  default  [90mread succeeded[39m
+
+[1mEVENTS[0m
+  [90mno retained Events match - this does not establish application health[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+[7m ○ LIVE 10:49:19  next 1s  data 9s old  spec 9/30s  fetch 0.0s  poll 5s  AUDITED | events | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit    [0m

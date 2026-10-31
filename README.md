@@ -83,60 +83,61 @@ kdash --version                                    # kdash 4.14.0
 
 ## Screenshots
 
-The gallery below contains saved live screens from **kdash 4.13.1** on a local WSL vcluster
-(`kubectl` reads only, namespace `default`), rendered from the exact tmux capture with
+The gallery below contains saved live screens from **kdash 4.19.2** - the version this
+repository ships - on a local WSL vcluster (`kubectl` reads only, namespace `default`),
+rendered from the exact tmux capture with
 [`scripts/capture-terminal.py`](scripts/capture-terminal.py) - nothing is drawn by hand.
 The captures behind them and the full list are in
-[`samples/cli_413/`](samples/cli_413/README.md) and
-[`artifacts/feature-screens-20261029-151233/raw/`](artifacts/feature-screens-20261029-151233/raw).
+[`samples/cli_419/`](samples/cli_419/README.md) and
+[`artifacts/view-screens-20261031-051739/raw/`](artifacts/view-screens-20261031-051739/raw).
 The names are placeholders: the context, the personal paths, the host and the other
 tenants of that shared development cluster were replaced by
 [`scripts/redact-run.sh`](scripts/redact-run.sh) before publication, exactly as described
 in [`samples/README.md`](samples/README.md).
-The earlier 4.12.0 validation run keeps its own gallery in [`samples/cli/`](samples/cli).
-The 4.14.0 shell/copy captures appear in the interactive section. These are historical
-evidence, not screenshots or live-cluster validation of the 4.19.2 interface.
+The 4.13.1, 4.14.0 and 4.12.0 captures are kept as historical evidence in
+[`samples/cli_413/`](samples/cli_413), [`samples/cli_414/`](samples/cli_414) and
+[`samples/cli/`](samples/cli); they show earlier interfaces, not this one.
 
 ### The views added in 4.13: services and storage
 
 | | |
 |---|---|
-| **8 SERVICES** - Ingress -> Service -> EndpointSlice -> ready pods: selector mismatches, unready backends, missing named target ports, selectorless and ExternalName services<br><img src="samples/cli_413/08-services.png" width="450" alt="kdash SERVICES view: service backend diagnostics"> | **9 STORAGE** - Pod -> PVC -> PV -> StorageClass: bound and pending claims, `claimRef` mismatches, declared mounts, storage Events, measured usage only when it exists<br><img src="samples/cli_413/09-storage.png" width="450" alt="kdash STORAGE view: PVC bindings, PVs and mounts"> |
+| **8 SERVICES** - Ingress -> Service -> EndpointSlice -> ready pods: selector mismatches, unready backends, missing named target ports, selectorless and ExternalName services<br><img src="samples/cli_419/08-services.png" width="450" alt="kdash SERVICES view: service backend diagnostics"> | **9 STORAGE** - Pod -> PVC -> PV -> StorageClass: bound and pending claims, `claimRef` mismatches, declared mounts, storage Events, measured usage only when it exists<br><img src="samples/cli_419/09-storage.png" width="450" alt="kdash STORAGE view: PVC bindings, PVs and mounts"> |
 
 ### Events, explanations, doctor - an alert to evidence to the next check
 
 | | |
 |---|---|
-| **E KUBERNETES EVENTS** - real Events with reason, involved object, count, first/last seen and coverage<br><img src="samples/cli_413/10-events.png" width="450" alt="kdash EVENTS view"> | **! INCIDENT EVIDENCE** - the observed fact, a *possible* explanation and the next read-only command<br><img src="samples/cli_413/11-explain.png" width="450" alt="kdash EXPLAIN view"> |
-| **DOCTOR** - kubeconfig, endpoint, TLS, RBAC, Metrics API and local reports, each classified with a next check<br><img src="samples/cli_413/12-doctor.png" width="450" alt="kdash doctor view"> | **1 PODS** - the 4.13 tab bar (`8 SVCS 9 STOR E EVENTS ! WHY`), health line and data freshness<br><img src="samples/cli_413/01-pods.png" width="450" alt="kdash PODS view with the new tab bar"> |
+| **E KUBERNETES EVENTS** - real Events with reason, involved object, count, first/last seen and coverage<br><img src="samples/cli_419/10-events.png" width="450" alt="kdash EVENTS view"> | **! INCIDENT EVIDENCE** - the observed fact, a *possible* explanation and the next read-only command<br><img src="samples/cli_419/11-explain.png" width="450" alt="kdash EXPLAIN view"> |
+| **DOCTOR** - kubeconfig, endpoint, TLS, RBAC, Metrics API and local reports, each classified with a next check<br><img src="samples/cli_419/13-doctor.png" width="450" alt="kdash doctor view"> | **1 PODS** - the current tab bar (`8 SVCS 9 STOR E EVENTS ! WHY`), health line and data freshness<br><img src="samples/cli_419/01-pods.png" width="450" alt="kdash PODS view with the new tab bar"> |
 
 ### Inspector: find in a pane, only matches, container drill-down
 
 | | |
 |---|---|
-| **`/` find** - every line stays visible, matches are highlighted, the header counts them (`137 matching`) and `n`/`N` jump<br><img src="samples/cli_413/16-inspector-find.png" width="450" alt="kdash inspector find"> | **`&` only matches** - the same 202-line Kafka log reduced to the 37 lines that matter<br><img src="samples/cli_413/17-inspector-only-matches.png" width="450" alt="kdash inspector only matches"> |
-| **`c` choose container** - ready, restarts, state, last exit and image per container; `1`-`9` opens one, `l`/`p` jumps to its logs<br><img src="samples/cli_413/18-inspector-containers.png" width="450" alt="kdash container picker"> | **`?` keys** - panes, find, level, follow, export, container switching<br><img src="samples/cli_413/19-inspector-help.png" width="450" alt="kdash inspector help"> |
+| **`/` find** - every line stays visible, matches are highlighted, the header counts them (`137 matching`) and `n`/`N` jump<br><img src="samples/cli_419/17-inspector-find.png" width="450" alt="kdash inspector find"> | **`&` only matches** - the same 202-line Kafka log reduced to the 37 lines that matter<br><img src="samples/cli_419/18-inspector-only-matches.png" width="450" alt="kdash inspector only matches"> |
+| **`c` choose container** - ready, restarts, state, last exit and image per container; `1`-`9` opens one, `l`/`p` jumps to its logs<br><img src="samples/cli_419/19-inspector-containers.png" width="450" alt="kdash container picker"> | **`?` keys** - panes, find, level, follow, export, container switching<br><img src="samples/cli_419/20-inspector-help.png" width="450" alt="kdash inspector help"> |
 
 ### Every view, on the vcluster
 
 | View | Screenshot |
 |---|---|
-| **1 PODS** | <img src="samples/cli_413/01-pods.png" width="430" alt="PODS"> |
-| **2 NODE POOLS** | <img src="samples/cli_413/02-nodes.png" width="430" alt="NODE POOLS"> |
-| **3 WORKLOADS** | <img src="samples/cli_413/03-workloads.png" width="430" alt="WORKLOADS"> |
-| **4 IP POOL** | <img src="samples/cli_413/04-ip.png" width="430" alt="IP POOL"> |
-| **5 MEMORY** | <img src="samples/cli_413/05-mem.png" width="430" alt="MEMORY"> |
-| **6 NET & DISK IO** | <img src="samples/cli_413/06-io.png" width="430" alt="NET and DISK IO"> |
-| **7 ALERTS** | <img src="samples/cli_413/07-alerts.png" width="430" alt="ALERTS"> |
-| **8 SERVICES** | <img src="samples/cli_413/08-services.png" width="430" alt="SERVICES"> |
-| **9 STORAGE** | <img src="samples/cli_413/09-storage.png" width="430" alt="STORAGE"> |
-| **help (`?`)** | <img src="samples/cli_413/20-help-keys.png" width="430" alt="dashboard help"> |
+| **1 PODS** | <img src="samples/cli_419/01-pods.png" width="430" alt="PODS"> |
+| **2 NODE POOLS** | <img src="samples/cli_419/02-nodes.png" width="430" alt="NODE POOLS"> |
+| **3 WORKLOADS** | <img src="samples/cli_419/03-workloads.png" width="430" alt="WORKLOADS"> |
+| **4 IP POOL** | <img src="samples/cli_419/04-ip.png" width="430" alt="IP POOL"> |
+| **5 MEMORY** | <img src="samples/cli_419/05-mem.png" width="430" alt="MEMORY"> |
+| **6 NET & DISK IO** | <img src="samples/cli_419/06-io.png" width="430" alt="NET and DISK IO"> |
+| **7 ALERTS** | <img src="samples/cli_419/07-alerts.png" width="430" alt="ALERTS"> |
+| **8 SERVICES** | <img src="samples/cli_419/08-services.png" width="430" alt="SERVICES"> |
+| **9 STORAGE** | <img src="samples/cli_419/09-storage.png" width="430" alt="STORAGE"> |
+| **help (`?`)** | <img src="samples/cli_419/21-help-keys.png" width="430" alt="dashboard help"> |
 
-Narrow terminals: [1 PODS at 100 columns](samples/cli_413/21-pods-100col.png) ·
-[8 SERVICES at 100 columns](samples/cli_413/22-services-100col.png).
-Intermediate screens: [pod picker](samples/cli_413/13-inspector-pod-picker.png) ·
-[pod summary](samples/cli_413/14-inspector-summary.png) ·
-[previous logs](samples/cli_413/15-inspector-previous-logs.png).
+Narrow terminals: [1 PODS at 100 columns](samples/cli_419/22-pods-100col.png) ·
+[8 SERVICES at 100 columns](samples/cli_419/23-services-100col.png).
+Intermediate screens: [pod picker](samples/cli_419/14-inspector-pod-picker.png) ·
+[pod summary](samples/cli_419/15-inspector-summary.png) ·
+[previous logs](samples/cli_419/16-inspector-previous-logs.png).
 
 ### The 4.12.0 validation run (kept for reference)
 
@@ -798,20 +799,25 @@ kdash offers the typed-path `kubectl cp` flow. Both routes need `tar` in the ima
 the browser also needs a usable `sh`. Names and paths are passed as arguments rather
 than evaluated as host shell commands.
 
-Historical proof, kdash 4.14.0 on a local vcluster (names redacted; the typed-path
-dialogs below predate the 4.19.2 browser):
+The current interface, kdash 4.19.2, on a local vcluster (names redacted). The
+matching 4.14.0 captures, including the typed-path dialogs that predate the 4.19.2
+browser, are in [`samples/cli_414/`](samples/cli_414):
 
 | | |
 |---|---|
-| **`S` while interactive mode is off** - the dashboard says why, and the attempt is audited as `INTERACTIVE_BLOCKED`<br><img src="samples/cli_414/03-attach-blocked-off.png" width="450" alt="S refused while interactive mode is off"> | **`S` while it is on** - pick the pod; the footer carries `S shell U/D copy`<br><img src="samples/cli_414/05-attach-picker-on.png" width="450" alt="pod picker with the attach keys"> |
-| **inside the container** - a real shell: the dashboard handed its terminal over<br><img src="samples/cli_414/06-shell-inside.png" width="450" alt="shell prompt inside the container"> | **after `exit`** - back on the dashboard, `attach shell … exited rc=0`<br><img src="samples/cli_414/08-back-in-dashboard.png" width="450" alt="dashboard after the shell exited"> |
-| **`D`** - the download prompt<br><img src="samples/cli_414/10-download-prompt.png" width="450" alt="download prompt"> | **`D` done** - `/etc/hostname` copied out, `CP_DOWN` + `CP_END rc=0 bytes=32`<br><img src="samples/cli_414/11-download-done.png" width="450" alt="download completed"> |
+| **`S` while interactive mode is off** - the dashboard says why, and the attempt is audited as `INTERACTIVE_BLOCKED`<br><img src="samples/cli_419/24-attach-blocked.png" width="450" alt="S refused while interactive mode is off"> | **`S` while it is on** - pick the pod; the footer carries `S shell U/D copy`<br><img src="samples/cli_419/27-shell-picker.png" width="450" alt="pod picker with the attach keys"> |
+| **inside the container** - a real shell: the dashboard handed its terminal over<br><img src="samples/cli_419/28-shell-inside.png" width="450" alt="shell prompt inside the container"> | **after `exit`** - back on the dashboard, `attach shell … exited rc=0`<br><img src="samples/cli_419/29-back-in-dashboard.png" width="450" alt="dashboard after the shell exited"> |
+| **`D`** - the download browser: local files left, container files right, with a review before the copy<br><img src="samples/cli_419/30-download-prompt.png" width="450" alt="download browser"> | **`D` done (4.14.0)** - `/etc/hostname` copied out, `CP_DOWN` + `CP_END rc=0 bytes=32`<br><img src="samples/cli_414/11-download-done.png" width="450" alt="download completed"> |
+| **`U`** - the upload browser<br><img src="samples/cli_419/31-upload-prompt.png" width="450" alt="upload browser"> | **`X` gate** - the same session with interactive mode turned on, audited as a mode change<br><img src="samples/cli_419/26-interactive-on.png" width="450" alt="interactive mode enabled, with the audit line"> |
 
 The raw capture of every step is in
-[`artifacts/feature-screens-20261029-161848-attach`](artifacts/feature-screens-20261029-161848-attach),
-redacted with [`scripts/redact-run.sh`](scripts/redact-run.sh) like the rest of `samples/`
-(see [`samples/cli_414/README.md`](samples/cli_414/README.md) for the audit lines that
-back each image).
+[`artifacts/view-screens-20261031-051739`](artifacts/view-screens-20261031-051739)
+(4.19.2) and
+[`artifacts/feature-screens-20261029-161848-attach`](artifacts/feature-screens-20261029-161848-attach)
+(4.14.0), redacted with [`scripts/redact-run.sh`](scripts/redact-run.sh) like the rest
+of `samples/` (see [`samples/cli_419/README.md`](samples/cli_419/README.md) and
+[`samples/cli_414/README.md`](samples/cli_414/README.md) for the audit lines that back
+each image).
 
 Worth knowing:
 

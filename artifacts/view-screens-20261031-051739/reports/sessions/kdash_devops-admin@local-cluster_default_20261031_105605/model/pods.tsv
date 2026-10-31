@@ -1,0 +1,4 @@
+KEY	NAMESPACE	POD	STATUS	READY	RESTARTS	NODE	POOL	POD_IP	HOST_IP	QOS	KIND	WORKLOAD	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	CONTAINERS	HOST_NETWORK
+platform-kafka-65c6d4dcfd-l7mqq	default	platform-kafka-65c6d4dcfd-l7mqq	Running	1/1	3	dev	role:control-plane,master	10.244.0.165	172.18.0.2	Burstable	Deployment	platform-kafka	10	200	1500	414	512	1536	10	414	Unknown	1	false
+platform-postgres-74699cf6db-69g4h	default	platform-postgres-74699cf6db-69g4h	Running	1/1	3	dev	role:control-plane,master	10.244.0.158	172.18.0.2	Burstable	Deployment	platform-postgres	2	100	1000	20	256	1024	3	20	Unknown	1	false
+platform-web-fb5754c79-vstz8	default	platform-web-fb5754c79-vstz8	Running	1/1	3	dev	role:control-plane,master	10.244.0.150	172.18.0.2	BestEffort	Deployment	platform-web	1	-	-	16	-	-	1	16	Unknown	1	false

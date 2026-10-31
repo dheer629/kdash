@@ -1,0 +1,32 @@
+file	columns	rows	title	png
+raw/01-pods.ansi	170	50	1 PODS - pod and container usage against requests and limits	samples/cli_419/01-pods.png
+raw/02-nodes.ansi	170	50	2 NODE POOLS - this namespace against the whole cluster, per worker node	samples/cli_419/02-nodes.png
+raw/03-workloads.ansi	170	50	3 WORKLOADS - replicas, rollout state and pods per node	samples/cli_419/03-workloads.png
+raw/04-ip.ansi	170	50	4 IP POOL - pod IPs, node blocks, subnets and services	samples/cli_419/04-ip.png
+raw/05-mem.ansi	170	50	5 MEMORY - trend, node bars, top pods and OOM risk	samples/cli_419/05-mem.png
+raw/06-io.ansi	170	50	6 NET & DISK IO - traffic and disk read/write per node and pod	samples/cli_419/06-io.png
+raw/07-alerts.ansi	170	50	7 ALERTS - verdict, every section and the kubectl action to run	samples/cli_419/07-alerts.png
+raw/08-services.ansi	170	50	8 SERVICES - Ingress -> Service -> EndpointSlice -> ready pods	samples/cli_419/08-services.png
+raw/09-storage.ansi	170	50	9 STORAGE - Pod -> PVC -> PV -> StorageClass	samples/cli_419/09-storage.png
+raw/10-events.ansi	170	50	E KUBERNETES EVENTS - real Events, deduplicated and counted	samples/cli_419/10-events.png
+raw/11-explain.ansi	170	50	! INCIDENT EVIDENCE - observed fact, explanation, next read-only check	samples/cli_419/11-explain.png
+raw/12-palette.ansi	170	50	the : command palette in a running kdash	samples/cli_419/12-palette.png
+raw/13-doctor.ansi	170	50	DOCTOR - connection, TLS, RBAC, metrics and reports, each with a next check	samples/cli_419/13-doctor.png
+raw/14-inspector-pod-picker.ansi	170	50	inspector pod picker - every pod with state, restarts and age	samples/cli_419/14-inspector-pod-picker.png
+raw/15-inspector-summary.ansi	170	50	inspector - pod summary and container state	samples/cli_419/15-inspector-summary.png
+raw/16-inspector-previous-logs.ansi	170	50	inspector - previous logs of the selected container	samples/cli_419/16-inspector-previous-logs.png
+raw/17-inspector-find.ansi	170	50	inspector / find - matches highlighted, header counts them	samples/cli_419/17-inspector-find.png
+raw/18-inspector-only-matches.ansi	170	50	inspector & - only the matching lines remain	samples/cli_419/18-inspector-only-matches.png
+raw/19-inspector-containers.ansi	170	50	inspector c - container picker with state, last exit and image	samples/cli_419/19-inspector-containers.png
+raw/20-inspector-help.ansi	170	50	inspector ? - the key map of the log pane	samples/cli_419/20-inspector-help.png
+raw/21-help-keys.ansi	170	50	the dashboard ? help, including the inspector and interactive keys	samples/cli_419/21-help-keys.png
+raw/22-pods-100col.ansi	100	40	1 PODS on a 100 column terminal	samples/cli_419/22-pods-100col.png
+raw/23-services-100col.ansi	100	40	8 SERVICES on a 100 column terminal	samples/cli_419/23-services-100col.png
+raw/24-attach-blocked.ansi	170	50	S while interactive mode is off - kdash refuses and audits the refusal	samples/cli_419/24-attach-blocked.png
+raw/25-interactive-ask.ansi	170	50	X asks first: interactive mode is opt-in and audited	samples/cli_419/25-interactive-ask.png
+raw/26-interactive-on.ansi	170	50	interactive mode on for this session, with the audit line	samples/cli_419/26-interactive-on.png
+raw/27-shell-picker.ansi	170	50	S - pick the pod and container for the shell	samples/cli_419/27-shell-picker.png
+raw/28-shell-inside.ansi	170	50	a real shell inside the container (kubectl exec, audited)	samples/cli_419/28-shell-inside.png
+raw/29-back-in-dashboard.ansi	170	50	back in the dashboard after exit	samples/cli_419/29-back-in-dashboard.png
+raw/30-download-prompt.ansi	170	50	D - the download browser (local files, container files, review)	samples/cli_419/30-download-prompt.png
+raw/31-upload-prompt.ansi	170	50	U - the upload browser	samples/cli_419/31-upload-prompt.png

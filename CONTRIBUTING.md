@@ -73,7 +73,7 @@ bash scripts/validate-all.sh
 That one command checks the Bash syntax of every shipped script, that the
 installer embeds `kdash` and the uninstaller byte for byte, source-module and version
 synchronization, and every fixture test under `tests/` (none needs a cluster),
-every checksum (root, `samples/`, `samples/html/`, `samples/cli_413/`, `samples/cli_414/`), the recorded
+every checksum (root, `samples/`, `samples/html/`, `samples/cli_419/`, `samples/cli_413/`, `samples/cli_414/`), the recorded
 run and its captures, the feature-screen run and its 22 captures plus manifest, the
 published samples, that no environment, product, site or personal name and no
 credential is in the tree, that every README reference resolves, that the README keeps

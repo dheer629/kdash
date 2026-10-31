@@ -14,6 +14,7 @@ shopt -s nullglob
            CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md LICENSE RELEASES.md \
            ENHANCEMENT_ROADMAP.md artifacts/README.md samples/README.md \
            samples/cli_413/README.md samples/cli_414/README.md \
+           samples/cli_419/README.md \
            src/*.sh tests/*.sh scripts/*.sh scripts/*.py \
            .editorconfig .gitattributes .gitignore .github/CODEOWNERS \
            .github/PULL_REQUEST_TEMPLATE.md .github/ISSUE_TEMPLATE/*.md \
@@ -24,7 +25,7 @@ shopt -s nullglob
 } > SHA256SUMS
 
 # Each published screenshot set carries its own manifest.
-for set in samples/cli_413 samples/cli_414; do
+for set in samples/cli_413 samples/cli_414 samples/cli_419; do
   [ -d "$set" ] || continue
   ( cd "$set" && sha256sum ./*.png > SHA256SUMS )
   printf '%s/SHA256SUMS written: %s entries\n' "$set" "$(wc -l < "$set/SHA256SUMS")"

@@ -1,0 +1,50 @@
+ KDASH │ SELECT POD │ context devops-admin@local-cluster │ namespace default  ▶ Enter UPLOADS into the pod                                             INTERACTIVE │ 3 of 3 pods
+ pods    ● Running 3
+ / search   view all (u)   sort name
+   POD                                 STATUS   READY  RST     CPU     MEM  %LIM  NODE
+ ▶ platform-kafka-65c6d4dcfd-l7mqq     Running    1/1    3     10m   414Mi   27%  dev  last-exit Unknown
+   platform-postgres-74699cf6db-69g4h  Running    1/1    3      2m    20Mi    2%  dev  last-exit Unknown
+   platform-web-fb5754c79-vstz8        Running    1/1    3      1m    16Mi     -  dev  last-exit Unknown
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── 1 / 3 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── live · refresh 5s ──
+ Enter upload · q dashboard · Q quit kdash · / search · u attention · j/k move · PgUp/PgDn page · 12 go to row
+ exit in the shell returns here · kdswitch related pods · kdquit leaves kdash · audited runs with your RBAC

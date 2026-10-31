@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ context devops-admin@local-cluster │ namespace default                                                                                             SUMMARY
+[0m [90mpod[39m        [1mplatform-kafka-65c6d4dcfd-l7mqq[0m
+ [90mcontainer[39m  [1mkafka[0m   [32m● Running[39m   [90mready[39m   [90mrestarts[39m 3   [90mlast exit[39m [1m[31mUnknown exit=255[0m   [90mapache/kafka:3.9.1[39m
+[90m──[39m [1mrows 1-31 / 31 · 31 lines · wrap[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90maudited[39m [90m──[39m
+Name: platform-kafka-65c6d4dcfd-l7mqq
+Namespace: default
+UID: d1f4308e-c788-48be-842e-49e038b9992b
+Created: 2026-10-04T10:44:20Z
+Phase: Running
+Reason:
+Message:
+Node: dev
+Pod IP: 10.244.0.165
+Service account: default
+Owner: ReplicaSet/platform-kafka-65c6d4dcfd
+
+CONDITIONS
+PodReadyToStartContainers       True
+Initialized     True
+Ready   True
+ContainersReady True
+PodScheduled    True
+
+CONTAINERS (requests / limits)
+kafka   apache/kafka:3.9.1
+  CPU: 200m / 1500m     Memory: 512Mi / 1536Mi
+
+CONTAINER STATUS
+kafka   ready=true      restarts=3
+  Waiting:
+  Running since: 2026-10-29T11:33:42Z
+  Terminated:  exit=
+  Previous: Unknown exit=255
+
+INIT CONTAINER STATUS
+
+
+
+
+
+
+
+
+
+
+
+ [1ms[0m summary[90m · [1m[39md[0m describe[90m · [1m[39me[0m events[90m · [1m[39m![0m why[90m · [1m[39ml[0m logs[90m · [1m[39mp[0m previous logs[90m · [1m[39mc[0m container[90m · [1m[39mS[0m shell[90m · [1m[39mU[0m upload[90m · [1m[39mD[0m download
+ [1mW[0m wrap on[90m · [1m[39mJ[0m readable JSON off[90m · [1m[39m+[0m 4x more lines[90m · [1m[39mA[0m all lines[90m · [1m[39m<- ->[0m pan (wrap off)[90m · [1m[39mf[0m follow off[90m · [1m[39mL[0m level all[90m · [1m[39mw[0m export the view
+ [1mq[0m back[90m · [1m[39mQ[0m quit[90m · [1m[39m/[0m find[90m · [1m[39m&[0m only matches[90m · [1m[39mn/N[0m next / prev[90m · [1m[39mj/k Space/b g/G[0m scroll[90m · [1m[39mr[0m reload[90m · [1m[39m?[0m keys
+

@@ -1,0 +1,50 @@
+[1;7m KDASH │ SHELL │ context devops-admin@local-cluster │ namespace default │ audited [0;7m                           exit back to kdash  ·  kdswitch related pods  ·  kdquit leave kdash
+[0m POD        [1mplatform-kafka-65c6d4dcfd-l7mqq[0m  │ [1m[32m● Running[0m   ready [1m1/1[0m   restarts [1m3[0m   QoS [1mBurstable[0m
+ CONTAINER  [1m[32mkafka[0m  apache/kafka:3.9.1        │ state [1mRunning, ready, restarts 3, last exit Unknown exit=255[0m
+ NODE       [1mdev   10.244.0.165             [0m  │ cpu [1m10m / 1.5c[0m   mem [1m414Mi / 1.5Gi (27%)[0m   user [1mappuser[0m (uid 1000)
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Alpine Linux v3.21, bash 5.2.37 ──
+[1mappuser[0m@[32mkafka[39m:[1m/[0m$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

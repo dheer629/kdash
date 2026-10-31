@@ -1,0 +1,40 @@
+[1;7m KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default      audited
+[0m [90m 1 PODS [39m [90m 2 NODES [39m [90m 3 WLOADS [39m [90m 4 IP [39m [90m 5 MEM [39m [90m 6 IO [39m [90m 7 ALERTS [39m  [1m2026-10-31 10:57:48[0m[90m IST[39m
+ [90mmatch[39m .*   [1m[94msort cpu ▼ high first[0m
+[90m [32mpods 3/3 ready[90m rst [35m9[90m oom [32m0[90m oomk [32m0[90m nolim [35m1[90m cpu [39m9m [32m0%[90m lim mem [39m450Mi [32m18%[90m lim wl [39m3[90m ev15m [32m! 0[39m [32m^ 0[39m
+Data pods=fresh age=7s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explai[2m›
+[0;1;7m SERVICES AND BACKENDS [0m  [90mobserved configuration and readiness - reachability is not tested[39m
+
+[1mDATA SOURCES[0m
+[1;4m  SOURCE     STATE    READ  DETAIL        [0m
+  services   [32m● ok [39m  8s ago  [90mread succeeded[39m
+  pods       [32m● ok [39m  8s ago  [90mread succeeded[39m
+  endpoints  [32m● ok [39m  7s ago  [90mread succeeded[39m
+  ingresses  [32m● ok [39m  7s ago  [90mread succeeded[39m
+
+[1mSERVICES[0m  [90m6 services[39m
+[1;4m  SERVICE            STATUS  TYPE       SELECTED  READY  ENDPOINTS  CLUSTER-IP      PORTS (name:por~
+[0m  kafka              [32m● OK  [39m  ClusterIP         1      1  1/1 ready  [90m10.109.120.49 [39m  kafka:9092
+  kafka-nodeport     [32m● OK  [39m  NodePort          1      1  1/1 ready  [90m10.108.89.68  [39m  kafka:9092
+  kubernetes         [32m● OK  [39m  ClusterIP         -      -  1/1 ready  [90m10.96.0.1     [39m  https:443→6443
+  platform-web       [32m● OK  [39m  ClusterIP         1      1  1/1 ready  [90m10.107.161.155[39m  http:9898
+  postgres           [32m● OK  [39m  ClusterIP         1      1  1/1 ready  [90m10.106.72.255 [39m  postgres:5432
+  postgres-nodeport  [32m● OK  [39m  NodePort          1      1  1/1 ready  [90m10.103.57.209 [39m  postgres:5432
+
+[1mFINDINGS[0m  [90m1 finding   critical first[39m
+[1;4m  SEVERITY  OBJECT      FINDING                                                              [0m
+  [90m● INFO  [39m  kubernetes  no selector: backends are managed manually (EndpointSlices 1/1 ready)
+
+[1mBACKENDS[0m  [90m5 services   selector and the Ready pods it selects (first 3)[39m
+[1;4m  SERVICE            READY BACKEND PODS                  SELECTOR             [0m
+  kafka              platform-kafka-65c6d4dcfd-l7mqq     [90mapp=platform-kafka[39m
+  kafka-nodeport     platform-kafka-65c6d4dcfd-l7mqq     [90mapp=platform-kafka[39m
+  platform-web       platform-web-fb5754c79-vstz8        [90mapp=platform-web[39m
+  postgres           platform-postgres-74699cf6db-69g4h  [90mapp=platform-postgres[39m
+  postgres-nodeport  platform-postgres-74699cf6db-69g4h  [90mapp=platform-postgres[39m
+
+[1mINGRESS ROUTES[0m[90m   service-backed rules[39m
+  [90mno service-backed Ingress routes in this scope[39m
+
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+[7m ● LIVE 10:57:48  next 3s  data 2s old  fetch 0.0s  poll 5s  AUDITED | services | rows 1-33/34    [0m

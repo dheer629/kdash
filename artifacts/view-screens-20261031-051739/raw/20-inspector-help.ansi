@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ KEYS │ context devops-admin@local-cluster │ namespace default                                                                              any key returns
+
+[0m FIND                          PANES                       NAVIGATE
+  /  find in this pane         s  summary                  j k arrows  line
+  &  show only matches         d  describe                 space b     page
+  n N  next / previous match   e  events                   PgUp PgDn   page
+  L  log level: all, ERROR,    !  why (event hypotheses)    g G Home End  top/bottom
+     WARN, INFO, DEBUG         l  current logs             c  choose container
+  f  follow logs               p  previous logs            r  reload now
+  w  export what you see       q Esc  back                ?  this help
+
+ LONG AND MANY LINES
+  W  wrap on/off: on (default) shows every line in full; off cuts at the edge, <- -> pan
+  J  readable JSON: time, level and message of JSON log lines; J again shows them raw
+  +  read 4x more lines        A  read every line the kubelet keeps (KDASH_LOG_MAX_BYTES)
+     the rule shows what was read: "5000 lines, 3.1 MiB - complete" or "- newest 5000 only"
+
+ S  shell in the container    U  upload a file             D  download a file
+ S/U/D need --allow-interactive: they run in your name and are audited writes.
+ / keeps the context around every match and highlights it; & hides everything else.
+ A lowercase pattern ignores case: /error finds ERROR and error.
+ n and N wrap around and put the match at the top of the pane.
+ c lists every container with readiness, restarts, state and last exit: pick one
+ and l/p read that container. Search and level stay active across panes.
+ w writes the filtered pane to /workspace/kdash/artifacts/view-screens-20261031-051739//reports/inspector/ (review it before sharing)
+.
+
+ any key returns
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

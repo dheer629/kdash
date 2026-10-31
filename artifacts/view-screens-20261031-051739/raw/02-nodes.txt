@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 10:48:22 IST
+ match .*   poll 5s  spec 12s/30s  session 10:47:40 up 42s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 10m ░░░░░░ 0% lim  mem 449Mi █░░░░░ 18% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+ NODE POOLS   this namespace vs the whole cluster, per pool and worker node
+ namespace  3 pods on 1 of 1 nodes   mem used 449Mi  req 768Mi  lim 2560Mi   cpu used 10m  req 300m  lim 2500m
+ cluster    1 nodes  1 pools   alloc mem 7524Mi  cpu 24.0c   used mem 1951Mi (25.9%)  cpu 244m (1.0%)
+ requests   25 pods in 9 namespaces   requested mem 2234Mi (29.7% of cluster)  cpu 1470m (6.1%)   used mem 1092Mi  cpu 76m (pod metrics)
+            namespace share of cluster   mem used 6.0%  req 10.2%   cpu used 0.0%  req 1.2%   pool label node-role
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=12s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+► NAMESPACE vs CLUSTER  share of pool allocatable:   █ used   ▒ requested, not used   ░ free    zoom x5  left bars magnified, % values true - Z: true scale
+POOL [ns nodes/all]                    ALLOC │ THIS NAMESPACE  default                          used / req  │ WHOLE CLUSTER  all namespaces                    used / req
+role:control-plane,master [1/~ mem    7524Mi │ █████████████▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░   6.0% / 10.2% │ ███████████▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  25.9% / 29.7%
+                               cpu     24.0c │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.0% /  1.2% │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   1.0% /  6.1%
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+CLUSTER TOTAL                  mem    7524Mi │ █████████████▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░   6.0% / 10.2% │ ███████████▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  25.9% / 29.7%
+                               cpu     24.0c │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.0% /  1.2% │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   1.0% /  6.1%
+
+► WORKER NODES RUNNING THIS NAMESPACE  grouped by pool
+                                                        │       CPU millicores       │                   MEMORY GiB                   │         node memory
+POOL [ns nodes/all] / NODE        STATUS    PODS ns/all │ nsUsed  nsReq  alloc   %al │  nsUsed   nsReq   nsLim   alloc   %al node% clReq% │ █ ns ▓ other ns used ░ free
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► role:control-plane,master [1/1]                  3/25 │     10    300  24000   0.0 │     0.4     0.8     2.5     7.3   6.0  25.9   29.7 │ ██▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░
+  dev                             Ready            3/25 │     10    300  24000   0.0 │     0.4     0.8     2.5     7.3   6.0  25.9   29.7 │ ██▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░
+      ip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 3/3   ns-restarts 9   namespaces 9   cluster-req mem 2234Mi cpu 1470m   node-cpu 244m›
+
+► NAMESPACES  usage and requests of each namespace in the cluster (top 20 by sort key) - bar: share of the memory used by all of them
+  NAMESPACE                           PODS rdy  WKLD NODES  CPU used   CPU req  MEM used   MEM req   MEM lim   %used  %clMem │ share of memory used
+  gitops-core                              4/4     4     1       21m      350m      81Mi     256Mi    4096Mi     7.4     3.4 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  ml-service-prod                           4/4     4     1       13m      400m     166Mi     768Mi    2048Mi    15.2    10.2 │ █████░░░░░░░░░░░░░░░░░░░░░░░░░
+  ► default                                3/3     3     1       10m      300m     449Mi     768Mi    2560Mi    41.1    10.2 │ ████████████░░░░░░░░░░░░░░░░░░
+  kube-system                              3/3     3     1       10m      120m      57Mi     264Mi     170Mi     5.2     3.5 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  ml-service-dev                          4/4     4     1        9m        0m     239Mi       0Mi       0Mi    21.9     0.0 │ ███████░░░░░░░░░░░░░░░░░░░░░░░
+  podinfo-demo                             2/2     1     1        5m      200m      31Mi     128Mi    1024Mi     2.8     1.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  kube-flannel                             1/1     1     1        4m      100m      13Mi      50Mi       0Mi     1.2     0.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  cert-manager                             3/3     3     1        3m        0m      48Mi       0Mi       0Mi     4.4     0.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  local-path-storage                       1/1     1     1        1m        0m       8Mi       0Mi       0Mi     0.7     0.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+NAMESPACE (1 nodes)                                   3 │     10    300  24000   0.0 │     0.4     0.8     2.5     7.3   6.0  25.9      - │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░
+ legend nsUsed/nsReq/nsLim = this namespace.  alloc = allocatable.  %al = namespace share.  node% = whole node used.  clReq% = requested by all namespaces.
+ ● LIVE 10:48:22  next 3s  data 2s old  spec 12/30s  fetch 0.0s  poll 5s  AUDITED | nodes | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

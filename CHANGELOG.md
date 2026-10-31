@@ -36,6 +36,14 @@ available separately.
   context, namespace, duration and the retained report location.
 - `scripts/build.sh --from-bundle` imports an updated authoritative bundle into
   the standalone CLI and source modules; `--check` verifies synchronization.
+- `scripts/capture-view-screens.sh` captures one live screen per view plus the
+  command palette, doctor, the inspector screens, the help, two 100-column layouts
+  and (with `--attach`) the opt-in interactive mode; `scripts/render-captures.ps1`
+  renders any run's `captures.tsv` into PNGs and writes the gallery's checksums.
+- `samples/cli_419/` - 31 screens of the current 4.19.2 interface, with the raw
+  `.ansi` / `.txt` captures and manifest in `artifacts/view-screens-20261031-051739/`
+  and the 31 image checksums in `samples/cli_419/SHA256SUMS`. The 4.12.0, 4.13.1 and
+  4.14.0 galleries stay, labelled with the version they were captured from.
 
 ### Changed
 - Installer shell shortcuts preserve occupied aliases/functions/commands, report

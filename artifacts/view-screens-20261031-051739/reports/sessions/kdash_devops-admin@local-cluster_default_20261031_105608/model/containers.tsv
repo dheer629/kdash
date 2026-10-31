@@ -1,0 +1,4 @@
+KEY	POD	CONTAINER	READY	RESTARTS	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	WAITING
+platform-kafka-65c6d4dcfd-l7mqq	platform-kafka-65c6d4dcfd-l7mqq	kafka	Y	3	9	200	1500	414	512	1536	10	414	Unknown	-
+platform-postgres-74699cf6db-69g4h	platform-postgres-74699cf6db-69g4h	postgres	Y	3	1	100	1000	20	256	1024	2	20	Unknown	-
+platform-web-fb5754c79-vstz8	platform-web-fb5754c79-vstz8	web	Y	3	1	-	-	16	-	-	1	16	Unknown	-

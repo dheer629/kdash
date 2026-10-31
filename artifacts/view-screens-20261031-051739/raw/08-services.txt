@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 10:49:04 IST
+ match .*   poll 5s  spec 24s/30s  session 10:47:40 up 1m24s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 9m ░░░░░░ 0% lim  mem 449Mi █░░░░░ 18% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+Data pods=fresh age=24s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+ SERVICES AND BACKENDS   observed configuration and readiness - reachability is not tested
+
+DATA SOURCES
+  SOURCE     STATE    READ  DETAIL
+  services   ● ok   6s ago  read succeeded
+  pods       ● ok   6s ago  read succeeded
+  endpoints  ● ok   6s ago  read succeeded
+  ingresses  ● ok   6s ago  read succeeded
+
+SERVICES  6 services
+  SERVICE            STATUS  TYPE       SELECTED  READY  ENDPOINTS  CLUSTER-IP      PORTS (name:port→target)
+  kafka              ● OK    ClusterIP         1      1  1/1 ready  10.109.120.49   kafka:9092
+  kafka-nodeport     ● OK    NodePort          1      1  1/1 ready  10.108.89.68    kafka:9092
+  kubernetes         ● OK    ClusterIP         -      -  1/1 ready  10.96.0.1       https:443→6443
+  platform-web       ● OK    ClusterIP         1      1  1/1 ready  10.107.161.155  http:9898
+  postgres           ● OK    ClusterIP         1      1  1/1 ready  10.106.72.255   postgres:5432
+  postgres-nodeport  ● OK    NodePort          1      1  1/1 ready  10.103.57.209   postgres:5432
+
+FINDINGS  1 finding   critical first
+  SEVERITY  OBJECT      FINDING
+  ● INFO    kubernetes  no selector: backends are managed manually (EndpointSlices 1/1 ready)
+
+BACKENDS  5 services   selector and the Ready pods it selects (first 3)
+  SERVICE            READY BACKEND PODS                  SELECTOR
+  kafka              platform-kafka-65c6d4dcfd-l7mqq     app=platform-kafka
+  kafka-nodeport     platform-kafka-65c6d4dcfd-l7mqq     app=platform-kafka
+  platform-web       platform-web-fb5754c79-vstz8        app=platform-web
+  postgres           platform-postgres-74699cf6db-69g4h  app=platform-postgres
+  postgres-nodeport  platform-postgres-74699cf6db-69g4h  app=platform-postgres
+
+INGRESS ROUTES   service-backed rules
+  no service-backed Ingress routes in this scope
+
+  Readiness is what the API reports. DNS, ingress controllers, NetworkPolicy, routing, TLS and application responses are not tested.
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+ ● LIVE 10:49:04  next 1s  data 4s old  spec 24/30s  fetch 0.0s  poll 5s  AUDITED | services | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

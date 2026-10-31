@@ -27,7 +27,7 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. Those files support the historical observations; current usage instructions follow the 4.19.2 source.
+`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 31 screens of the **current 4.19.2 interface** (all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode) with their raw captures in `artifacts/view-screens-20261031-051739/`, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_419/` follows this source; the other galleries support the historical observations.
 
 ## 1. Open the correct environment
 
@@ -292,6 +292,11 @@ artifacts/wsl-validation-<run-id>/
     audit/                 audit_YYYYMM.log (+ CSV and HTML audit export)
 samples/
   cli/<namespace>/01-pods.png ... 07-alerts.png   rendered screenshots of views 1-7 (4.12.0 run)
+  cli_419/01-pods.png ... 31-upload-prompt.png    the current 4.19.2 interface: every view,
+                                                  the palette, doctor, the inspector, the
+                                                  help, narrow layouts and the opt-in
+                                                  interactive mode, from
+                                                  artifacts/view-screens-*/raw/*.ansi
   cli_413/01-pods.png ... 22-services-100col.png  the 4.13.1 views and the inspector, from
                                                   artifacts/feature-screens-*/raw/*.ansi
   html/<namespace>/       the HTML reports, byte for byte, plus screenshots/ and SHA256SUMS

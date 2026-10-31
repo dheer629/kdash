@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                            INTERACTIVE │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 11:00:09 IST
+ match .*   poll 5s  spec 26s/30s  session 10:59:13 up 56s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 17m ░░░░░░ 1% lim  mem 450Mi █░░░░░ 18% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                                   │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)
+WORKLOAD / POD / CONTAINER                 RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=26s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+► TIMELINE  10:59:13 -> 11:00:09 IST  (all since kdash started, z window, c hides graphs) ─────────────────────────────────────────────────────────
+  CPU used - namespace                                                       MEMORY used - namespace
+     20m┤               ·               ·               ·                     806Mi┤────────────────────────────────────────────────────────────────
+        │               ·               ·               ·      ██████████          │               ·               ·               ·
+        │               ·               ·   █████████████████████████████          │               · ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+     10m┤               · ███████████████████████████████████████████████     403Mi┤               · ███████████████████████████████████████████████
+        │               · ███████████████████████████████████████████████          │               · ███████████████████████████████████████████████
+        │               · ███████████████████████████████████████████████          │               · ███████████████████████████████████████████████
+      0m└┴──────────────┴───────────────┴───────────────┴───────────────┴       0Mi└┴──────────────┴───────────────┴───────────────┴───────────────┴
+         10:59:13                   10:59:41                     11:00:09           10:59:13                   10:59:41                     11:00:09
+  events                                                                     events
+  now 17m  min 10m  avg 14m  max 17m @ 11:00:09                              now 450Mi  min 450Mi  avg 450Mi  max 450Mi @ 11:00:09
+  request 300m (above)  limit 2500m (above)  1% of limit                     request 768Mi ─  limit 2560Mi (above)  18% of limit
+
+► PODS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► Deployment platform-kafka  (1 pod)       1/1   3 │     14 ·     414 · │    200   1500     512    1536 │   7.0   0.9 ░░░░░░░░  80.9  27.0 ██░░░░░░
+  platform-kafka-65c6d4dcfd-l7mqq          1/1   3 │     14 ·     414 · │    200   1500     512    1536 │   7.0   0.9 ░░░░░░░░  80.9  27.0 ██░░░░░░
+      cpu _▒██              mem ░░░░              pk 414Mi   node dev   pool role:control-plane,master   ip 10.244.0.165   qos Burstable   status Running   last-exit Unk›
+    └─ kafka                               Y     3 │     14 ·     414 · │    200   1500     512    1536 │   7.0   0.9 ░░░░░░░░  80.9  27.0 ██░░░░░░
+        last-exit Unknown
+....................................................................................................................................................
+► Deployment platform-postgres  (1 pod)    1/1   3 │      2 ·      20 · │    100   1000     256    1024 │   2.0   0.2 ░░░░░░░░   7.8   2.0 ░░░░░░░░
+  platform-postgres-74699cf6db-69g4h       1/1   3 │      2 ·      20 · │    100   1000     256    1024 │   2.0   0.2 ░░░░░░░░   7.8   2.0 ░░░░░░░░
+      cpu __██              mem ░░░░              pk 20Mi   node dev   pool role:control-plane,master   ip 10.244.0.158   qos Burstable   status Running   last-exit Unkn›
+    └─ postgres                            Y     3 │      2 ·      20 · │    100   1000     256    1024 │   2.0   0.2 ░░░░░░░░   7.8   2.0 ░░░░░░░░
+        last-exit Unknown
+....................................................................................................................................................
+► Deployment platform-web  (1 pod)         1/1   3 │      1 ·      16 · │      -      -       -       - │     -     - n/a          -     - n/a
+  platform-web-fb5754c79-vstz8             1/1   3 │      1 ·      16 · │      -      -       -       - │     -     - n/a          -     - n/a
+      cpu ░░░░              mem ░░░░              pk 16Mi   node dev   pool role:control-plane,master   ip 10.244.0.150   qos BestEffort   status Running   last-exit Unk›
+    └─ web                                 Y     3 │      1 ·      16 · │      -      -       -       - │     -     - n/a          -     - n/a
+        last-exit Unknown
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (3 pods, 3 workloads)                      9 │     17 ·     450 · │    300   2500     768    2560 │   5.7   0.7 ░░░░░░░░  58.6  17.6 █░░░░░░░
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+ ○ LIVE 11:00:09  next 2s  data 3s old  spec 26/30s  fetch 0.0s  poll 5s  AUDITED | pods | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

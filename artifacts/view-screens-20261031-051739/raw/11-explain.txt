@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 10:49:26 IST
+ match .*   poll 5s  spec 16s/30s  session 10:47:40 up 1m46s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 12m ░░░░░░ 0% lim  mem 449Mi █░░░░░ 18% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+Data pods=fresh age=16s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+ WHY - INCIDENT EVIDENCE   warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context devops-admin@local-cluster
+  SOURCE  STATE     READ  SCOPE    DETAIL
+  events  ● ok   28s ago  default  read succeeded
+
+PODS NEEDING ATTENTION   3 other pods are Running and ready - from the dashboard model
+  every pod is Running and ready
+
+WARNING EVIDENCE   one row per object and category, newest first, up to 20
+  no retained warning events - coverage gaps, expired events and failures without events remain possible
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+ ● LIVE 10:49:26  next 4s  data 1s old  spec 16/30s  fetch 0.0s  poll 5s  AUDITED | explain | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

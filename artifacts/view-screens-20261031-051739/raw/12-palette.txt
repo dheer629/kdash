@@ -1,0 +1,50 @@
+ KDASH │ COMMAND PALETTE │ context devops-admin@local-cluster │ namespace default                                                                 Enter on an empty line cancels
+
+ shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list
+ quit                    Leave kdash (also Q on any screen)
+ inspect                 Choose a pod and inspect it
+ filter                  Structured pod filters
+ pods / nodes / workloads / ip / mem / io / alerts
+ services / storage / events / explain / doctor
+ help                    Dashboard help
+
+ Commands use fixed handlers and never execute shell text.
+ :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,4 @@
+POD	NODE	POOL	KIND	WORKLOAD	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	PCT_OF_REQ	PCT_OF_LIM	RESTARTS	LAST_TERMINATION	RISK
+platform-kafka-65c6d4dcfd-l7mqq	dev	role:control-plane,master	Deployment	platform-kafka	413	512	1536	80.7	26.9	3	Unknown	-
+platform-postgres-74699cf6db-69g4h	dev	role:control-plane,master	Deployment	platform-postgres	20	256	1024	7.8	2.0	3	Unknown	-
+platform-web-fb5754c79-vstz8	dev	role:control-plane,master	Deployment	platform-web	16	-	-	-	-	3	Unknown	NO_LIMIT

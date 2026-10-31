@@ -1,10 +1,11 @@
 # kdash samples
 
-This gallery preserves historical output from kdash 4.12.0, 4.13.1 and 4.14.0.
-The current source and bundle are 4.19.2, whose shell picker, file browsers and
-updated layouts are described in the [README](../README.md) and
-[DevOps guide](../DEVOPS_USER_GUIDE.md). These images are not current-version
-screenshots and should not be relabeled as such.
+This gallery covers every version this repository has published: the **current
+4.19.2 interface** in [`cli_419/`](cli_419) (31 screens of a live run), the
+historical feature captures of 4.13.1 and 4.14.0 in [`cli_413/`](cli_413) and
+[`cli_414/`](cli_414), and the 4.12.0 validation run's views in [`cli/`](cli).
+Each gallery names the version it was captured from and is never relabeled as
+another version's.
 
 The names in these samples are placeholders. Before publication the cluster
 context, the namespaces, the namespace-derived pod prefixes, the operator and host
@@ -21,6 +22,25 @@ hash chain.
 Shareable examples produced by the validation run `wsl-validation-20261018-134816`
 (kdash 4.12.0, context `devops-admin@local-cluster`, three namespaces, five minutes
 each). The raw evidence behind every file here is in `../artifacts/`.
+
+## 4.19.2 screenshots - the current interface
+
+`samples/cli_419/` holds 31 screens from **kdash 4.19.2** - the same file this
+repository ships - against a local WSL vcluster (namespace `default`, 5 s poll).
+They cover the whole current interface: the nine views plus `E` events and `!`
+explanations, the `:` command palette, the doctor, the inspector (pod picker,
+summary, previous logs, `/` find, `&` only matches, `c` container picker and its
+key map), the dashboard help, two 100-column layouts and the opt-in interactive
+mode end to end (`S` refused, the `X` gate, the shell picker, a real shell, and
+the `D` / `U` browsers). Same method as above: `tmux capture-pane -e -p` while
+live, replayed cell by cell with `scripts/capture-terminal.py`. The raw `.ansi` /
+`.txt` captures and the manifest are in
+[`../artifacts/view-screens-20261031-051739/`](../artifacts/view-screens-20261031-051739),
+captured by [`../scripts/capture-view-screens.sh`](../scripts/capture-view-screens.sh)
+and rendered by [`../scripts/render-captures.ps1`](../scripts/render-captures.ps1);
+`samples/cli_419/SHA256SUMS` lists the 31 images. See
+[`cli_419/README.md`](cli_419/README.md) for the file list and the placeholders
+that `../scripts/redact-run.sh` substituted.
 
 ## 4.13.1 screenshots - the new views and the inspector
 

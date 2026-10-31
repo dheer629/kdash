@@ -1,0 +1,50 @@
+ KDASH │ DOWNLOAD │ context devops-admin@local-cluster │ namespace default                                                               platform-kafka-65c6d4dcfd-l7mqq │ kafka
+ path   /
+ 20 entries   selected 0
+       TYPE  NAME                                                                                                                               SIZE  MODIFIED
+ ▶ [ ] dir   bin/                                                                                                                                  -  2025-05-12 12:09
+   [ ] dir   dev/                                                                                                                                  -  2026-10-29 17:03
+   [ ] dir   etc/                                                                                                                                  -  2026-10-29 17:03
+   [ ] dir   fixture/                                                                                                                              -  2026-10-04 16:14
+   [ ] dir   home/                                                                                                                                 -  2025-05-12 12:09
+   [ ] dir   lib/                                                                                                                                  -  2025-05-12 12:09
+   [ ] dir   lib64/                                                                                                                                -  2025-05-12 12:09
+   [ ] dir   media/                                                                                                                                -  2025-02-14 04:34
+   [ ] dir   mnt/                                                                                                                                  -  2025-05-12 12:09
+   [ ] dir   opt/                                                                                                                                  -  2025-05-12 12:09
+   [ ] dir   proc/                                                                                                                                 -  2026-10-29 17:03
+   [ ] dir   root/                                                                                                                                 -  2025-05-12 12:09
+   [ ] dir   run/                                                                                                                                  -  2025-02-14 04:34
+   [ ] dir   sbin/                                                                                                                                 -  2025-05-12 12:09
+   [ ] dir   srv/                                                                                                                                  -  2025-02-14 04:34
+   [ ] dir   sys/                                                                                                                                  -  2026-10-29 17:03
+   [ ] dir   tmp/                                                                                                                                  -  2026-10-29 21:48
+   [ ] dir   usr/                                                                                                                                  -  2025-05-12 12:09
+   [ ] dir   var/                                                                                                                                  -  2025-02-14 04:34
+   [ ] file  __cacert_entrypoint.sh                                                                                                          5.2 KiB  2025-04-23 22:01
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── ready ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 1 / 20 · remote · audited ──
+  MOVE                      OPEN · VIEW                              SELECT                                 DOWNLOAD
+  j/k ↑↓     move           Enter     open bin/                       Space  mark bin                        d        download bin
+  PgUp/PgDn  page           h / Bksp  up (already at /)               a      mark all files (1)                       then: review, confirm or cancel
+  g / G      first / last   p         go to a path                    n      clear 0 marks                   q / Esc  cancel, back to kdash
+  /          filter names   v         view (files only)               r      reload this list                Q        quit kdash

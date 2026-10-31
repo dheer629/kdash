@@ -1,0 +1,50 @@
+[1;7m KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [1;7m ! WHY [0m  [1m2026-10-31 10:49:26[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 5s  spec 16s/30s  session [39m10:47:40[90m up [39m1m46s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m12m [32m░░░░░░[39m [32m0%[90m lim  mem [39m449Mi [32m█░░░░░[39m [32m18%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+Data pods=fresh age=16s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1;7m WHY - INCIDENT EVIDENCE [0m  [90mwarning events grouped into possible explanations - timing alone does not establish a cause[39m
+
+[1mDATA SOURCES[0m[90m   context devops-admin@local-cluster[39m
+[1;4m  SOURCE  STATE     READ  SCOPE    DETAIL        [0m
+  events  [32m● ok [39m  28s ago  default  [90mread succeeded[39m
+
+[1mPODS NEEDING ATTENTION[0m[90m   3 other pods are Running and ready - from the dashboard model[39m
+  [90mevery pod is Running and ready[39m
+
+[1mWARNING EVIDENCE[0m[90m   one row per object and category, newest first, up to 20[39m
+  [90mno retained warning events - coverage gaps, expired events and failures without events remain possible[39m
+
+  [90mCompare current readiness, resource identities, logs and workload conditions before deciding on a change.[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+[7m ● LIVE 10:49:26  next 4s  data 1s old  spec 16/30s  fetch 0.0s  poll 5s  AUDITED | explain | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit  [0m
