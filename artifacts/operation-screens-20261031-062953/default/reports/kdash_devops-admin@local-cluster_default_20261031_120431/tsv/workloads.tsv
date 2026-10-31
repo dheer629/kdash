@@ -1,0 +1,4 @@
+KIND	WORKLOAD	PODS	PODS_READY	UNSCHEDULED	NODES	MAX_PER_NODE	VERDICT	CPU_USED_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	DISTRIBUTION	DESIRED	READY_REPLICAS	UPDATED	AVAILABLE	ROLLOUT	CPU_REQ_m	RESTARTS	IMAGES	SCHEDULE	LAST_SCHEDULE
+Deployment	platform-kafka	1	1	0	1	1	SINGLE	9	415	512	1536	dev:1	1	1	1	1	complete	200	3	apache/kafka:3.9.1	-	-
+Deployment	platform-postgres	1	1	0	1	1	SINGLE	2	20	256	1024	dev:1	1	1	1	1	complete	100	3	postgres:16-alpine	-	-
+Deployment	platform-web	1	1	0	1	1	SINGLE	1	16	-	-	dev:1	1	1	1	1	complete	-	3	ghcr.io/stefanprodan/podinfo:6.15.0	-	-

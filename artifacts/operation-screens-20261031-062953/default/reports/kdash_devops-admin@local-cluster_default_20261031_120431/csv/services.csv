@@ -1,0 +1,7 @@
+NAMESPACE,SERVICE,TYPE,CLUSTER_IP,EXTERNAL_IPS,LB_INGRESS,PORTS
+default,kafka,ClusterIP,10.109.120.49,,,9092/TCP
+default,kafka-nodeport,NodePort,10.108.89.68,,,9092/TCP
+default,kubernetes,ClusterIP,10.96.0.1,,,443/TCP
+default,platform-web,ClusterIP,10.107.161.155,,,9898/TCP
+default,postgres,ClusterIP,10.106.72.255,,,5432/TCP
+default,postgres-nodeport,NodePort,10.103.57.209,,,5432/TCP

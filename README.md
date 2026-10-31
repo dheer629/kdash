@@ -139,6 +139,26 @@ Intermediate screens: [pod picker](samples/cli_419/14-inspector-pod-picker.png) 
 [pod summary](samples/cli_419/15-inspector-summary.png) ·
 [previous logs](samples/cli_419/16-inspector-previous-logs.png).
 
+### Operations, exports and one-shot modes
+
+Captured live in the same run, from the same gallery
+([`samples/cli_419/`](samples/cli_419/README.md)):
+
+| | | |
+|---|---|---|
+| **`e` HTML menu, Enter writes it** - the all-tabs report plus history in one file, named in the footer when it is written<br><img src="samples/cli_419/44-html-report-written.png" width="450" alt="kdash all-tabs HTML report written"> | **`--report` evidence bundle** - text views, TSV, CSV and an index for one namespace<br><img src="samples/cli_419/50-report-bundle.png" width="450" alt="kdash evidence bundle"> |
+| **`--audit`** - every run, action, report and kubectl call, from one table<br><img src="samples/cli_419/51-audit-table.png" width="450" alt="kdash audit table"> | **`q` session summary** - context, namespace, duration, retained reports and the audit trail<br><img src="samples/cli_419/46-session-summary.png" width="450" alt="kdash session close summary"> |
+
+That run also captured every control (namespace picker `n`, pod filter `/`, structured
+filters `F`, `d` details, `p` pods-only, sort `s`/`o`, pause `P`, theme `T`, node
+toggles `a`/`Z`, chart window `z`), the inspector's `w` export, the other one-shot
+modes (`-V`, `-h`, `--snapshot all`, `--audit-verify`, `--about`, `--audit-report`) and
+the first-run disclaimer gate; the HTML it produced is published in
+[`samples/html419/`](samples/html419). See the file list in
+[`samples/cli_419/README.md`](samples/cli_419/README.md) and the run's own manifest and
+verification log in
+[`artifacts/operation-screens-20261031-062953/`](artifacts/operation-screens-20261031-062953).
+
 ### The 4.12.0 validation run (kept for reference)
 
 `orders-service-e2e` in the recorded run: 27 pods, 14 ready, a crash loop, an image

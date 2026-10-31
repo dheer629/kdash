@@ -16,11 +16,18 @@ byte for byte, and the checksum list lets a reviewer verify that.
 .EXAMPLE
 powershell -ExecutionPolicy Bypass -File scripts/collect-html-samples.ps1 `
   -RunDirectory artifacts/wsl-validation-20261018-115201 -Screenshot
+
+.EXAMPLE
+# collect one run into its own gallery instead of samples/html:
+powershell -ExecutionPolicy Bypass -File scripts/collect-html-samples.ps1 `
+  -RunDirectory artifacts/operation-screens-20261031-062059 `
+  -OutputDirectory samples/html419 -Screenshot
 #>
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)][string]$RunDirectory,
   [string]$SamplesDirectory,
+  [string]$OutputDirectory,
   [switch]$Screenshot,
   [string]$Edge = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
   [int]$Width = 1500,
@@ -31,7 +38,10 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if (-not $SamplesDirectory) { $SamplesDirectory = Join-Path $repoRoot 'samples' }
 $run = Get-Item -LiteralPath $RunDirectory
-$outputRoot = Join-Path $SamplesDirectory 'html'
+# Default target: <samples>/html. Pass -OutputDirectory to collect a run into its
+# own gallery (for example samples/html419) without touching an existing one.
+$outputRoot = if ($OutputDirectory) { Join-Path $repoRoot $OutputDirectory }
+              else { Join-Path $SamplesDirectory 'html' }
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
 $copied = New-Object System.Collections.Generic.List[string]
 

@@ -1,0 +1,48 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                                                  read-only │ audited │ Dheeraj V 
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SERVICES   9 STORAGE   E EVENTS   ! EXPLAIN   2026-10-31 12:04:31 IST
+ match .*   poll 2s  spec 1s/30s   sort mem ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 12m ░░░░░░ 0% lim  mem 451Mi █░░░░░ 18% lim  │ workloads 3
+ MEMORY   live namespace memory dashboard
+ MEMORY used    451Mi  req    768Mi  lim   2560Mi   used/req   58.7%  used/lim   17.6%  ████░░░░░░░░░░░░░░░░░░░░
+ window 12:04:30 -> 12:04:31 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
+ CPU    used      12m  req     300m  lim    2500m   used/req    4.0%  used/lim    0.5%  ░
+ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 9
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=1s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+► TIMELINE  12:04:30 -> 12:04:31 IST  (all since kdash started, host clock) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  MEMORY used - namespace                                                                              CPU used - namespace                                                                             
+         one sample so far - the chart starts with the 2nd (run kdash live)                                   one sample so far - the chart starts with the 2nd (run kdash live)                        
+  events: recorded in live mode (session history)
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (live sessions) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  builds from the session samples while kdash runs live (no samples yet)
+
+► MEMORY BY WORKER NODE ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory                           ns trend
+  dev                          role:contro~    451Mi   7524Mi   6.0  26.0  ██▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░  ░
+
+► PODS BY MEMORY USED ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD                                NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  platform-kafka-65c6d4dcfd-l7mqq    dev                           415Mi    512Mi   1536Mi  81.1  27.0 ██░░░░░░   3  
+  platform-postgres-74699cf6db-69g4h dev                            20Mi    256Mi   1024Mi   7.8   2.0 ░░░░░░░░   3  
+  platform-web-fb5754c79-vstz8       dev                            16Mi        -        -     -     - n/a        3  NO_LIMIT
+
+► OOM RISK  (>= 90% of memory limit) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► MEMORY GROWTH FORECAST  (linear trend of the last 30m, a restart starts the trend again) ────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  needs a live session with 2m of samples (every 15s) - the forecast appears here
+
+► RECENT OOMKilled  (last container termination) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► NO MEMORY LIMIT  (unbounded containers) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  platform-web-fb5754c79-vstz8
+
+► MEMORY BY WORKLOAD ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  KIND        WORKLOAD                              PODS     USED      REQ      LIM  %LIM MEM/LIM 
+  Deployment  platform-kafka                           1    415Mi    512Mi   1536Mi  27.0 ██░░░░░░
+  Deployment  platform-postgres                        1     20Mi    256Mi   1024Mi   2.0 ░░░░░░░░
+  Deployment  platform-web                             1     16Mi        -        -     - n/a     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 1 polls.  metrics refresh about every 15 s.

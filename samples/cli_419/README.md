@@ -1,8 +1,10 @@
 # kdash 4.19.2 screenshots - the current interface
 
-31 saved live screens from **kdash 4.19.2** (`~/.local/bin/kdash`, the same file as
+55 saved live screens from **kdash 4.19.2** (`~/.local/bin/kdash`, the same file as
 `kdash` in this repository) running against a local WSL vcluster (namespace
-`default`, 5 s poll, 170x50 and 100x40 terminals).
+`default`, 5 s poll, 170x50 and 100x40 terminals): screens `01`-`31` show the
+interface itself, `32`-`55` show what you can do with it - the dashboard controls,
+the exports and the one-shot modes.
 
 The names are placeholders, as in the rest of `samples/`: the context is shown as
 `devops-admin@local-cluster`, the personal paths as `/home/demo`, the host as
@@ -60,6 +62,44 @@ Facts visible in these screens are the cluster's, not examples: the Kafka pod
 really runs `apache/kafka:3.9.1` with `restarts 3`, its previous-log window really
 held 1152 lines of which 823 matched `INFO`, and the namespace really holds three
 `platform-*` deployments with 3, 3 and 3 restarts.
+
+## Operations, exports and one-shot modes (`32`-`55`)
+
+The second run behind these screens
+([`artifacts/operation-screens-20261031-062953/`](../../artifacts/operation-screens-20261031-062953),
+produced by [`scripts/capture-operation-screens.sh`](../capture-operation-screens.sh))
+captured each control and each mode while it ran, and then checked the files it
+produced - the run's `README.txt` lists them.
+
+| File | Screen |
+|---|---|
+| `32-namespace-picker.png` | `n` - the namespace picker (every namespace with your access checked) |
+| `33-pod-filter.png` | `/` - the pod filter applied to the live view |
+| `34-filters.png` | `F` - the structured filter prompt: label, status, node, workload, unhealthy |
+| `35-detail-lines.png` | `d` - per-container detail lines under every workload |
+| `36-pods-only.png` | `p` - pod totals only |
+| `37-sort-order.png` | `s` and `o` - the sort key cycled and the order reversed |
+| `38-paused-interval.png` | `P` and `+` - the refresh paused and the poll interval changed |
+| `39-theme.png` | `T` - another colour theme |
+| `40-nodes-all.png` | `2` and `a` - NODE POOLS with every node, not only the hosting ones |
+| `41-nodes-true-scale.png` | `Z` - true-scale node bars instead of auto zoom |
+| `42-chart-window.png` | `5` and `z` - MEMORY with the chart window moved |
+| `43-html-menu.png` | `e` - the HTML menu (all tabs, current view, views 1-6, bundle) |
+| `44-html-report-written.png` | Enter in that menu - the all-tabs report written and named |
+| `45-inspector-export.png` | `w` in the inspector - the visible log pane exported as a file |
+| `46-session-summary.png` | `q` - the session close summary with context, namespace, duration, reports and audit trail |
+| `47-version.png` | `kdash -V` |
+| `48-help-cli.png` | `kdash -h` (first page of the CLI help) |
+| `49-snapshot-all.png` | `--snapshot all` - the every-view HTML report, written and named |
+| `50-report-bundle.png` | `--report` - the evidence bundle (text views, TSV, CSV, index) |
+| `51-audit-table.png` | `--audit 40` - the recorded events |
+| `52-audit-verify.png` | `--audit-verify` - the audit hash chain checked |
+| `53-about.png` | `--about` - author, disclaimer and where this run is audited |
+| `54-disclaimer-first-run.png` | a first run asks for the disclaimer before it reads the cluster |
+| `55-audit-report.png` | `--audit-report` - the audit log as HTML and CSV |
+
+The HTML that run produced is published byte for byte in
+[`../html419/`](../html419), with browser screenshots of the main pages next to it.
 
 Verify the images are unchanged: `sha256sum -c SHA256SUMS` in this directory.
 The 4.13.1 screens are in [`../cli_413/`](../cli_413), the 4.14.0 interactive

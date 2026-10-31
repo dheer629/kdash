@@ -86,7 +86,7 @@ for f in tests/*.sh; do
 done
 
 echo "=== 3. checksums"
-for dir in . samples samples/html samples/cli_419 samples/cli_413 samples/cli_414; do
+for dir in . samples samples/html samples/html419 samples/cli_419 samples/cli_413 samples/cli_414; do
   file=SHA256SUMS
   want=$(awk 'NF {n++} END {print n+0}' "$dir/$file" 2>/dev/null)
   if [ "${want:-0}" -gt 0 ] && (cd "$dir" && sha256sum -c "$file") > "$VALIDATE_TMP/checksums" 2>&1; then
@@ -117,7 +117,11 @@ else
 fi
 
 echo "=== 5. the published samples"
-i=$(find samples -name '*.png' | wc -l); [ "$i" = 107 ] && ok "107 screenshots" || bad "$i screenshots"
+i=$(find samples -name '*.png' | wc -l); [ "$i" = 133 ] && ok "133 screenshots" || bad "$i screenshots"
+h419=$(find samples/html419 -name '*.html' | wc -l)
+c419=$(find samples/html419 -name '*.csv' | wc -l)
+[ "$h419" = 10 ] && [ "$c419" = 1 ] && ok "html419: 10 report HTML, $c419 audit CSV" \
+  || bad "html419: $h419 HTML, $c419 CSV"
 h=$(find samples/html -name '*.html' | wc -l); [ "$h" = 33 ] && ok "33 HTML reports" || bad "$h HTML reports"
 c=$(find samples/html -name '*.csv' | wc -l); [ "$c" = 3 ] && ok "3 audit CSVs" || bad "$c audit CSVs"
 for f in samples/cli_7_alerts_170col.png samples/html_overview.png \
@@ -128,7 +132,12 @@ for f in samples/cli_7_alerts_170col.png samples/html_overview.png \
          samples/cli_419/07-alerts.png samples/cli_419/08-services.png \
          samples/cli_419/13-doctor.png samples/cli_419/17-inspector-find.png \
          samples/cli_419/18-inspector-only-matches.png samples/cli_419/24-attach-blocked.png \
-         samples/cli_419/28-shell-inside.png samples/cli_419/30-download-prompt.png; do
+         samples/cli_419/28-shell-inside.png samples/cli_419/30-download-prompt.png \
+         samples/cli_419/33-pod-filter.png samples/cli_419/34-filters.png \
+         samples/cli_419/43-html-menu.png samples/cli_419/44-html-report-written.png \
+         samples/cli_419/46-session-summary.png samples/cli_419/49-snapshot-all.png \
+         samples/cli_419/50-report-bundle.png samples/cli_419/51-audit-table.png \
+         samples/cli_419/54-disclaimer-first-run.png; do
   [ -s "$f" ] && ok "present $f" || bad "missing $f"
 done
 FEATURE=artifacts/feature-screens-20261029-151233
@@ -166,6 +175,26 @@ if [ -d "$VIEWS" ]; then
   done
 else
   bad "no artifacts/view-screens-* directory"
+fi
+OPS=artifacts/operation-screens-20261031-062953
+if [ -d "$OPS" ]; then
+  a=$(ls -1 "$OPS"/raw/*.ansi 2>/dev/null | wc -l)
+  t=$(ls -1 "$OPS"/raw/*.txt 2>/dev/null | wc -l)
+  m=$(awk 'NF {n++} END {print n+0}' "$OPS/captures.tsv" 2>/dev/null)
+  [ "$a" = 24 ] && [ "$t" = 24 ] && [ "$m" = 25 ] \
+    && ok "operation captures 24 pairs, $m manifest rows" \
+    || bad "operation captures: $a ansi, $t txt, $m manifest rows"
+  for s in 32-namespace-picker 34-filters 43-html-menu 44-html-report-written \
+           46-session-summary 49-snapshot-all 51-audit-table 54-disclaimer-first-run; do
+    grep -q "raw/$s.ansi" "$OPS/captures.tsv" && ok "manifest lists $s" \
+      || bad "manifest is missing $s"
+  done
+  grep -q 'OK   audit HTML + CSV' "$OPS/run.log" 2>/dev/null \
+    && ok "the run verified audit HTML + CSV" || bad "the run report lacks the audit check"
+  grep -q 'chain intact' "$OPS/raw/52-audit-verify.txt" 2>/dev/null \
+    && ok "the audit chain verified before redaction" || bad "no chain-intact evidence"
+else
+  bad "no artifacts/operation-screens-* directory"
 fi
 
 echo "=== 6. no environment, product, site or personal names"

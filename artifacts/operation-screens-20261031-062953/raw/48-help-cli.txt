@@ -1,0 +1,50 @@
+  "-"           unset, unknown or not permitted.
+
+CONFIGURATION  (later overrides earlier)
+  /etc/kdash.conf, $XDG_CONFIG_HOME/kdash.conf, environment, flags
+  KDASH_NS KDASH_CONTEXT KDASH_KUBECONFIG KDASH_INTERVAL KDASH_SPEC_TTL
+  KDASH_FILTER KDASH_KUBECTL KDASH_NS_MAP KDASH_VIEW KDASH_POOL_LABEL
+  KDASH_TOPN KDASH_HISTORY KDASH_NODE_METRICS KDASH_REPORT_DIR KDASH_THEME
+  KDASH_CLUSTER KDASH_ALL_NODES KDASH_WINDOW KDASH_FORECAST_WINDOW KDASH_ZOOM KDASH_COMPARE_NS KDASH_NS_SCAN
+  KDASH_SAMPLE_EVERY KDASH_SESSION_KEEP KDASH_SESSION_MAX_MB
+  KDASH_COLUMNS KDASH_LINES   NO_COLOR disables colour.
+
+AUDIT  (every run is logged; see the disclaimer at the top)
+      --about            author, disclaimer, where this run is audited
+      --audit [N]        last N audit events (default 40)
+      --audit-all        ... including the central log (/var/log/kdash)
+      --audit-grep RE    ... only events matching RE (user, namespace, event)
+      --audit-verify     check the hash chain of every audit file (edits /
+                         deletions break it)
+      --audit-report [DIR]  audit log as HTML + CSV
+      --accept-disclaimer   accept the disclaimer for this user (automation;
+                         also KDASH_ACCEPT_DISCLAIMER=1)
+  Logged: start / end (user, sudo user, uid, host, SSH client, tty, context,
+  namespace, arguments), every action in the live dashboard, namespace
+  switches (allowed / denied), alerts, every report written (path + sha256),
+  kubectl calls (counted per command shape) and failures. kubectl verbs that
+  could change the cluster are refused. Files: KDASH_AUDIT_DIR (default
+  ~/kdash_reports/audit), KDASH_AUDIT_CENTRAL (default /var/log/kdash when
+  writable), syslog (logger -t kdash, KDASH_AUDIT_SYSLOG=0 turns it off).
+  KDASH_AUDIT_REQUIRED=1 refuses to run when no audit file can be written.
+
+EXIT CODES
+  0 success   1 runtime error   2 usage error   3 no pods matched
+  5 disclaimer not accepted   6 audit required but not writable
+
+EXAMPLES
+  kdash                                  every pod, live
+  kdash -v nodes                         node pools for the namespace, live
+  kdash -v workloads '^order-svc-1-'     where those pods run, HA spread
+  kdash -v ip --once                     IP pool snapshot
+  kdash -v mem -i 5                      memory dashboard, 5 s poll
+  kdash -v all --once > snapshot.txt     every view as plain text
+  kdash -v nodes --once -o csv           node pool table as CSV
+  kdash --snapshot                       one HTML, all tabs (+ history if live)
+  kdash --session-report latest          all tabs + history of the last live run
+  kdash -v nodes --snapshot current      node pools only, one HTML
+  kdash --snapshot all                   five HTML reports, one per view
+  kdash --snapshot 25                    node pools + memory, one HTML each
+  kdash --report                         combined HTML + TSV evidence bundle
+
+Pane is dead (status 0, Sat Oct 31 06:33:53 2026)

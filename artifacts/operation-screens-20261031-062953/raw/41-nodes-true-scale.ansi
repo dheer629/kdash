@@ -1,0 +1,50 @@
+[1;7m KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [1;7m 2 NODE POOLS [0m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-31 12:02:18[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 10s  spec 23s/30s  session [39m11:59:57[90m up [39m2m21s   [1m[96msort mem ▲ low first[0m
+[90m health [92mpods 3/3 ready[90m  restarts [95m9[90m  OOM risk [92m0[90m  OOMKilled [92m0[90m  no-limit [95m1[90m  │ cpu [39m24m [92m░░░░░░[39m [92m1%[90m lim  mem [39m466Mi [92m█░░░░░[39m [92m18%[90m lim  │ workloads [39m3[90m  │ events 15m [92m! 0[39m [92m^ 0[39m
+ [1m[95mNODE POOLS   this namespace vs the whole cluster, per pool and worker node[0m
+ [1m[32mnamespace [0m 3 pods on 1 of 1 nodes   mem used 466Mi  req 768Mi  lim 2560Mi   cpu used 24m  req 300m  lim 2500m
+ [1m[96mcluster   [0m 1 nodes  1 pools   alloc mem 7524Mi  cpu 24.0c   used mem 1959Mi (26.0%)  cpu 192m (0.8%)
+ [1m[96mrequests  [0m 25 pods in 9 namespaces   requested mem 2234Mi (29.7% of cluster)  cpu 1470m (6.1%)   used mem 1093Mi  cpu 48m (pod metrics)
+ [90m          [39m namespace share of cluster   mem used 6.2%  req 10.2%   cpu used 0.1%  req 1.2%   pool label node-role
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=24s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1m[96m►[0m [1mNAMESPACE vs CLUSTER[0m[90m  share of pool allocatable:  [39m [92m█[90m used   [95m▒[90m requested, not used   ░ free   zoom off - Z: auto zoom[39m
+POOL [ns nodes/all]                    ALLOC [90m│[39m [1m[32mTHIS NAMESPACE  default                     [0m [90m    used / req[39m  [90m│[39m [1m[96mWHOLE CLUSTER  all namespaces               [0m [90m    used / req[39m
+[1m[95mrole:control-plane,master [1/~[0m [90mmem[39m    7524Mi [90m│[39m [92m███[95m▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m  6.2[90m% /[92m 10.2[90m%[39m [90m│[39m [96m███████████[95m▒▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m 26.0[90m% /[92m 29.7[90m%[39m
+                               [90mcpu[39m     24.0c [90m│[39m [92m█[95m▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m  0.1[90m% /[92m  1.2[90m%[39m [90m│[39m [96m█[95m▒▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m  0.8[90m% /[92m  6.1[90m%[39m
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m[39mCLUSTER TOTAL                 [0m [90mmem[39m    7524Mi [90m│[39m [92m███[95m▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m  6.2[90m% /[92m 10.2[90m%[39m [90m│[39m [96m███████████[95m▒▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m 26.0[90m% /[92m 29.7[90m%[39m
+                               [90mcpu[39m     24.0c [90m│[39m [92m█[95m▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m  0.1[90m% /[92m  1.2[90m%[39m [90m│[39m [96m█[95m▒▒[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [92m  0.8[90m% /[92m  6.1[90m%[39m
+
+[1m[96m►[0m [1mWORKER NODES RUNNING THIS NAMESPACE[0m[90m  grouped by pool[39m
+                                                        [90m│[39m [1m[96m      CPU millicores      [0m [90m│[39m [1m[95m                  MEMORY GiB                  [0m [90m│[39m [1m        node memory         [0m
+POOL [ns nodes/all] / NODE        STATUS    PODS ns/all [90m│[39m nsUsed  nsReq  alloc   %al [90m│[39m  nsUsed   nsReq   nsLim   alloc   %al node% clReq% [90m│[39m [92m█[39m ns [96m▓[39m other ns used [90m░ free[39m
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m[95m► role:control-plane,master [1/1][0m [90m         [39m        3/25 [90m│[39m     24    300  24000 [92m  0.1[39m [90m│[39m     0.5     0.8     2.5     7.3 [92m  6.2[39m [92m 26.0[39m [92m  29.7[39m [90m│[39m [92m██[96m▓▓▓▓▓[90m░░░░░░░░░░░░░░░░░░░░░[39m
+  dev                             [90mReady    [39m        3/25 [90m│[39m     24    300  24000 [92m  0.1[39m [90m│[39m     0.5     0.8     2.5     7.3 [92m  6.2[39m [92m 26.0[39m [92m  29.7[39m [90m│[39m [92m██[96m▓▓▓▓▓[90m░░░░░░░░░░░░░░░░░░░░░[39m
+      [90mip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 3/3   ns-restarts 9   namespaces 9   cluster-req mem 2234Mi cpu 1470m   node-cpu 192m[2m[39m›
+
+[0;1m[96m►[0m [1mNAMESPACES[0m[90m  usage and requests of each namespace in the cluster (top 20 by sort key) - bar: share of the memory used by all of them[39m
+  NAMESPACE                           PODS rdy  WKLD NODES  CPU used   CPU req  MEM used   MEM req   MEM lim   %used  %clMem [90m│[39m share of memory used
+  local-path-storage                       1/1     1     1        1m        0m       8Mi       0Mi       0Mi [92m    0.7[39m [92m    0.0[39m [90m│[39m [96m█[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+  kube-flannel                             1/1     1     1        4m      100m      12Mi      50Mi       0Mi [92m    1.1[39m [92m    0.7[39m [90m│[39m [96m█[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+  podinfo-demo                             2/2     1     1        2m      200m      28Mi     128Mi    1024Mi [92m    2.6[39m [92m    1.7[39m [90m│[39m [96m█[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+  cert-manager                             3/3     3     1        3m        0m      48Mi       0Mi       0Mi [92m    4.4[39m [92m    0.0[39m [90m│[39m [96m█[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+  kube-system                              3/3     3     1        6m      120m      57Mi     264Mi     170Mi [92m    5.2[39m [92m    3.5[39m [90m│[39m [96m██[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+  gitops-core                              4/4     4     1        5m      350m      84Mi     256Mi    4096Mi [92m    7.7[39m [92m    3.4[39m [90m│[39m [96m██[90m░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+  ml-service-prod                           4/4     4     1       11m      400m     166Mi     768Mi    2048Mi [92m   15.2[39m [92m   10.2[39m [90m│[39m [96m█████[90m░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+  ml-service-dev                          4/4     4     1        8m        0m     239Mi       0Mi       0Mi [92m   21.9[39m [92m    0.0[39m [90m│[39m [96m███████[90m░░░░░░░░░░░░░░░░░░░░░░░[39m
+  [1m[32m► default                         [0m       3/3     3     1        8m      300m     451Mi     768Mi    2560Mi [92m   41.3[39m [92m   10.2[39m [90m│[39m [92m████████████[90m░░░░░░░░░░░░░░░░░░[39m
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m[39mNAMESPACE (1 nodes)              [0m [90m         [39m           3 [90m│[39m     24    300  24000 [92m  0.1[39m [90m│[39m     0.5     0.8     2.5     7.3 [92m  6.2[39m [92m 26.0[39m [90m     -[39m [90m│[39m [92m██[90m░░░░░░░░░░░░░░░░░░░░░░░░░░[39m
+ [90mlegend[39m nsUsed/nsReq/nsLim = this namespace.  alloc = allocatable.  %al = namespace share.  node% = whole node used.  clReq% = requested by all namespaces.
+[7m NODE POOLS bars: true scale | ○ LIVE 12:02:19  next 5s  data 5s old  spec 24/30s  fetch 0.0s  poll 10s  AUDITED | nodes | ? help  1-9 view  n ns  s sort(mem rev)      [0m

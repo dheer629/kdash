@@ -1,0 +1,25 @@
+file	columns	rows	title	png
+raw/32-namespace-picker.ansi	170	50	the n namespace picker	samples/cli_419/32-namespace-picker.png
+raw/33-pod-filter.ansi	170	50	the / pod filter applied - only the matching pod remains	samples/cli_419/33-pod-filter.png
+raw/34-filters.ansi	170	50	the F structured filter prompt	samples/cli_419/34-filters.png
+raw/35-detail-lines.ansi	170	50	d detail lines under every workload	samples/cli_419/35-detail-lines.png
+raw/36-pods-only.ansi	170	50	p pods-only totals	samples/cli_419/36-pods-only.png
+raw/37-sort-order.ansi	170	50	s sort key cycled and o reversed	samples/cli_419/37-sort-order.png
+raw/38-paused-interval.ansi	170	50	P pause and + poll interval	samples/cli_419/38-paused-interval.png
+raw/39-theme.ansi	170	50	T colour theme	samples/cli_419/39-theme.png
+raw/40-nodes-all.ansi	170	50	2 NODE POOLS with every node (a)	samples/cli_419/40-nodes-all.png
+raw/41-nodes-true-scale.ansi	170	50	Z true-scale node bars	samples/cli_419/41-nodes-true-scale.png
+raw/42-chart-window.ansi	170	50	5 MEMORY with the z chart window	samples/cli_419/42-chart-window.png
+raw/43-html-menu.ansi	170	50	e the HTML report menu	samples/cli_419/43-html-menu.png
+raw/44-html-report-written.ansi	170	50	Enter in the menu wrote the all-tabs report	samples/cli_419/44-html-report-written.png
+raw/45-inspector-export.ansi	170	50	w exported the visible log pane	samples/cli_419/45-inspector-export.png
+raw/46-session-summary.ansi	170	50	the session close summary	samples/cli_419/46-session-summary.png
+raw/47-version.ansi	170	50	kdash -V	samples/cli_419/47-version.png
+raw/48-help-cli.ansi	170	50	kdash -h, first page	samples/cli_419/48-help-cli.png
+raw/49-snapshot-all.ansi	170	50	--snapshot all wrote the view HTML	samples/cli_419/49-snapshot-all.png
+raw/50-report-bundle.ansi	170	50	--report wrote the evidence bundle	samples/cli_419/50-report-bundle.png
+raw/51-audit-table.ansi	170	50	kdash --audit 40	samples/cli_419/51-audit-table.png
+raw/52-audit-verify.ansi	170	50	kdash --audit-verify	samples/cli_419/52-audit-verify.png
+raw/53-about.ansi	170	50	kdash --about	samples/cli_419/53-about.png
+raw/54-disclaimer-first-run.ansi	170	50	the first-run disclaimer gate	samples/cli_419/54-disclaimer-first-run.png
+raw/55-audit-report.ansi	170	50	--audit-report wrote HTML + CSV	samples/cli_419/55-audit-report.png

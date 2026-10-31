@@ -1,0 +1,50 @@
+7mqq pane=previous container=kafka search=none level=all
+2026-10-31 12:03:19+0530 demo@node          local /dev/pts/3       devops-admin@local-cluster / defaul INSPECT_EXPORT       namespace=default pod=platform-kafka-65c6d4dcfd-l
+7mqq container=kafka pane=previous lines=1152 search=none level=all file=/workspace/kdash/artifacts/operation-screens-20261031-062953
+/default/reports/inspector/kdash_inspect_default_platform-kafka-65c6d4dcfd-l7mqq_kafka_previous_20261031_120319.txt
+2026-10-31 12:03:34+0530 demo@node          local /dev/pts/3       devops-admin@local-cluster / defaul KEY                  key=$'\n'
+2026-10-31 12:04:03+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul START                mode=snapshot view=pods filter=.* kubeconfig=/hom
+e/demo/.kube/config term=xterm-256color 170x50 argv=-c devops-admin@local-cluster -n default --snapshot all
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul REPORT_HTML          file=/home/demo/OneDrive/Desktop/AI Proje
+cts/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_pod_container_resources_devops-admin@local-cluster_default_20261031_120404.html bytes=82086 sha256=78
+312dbf8d7dfbd770adc6efdab96a68ebd6bed3646d5f5f548b4dab9a96ed8f
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul REPORT_HTML          file=/home/demo/OneDrive/Desktop/AI Proje
+cts/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_node_pools_worker_nodes_devops-admin@local-cluster_default_20261031_120404.html bytes=94366 sha256=07
+6c70ac52af4823b6da6a0731de5e675f870412f8f3d4d170c506f967f03205
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul REPORT_HTML          file=/home/demo/OneDrive/Desktop/AI Proje
+cts/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_workloads_per_worker_node_devops-admin@local-cluster_default_20261031_120404.html bytes=79410 sha256=
+88f4521beac939c577b076a26688c4fd7411a7a52d24fb38af71074a3491f150
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul REPORT_HTML          file=/home/demo/OneDrive/Desktop/AI Proje
+cts/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_namespace_ip_pool_devops-admin@local-cluster_default_20261031_120404.html bytes=79151 sha256=fc5e07ea
+0fda0a8e732d395c152d7bacfdc920b86df7fcd039a6fa691b8433d4
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul REPORT_HTML          file=/home/demo/OneDrive/Desktop/AI Proje
+cts/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_memory_dashboard_devops-admin@local-cluster_default_20261031_120404.html bytes=89217 sha256=91f0e9058
+9fc9da9a2a681941a3e3f388ab709fef809b241a7c61c453494e69d
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul REPORT_HTML          file=/home/demo/OneDrive/Desktop/AI Proje
+cts/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_network_disk_io_devops-admin@local-cluster_default_20261031_120404.html bytes=66950 sha256=9d06925e0d
+3e77a12e465b62673a8aeb6fd6264a24e1c8e00e4f0c30044927f6
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul KUBECTL              calls=8 failed=0 refused=0 writes=0 | 1x --reques
+t-timeout=5s --context devops-admin@local-cluster top pod -n default --containers --no-headers | 1x --request-timeout=5s --context devops-admin@local-cluster get pods -n default -o <fm
+t> | 1x --request-timeout=5s --context devops-admin@local-cluster get nodes -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster get pods --all-namespaces --request-
+timeout=20s -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster get deployments,statefulsets,daemonsets,cronjobs -n default --request-timeout=5s -o <fmt> | 1
+x --request-timeout=5s --context devops-admin@local-cluster get services -n default -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster top pod --all-namespaces --n
+o-headers --request-timeout=20s | 1x --request-timeout=5s --context devops-admin@local-cluster top node --no-headers
+2026-10-31 12:04:04+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul END                  rc=0 mode=snapshot duration=1s reports=6
+2026-10-31 12:04:30+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul START                mode=report view=pods filter=.* kubeconfig=/home/
+demo/.kube/config term=xterm-256color 170x50 argv=-c devops-admin@local-cluster -n default --report
+2026-10-31 12:04:32+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul REPORT_BUNDLE        file=/home/demo/OneDrive/Desktop/AI Proje
+cts/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_devops-admin@local-cluster_default_20261031_120431.html bytes=29139 sha256=8104399e61ec14f78b8f600c42
+d4b5d26b6a37b3355e9e34519d9f53a362068c
+2026-10-31 12:04:32+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul KUBECTL              calls=16 failed=0 refused=0 writes=0 | 1x --reque
+st-timeout=5s --context devops-admin@local-cluster get persistentvolumeclaims -n default --request-timeout=12s -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster g
+et events -n default --request-timeout=10s -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster top pod -n default --containers --no-headers | 1x --request-ti
+meout=5s --context devops-admin@local-cluster get pods -n default -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster get nodes -o <fmt> | 1x --request-timeout=5s -
+-context devops-admin@local-cluster get pods --all-namespaces --request-timeout=20s -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster get storageclasses.storage.k
+8s.io --request-timeout=12s -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster get ingresses.networking.k8s.io -n default --request-timeout=12s -o <fmt> | 1
+x --request-timeout=5s --context devops-admin@local-cluster get deployments,statefulsets,daemonsets,cronjobs -n default --request-timeout=5s -o <fmt> | 1x --request-timeout=5s -
+-context devops-admin@local-cluster get services -n default -o <fmt> | 1x --request-timeout=5s --context devops-admin@local-cluster top pod --all-namespaces --no-headers --request-time
+out=20s | 1x --request-timeout=5s --context devops-admin@local-cluster get pods -n default --request-timeout=12s -o <fmt>
+2026-10-31 12:04:32+0530 demo@node          local /dev/pts/0       devops-admin@local-cluster / defaul END                  rc=0 mode=report duration=2s reports=1
+2026-10-31 12:05:02+0530 demo@node          local /dev/pts/0       - / -                        AUDIT_VIEW           n=40 all=0 grep=
+
+Pane is dead (status 0, Sat Oct 31 06:35:02 2026)

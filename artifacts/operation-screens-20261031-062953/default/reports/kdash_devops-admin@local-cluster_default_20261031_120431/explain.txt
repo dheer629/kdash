@@ -1,0 +1,14 @@
+WHY - INCIDENT EVIDENCE  -  warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context devops-admin@local-cluster
+  SOURCE  STATE    READ  SCOPE    DETAIL
+  ------  -----  ------  -------  --------------
+  events  ● ok   1s ago  default  read succeeded
+
+PODS NEEDING ATTENTION   3 other pods are Running and ready - from the dashboard model
+  every pod is Running and ready
+
+WARNING EVIDENCE   one row per object and category, newest first, up to 20
+  no retained warning events - coverage gaps, expired events and failures without events remain possible
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.

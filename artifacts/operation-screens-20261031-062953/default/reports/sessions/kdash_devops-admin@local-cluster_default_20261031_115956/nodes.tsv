@@ -1,0 +1,17 @@
+EPOCH	NODE	POOL	STATUS	NS_PODS	NS_CPU_m	NS_MEM_Mi	NODE_CPU_m	NODE_MEM_Mi	NODE_MEM_ALLOC_Mi
+1793428212	dev	role:control-plane,master	Ready	3	7	450	152	1955	7524
+1793428231	dev	role:control-plane,master	Ready	3	8	450	220	1964	7524
+1793428249	dev	role:control-plane,master	Ready	1	6	414	160	1965	7524
+1793428267	dev	role:control-plane,master	Ready	3	9	450	170	1963	7524
+1793428288	dev	role:control-plane,master	Ready	3	10	451	284	1969	7524
+1793428303	dev	role:control-plane,master	Ready	3	9	451	180	1953	7524
+1793428334	dev	role:control-plane,master	Ready	3	24	466	192	1959	7524
+1793428359	dev	role:control-plane,master	Ready	3	10	451	214	1963	7524
+1793428374	dev	role:control-plane,master	Ready	3	8	451	187	1965	7524
+1793428409	dev	role:control-plane,master	Ready	3	7	451	210	1956	7524
+1793428424	dev	role:control-plane,master	Ready	3	10	451	170	1958	7524
+1793428444	dev	role:control-plane,master	Ready	3	9	451	171	1958	7524
+1793428464	dev	role:control-plane,master	Ready	3	8	451	149	1960	7524
+1793428494	dev	role:control-plane,master	Ready	3	12	451	164	1970	7524
+1793428524	dev	role:control-plane,master	Ready	3	8	451	198	1970	7524
+1793428554	dev	role:control-plane,master	Ready	3	9	451	155	1967	7524

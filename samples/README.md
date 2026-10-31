@@ -25,22 +25,35 @@ each). The raw evidence behind every file here is in `../artifacts/`.
 
 ## 4.19.2 screenshots - the current interface
 
-`samples/cli_419/` holds 31 screens from **kdash 4.19.2** - the same file this
+`samples/cli_419/` holds 55 screens from **kdash 4.19.2** - the same file this
 repository ships - against a local WSL vcluster (namespace `default`, 5 s poll).
-They cover the whole current interface: the nine views plus `E` events and `!`
-explanations, the `:` command palette, the doctor, the inspector (pod picker,
+Screens `01`-`31` cover the whole current interface: the nine views plus `E` events
+and `!` explanations, the `:` command palette, the doctor, the inspector (pod picker,
 summary, previous logs, `/` find, `&` only matches, `c` container picker and its
-key map), the dashboard help, two 100-column layouts and the opt-in interactive
-mode end to end (`S` refused, the `X` gate, the shell picker, a real shell, and
-the `D` / `U` browsers). Same method as above: `tmux capture-pane -e -p` while
-live, replayed cell by cell with `scripts/capture-terminal.py`. The raw `.ansi` /
-`.txt` captures and the manifest are in
-[`../artifacts/view-screens-20261031-051739/`](../artifacts/view-screens-20261031-051739),
-captured by [`../scripts/capture-view-screens.sh`](../scripts/capture-view-screens.sh)
-and rendered by [`../scripts/render-captures.ps1`](../scripts/render-captures.ps1);
-`samples/cli_419/SHA256SUMS` lists the 31 images. See
+key map), the dashboard help, two 100-column layouts and the opt-in interactive mode
+end to end (`S` refused, the `X` gate, the shell picker, a real shell, and the `D` /
+`U` browsers). Screens `32`-`55` cover what you can do with it: the dashboard controls
+(namespace picker, pod filter, structured filters, details, pods-only, sort, pause,
+theme, node toggles, chart window), the exports (`e`/Enter all-tabs HTML report, the
+inspector's `w`, `--snapshot all`, `--report`, `--audit-report`) and the one-shot modes
+(`-V`, `-h`, `--audit`, `--audit-verify`, `--about`), plus the first-run disclaimer.
+Same method as above: `tmux capture-pane -e -p` while live, replayed cell by cell with
+`scripts/capture-terminal.py`. The raw `.ansi` / `.txt` captures and manifests are in
+[`../artifacts/view-screens-20261031-051739/`](../artifacts/view-screens-20261031-051739)
+(views and panels, by
+[`../scripts/capture-view-screens.sh`](../scripts/capture-view-screens.sh)) and
+[`../artifacts/operation-screens-20261031-062953/`](../artifacts/operation-screens-20261031-062953)
+(controls, exports and one-shots, by
+[`../scripts/capture-operation-screens.sh`](../scripts/capture-operation-screens.sh));
+both were rendered by [`../scripts/render-captures.ps1`](../scripts/render-captures.ps1)
+and `samples/cli_419/SHA256SUMS` lists the 55 images. See
 [`cli_419/README.md`](cli_419/README.md) for the file list and the placeholders
 that `../scripts/redact-run.sh` substituted.
+
+The HTML that run produced - the all-tabs namespace report, the every-view
+snapshot, the evidence bundle with TSV/CSV and the audit report as HTML and CSV - is
+copied byte for byte into [`html419/`](html419), with browser screenshots of the main
+pages in `html419/default/screenshots/`.
 
 ## 4.13.1 screenshots - the new views and the inspector
 

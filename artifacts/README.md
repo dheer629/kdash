@@ -45,7 +45,26 @@ listed in `captures.tsv`; `../scripts/render-captures.ps1` rendered them into
 images were re-rendered from the redacted captures afterwards. It is one screen per
 view, not a five-minute cycle, so it makes no claim about long-run behaviour.
 
-## What the run did
+## Operations, exports and one-shots: `operation-screens-20261031-062953/`
+
+24 raw screens of the same 4.19.2 build showing what the utility *does*, captured with
+`../scripts/capture-operation-screens.sh`: the dashboard controls (namespace picker,
+pod filter, structured filter prompt, detail lines, pods-only, sort and reverse, pause
+and poll interval, colour theme, all-vs-hosting nodes, true scale, chart window), the
+`e` HTML menu and the all-tabs report being written, the inspector's `w` export, the
+session close summary, the one-shot modes (`-V`, `-h`, `--snapshot all`, `--report`,
+`--audit`, `--audit-verify`, `--about`, `--audit-report`) and the first-run disclaimer
+gate - captured with a private `XDG_CONFIG_HOME`, so no acceptance of this user was
+touched.
+
+The run also produced the files those modes write - `<ns>/reports/*.html`, the evidence
+bundle's TSV and CSV, `reports/inspector/`, and `<ns>/audit/*.html|.csv` - and its
+`README.txt` names each one, so a screen can be checked against the artifact it claims.
+Rendered into `../samples/cli_419/` (32-55) and collected into `../samples/html419/`
+with `../scripts/render-captures.ps1` and `../scripts/collect-html-samples.ps1`, after
+the same redaction as the other runs.
+
+## What the 4.12.0 run did
 
 1. inventoried the host, the installed kdash and the cluster (read-only)
 2. previewed and ran `kdash-uninstall.sh`, keeping every line of output

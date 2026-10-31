@@ -1,0 +1,50 @@
+  /workspace/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_pod_container_resources_devops-admin@local-cluster_defa
+ult_20261031_120404.html
+  /workspace/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_node_pools_worker_nodes_devops-admin@local-cluster_defa
+ult_20261031_120404.html
+  /workspace/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_workloads_per_worker_node_devops-admin@local-cluster_de
+fault_20261031_120404.html
+  /workspace/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_namespace_ip_pool_devops-admin@local-cluster_default_20
+261031_120404.html
+  /workspace/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_memory_dashboard_devops-admin@local-cluster_default_202
+61031_120404.html
+  /workspace/kdash/artifacts/operation-screens-20261031-062953/default/reports/kdash_network_disk_io_devops-admin@local-cluster_default_2026
+1031_120404.html
+  index   /workspace/kdash/artifacts/operation-screens-20261031-062953/default/reports/index.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pane is dead (status 0, Sat Oct 31 06:34:04 2026)

@@ -1,0 +1,4 @@
+POD,NODE,WORKLOAD,NET_RX_Bps,NET_TX_Bps,DISK_R_Bps,DISK_W_Bps,DISK_R_IOPS,DISK_W_IOPS
+platform-kafka-65c6d4dcfd-l7mqq,dev,Deployment/platform-kafka,,,,,,
+platform-postgres-74699cf6db-69g4h,dev,Deployment/platform-postgres,,,,,,
+platform-web-fb5754c79-vstz8,dev,Deployment/platform-web,,,,,,

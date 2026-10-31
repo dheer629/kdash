@@ -1,0 +1,29 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                                                  read-only │ audited │ Dheeraj V 
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SERVICES   9 STORAGE   E EVENTS   ! EXPLAIN   2026-10-31 12:04:31 IST
+ match .*   poll 2s  spec 1s/30s   sort cpu ▼ high first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 12m ░░░░░░ 0% lim  mem 451Mi █░░░░░ 18% lim  │ workloads 3
+ WORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes
+ workloads 3: Deployment 3   pods 3 (3 ready)   0 degraded  0 rolling out  0 HA risk  0 skewed  0 unscheduled
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=1s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+► WORKLOADS   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec
+  KIND        WORKLOAD                   READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Deployment  platform-kafka               1/1    1     1     1     9m / 200m     415Mi /   512Mi / 1536Mi     3 SINGLE
+      ├─ platform-kafka-65c6d4dcfd-l7mqq    Running              1/1 dev                          cpu     9m  mem   415Mi  rst 3  10.244.0.165
+      └─ image apache/kafka:3.9.1
+  Deployment  platform-postgres            1/1    1     1     1     2m / 100m      20Mi /   256Mi / 1024Mi     3 SINGLE
+      ├─ platform-postgres-74699cf6db-69g4h Running              1/1 dev                          cpu     2m  mem    20Mi  rst 3  10.244.0.158
+      └─ image postgres:16-alpine
+  Deployment  platform-web                 1/1    1     1     1     1m / -         16Mi /       - / -          3 SINGLE
+      ├─ platform-web-fb5754c79-vstz8       Running              1/1 dev                          cpu     1m  mem    16Mi  rst 3  10.244.0.150
+      └─ image ghcr.io/stefanprodan/podinfo:6.15.0
+
+► SPREAD OVER WORKER NODES   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node
+  KIND        WORKLOAD                   N1  VERDICT
+  Deployment  platform-kafka              1  SINGLE
+  Deployment  platform-postgres           1  SINGLE
+  Deployment  platform-web                1  SINGLE
+              pods on node                3
+  N1   dev                                      pool role:control-plane,master   pods 3
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hide pods.

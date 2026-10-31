@@ -1,0 +1,9 @@
+KUBERNETES EVENTS  -  API events, newest first - local session changes are recorded separately
+
+DATA SOURCES   context devops-admin@local-cluster
+  SOURCE  STATE    READ  SCOPE    DETAIL
+  ------  -----  ------  -------  --------------
+  events  ● ok   1s ago  default  read succeeded
+
+EVENTS
+  no retained Events match - this does not establish application health

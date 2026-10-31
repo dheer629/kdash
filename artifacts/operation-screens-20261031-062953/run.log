@@ -1,0 +1,53 @@
+2026-10-31T06:29:56+00:00 run operation-screens-20261031-062953 (context devops-admin@local-cluster, namespace default)
+2026-10-31T06:29:58+00:00 started kd-ops: kdash -c devops-admin@local-cluster -n default -i 5
+2026-10-31T06:30:30+00:00 captured 32-namespace-picker (842 bytes) - the n namespace picker
+2026-10-31T06:30:57+00:00 captured 33-pod-filter (6547 bytes) - the / pod filter applied - only the matching pod remains
+2026-10-31T06:31:18+00:00 captured 34-filters (549 bytes) - the F structured filter prompt
+2026-10-31T06:31:26+00:00 captured 35-detail-lines (8070 bytes) - d detail lines under every workload
+2026-10-31T06:31:34+00:00 captured 36-pods-only (8005 bytes) - p pods-only totals
+2026-10-31T06:31:46+00:00 captured 37-sort-order (8675 bytes) - s sort key cycled and o reversed
+2026-10-31T06:31:54+00:00 captured 38-paused-interval (8771 bytes) - P pause and + poll interval
+2026-10-31T06:32:02+00:00 captured 39-theme (8716 bytes) - T colour theme
+2026-10-31T06:32:11+00:00 captured 40-nodes-all (8908 bytes) - 2 NODE POOLS with every node (a)
+2026-10-31T06:32:19+00:00 captured 41-nodes-true-scale (8871 bytes) - Z true-scale node bars
+2026-10-31T06:32:31+00:00 captured 42-chart-window (10015 bytes) - 5 MEMORY with the z chart window
+2026-10-31T06:32:39+00:00 captured 43-html-menu (8506 bytes) - e the HTML report menu
+2026-10-31T06:32:55+00:00 captured 44-html-report-written (8485 bytes) - Enter in the menu wrote the all-tabs report
+2026-10-31T06:33:27+00:00 captured 45-inspector-export (6323 bytes) - w exported the visible log pane
+2026-10-31T06:33:43+00:00 captured 46-session-summary (8500 bytes) - the session close summary
+2026-10-31T06:33:45+00:00 started kd-version: kdash -V
+2026-10-31T06:33:53+00:00 EMPTY 47-version (99 bytes)
+2026-10-31T06:33:55+00:00 started kd-help: kdash -h
+2026-10-31T06:34:03+00:00 captured 48-help-cli (2964 bytes) - kdash -h, first page
+2026-10-31T06:34:05+00:00 started kd-snap: kdash -c devops-admin@local-cluster -n default --snapshot all
+2026-10-31T06:34:30+00:00 captured 49-snapshot-all (1378 bytes) - --snapshot all wrote the view HTML
+2026-10-31T06:34:32+00:00 started kd-report: kdash -c devops-admin@local-cluster -n default --report
+2026-10-31T06:35:02+00:00 captured 50-report-bundle (488 bytes) - --report wrote the evidence bundle
+2026-10-31T06:35:04+00:00 started kd-audit: kdash --audit 40
+2026-10-31T06:35:14+00:00 captured 51-audit-table (6935 bytes) - kdash --audit 40
+2026-10-31T06:35:16+00:00 started kd-verify: kdash --audit-verify
+2026-10-31T06:35:26+00:00 EMPTY 52-audit-verify (99 bytes)
+2026-10-31T06:35:28+00:00 started kd-about: kdash --about
+2026-10-31T06:35:36+00:00 captured 53-about (1297 bytes) - kdash --about
+2026-10-31T06:35:38+00:00 started kd-audrep: kdash --audit-report /workspace/kdash/artifacts/operation-screens-20261031-062953/default/audit
+2026-10-31T06:35:50+00:00 captured 55-audit-report (256 bytes) - --audit-report wrote HTML + CSV
+2026-10-31T06:36:02+00:00 captured 54-disclaimer-first-run (1068 bytes) - the first-run disclaimer gate
+2026-10-31T06:36:04+00:00 screens: 22
+2026-10-31T06:36:04+00:00 --- artifacts on disk
+2026-10-31T06:36:04+00:00 OK   all-tabs HTML report (x) (1 file(s))
+2026-10-31T06:36:04+00:00 OK   snapshot HTML (--snapshot all) (8 file(s))
+2026-10-31T06:36:04+00:00 MISS evidence bundle (--report)
+2026-10-31T06:36:04+00:00 OK   inspector export (w) (1 file(s))
+2026-10-31T06:36:04+00:00 MISS audit HTML + CSV (--audit-report)
+2026-10-31T06:36:04+00:00 OK   audit log (1 file(s))
+2026-10-31T06:36:04+00:00 OK   session records (1 file(s))
+2026-10-31T06:36:04+00:00 README.txt written - done
+2026-10-31T06:40:49+00:00 --- artifacts on disk
+2026-10-31T06:40:49+00:00 OK   all-tabs HTML report (x) (1 file(s))
+2026-10-31T06:40:49+00:00 OK   snapshot HTML (--snapshot all) (8 file(s))
+2026-10-31T06:40:49+00:00 OK   audit HTML + CSV (--audit-report) (2 file(s))
+2026-10-31T06:40:49+00:00 OK   inspector export (w) (1 file(s))
+2026-10-31T06:40:49+00:00 OK   audit log (1 file(s))
+2026-10-31T06:40:49+00:00 OK   session records (1 file(s))
+2026-10-31T06:40:49+00:00 OK   evidence bundle (--report): 11 text, 15 CSV, 17 TSV files in kdash_devops-admin@local-cluster_default_20261031_120431
+2026-10-31T06:40:49+00:00 README.txt written

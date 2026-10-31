@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                                                    read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 12:02:30 IST
+ match .*   poll 10s  spec 35s/30s  session 11:59:57 up 2m33s   sort mem ▲ low first
+ health pods 3/3 ready  restarts 9  OOM risk 0  OOMKilled 0  no-limit 1  │ cpu 24m ░░░░░░ 1% lim  mem 466Mi █░░░░░ 18% lim  │ workloads 3  │ events 15m ! 0 ^ 0
+ MEMORY   live namespace memory dashboard
+ MEMORY used    466Mi  req    768Mi  lim   2560Mi   used/req   60.7%  used/lim   18.2%  ████░░░░░░░░░░░░░░░░░░░░
+ window 11:59:57 -> 12:02:30 IST (UTC+05:30)   2m33s, last 15m (have 2m33s)   samples 8 every 15s   z: 15m 1h 6h 24h all
+ CPU    used      24m  req     300m  lim    2500m   used/req    8.0%  used/lim    1.0%  ____░░░__██
+ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 9
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=35s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+STALE nodes: last successful read 35s ago
+STALE svc: last successful read 35s ago
+► TIMELINE  11:59:57 -> 12:02:30 IST  (last 15m (have 2m33s), host clock) ───────────────────────────────────────────────────────────────────────────────────────────────
+  MEMORY used - namespace                                         zoomed: from 398Mi    CPU used - namespace
+   482Mi┤                 ·                   ·                 ·                          28m┤                 ·                   ·                 ·
+        │                 ·                   ·                 ·           ▄▄▄▄▄▄▄▄          │                 ·                   ·                 ·           ████████
+        │                 ·                   ·                 ·           ████████          │                 ·                   ·                 ·           ████████
+        │       ██████████████████         █████████████████████████████████████████          │                 ·                   ·                 ·           ████████
+   440Mi┤       ██████████████████         █████████████████████████████████████████       14m┤                 ·                   ·                 ·           ████████
+        │       ██████████████████         █████████████████████████████████████████          │                ▄▄▄▄▄▄▄▄▄         ▄▄▄▄▄▄▄▄▄▄███████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄████████
+        │       ██████████████████▄▄▄▄▄▄▄▄▄█████████████████████████████████████████          │       ██████████████████▄▄▄▄▄▄▄▄▄█████████████████████████████████████████
+        │       ████████████████████████████████████████████████████████████████████          │       ████████████████████████████████████████████████████████████████████
+   398Mi└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴        0m└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         11:59:57                         12:01:13                          12:02:30           11:59:57                         12:01:13                          12:02:30
+  events                                                                                events
+  now 466Mi  min 414Mi  avg 450Mi  max 466Mi @ 12:02:30                                 now 24m  min 6m  avg 12m  max 24m @ 12:02:30
+  request 768Mi (above)  limit 2560Mi (above)  18% of limit                             request 300m (above)  limit 2500m (above)  1% of limit
+  EVENTS 3 in window   ! 0 critical   ^ 0 warning
+  12:01:05       - FILTER           default                                  pod filter changed to .*
+  12:00:48       - FILTER           default                                  pod filter changed to kafka
+  11:59:57       - SESSION          default                                  kdash 4.19.2 started on node by demo - filter .*
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (11:59:57 -> 12:02:27 IST) ───────────────────────────────────────────────────────────────────────────────────
+  platform-postgres-74699cf6db-69g4h │          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   2.0 now
+  platform-kafka-65c6d4dcfd-l7mqq    │          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │  28.0 now
+                                      11:59:57                                         12:01:12                                           12:02:27
+                                      ░ < 50%  ▒ < 75%  ▓ < 90%  █ >= 90% of limit  ! restart   1 pod(s) without memory limit not shown
+
+► MEMORY BY WORKER NODE ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory                           ns trend
+  dev                          role:contro~    466Mi   7524Mi   6.2  26.0  ██▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░  _________██
+
+► PODS BY MEMORY USED ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD                                NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  platform-web-fb5754c79-vstz8       dev                            16Mi        -        -     -     - n/a        3  NO_LIMIT
+  platform-postgres-74699cf6db-69g4h dev                            20Mi    256Mi   1024Mi   7.8   2.0 ░░░░░░░░   3
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 11 polls.  metrics refresh about every 15 s.
+ chart window: last 15m | ● LIVE 12:02:30  next 4s  data 6s old  spec 35/30s  fetch 0.0s  poll 10s  AUDITED | mem | rows 1-34/53 | ? help  1-9 view  n ns

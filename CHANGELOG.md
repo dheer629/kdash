@@ -44,6 +44,20 @@ available separately.
   `.ansi` / `.txt` captures and manifest in `artifacts/view-screens-20261031-051739/`
   and the 31 image checksums in `samples/cli_419/SHA256SUMS`. The 4.12.0, 4.13.1 and
   4.14.0 galleries stay, labelled with the version they were captured from.
+- `scripts/capture-operation-screens.sh` captures what kdash does - the dashboard
+  controls (namespace picker, `/` filter, `F` filters, `d`/`p`, sort, pause, theme,
+  node toggles, chart window), the `e` HTML menu and report, the inspector's `w`
+  export, the session close summary, the one-shot modes (`-V`, `-h`, `--snapshot
+  all`, `--report`, `--audit`, `--audit-verify`, `--about`, `--audit-report`) and the
+  first-run disclaimer - and then checks the files each mode produced, writing the
+  result into the run's `README.txt`.
+- `samples/cli_419/` grew to 55 screens: `01`-`31` the interface, `32`-`55` the
+  controls, the exports and the one-shot modes, from
+  `artifacts/operation-screens-20261031-062953/`. The HTML that run wrote is
+  published byte for byte in `samples/html419/`, with browser screenshots of the
+  report pages.
+- `scripts/collect-html-samples.ps1` gained `-OutputDirectory`, so a run can be
+  collected into its own gallery instead of `samples/html/`.
 
 ### Changed
 - Installer shell shortcuts preserve occupied aliases/functions/commands, report

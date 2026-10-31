@@ -1,0 +1,50 @@
+kdash 4.19.2 - live Kubernetes namespace operations dashboard
+author   Dheeraj V
+
+DISCLAIMER - kdash is provided as is, without warranty of any kind. The
+person running this utility is solely responsible for its use, for having
+authorisation to access the clusters and namespaces it reads, and for any
+decision or action taken on its output. kdash only reads the cluster unless
+interactive mode is enabled explicitly (--allow-interactive), which adds a
+shell inside a container and file copy in or out of one: those two run in the
+user's name with the user's rights and are NOT read-only. Every run is
+AUDITED: the user, host, origin, context, namespace, every action taken in
+the dashboard, every report written, every kubectl call and every interactive
+attachment are logged and stored (local audit log, central audit log when
+configured, and syslog).
+
+audit    local    /workspace/kdash/artifacts/operation-screens-20261031-062953/default/audit/audit_202610.log
+         central  not configured (/var/log/kdash missing or not writable)
+         syslog   on (logger -t kdash)
+         session  20261031-120526-1065587 (demo@node from local)
+accepted 2026-10-17T13:18:47+0000 demo@node from local via prompt kdash 4.12.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

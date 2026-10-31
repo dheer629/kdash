@@ -1,0 +1,50 @@
+[1;7m KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                              read-only │ audited │ Dheeraj V [0m
+ [1;7m 1 PODS [0m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-10-31 12:01:34[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 5s  spec 15s/30s  session [39m11:59:57[90m up [39m1m37s   [1m[94msort cpu ▼ high first[0m
+[90m health [32mpods 3/3 ready[90m  restarts [35m9[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [35m1[90m  │ cpu [39m10m [32m░░░░░░[39m [32m0%[90m lim  mem [39m451Mi [32m█░░░░░[39m [32m18%[90m lim  │ workloads [39m3[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mPOD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)[0m
+                                                   [90m│[39m [1m[94m  ACTUAL (live)   [0m [90m│[39m [1m[35m   ASSIGNED (req / limit)    [0m [90m│[39m [1m[35m     UTILISATION (used vs req / lim)      [0m
+WORKLOAD / POD / CONTAINER                 RDY RST [90m│[39m   CPUm T  MEM Mi T [90m│[39m CPUreq CPUlim  MEMreq  MEMlim [90m│[39m c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+[90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+Data pods=fresh age=15s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1m[94m►[0m [1mTIMELINE  11:59:57 -> 12:01:34 IST  (all since kdash started, z window, c hides graphs)[0m [90m─────────────────────────────────────────────────────────[39m
+  [1mCPU used - namespace                           [0m[90m                        [39m    [1mMEMORY used - namespace                        [0m[90m      zoomed: from 403Mi[39m
+  [90m   12m┤[39m               [90m·[39m               [90m·[39m               [90m·[39m                    [90m 462Mi┤[39m               [90m·[39m               [90m·[39m               [90m·[39m
+  [90m      │[39m               [90m·[39m               [90m·[39m              [32m▄▄▄▄▄▄▄▄▄▄▄▄▄▄████[39m    [90m      │[39m         [32m█████████████████████████[39m            [32m██████████████████[39m
+  [90m      │[39m         [32m▄▄▄▄▄▄▄▄▄▄▄▄▄████████████[39m            [32m██████████████████[39m    [90m      │[39m         [32m█████████████████████████[39m            [32m██████████████████[39m
+  [90m    6m┤[39m         [32m███████████████████████████████████████████████████████[39m    [90m 433Mi┤[39m         [32m█████████████████████████[39m            [32m██████████████████[39m
+  [90m      │[39m         [32m███████████████████████████████████████████████████████[39m    [90m      │[39m         [32m█████████████████████████[39m            [32m██████████████████[39m
+  [90m      │[39m         [32m███████████████████████████████████████████████████████[39m    [90m      │[39m         [32m███████████████████████████████████████████████████████[39m
+  [90m    0m└┴──────────────┴───────────────┴───────────────┴───────────────┴[39m    [90m 403Mi└┴──────────────┴───────────────┴───────────────┴───────────────┴[39m
+  [90m       11:59:57                   12:00:45                     12:01:34[39m    [90m       11:59:57                   12:00:45                     12:01:34[39m
+  [90mevents [39m                                                                    [90mevents [39m
+  [90mnow [1m[94m10m[0m[90m  min [39m6m[90m  avg [39m8m[90m  max [1m[39m10m[0m[90m @ 12:01:34[39m                                [90mnow [1m[94m451Mi[0m[90m  min [39m414Mi[90m  avg [39m444Mi[90m  max [1m[39m451Mi[0m[90m @ 12:01:34[39m
+  [90mrequest [39m300m[90m (above)[39m  [90mlimit [39m2500m[90m (above)[39m  [32m0%[90m of limit[39m                     [90mrequest [39m768Mi[90m (above)[39m  [90mlimit [39m2560Mi[90m (above)[39m  [32m18%[90m of limit[39m
+
+[1m[94m►[0m [1mPODS[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1m[35m► Deployment platform-kafka  (1 pod)      [0m [32m1/1[39m [35m  3[39m [90m│[39m      8 [90m·[39m     415 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  4.0[39m [32m  0.5[39m [32m░░░░░░░░[39m [35m 81.1[39m [32m 27.0[39m [32m██░░░░░░[39m
+[32m  platform-kafka-65c6d4dcfd-l7mqq         [39m [32m1/1[39m [35m  3[39m [90m│[39m      8 [90m·[39m     415 [90m·[39m [90m│[39m    200   1500     512    1536 [90m│[39m [32m  4.0[39m [32m  0.5[39m [32m░░░░░░░░[39m [35m 81.1[39m [32m 27.0[39m [32m██░░░░░░[39m
+      [90mcpu [32m_░░░██          [90m  mem [32m____██          [90m  pk 415Mi [39m  [90mnode dev   pool role:control-plane,master   ip 10.244.0.165   qos Burstable   status Running   last-exit Unk[2m[39m›
+[0m[90m....................................................................................................................................................[39m
+[1m[35m► Deployment platform-postgres  (1 pod)   [0m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  1.0[39m [32m  0.1[39m [32m░░░░░░░░[39m [32m  7.8[39m [32m  2.0[39m [32m░░░░░░░░[39m
+[32m  platform-postgres-74699cf6db-69g4h      [39m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      20 [90m·[39m [90m│[39m    100   1000     256    1024 [90m│[39m [32m  1.0[39m [32m  0.1[39m [32m░░░░░░░░[39m [32m  7.8[39m [32m  2.0[39m [32m░░░░░░░░[39m
+      [90mcpu [32m__█__           [90m  mem [32m░░░░░           [90m  pk 20Mi [39m  [90mnode dev   pool role:control-plane,master   ip 10.244.0.158   qos Burstable   status Running   last-exit Unkn[2m[39m›
+[0m[90m....................................................................................................................................................[39m
+[1m[35m► Deployment platform-web  (1 pod)        [0m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[39m [90m    -[39m [90mn/a     [39m [90m    -[39m [90m    -[39m [90mn/a     [39m
+[32m  platform-web-fb5754c79-vstz8            [39m [32m1/1[39m [35m  3[39m [90m│[39m      1 [90m·[39m      16 [90m·[39m [90m│[39m      -      -       -       - [90m│[39m [90m    -[39m [90m    -[39m [90mn/a     [39m [90m    -[39m [90m    -[39m [90mn/a     [39m
+      [90mcpu [32m░░░░░           [90m  mem [94m░░░░░           [90m  pk 16Mi [39m  [90mnode dev   pool role:control-plane,master   ip 10.244.0.150   qos BestEffort   status Running   last-exit Unk[2m[39m›
+
+
+
+
+
+
+
+
+
+
+
+[0m[90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1mTOTAL (3 pods, 3 workloads)               [0m     [35m  9[39m [90m│[39m     10 [90m·[39m     451 [90m·[39m [90m│[39m    300   2500     768    2560 [90m│[39m [32m  3.3[39m [32m  0.4[39m [32m░░░░░░░░[39m [94m 58.7[39m [32m 17.6[39m [32m█░░░░░░░[39m
+ [90mlegend[39m cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+[7m ● LIVE 12:01:34  next 4s  data 1s old  spec 15/30s  fetch 0.0s  poll 5s  AUDITED | pods | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit     [0m

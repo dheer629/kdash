@@ -1,0 +1,5 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1793428197	info	SESSION	default	kdash 4.19.2 started on node by demo - filter .*
+1793428248	info	FILTER	default	pod filter changed to kafka
+1793428265	info	FILTER	default	pod filter changed to .*
+1793428562	info	SESSION	default	kdash stopped after 365s

@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD FILTERS │ context devops-admin@local-cluster │ namespace default                                                                           structured, AND-combined
+
+[0m label=
+ status=
+ node=
+ workload=
+ unhealthy=0
+
+ Enter semicolon-separated fields; omitted fields stay unchanged.
+ Example: label=app in (api,worker);status=Pending|CrashLoop;unhealthy=1
+ Node uses an exact match; status and workload use extended regex.
+ Empty value clears a field. Type clear to reset all; Enter cancels.
+
+ filters >
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

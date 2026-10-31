@@ -1,0 +1,50 @@
+[1;7m KDASH │ SELECT NAMESPACE │ context devops-admin@local-cluster │ namespace default                                                                               current default
+
+[0m namespace list from the API.  11 namespaces.
+ [90maccess[39m [32m11 you can open[39m  [31m0 no access[39m  [90m(checked with kubectl auth can-i list pods)[39m    * current  + recent  (n) pods
+
+   1 * [32mdefault           [39m (3)       4   [32mgitops-core       [39m (4)       7   [32mkube-public       [39m          10   [32mlocal-path-storage[39m (1)
+   2 + [32mml-service-dev   [39m (4)       5   [32mkube-flannel      [39m (1)       8   [32mkube-system       [39m (3)      11   [32mpodinfo-demo      [39m (2)
+   3   [32mcert-manager      [39m (3)       6   [32mkube-node-lease   [39m           9   [32mml-service-prod    [39m (4)
+
+ number | name | text to filter | A = all namespaces | Enter = keep current | q = cancel | Q = quit kdash >
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

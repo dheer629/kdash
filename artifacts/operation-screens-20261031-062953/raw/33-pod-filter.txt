@@ -1,0 +1,50 @@
+ KDASH 4.19.2 │ KUBERNETES RESOURCES │ context devops-admin@local-cluster │ namespace default                           read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-10-31 12:00:57 IST
+ match kafka   poll 5s  spec 27s/30s  session 11:59:57 up 1m   sort cpu ▼ high first
+ health pods 1/1 ready  restarts 3  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 6m ░░░░░░ 0% lim  mem 414Mi ██░░░░ 27% lim  │ workloads 1  │ events 15m ! 0 ^ 0
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                                │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)
+WORKLOAD / POD / CONTAINER              RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=27s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+► TIMELINE  11:59:57 -> 12:00:57 IST  (all since kdash started, z window, c hides graphs) ──────────────────────────────────────────────────────
+  CPU used - namespace                                  zoomed: from 5m    MEMORY used - namespace                            zoomed: from 403Mi
+      9m┤              ·               ·              ·                     461Mi┤              ·               ·              ·
+        │              ·               ·    ██████████████████                   │              ·██████████████████████████████████████
+        │              ·               ·    ██████████████████                   │              ·██████████████████████████████████████
+      7m┤              ·██████████████████████████████████████              432Mi┤              ·██████████████████████████████████████
+        │              ·██████████████████████████████████████                   │              ·██████████████████████████████████████
+        │              ·███████████████████████████████████████████████          │              ·███████████████████████████████████████████████
+      5m└┴─────────────┴───────────────┴──────────────┴───────────────┴     403Mi└┴─────────────┴───────────────┴──────────────┴───────────────┴
+         11:59:57                  12:00:27                    12:00:57           11:59:57                  12:00:27                    12:00:57
+  events                                                                   events
+  now 6m  min 6m  avg 7m  max 8m @ 12:00:31                                now 414Mi  min 414Mi  avg 432Mi  max 450Mi @ 12:00:31
+  request 200m (above)  limit 1500m (above)  0% of limit                   request 512Mi (above)  limit 1536Mi (above)  27% of limit
+
+► PODS ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► Deployment platform-kafka  (1 pod)    1/1   3 │      6 ·     414 · │    200   1500     512    1536 │   3.0   0.4 ░░░░░░░░  80.9  27.0 ██░░░░░░
+  platform-kafka-65c6d4dcfd-l7mqq       1/1   3 │      6 ·     414 · │    200   1500     512    1536 │   3.0   0.4 ░░░░░░░░  80.9  27.0 ██░░░░░░
+      cpu _███              mem ░░░░              pk 414Mi   node dev   pool role:control-plane,master   ip 10.244.0.165   qos Burstable   status Running   last-exit Unk›
+    └─ kafka                            Y     3 │      6 ·     414 · │    200   1500     512    1536 │   3.0   0.4 ░░░░░░░░  80.9  27.0 ██░░░░░░
+        last-exit Unknown
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (1 pods, 1 workloads)                   3 │      6 ·     414 · │    200   1500     512    1536 │   3.0   0.4 ░░░░░░░░  80.9  27.0 ██░░░░░░
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+ ○ LIVE 12:00:57  next 1s  data 9s old  spec 27/30s  fetch 0.0s  poll 5s  AUDITED | pods | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

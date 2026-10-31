@@ -14,7 +14,7 @@ shopt -s nullglob
            CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md LICENSE RELEASES.md \
            ENHANCEMENT_ROADMAP.md artifacts/README.md samples/README.md \
            samples/cli_413/README.md samples/cli_414/README.md \
-           samples/cli_419/README.md \
+           samples/cli_419/README.md samples/html419/README.md \
            src/*.sh tests/*.sh scripts/*.sh scripts/*.py \
            .editorconfig .gitattributes .gitignore .github/CODEOWNERS \
            .github/PULL_REQUEST_TEMPLATE.md .github/ISSUE_TEMPLATE/*.md \
