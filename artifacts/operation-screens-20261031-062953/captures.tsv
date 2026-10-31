@@ -13,7 +13,7 @@ raw/42-chart-window.ansi	170	50	5 MEMORY with the z chart window	samples/cli_419
 raw/43-html-menu.ansi	170	50	e the HTML report menu	samples/cli_419/43-html-menu.png
 raw/44-html-report-written.ansi	170	50	Enter in the menu wrote the all-tabs report	samples/cli_419/44-html-report-written.png
 raw/45-inspector-export.ansi	170	50	w exported the visible log pane	samples/cli_419/45-inspector-export.png
-raw/46-session-summary.ansi	170	50	the session close summary	samples/cli_419/46-session-summary.png
+raw/46-session-summary.ansi	170	51	the session close summary	samples/cli_419/46-session-summary.png
 raw/47-version.ansi	170	50	kdash -V	samples/cli_419/47-version.png
 raw/48-help-cli.ansi	170	50	kdash -h, first page	samples/cli_419/48-help-cli.png
 raw/49-snapshot-all.ansi	170	50	--snapshot all wrote the view HTML	samples/cli_419/49-snapshot-all.png

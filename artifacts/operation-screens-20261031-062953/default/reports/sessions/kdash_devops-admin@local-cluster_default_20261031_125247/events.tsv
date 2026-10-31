@@ -1,0 +1,3 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1793431367	info	SESSION	default	kdash 4.19.2 started on node by demo - filter .*
+1793431397	info	SESSION	default	kdash stopped after 30s

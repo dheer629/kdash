@@ -51,3 +51,12 @@
 2026-10-31T06:40:49+00:00 OK   session records (1 file(s))
 2026-10-31T06:40:49+00:00 OK   evidence bundle (--report): 11 text, 15 CSV, 17 TSV files in kdash_devops-admin@local-cluster_default_20261031_120431
 2026-10-31T06:40:49+00:00 README.txt written
+2026-10-31T07:26:17+00:00 --- artifacts on disk
+2026-10-31T07:26:17+00:00 OK   all-tabs HTML report (x) (1 file(s))
+2026-10-31T07:26:17+00:00 OK   snapshot HTML (--snapshot all) (8 file(s))
+2026-10-31T07:26:17+00:00 OK   audit HTML + CSV (--audit-report) (2 file(s))
+2026-10-31T07:26:17+00:00 OK   inspector export (w) (1 file(s))
+2026-10-31T07:26:17+00:00 OK   audit log (1 file(s))
+2026-10-31T07:26:17+00:00 OK   session records (2 file(s))
+2026-10-31T07:26:17+00:00 OK   evidence bundle (--report): 11 text, 15 CSV, 17 TSV files in kdash_devops-admin@local-cluster_default_20261031_120431
+2026-10-31T07:26:17+00:00 README.txt written

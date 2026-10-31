@@ -147,7 +147,7 @@ Captured live in the same run, from the same gallery
 | | | |
 |---|---|---|
 | **`e` HTML menu, Enter writes it** - the all-tabs report plus history in one file, named in the footer when it is written<br><img src="samples/cli_419/44-html-report-written.png" width="450" alt="kdash all-tabs HTML report written"> | **`--report` evidence bundle** - text views, TSV, CSV and an index for one namespace<br><img src="samples/cli_419/50-report-bundle.png" width="450" alt="kdash evidence bundle"> |
-| **`--audit`** - every run, action, report and kubectl call, from one table<br><img src="samples/cli_419/51-audit-table.png" width="450" alt="kdash audit table"> | **`q` session summary** - context, namespace, duration, retained reports and the audit trail<br><img src="samples/cli_419/46-session-summary.png" width="450" alt="kdash session close summary"> |
+| **`--audit`** - every run, action, report and kubectl call, from one table<br><img src="samples/cli_419/51-audit-table.png" width="450" alt="kdash audit table"> | **`q` session summary** - context, namespace, duration and the retained session history<br><img src="samples/cli_419/46-session-summary.png" width="450" alt="kdash session close summary"> |
 
 That run also captured every control (namespace picker `n`, pod filter `/`, structured
 filters `F`, `d` details, `p` pods-only, sort `s`/`o`, pause `P`, theme `T`, node

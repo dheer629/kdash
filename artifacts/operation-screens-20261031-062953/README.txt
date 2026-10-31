@@ -1,5 +1,5 @@
 run            operation-screens-20261031-062953
-context        devops-admin@local-cluster
+context        vcluster-docker_dev
 namespace      default
 version        kdash 4.19.2
 sha256         3a95e6edb029bf88bdafa81af754fb9ab57d1c3d23a4c0f67a32a0e88bcd2844
@@ -22,8 +22,8 @@ What the screens prove
   42      5 MEMORY: z moves the chart window
   43,44   e opens the HTML menu; Enter writes the all-tabs report and names it
   45      w in the inspector exported the visible log pane
-  46      q printed the session close summary (context, namespace, duration,
-          retained reports and the audit trail)
+  46      q printed the session close summary (context, namespace, duration
+          and the retained session history)
   47,48   the CLI version and the first page of -h
   49      --snapshot all wrote the every-view HTML and said where
   50      --report wrote the text + TSV + CSV evidence bundle
@@ -36,12 +36,6 @@ Artifacts this run produced (besides raw/ and captures.tsv)
 default/audit/kdash_audit_20261031_120536.csv
 default/audit/kdash_audit_20261031_120536.html
 default/reports/index.html
-default/reports/kdash_memory_dashboard_devops-admin@local-cluster_default_20261031_120404.html
-default/reports/kdash_namespace_ip_pool_devops-admin@local-cluster_default_20261031_120404.html
-default/reports/kdash_namespace_report_devops-admin@local-cluster_default_20261031_120239.html
-default/reports/kdash_network_disk_io_devops-admin@local-cluster_default_20261031_120404.html
-default/reports/kdash_node_pools_worker_nodes_devops-admin@local-cluster_default_20261031_120404.html
-default/reports/kdash_pod_container_resources_devops-admin@local-cluster_default_20261031_120404.html
 default/reports/kdash_devops-admin@local-cluster_default_20261031_120431.html
 default/reports/kdash_devops-admin@local-cluster_default_20261031_120431/csv/cluster_ns.csv
 default/reports/kdash_devops-admin@local-cluster_default_20261031_120431/csv/containers.csv
@@ -76,6 +70,12 @@ default/reports/kdash_devops-admin@local-cluster_default_20261031_120431/tsv/ser
 default/reports/kdash_devops-admin@local-cluster_default_20261031_120431/tsv/subnets.tsv
 default/reports/kdash_devops-admin@local-cluster_default_20261031_120431/tsv/wl_node.tsv
 default/reports/kdash_devops-admin@local-cluster_default_20261031_120431/tsv/workloads.tsv
+default/reports/kdash_memory_dashboard_devops-admin@local-cluster_default_20261031_120404.html
+default/reports/kdash_namespace_ip_pool_devops-admin@local-cluster_default_20261031_120404.html
+default/reports/kdash_namespace_report_devops-admin@local-cluster_default_20261031_120239.html
+default/reports/kdash_network_disk_io_devops-admin@local-cluster_default_20261031_120404.html
+default/reports/kdash_node_pools_worker_nodes_devops-admin@local-cluster_default_20261031_120404.html
+default/reports/kdash_pod_container_resources_devops-admin@local-cluster_default_20261031_120404.html
 default/reports/kdash_workloads_per_worker_node_devops-admin@local-cluster_default_20261031_120404.html
 default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_115956/events.tsv
 default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_115956/model/cluster_ns.tsv
@@ -97,6 +97,26 @@ default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_11595
 default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_115956/ns.tsv
 default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_115956/pods.tsv
 default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_115956/state.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/events.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/cluster_ns.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/containers.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/io_nodes.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/io_pods.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/ip.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/ipblocks.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/memory.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/meta.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/nodes.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/pods.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/pools.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/services.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/subnets.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/wl_node.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/model/workloads.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/nodes.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/ns.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/pods.tsv
+default/reports/sessions/kdash_devops-admin@local-cluster_default_20261031_125247/state.tsv
 
 Every screen was captured with tmux capture-pane -e -p while kdash was live
 and rendered with ../../scripts/render-captures.ps1. The run was redacted with

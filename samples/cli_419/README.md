@@ -87,7 +87,7 @@ produced - the run's `README.txt` lists them.
 | `43-html-menu.png` | `e` - the HTML menu (all tabs, current view, views 1-6, bundle) |
 | `44-html-report-written.png` | Enter in that menu - the all-tabs report written and named |
 | `45-inspector-export.png` | `w` in the inspector - the visible log pane exported as a file |
-| `46-session-summary.png` | `q` - the session close summary with context, namespace, duration, reports and audit trail |
+| `46-session-summary.png` | `q` - the session close summary: context, namespace, duration and the retained session history (captured with its scrollback) |
 | `47-version.png` | `kdash -V` |
 | `48-help-cli.png` | `kdash -h` (first page of the CLI help) |
 | `49-snapshot-all.png` | `--snapshot all` - the every-view HTML report, written and named |

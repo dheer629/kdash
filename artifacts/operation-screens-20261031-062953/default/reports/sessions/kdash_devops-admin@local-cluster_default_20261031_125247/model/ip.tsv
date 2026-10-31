@@ -1,0 +1,4 @@
+POD	POD_IP	NODE	POOL	HOST_IP	KIND	WORKLOAD	STATUS	NOTE
+platform-web-fb5754c79-vstz8	10.244.0.150	dev	role:control-plane,master	172.18.0.2	Deployment	platform-web	Running	-
+platform-postgres-74699cf6db-69g4h	10.244.0.158	dev	role:control-plane,master	172.18.0.2	Deployment	platform-postgres	Running	-
+platform-kafka-65c6d4dcfd-l7mqq	10.244.0.165	dev	role:control-plane,master	172.18.0.2	Deployment	platform-kafka	Running	-

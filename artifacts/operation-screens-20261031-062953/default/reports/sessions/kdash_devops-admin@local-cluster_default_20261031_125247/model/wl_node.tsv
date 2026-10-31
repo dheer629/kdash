@@ -1,0 +1,4 @@
+NODE	POOL	KIND	WORKLOAD	PODS	PODS_READY	RESTARTS	CPU_USED_m	MEM_USED_Mi	MEM_REQ_Mi	POD_NAMES
+dev	role:control-plane,master	Deployment	platform-kafka	1	1	3	7	420	512	platform-kafka-65c6d4dcfd-l7mqq
+dev	role:control-plane,master	Deployment	platform-postgres	1	1	3	1	20	256	platform-postgres-74699cf6db-69g4h
+dev	role:control-plane,master	Deployment	platform-web	1	1	3	1	16	-	platform-web-fb5754c79-vstz8
