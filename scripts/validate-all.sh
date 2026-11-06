@@ -212,7 +212,22 @@ echo "=== 6. no environment, product, site or personal names"
 # Inspect only files that can be published. Ignored private captures, downloaded
 # developer tools and release staging directories are outside this check.
 publication_paths() { git ls-files -z --cached --others --exclude-standard | sort -zu; }
-historical_paths() { publication_paths | grep -zvE '^(artifacts/live-e2e-|samples/(cli_4232?|html4232?)/)'; }
+# The current gallery keeps the real local names; every older gallery is redacted.
+# Follow artifacts/latest-e2e.txt so a new release does not need this list edited.
+current_gallery_dirs() {
+  local run png g1
+  [ -f artifacts/latest-e2e.txt ] || return 0
+  read -r run < artifacts/latest-e2e.txt || return 0
+  [ -f "artifacts/$run/captures.tsv" ] || return 0
+  png=$(awk -F '\t' 'NR==1 { for(i=1;i<=NF;i++) if($i=="png") col=i; next } col { print $col; exit }' "artifacts/$run/captures.tsv")
+  [ -n "$png" ] || return 0
+  g1="${png%/*}"
+  printf '%s\n%s\n' "${g1#samples/}" "html${g1#samples/cli_}"
+}
+historical_paths() {
+  local cur; cur="$(current_gallery_dirs | paste -sd'|' -)"
+  publication_paths | grep -zvE "^(artifacts/live-e2e-|samples/(cli_4232?|html4232?${cur:+|$cur})/)"
+}
 hits=$(historical_paths | xargs -0 -r grep -lI --exclude='validate-all.sh' \
   -e kubernetes-super-admin -e devopssentinel -e learnalgorithm -e flux-system -e devopsonm \
   -e pny9 -e sjy9 -e ecev -e etdp -e ETDP -e sentinel -e Sentinel -e 'director host' \
@@ -225,9 +240,12 @@ personal=$(publication_paths | xargs -0 -r grep -lI --exclude='validate-all.sh' 
 [ -z "$personal" ] && ok "no personal home paths in published data" || bad "personal path in: $personal"
 n=$(historical_paths | xargs -0 -r grep -nI --exclude='validate-all.sh' -e Dheeraj 2>/dev/null | grep -vc 'Dheeraj V')
 [ "$n" = 0 ] && ok "the author credit is the only name reference" || bad "$n unexpected name references"
-creds=$(publication_paths | grep -zvE '^\.github/' | xargs -0 -r grep -liE \
+# A jsonpath selector such as {.users[0].user.client-certificate-data} names a
+# kubeconfig field; it is not credential data. A selector closes the field name
+# with "}", so those lines are not matches.
+creds=$(publication_paths | grep -zvE '^\.github/' | xargs -0 -r grep -nIiE \
   'client-key-data|client-certificate-data|BEGIN [A-Z ]*PRIVATE KEY|^[[:space:]]*password[[:space:]]*[:=]|bearer [A-Za-z0-9._-]{20,}' \
-  --exclude='validate-all.sh' 2>/dev/null | head -3)
+  --exclude='validate-all.sh' 2>/dev/null | grep -vE 'client-(key|certificate)-data\}' | cut -d: -f1 | sort -u | head -3)
 [ -z "$creds" ] && ok "no credential-looking strings" || bad "credential-looking content in: $creds"
 
 echo "=== 7. README references"

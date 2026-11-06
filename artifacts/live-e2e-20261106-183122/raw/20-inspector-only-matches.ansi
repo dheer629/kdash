@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                        LOGS
+[0m[90m┌─[39m [1mLOGS[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90mREAD-ONLY / audited[39m [90m─┐[39m
+[90m│[39m [90mPOD      [39m  [1mapp-server-8fb4699bc-j6rk2[0m                                                                                                                                 [90m│[39m
+[90m│[39m [90mCONTAINER[39m  [1mapp[0m   [32m● Running[39m   [90mready[39m   [90mrestarts[39m 0   [90mbusybox:1.36[39m                                                                                                        [90m│[39m
+[90m└─[39m [1mrows 1-41 / 10665 · 10665 shown · 21330 lines 2.3 MiB, all the kubelet keeps · only /WARN (10665)[0m [90m───────────────────────────────────────────────────────────────────┘[39m
+2026-11-06T12:38:19.341383212Z 2026-11-06T12:38:19+00:00 [1m[31mWARN[0m request=0 demonstration warning from live workload
+2026-11-06T12:38:21.343049220Z 2026-11-06T12:38:21+00:00 [1m[31mWARN[0m request=1 demonstration warning from live workload
+2026-11-06T12:38:23.344491593Z 2026-11-06T12:38:23+00:00 [1m[31mWARN[0m request=2 demonstration warning from live workload
+2026-11-06T12:38:25.345967525Z 2026-11-06T12:38:25+00:00 [1m[31mWARN[0m request=3 demonstration warning from live workload
+2026-11-06T12:38:27.347633896Z 2026-11-06T12:38:27+00:00 [1m[31mWARN[0m request=4 demonstration warning from live workload
+2026-11-06T12:38:29.349925598Z 2026-11-06T12:38:29+00:00 [1m[31mWARN[0m request=5 demonstration warning from live workload
+2026-11-06T12:38:31.351738317Z 2026-11-06T12:38:31+00:00 [1m[31mWARN[0m request=6 demonstration warning from live workload
+2026-11-06T12:38:33.353340292Z 2026-11-06T12:38:33+00:00 [1m[31mWARN[0m request=7 demonstration warning from live workload
+2026-11-06T12:38:35.354740525Z 2026-11-06T12:38:35+00:00 [1m[31mWARN[0m request=8 demonstration warning from live workload
+2026-11-06T12:38:37.356731214Z 2026-11-06T12:38:37+00:00 [1m[31mWARN[0m request=9 demonstration warning from live workload
+2026-11-06T12:38:39.358738378Z 2026-11-06T12:38:39+00:00 [1m[31mWARN[0m request=10 demonstration warning from live workload
+2026-11-06T12:38:41.360086658Z 2026-11-06T12:38:41+00:00 [1m[31mWARN[0m request=11 demonstration warning from live workload
+2026-11-06T12:38:43.362025491Z 2026-11-06T12:38:43+00:00 [1m[31mWARN[0m request=12 demonstration warning from live workload
+2026-11-06T12:38:45.364013154Z 2026-11-06T12:38:45+00:00 [1m[31mWARN[0m request=13 demonstration warning from live workload
+2026-11-06T12:38:47.366271620Z 2026-11-06T12:38:47+00:00 [1m[31mWARN[0m request=14 demonstration warning from live workload
+2026-11-06T12:38:49.368011154Z 2026-11-06T12:38:49+00:00 [1m[31mWARN[0m request=15 demonstration warning from live workload
+2026-11-06T12:38:51.369789671Z 2026-11-06T12:38:51+00:00 [1m[31mWARN[0m request=16 demonstration warning from live workload
+2026-11-06T12:38:53.372268169Z 2026-11-06T12:38:53+00:00 [1m[31mWARN[0m request=17 demonstration warning from live workload
+2026-11-06T12:38:55.374277163Z 2026-11-06T12:38:55+00:00 [1m[31mWARN[0m request=18 demonstration warning from live workload
+2026-11-06T12:38:57.376327346Z 2026-11-06T12:38:57+00:00 [1m[31mWARN[0m request=19 demonstration warning from live workload
+2026-11-06T12:38:59.378038184Z 2026-11-06T12:38:59+00:00 [1m[31mWARN[0m request=20 demonstration warning from live workload
+2026-11-06T12:39:01.380728210Z 2026-11-06T12:39:01+00:00 [1m[31mWARN[0m request=21 demonstration warning from live workload
+2026-11-06T12:39:03.382721167Z 2026-11-06T12:39:03+00:00 [1m[31mWARN[0m request=22 demonstration warning from live workload
+2026-11-06T12:39:05.384812042Z 2026-11-06T12:39:05+00:00 [1m[31mWARN[0m request=23 demonstration warning from live workload
+2026-11-06T12:39:07.386660588Z 2026-11-06T12:39:07+00:00 [1m[31mWARN[0m request=24 demonstration warning from live workload
+2026-11-06T12:39:09.388554993Z 2026-11-06T12:39:09+00:00 [1m[31mWARN[0m request=25 demonstration warning from live workload
+2026-11-06T12:39:11.390401198Z 2026-11-06T12:39:11+00:00 [1m[31mWARN[0m request=26 demonstration warning from live workload
+2026-11-06T12:39:13.392166584Z 2026-11-06T12:39:13+00:00 [1m[31mWARN[0m request=27 demonstration warning from live workload
+2026-11-06T12:39:15.393905171Z 2026-11-06T12:39:15+00:00 [1m[31mWARN[0m request=28 demonstration warning from live workload
+2026-11-06T12:39:17.395947253Z 2026-11-06T12:39:17+00:00 [1m[31mWARN[0m request=29 demonstration warning from live workload
+2026-11-06T12:39:19.398052192Z 2026-11-06T12:39:19+00:00 [1m[31mWARN[0m request=30 demonstration warning from live workload
+2026-11-06T12:39:21.400049626Z 2026-11-06T12:39:21+00:00 [1m[31mWARN[0m request=31 demonstration warning from live workload
+2026-11-06T12:39:23.402127783Z 2026-11-06T12:39:23+00:00 [1m[31mWARN[0m request=32 demonstration warning from live workload
+2026-11-06T12:39:25.403795968Z 2026-11-06T12:39:25+00:00 [1m[31mWARN[0m request=33 demonstration warning from live workload
+2026-11-06T12:39:27.406037110Z 2026-11-06T12:39:27+00:00 [1m[31mWARN[0m request=34 demonstration warning from live workload
+2026-11-06T12:39:29.408021691Z 2026-11-06T12:39:29+00:00 [1m[31mWARN[0m request=35 demonstration warning from live workload
+2026-11-06T12:39:31.409841307Z 2026-11-06T12:39:31+00:00 [1m[31mWARN[0m request=36 demonstration warning from live workload
+2026-11-06T12:39:33.412031227Z 2026-11-06T12:39:33+00:00 [1m[31mWARN[0m request=37 demonstration warning from live workload
+2026-11-06T12:39:35.413973047Z 2026-11-06T12:39:35+00:00 [1m[31mWARN[0m request=38 demonstration warning from live workload
+2026-11-06T12:39:37.416449387Z 2026-11-06T12:39:37+00:00 [1m[31mWARN[0m request=39 demonstration warning from live workload
+2026-11-06T12:39:39.418151062Z 2026-11-06T12:39:39+00:00 [1m[31mWARN[0m request=40 demonstration warning from live workload
+[90mPANES[39m  [1m<s>[0m summary  [1m<d>[0m describe  [1m<e>[0m events  [1m<!>[0m why  [1m<l>[0m logs  [1m<p>[0m prev logs  [1m<c>[0m container  [1m<S>[0m shell  [1m<U>[0m upload  [1m<D>[0m download  [1m<X>[0m interactive off
+[90mREAD [39m  [1m<W>[0m wrap off  [1m<J>[0m JSON on  [1m<+>[0m 4x lines  [1m<A>[0m all lines  [1m<left/right>[0m pan  [1m<f>[0m follow off  [1m<L>[0m level all  [1m<w>[0m export
+[90mMOVE [39m  [1m</>[0m find  [1m<&>[0m only matches  [1m<n/N>[0m next / prev  [1m<j/k>[0m scroll  [1m<g/G>[0m top / end  [1m<r>[0m reload  [1m<?>[0m keys  [1m<q>[0m back  [1m<Q>[0m quit
+[1m[33m match 1/10665[0m

@@ -1,0 +1,10 @@
+ KDASH 4.24.1 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:01:51 IST
+ match ^no-pod-can-match-this$   sort cpu ▼ high first
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=1s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain C certs : commands
+ no pods match "^no-pod-can-match-this$" in namespace kdash-e2e
+════════════════════════════════════════════════════════════════════════════════

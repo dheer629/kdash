@@ -41,6 +41,17 @@ doctor_run() {
     else
         printf 'metrics\t{y}INFO\t%s; requests / limits and object health remain available\tcheck metrics-server and your metrics.k8s.io permissions\n' "$(doctor_classify "$err")" >> "$rows"
     fi
+    # certificates and login: the quick check (kubeconfig, API endpoint, CA bundles)
+    local cq="$TMPD/certd" cs cb
+    ( TOOLKIT_DIR="$cq"; rm -rf "$cq"; mkdir -p "$cq"; certs_collect quick ) > /dev/null 2>&1
+    cs="$(cat "$cq/certs.summary" 2>/dev/null)"; cb="$(certs_badge "$cs")"
+    if [ -z "$cs" ]; then printf 'certificates\t{y}INFO\tcould not be checked\tkdash --certs\n' >> "$rows"
+    elif [ -z "$cb" ]; then printf 'certificates\t{g}PASS\tnothing expires within %s days (API endpoint, kubeconfig, login, CA bundles)\tkdash --certs also probes nodes, kubelets and ingress hosts\n' "$CERT_WARN_DAYS" >> "$rows"
+    else
+      local fst="${cs##*first=}"
+      printf 'certificates\t%s\t%s%s\tkdash --certs  (or key C)\n' "$(case "$cs" in *expired=[1-9]*|*critical=[1-9]*) printf '{r}CRITICAL' ;; *) printf '{y}WARNING' ;; esac)" "$cb" "$([ -n "${fst%%|*}" ] && printf ' - soonest: %s in %s' "${fst%%|*}" "${fst#*|}")" >> "$rows"
+    fi
+    rm -rf "$cq"
     if [ -d "$REPORT_DIR" ] && [ -w "$REPORT_DIR" ] || { mkdir -p "$REPORT_DIR" 2>/dev/null && [ -w "$REPORT_DIR" ]; }; then
         printf 'local reports\t{g}PASS\twritable: %s\t-\n' "$REPORT_DIR" >> "$rows"
     else printf 'local reports\t{r}FAIL\tdirectory is not writable: %s\tset KDASH_REPORT_DIR to a writable directory\n' "$REPORT_DIR" >> "$rows"; code=1; fi
@@ -173,11 +184,22 @@ fetch_adopt() {
         case "$name" in SPEC_OK|SPEC_AT|TOP_OK|TOP_AT|NODES_STATE|SVC_STATE|TOPN_STATE|TOPN_OK|CLUSTER_STATE|WL_STATE|WL_KINDS|TOPA_STATE|NS_SCAN_AT|METRICS_NEXT|IO_STATE|IO_SRC|IO_REASON|IO_LAST|IO_DETECT_AT|IO_SAMPLE_AT|IO_SRC_PATH) printf -v "$name" '%s' "$value" ;; esac
     done < "$job/state"
     if [ "$SPEC_OK" = 1 ]; then FETCH_SUCCESS=$(cat "$job/finished"); FETCH_FAILURES=0
-    else FETCH_FAILURES=$(( FETCH_FAILURES + 1 )); fi
+      [ -z "${SPEC_REASON:-}" ] || { SPEC_REASON=""; declare -F flash >/dev/null && flash "API reads work again" 5; }
+    else FETCH_FAILURES=$(( FETCH_FAILURES + 1 ))
+      if [ -s "$job/spec.err" ]; then
+        SPEC_REASON="$(doctor_classify "$job/spec.err") - $(head -n 1 "$job/spec.err" | LC_ALL=C tr -d '\000-\037' | cut -c1-110)"
+        # say it once per outage; the frame keeps the last good data (marked STALE)
+        if [ "$FETCH_FAILURES" = 1 ] && declare -F flash >/dev/null; then
+          if [ "${SPEC_AT:-0}" != 0 ]; then flash "API read failed - showing data from $(date -d "@$SPEC_AT" '+%H:%M:%S' 2>/dev/null) - $SPEC_REASON" 12
+          else flash "pod read failed: $SPEC_REASON" 12; fi
+        fi
+      fi
+    fi
     local delay="$INTERVAL"
     [ "$FETCH_FAILURES" = 0 ] || delay=$(( 2 ** (FETCH_FAILURES > 5 ? 5 : FETCH_FAILURES) ))
     FETCH_NEXT=$(( $(date +%s) + ${delay%.*} ))
     build_model; session_tick; FETCH_AT=$(date +%s)
+    declare -F certs_quick_poll >/dev/null && certs_quick_poll
     NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv" 2>/dev/null)
     # the first answer from the API decides the "no pods" hint (the start screen has none yet)
     if [ "${NOPODS_CHECK:-0}" = 1 ] && [ "$SPEC_OK" = 1 ]; then NOPODS_CHECK=0
@@ -207,16 +229,18 @@ toolkit_tick() {
     (
         trap - EXIT INT TERM HUP
         local next="$TMPD/toolkit-next"
-        mkdir -p "$next"; cp -f "$TOOLKIT_DIR"/* "$next/" 2>/dev/null || true
+        mkdir -p "$next"; cp -Rf "$TOOLKIT_DIR"/. "$next/" 2>/dev/null || true
         TOOLKIT_DIR="$next"
         events_collect; health_collect
+        # TLS handshakes are slower: only for the certificates view, at most every KDASH_CERT_TTL s
+        if [ "$VIEW" = certs ] && [ "$(certs_age)" -ge "${KDASH_CERT_TTL:-300}" ]; then certs_collect full; audit CERTS "$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"; fi
         TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}" doctor_run > "$TOOLKIT_DIR/doctor.txt"
     ) & TOOLKIT_PID=$!
 }
 
 toolkit_cancel() {
     local pid kids
-    for pid in "${FETCH_PID:-}" "${TOOLKIT_PID:-}"; do
+    for pid in "${FETCH_PID:-}" "${TOOLKIT_PID:-}" "${CERTQ_PID:-}"; do
         # its children too (kubectl, cp, mv): left running they would write into the
         # removed temp dir and print "No such file or directory" after kdash quit
         [ -n "$pid" ] || continue
@@ -225,7 +249,7 @@ toolkit_cancel() {
         [ -z "$kids" ] || kill $kids 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
     done
-    FETCH_PID=""; TOOLKIT_PID=""
+    FETCH_PID=""; TOOLKIT_PID=""; CERTQ_PID=""
     rm -rf "$TMPD/fetch-job" "$TMPD/toolkit-next"
 }
 
@@ -239,22 +263,23 @@ toolkit_panel() {
     case "$view" in
         services) health_render_services ;; storage) health_render_storage ;;
         events) events_render ;; explain) explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}" ;;
+        certs) certs_render ;;
         doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
     esac | toolkit_clean | tk_colorize > "$BODYF"
     export -n TK_COLOR TK_COLS TK_GLYPH
-    printf '8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF"
+    printf '8 services | 9 storage | E events | ! why | C certs | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF"
 }
 
 render() {
-    case "$VIEW" in services|storage|events|explain|doctor) toolkit_panel "$VIEW" ;;
+    case "$VIEW" in services|storage|events|explain|doctor|certs) toolkit_panel "$VIEW" ;;
         *) render_core ;;
     esac
     local age=never status=not-collected
     [ "${SPEC_AT:-0}" = 0 ] || age="$(( $(date +%s) - SPEC_AT ))s"
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
-    printf 'Data pods=%s age=%s metrics=%s | Enter/i inspect | 8 services 9 storage E events ! explain : commands\n' \
-        "$status" "$age" "$([ "$TOP_OK" = 1 ] && echo available || echo unavailable)" >> "$HDRF"
+    printf 'Data pods=%s age=%s metrics=%s | Enter/i inspect | 8 services 9 storage E events ! explain C certs%s : commands\n' \
+        "$status" "$age" "$([ "$TOP_OK" = 1 ] && echo available || echo unavailable)" "${CERT_BADGE:+ ($CERT_BADGE)}" >> "$HDRF"
     local source updated
     for source in nodes svc; do
         updated="$(cat "$TMPD/$source.updated" 2>/dev/null || printf 0)"
@@ -280,16 +305,6 @@ toolkit_filters_changed() {
     fi
 }
 
-toolkit_once() { # view [renderer arguments]; structured output keeps table schemas
-    local view="$1" TK_FORMAT="${OUTFMT:-text}"
-    shift
-    export TK_FORMAT
-    case "$view" in
-        services) health_render_services "$@" ;; storage) health_render_storage "$@" ;;
-        events) events_render "$@" ;; explain) explain_render "$@" ;;
-    esac
-}
-
 toolkit_export() {
     local dir="$1" item
     [ -d "$dir" ] || return 0
@@ -297,6 +312,7 @@ toolkit_export() {
         case "$item" in services) health_render_services ;; storage) health_render_storage ;;
             events) events_render ;; explain) explain_render ;; esac | toolkit_clean > "$dir/$item.txt"
     done
+    [ ! -d "$TOOLKIT_DIR/certs" ] || certs_render | toolkit_clean > "$dir/certs.txt"
     mkdir -p "$dir/diagnostics"
     cp -f "$TOOLKIT_DIR"/*.tsv "$TOOLKIT_DIR"/*.status "$dir/diagnostics/" 2>/dev/null || true
 }

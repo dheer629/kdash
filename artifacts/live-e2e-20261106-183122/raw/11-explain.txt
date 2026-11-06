@@ -1,0 +1,50 @@
+ KDASH 4.24.1 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-07 00:02:35 IST
+ match .*   poll 2s  spec 14s/30s  session 00:01:51 up 44s   sort cpu ▼ high first
+ health ! pods 3/5 ready  restarts 73  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 6m ░░░░░░ 1% lim  mem 1Mi ░░░░░░ 0% lim  │ workloads 4  │ events 15m ! 0 ^ 0
+Data pods=fresh age=14s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain C certs : commands
+ WHY - INCIDENT EVIDENCE   warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context kdash-local
+┌────────┬───────┬─────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │    READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼─────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 14s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴─────────┴───────────┴────────────────┘
+
+PODS NEEDING ATTENTION  2 pods   3 other pods are Running and ready - from the dashboard model
+┌───────────┬────────────────────┬───────┬──────────┬───────────────┐
+│ POD       │ STATUS             │ READY │ RESTARTS │ NODE          │
+├───────────┼────────────────────┼───────┼──────────┼───────────────┤
+│ z-crash   │ ● CrashLoopBackOff │   0/1 │       73 │ dev           │
+│ z-pending │ ● Pending          │   0/1 │        0 │ (unscheduled) │
+└───────────┴────────────────────┴───────┴──────────┴───────────────┘
+
+WARNING EVIDENCE  3 items   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────────────────────────┬────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT                          │ REASON             │ COUNT │ CATEGORY   │ MESSAGE                                                                    │
+├───┼───────────┼─────────────────────────────────┼────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 4m        │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │  1402 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found    │
+│ 2 │ 4m        │ Pod/z-crash                     │ BackOff            │  1594 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(6a92c~ │
+│ 3 │ 28m       │ Pod/z-pending                   │ FailedScheduling   │    67 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims~ │
+└───┴───────────┴─────────────────────────────────┴────────────────────┴───────┴────────────┴────────────────────────────────────────────────────────────────────────────┘
+
+POSSIBLE EXPLANATIONS  3 categories   hypotheses to check, not conclusions
+┌────────────┬──────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY   │ EVIDENCE │ POSSIBLE EXPLANATION                                                                                   │
+├────────────┼──────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ storage    │ #1       │ volume binding, provisioning, attachment or mounting may block startup - not evidence of a full volume │
+│ restart    │ #2       │ a container may be exiting repeatedly - the event alone does not say why                               │
+│ scheduling │ #3       │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
+└────────────┴──────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+NEXT READ-ONLY CHECKS  5 checks   copy and run - all of them only read
+┌───┬────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ NEXT READ-ONLY CHECK                                                                           │
+├───┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ kubectl --context kdash-local -n kdash-e2e describe persistentvolumeclaim z-unbound            │
+│ 1 │ kubectl --context kdash-local -n kdash-e2e get pvc                                             │
+│ 2 │ kubectl --context kdash-local -n kdash-e2e describe pod z-crash                                │
+│ 2 │ kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100 │
+8 services | 9 storage | E events | ! why | C certs | j/k scroll | h/l pan | i inspect | : commands | q quit
+ ○ LIVE 00:02:35  next 2s  data 2s old  spec 14/30s  fetch 0.0s  poll 2s  AUDITED | explain | rows 1-43/47 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause

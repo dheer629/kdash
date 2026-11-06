@@ -1,0 +1,50 @@
+ KDASH 4.24.1 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-07 00:04:57 IST
+ match .*   poll 3s  spec 26s/30s  session 00:01:51 up 3m06s   sort mem ▲ low first
+ health ! pods 3/5 ready  restarts 73  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 6m ░░░░░░ 1% lim  mem 1Mi ░░░░░░ 0% lim  │ workloads 4  │ events 15m ! 0 ^ 0
+ MEMORY   live namespace memory dashboard
+ MEMORY used      1Mi  req     36Mi  lim    288Mi   used/req    2.8%  used/lim    0.3%  ░░░░░░░░░░░░░░░░░░░░░░░░
+ window 00:01:51 -> 00:04:57 IST (UTC+05:30)   3m06s, last 15m (have 3m06s)   samples 42 every 2s   z: 15m 1h 6h 24h all
+ CPU    used       6m  req      65m  lim     650m   used/req    9.2%  used/lim    0.9%  _________██
+ risk  >=90% of limit 0   no limit 0   over request 0   OOMKilled before 0   restarts 73
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=26s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain C certs : commands
+► TIMELINE  00:01:51 -> 00:04:57 IST  (last 15m (have 3m06s), host clock) ───────────────────────────────────────────────────────────────────────────────────────────────
+  MEMORY used - namespace                                                               CPU used - namespace
+     2Mi┤                 ·                   ·                 ·                           7m┤                 ·                   ·                 ·
+        │                 ·                   ·                 ·  ███                        │ █████      █████████████████████████·                 ·                ███
+        │                 ·                   ·                 ·  ███                        │ █████      █████████████████████████·                 · ██████████████████
+        │                 ·                   ·                 ·  ███                        │ █████▄▄▄▄▄▄█████████████████████████·                 · ██████████████████
+     1Mi┤            ▄▄▄▄▄▄▄▄▄▄▄▄▄            ·                 · ▄███▄▄▄▄▄▄     ▄▄▄        3m┤ ████████████████████████████████████·                 · ██████████████████
+        │            █████████████            ·                 · ██████████     ███          │ ████████████████████████████████████·                 · ██████████████████
+        │            █████████████            ·                 · ██████████     ███          │ ████████████████████████████████████·                 · ██████████████████
+        │            █████████████            ·                 · ██████████     ███          │ ████████████████████████████████████·                 · ██████████████████
+     0Mi└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴        0m└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         00:01:51                         00:03:24                          00:04:57           00:01:51                         00:03:24                          00:04:57
+  events                                                                                events
+  now 1Mi  min 0Mi  avg 1Mi  max 2Mi @ 00:04:21                                         now 6m  min 4m  avg 5m  max 6m @ 00:04:57
+  request 36Mi (above)  limit 288Mi (above)  0% of limit                                request 65m (above)  limit 650m (above)  1% of limit
+  EVENTS 3 in window   ! 0 critical   ^ 0 warning
+  00:04:28       - FILTER           kdash-e2e                                pod filter changed to .*
+  00:04:23       - FILTER           kdash-e2e                                pod filter changed to app-server
+  00:01:51       - SESSION          kdash-e2e                                kdash 4.24.1 started on Dheeraj by root - filter .*
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (00:01:51 -> 00:04:55 IST) ───────────────────────────────────────────────────────────────────────────────────
+  app-server-8fb4699bc-j6rk2 │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                        ░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  completed-check-m9swm      │                                                                                                                     │   0.0 now
+  z-crash                    │                                                                                                                     │   0.0 now
+  z-pending                  │                                                                                                                     │   0.0 now
+  app-server-8fb4699bc-z8kl7 │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                        ░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   1.0 now
+                              00:01:51                                             00:03:23                                               00:04:55
+                              ░ < 50%  ▒ < 75%  ▓ < 90%  █ >= 90% of limit  ! restart
+
+► MEMORY BY WORKER NODE ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory                           ns trend
+  dev                          role:contro~      1Mi   7524Mi   0.0  27.6  █▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░  █████____██
+
+► PODS BY MEMORY USED ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD                        NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  completed-check-m9swm      dev                               -      4Mi     32Mi     -     - n/a        0
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 11 polls.  metrics refresh about every 15 s.
+ chart window: last 15m | ○ LIVE 00:04:57  next 1s  data 2s old  spec 26/30s  fetch 0.0s  poll 3s  AUDITED | mem | rows 1-36/59 | ? help  1-9 view  n ns  s sort(mem rev)

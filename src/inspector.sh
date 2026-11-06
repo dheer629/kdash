@@ -78,11 +78,7 @@ inspector_logs() { # ns pod container current|previous output-file
   if [ "$INSPECTOR_TAIL" = -1 ]; then INSPECTOR_LOGINFO+=", all the kubelet keeps"
   elif [ "$nl" -ge "$INSPECTOR_TAIL" ]; then INSPECTOR_LOGINFO+=", newest only (+ more, A all)"
   else INSPECTOR_LOGINFO+=", complete"; fi
-  if [ -f "$dest.body.capped" ]; then
-    INSPECTOR_LOGINFO+=", $(xfer_hsize "$INSPECTOR_BYTES") cap reached"
-    [ "$INSPECTOR_BYTES" -ge 268435456 ] || INSPECTOR_LOGINFO+=' (A reads more)'
-    rm -f -- "$dest.body.capped"
-  fi
+  [ ! -f "$dest.body.capped" ] || { INSPECTOR_LOGINFO+=", $(xfer_hsize "$INSPECTOR_BYTES") cap reached (A reads more)"; rm -f -- "$dest.body.capped"; }
   printf '%s' "$INSPECTOR_LOGINFO" > "$dest.info"
   cat "$dest.body" > "$dest"; rm -f -- "$dest.body"
   [ "$mode" != previous ] || [ "$rc" = 0 ] || printf '\nPrevious logs require a previously terminated instance of this container.\n' >> "$dest"
@@ -534,8 +530,7 @@ inspector_help() {
   printf '  +  read 4x more lines        A  read every line the kubelet keeps (KDASH_LOG_MAX_BYTES)\n'
   printf '     the rule shows what was read: "5000 lines, 3.1 MiB - complete" or "- newest 5000 only"\n\n'
   printf ' S  shell in the container    U  upload a file             D  download a file\n'
-  printf ' X  enable/disable interactive mode here; y + Enter confirms enabling.\n'
-  printf ' S/U/D need interactive mode: they run in your name and are audited writes.\n'
+  printf ' S/U/D need --allow-interactive: they run in your name and are audited writes.\n'
   printf ' / keeps the context around every match and highlights it; & hides everything else.\n'
   printf ' A lowercase pattern ignores case: /error finds ERROR and error.\n'
   printf ' n and N wrap around and put the match at the top of the pane.\n'
@@ -1397,7 +1392,7 @@ inspector_filter_prompt() {
 inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
-  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n services / storage / events / explain / doctor\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n services / storage / events / explain / doctor / certs\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
   IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
   case "$command" in *$'\e'*) return 0 ;; esac
   case "$command" in
@@ -1408,7 +1403,7 @@ inspector_palette() {
       PK_Q="${command#* }"; [ "$PK_Q" != "$command" ] || PK_Q=""; PK_AUTO=1; PK_SEL_KEY=""
       KDASH_ATTACH_ACTION=S; inspector_open; KDASH_ATTACH_ACTION="" ;;
     pods|nodes|workloads|ip|mem|io|alerts) VIEW="$command"; SCROLL=0; HSCROLL=0 ;;
-    services|storage|events|explain|doctor) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    services|storage|events|explain|doctor|certs) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     help|'?') if declare -F show_help >/dev/null; then show_help; else printf '\n Use ? on the dashboard for help.\n'; fi ;;
     *) declare -F flash >/dev/null && flash "Unknown command: ${command:0:70}" 5; return 2 ;;
   esac

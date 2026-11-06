@@ -1,0 +1,29 @@
+KDASH 4.24.1 DOCTOR  -  read-only capability checks - no cluster changes are made
+
+CONNECTION
+┌──────────────┬──────────────────────────────────────────────────────────────────────────┐
+│ SETTING      │ VALUE                                                                    │
+├──────────────┼──────────────────────────────────────────────────────────────────────────┤
+│ context      │ kdash-local                                                              │
+│ namespace    │ kdash-e2e                                                                │
+│ kubeconfig   │ /tmp/kdash-local.kubeconfig                                              │
+│ API endpoint │ https://localhost:10093                                                  │
+│ audit log    │ /tmp/kdash-run/artifacts/live-e2e-20261106-183122/audit/audit_202611.log │
+└──────────────┴──────────────────────────────────────────────────────────────────────────┘
+
+CHECKS  9 checks   all required checks passed
+┌─────────────────────────────────┬────────┬──────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┐
+│ CHECK                           │ RESULT │ DETAIL                                                   │ NEXT STEP                                                   │
+├─────────────────────────────────┼────────┼──────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┤
+│ pods                            │ ● PASS │ readable (an empty namespace is valid)                   │ -                                                           │
+│ nodes                           │ ● PASS │ readable                                                 │ -                                                           │
+│ services                        │ ● PASS │ readable                                                 │ -                                                           │
+│ endpointslices.discovery.k8s.io │ ● PASS │ readable                                                 │ -                                                           │
+│ persistentvolumeclaims          │ ● PASS │ readable                                                 │ -                                                           │
+│ events                          │ ● PASS │ readable                                                 │ -                                                           │
+│ metrics                         │ ● PASS │ pod CPU / memory readable                                │ -                                                           │
+│ certificates                    │ ● PASS │ nothing expires within 30 days (API endpoint, kubeconfi~ │ kdash --certs also probes nodes, kubelets and ingress hosts │
+│ local reports                   │ ● PASS │ writable: /tmp/kdash-run/artifacts/live-e2e-20261106-18~ │ -                                                           │
+└─────────────────────────────────┴────────┴──────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────┘
+
+  Read-only checks complete; no cluster changes made.

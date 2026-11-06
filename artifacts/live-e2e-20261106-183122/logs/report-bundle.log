@@ -1,0 +1,3 @@
+kdash report
+  html    /tmp/kdash-run/artifacts/live-e2e-20261106-183122/reports/kdash_kdash-local_kdash-e2e_20261107_000148.html
+  bundle  /tmp/kdash-run/artifacts/live-e2e-20261106-183122/reports/kdash_kdash-local_kdash-e2e_20261107_000148  (text views, tsv/, csv/, SHA256SUMS)

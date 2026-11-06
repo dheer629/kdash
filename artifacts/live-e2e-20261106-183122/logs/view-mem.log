@@ -1,0 +1,54 @@
+ KDASH 4.24.1 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:01:25 IST
+ match .*   sort mem ▼ high first
+ ! pods 3/5 ready rst 73 oom 0 oomk 0 nolim 0 cpu 6m 1% lim mem 1Mi 0% lim wl 4
+ MEMORY   live namespace memory dashboard
+ MEMORY used      1Mi  req     36Mi  lim    288Mi   used/req    2.8%  used/lim    0.3%  ░░░░░░░░░░░░░░░░░░░░░░░░
+ window 00:01:24 -> 00:01:25 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
+ CPU    used       6m  req      65m  lim     650m   used/req    9.2%  used/lim    0.9%  ░
+ risk  >=90% of limit 0   no limit 0   over request 0   OOMKilled before 0   restarts 73
+────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=0s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain C certs : commands
+► TIMELINE  00:01:24 -> 00:01:25 IST  (all since kdash started, host clock) ───
+  MEMORY used - namespace                                                       
+         one sample so far - the chart starts with the 2nd (run kdash live)     
+
+  CPU used - namespace                                                          
+         one sample so far - the chart starts with the 2nd (run kdash live)     
+  events: recorded in live mode (session history)
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (live sessions) ────
+  builds from the session samples while kdash runs live (no samples yet)
+
+► MEMORY BY WORKER NODE ───────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory  ns trend
+  dev                          role:contro~      1Mi   7524Mi   0.0  27.1  █▓▓░░░░░░░  ░
+
+► PODS BY MEMORY USED ─────────────────────────────────────────────────────────
+  POD                      NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  app-server-8fb4699bc-j6~ dev                             1Mi     12Mi     96Mi   8.3   1.0 ░░░░░░░░   0  
+  app-server-8fb4699bc-z8~ dev                             0Mi     12Mi     96Mi   0.0   0.0 ░░░░░░░░   0  
+  completed-check-m9swm    dev                               -      4Mi     32Mi     -     - n/a        0  
+  z-crash                  dev                               -      4Mi     32Mi     -     - n/a       73  
+  z-pending                (unscheduled)                     -      4Mi     32Mi     -     - n/a        0  
+
+► OOM RISK  (>= 90% of memory limit) ──────────────────────────────────────────
+  none
+
+► MEMORY GROWTH FORECAST  (linear trend of the last 30m, a restart starts the trend again) 
+  needs a live session with 2m of samples (every 2s) - the forecast appears here
+
+► RECENT OOMKilled  (last container termination) ──────────────────────────────
+  none
+
+► NO MEMORY LIMIT  (unbounded containers) ─────────────────────────────────────
+  none
+
+► MEMORY BY WORKLOAD ──────────────────────────────────────────────────────────
+  KIND        WORKLOAD                    PODS     USED      REQ      LIM  %LIM MEM/LIM 
+  Deployment  app-server                     2      1Mi     24Mi    192Mi   0.5 ░░░░░░░░
+  Job         completed-check                1        -      4Mi     32Mi     - n/a     
+  Pod         z-crash                        1        -      4Mi     32Mi     - n/a     
+  Pod         z-pending                      1        -      4Mi     32Mi     - n/a     
+────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 1 polls.  metrics refresh about every 15 s.

@@ -5,6 +5,34 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.24.1] - 2026-11-06
+
+### Added
+- Certificate and login expiry view: `C`, `-v certs` (aliases `C`, `cert`,
+  `certificates`, `tls`, `expiry`) and `--certs`. It reports what expires next
+  across the API endpoint, the kubeconfig client certificate and cluster CA,
+  node kubelets, webhook and API-service CAs, cert-manager `Certificate`
+  objects, ingress hosts, RKE2 certificate files on this host, and the login
+  (bearer token, OIDC / kubelogin cached tokens).
+- Thresholds `KDASH_CERT_WARN_DAYS` (default 30) and `KDASH_CERT_CRIT_DAYS`
+  (default 7) grade every row `OK` / `WARNING` / `CRITICAL` / `EXPIRED`, with
+  `LOGIN NEEDED` for a login. Rows that could not be read are listed under
+  NOT CHECKED with the reason, so a gap is never mistaken for a pass.
+- A background quick check (kubeconfig, API endpoint, CA bundles) runs at start
+  and hourly, flashes once and adds a header badge such as
+  `(2 critical, 3 expiring)`. `KDASH_CERT_CHECK=0` disables it.
+- `--certs` exits `0` (nothing inside the window), `1` (warning or login) or `2`
+  (critical or expired) so it can gate a pipeline. Runs are audited as `CERTS`,
+  and a background check that finds something due is audited as `CERTS_WARNING`.
+- `KDASH_RKE2_DATA_DIR` selects the RKE2 data directory read for local
+  certificates (default `/var/lib/rancher/rke2`).
+
+### Notes
+- The view is read-only: TLS endpoints are checked with an `openssl` handshake
+  and nothing is sent after it, kubeconfig fields are read locally, and tokens
+  and keys are never printed or written to disk - only expiry, issuer and
+  subject are kept.
+
 ## [4.23.2] - 2026-11-06
 
 ### Fixed

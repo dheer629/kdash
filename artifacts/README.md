@@ -1,9 +1,11 @@
 # kdash validation artifacts
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261106-162543` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.2 in namespace `kdash-e2e`.
-[Inspect the recorded checks](live-e2e-20261106-162543/checks.tsv).
+Run `live-e2e-20261106-183122` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.24.1 in namespace `kdash-e2e`.
+[Inspect the recorded checks](live-e2e-20261106-183122/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
+
+
 
 
 
@@ -28,8 +30,8 @@ using the dedicated `kdash-e2e` namespace. Its files include:
 | `reports/` | generated reports, tables, audit output and session history |
 
 The current screenshots and companion renders are in
-[`../samples/cli_4232/`](../samples/cli_4232/README.md) and report samples in
-[`../samples/html4232/`](../samples/html4232/README.md). Terminal images replay
+[`../samples/cli_4241/`](../samples/cli_4241/README.md) and report samples in
+[`../samples/html4241/`](../samples/html4241/README.md). Terminal images replay
 actual captures. `native/` contains real xterm window screenshots captured in WSL;
 the other PNGs are labelled ANSI replays. Their SHA-256 hashes and the installed
 CLI hash are recorded in `results.json`. The current run keeps actual local

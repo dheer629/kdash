@@ -22,7 +22,7 @@ interactive_hint() {
     printf 'interactive actions are off (read-only). Press X to turn them on, or start kdash with kdx / kdash -X.'
 }
 
-# X key: switch interactive mode on (with a whole-line confirmation) or off.
+# X key: switch interactive mode on (with a y/N confirmation) or off without restarting.
 # The kubectl guard reads the exported KDASH_ALLOW_INTERACTIVE on every call, so the
 # change applies at once. Both directions are audited.
 interactive_toggle() {
@@ -1015,30 +1015,9 @@ xfer_stamp() { date +%Y%m%d_%H%M%S; }
 xfer_safe() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-60; }
 xfer_zip_tool() { if command -v zip >/dev/null 2>&1; then echo zip; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo ""; fi; }
 
-# Validate a completed archive before replacing the user's destination file.
-# The transfer result records a failure if an available integrity test fails.
-xfer_archive_test() { # tgz|zip path -> XFER_ARCHIVE_TEST
-  XFER_ARCHIVE_TEST=""
-  case "$1" in
-    tgz)
-      if gzip -t "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK gzip -t passed"
-      else XFER_ARCHIVE_TEST="$XG_BAD gzip -t failed"; return 1; fi ;;
-    zip)
-      if command -v unzip >/dev/null 2>&1; then
-        if unzip -tq "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK unzip -t passed"
-        else XFER_ARCHIVE_TEST="$XG_BAD unzip -t failed"; return 1; fi
-      elif command -v python3 >/dev/null 2>&1; then
-        if python3 -c 'import sys,zipfile; sys.exit(zipfile.ZipFile(sys.argv[1]).testzip() is not None)' "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK zip test passed"
-        else XFER_ARCHIVE_TEST="$XG_BAD zip test failed"; return 1; fi
-      else XFER_ARCHIVE_TEST="$XG_WARN archive integrity test unavailable (install unzip or python3)"; fi ;;
-    *) XFER_ARCHIVE_TEST="$XG_BAD unknown archive format"; return 1 ;;
-  esac
-  return 0
-}
-
 # Fingerprints of the transferred items, computed the same way in the container and
 # on this host (POSIX sh, no awk): file = size + hash; directory = number of files,
-# total bytes and one hash over every directory, file and symlink in sorted order; symlink =
+# total bytes and one hash over "hash path" of every file in sorted order; symlink =
 # hash of its target text. ALG sha256 (preferred), md5 or none (sizes only).
 XFER_SUM_SH='alg=$1; d=$2; shift 2
 cd -- "$d" 2>/dev/null || exit 3
@@ -1094,6 +1073,24 @@ xfer_sum_parse() { # file prefix -> <prefix>T[name] F B H, <prefix>ALG
       I) eval "${2}T[\$n]=\$t; ${2}F[\$n]=\$f; ${2}B[\$n]=\$b; ${2}H[\$n]=\$h" ;;
     esac
   done < "$1"
+}
+xfer_archive_test() { # tgz|zip path -> XFER_ARCHIVE_TEST
+  XFER_ARCHIVE_TEST=""
+  case "$1" in
+    tgz)
+      if gzip -t "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK gzip -t passed"
+      else XFER_ARCHIVE_TEST="$XG_BAD gzip -t failed"; return 1; fi ;;
+    zip)
+      if command -v unzip >/dev/null 2>&1; then
+        if unzip -tq "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK unzip -t passed"
+        else XFER_ARCHIVE_TEST="$XG_BAD unzip -t failed"; return 1; fi
+      elif command -v python3 >/dev/null 2>&1; then
+        if python3 -c 'import sys,zipfile; sys.exit(zipfile.ZipFile(sys.argv[1]).testzip() is not None)' "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK zip test passed"
+        else XFER_ARCHIVE_TEST="$XG_BAD zip test failed"; return 1; fi
+      else XFER_ARCHIVE_TEST="$XG_WARN archive integrity test unavailable (install unzip or python3)"; fi ;;
+    *) XFER_ARCHIVE_TEST="$XG_BAD unknown archive format"; return 1 ;;
+  esac
+  return 0
 }
 xfer_glyphs() { if [ "${BARCHR:-unicode}" = ascii ]; then XG_OK="*"; XG_BAD="*"; XG_WARN="*"; XG_ELL=".."; else XG_OK="●"; XG_BAD="●"; XG_WARN="●"; XG_ELL="…"; fi; }
 # a solid status chip: READY / VERIFIED (green), CHECK (yellow), BLOCKED / FAILED (red)
@@ -1354,7 +1351,7 @@ xfer_download_once() { # ns pod container
   printf '\n'
   : > "$d/err"; local t0=$SECONDS
   XFER_EXPECT="$tb" xfer_run_bg "DOWNLOADING ${PC_MID} $(xfer_n "${#items[@]}" item) from ${pod}" "$part" -- xfer_down_pipe; rc=$?
-  local out="" count=0 asum="" atest="" archive_part="" saved=()
+  local out="" count=0 asum="" atest="" saved=()
   if [ "$rc" = 0 ] && [ -s "$part" ]; then
     rm -rf "$stage"; mkdir -p "$stage" && tar xf "$part" -C "$stage" 2>> "$d/err" || rc=1
     count="$(tar tf "$part" 2>/dev/null | wc -l | tr -d ' ')"
@@ -1381,17 +1378,13 @@ xfer_download_once() { # ns pod container
       tgz)
         [ "$XFER_CONFLICT" = keep ] && name="$(xfer_free_name "$outdir" "$name")"
         out="$outdir/$name"
-        archive_part="$out.part"
-        ( cd "$stage" && tar czf "$archive_part" -- "${items[@]}" ) 2>> "$d/err" || rc=1
-        if [ "$rc" = 0 ]; then
-          if xfer_archive_test tgz "$archive_part"; then atest="$XFER_ARCHIVE_TEST"; mv -f -- "$archive_part" "$out" || rc=1
-          else printf '%s\n' "$XFER_ARCHIVE_TEST" >> "$d/err"; rc=1; fi
-        fi ;;
+        ( cd "$stage" && tar czf "$out.part" -- "${items[@]}" ) 2>> "$d/err" && mv -f "$out.part" "$out" || rc=1
+        [ "$rc" = 0 ] && { xfer_archive_test tgz "$out" && atest="$XFER_ARCHIVE_TEST" || atest="$XFER_ARCHIVE_TEST"; } ;;
       zip)
         [ "$XFER_CONFLICT" = keep ] && name="$(xfer_free_name "$outdir" "$name")"
-        out="$outdir/$name"; archive_part="$out.part.zip"; rm -f -- "$archive_part"
-        if [ "$zt" = zip ]; then ( cd "$stage" && zip -qry "$archive_part" "${items[@]/#/./}" ) 2>> "$d/err" || rc=1
-        else ( cd "$stage" && python3 - "$archive_part" "${items[@]}" <<'PY'
+        out="$outdir/$name"; rm -f "$out"
+        if [ "$zt" = zip ]; then ( cd "$stage" && zip -qry "$out" "${items[@]/#/./}" ) 2>> "$d/err" || rc=1
+        else ( cd "$stage" && python3 - "$out" "${items[@]}" <<'PY'
 import os, sys, zipfile
 out = sys.argv[1]
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
@@ -1419,13 +1412,11 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
 PY
           ) 2>> "$d/err" || rc=1; fi
         if [ "$rc" = 0 ]; then
-          if xfer_archive_test zip "$archive_part"; then atest="$XFER_ARCHIVE_TEST"; mv -f -- "$archive_part" "$out" || rc=1
-          else printf '%s\n' "$XFER_ARCHIVE_TEST" >> "$d/err"; rc=1; fi
+          xfer_archive_test zip "$out" && atest="$XFER_ARCHIVE_TEST" || atest="$XFER_ARCHIVE_TEST"
         fi ;;
     esac
     [ "$fmt" = files ] || { [ "$rc" = 0 ] && command -v sha256sum >/dev/null && asum="$(sha256sum -- "$out" | cut -c1-64)"; }
   fi
-  [ -z "$archive_part" ] || rm -f -- "$archive_part"
   rm -rf "$stage"
   picker_size
   ui_bar "$PK_COLS" " KDASH ${PC_SEP} DOWNLOAD ${PC_SEP} RESULT ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " audited "
@@ -1649,4 +1640,475 @@ interactive_container() { # ns pod dir [wanted]
     # remember it for this pod: preselected next time
     KDASH_INSPECT_CONTAINER="$INSPECTOR_CONTAINER"; KDASH_INSPECT_CONTAINER_POD="$ns/$pod"
     return 0
+}
+
+# ---- certificate and login expiry (key C, -v certs, --certs) -------------------
+# Read-only. TLS endpoints are checked with an openssl handshake: nothing is sent
+# after it. Kubeconfig fields are read locally. CA bundles and cert-manager status
+# come from ordinary API reads. Tokens and keys are never printed or written to
+# disk; only their expiry, issuer and subject are kept.
+# rows.tsv: GROUP WHAT OBJECT WHERE EPOCH STATE NOTE KIND
+#   EPOCH is the notAfter / exp time (empty if unknown). STATE is ok when a date was
+#   read, otherwise why not (unreachable, no-tls, unreadable, ...).
+#   KIND picks the thresholds: cert (days), login (hours), idtoken (renewed on use).
+CERT_WARN_DAYS="${KDASH_CERT_WARN_DAYS:-30}"
+CERT_CRIT_DAYS="${KDASH_CERT_CRIT_DAYS:-7}"
+CERT_RKE2_DIR="${KDASH_RKE2_DATA_DIR:-/var/lib/rancher/rke2}"
+
+certs__row() { # group what object where epoch state note kind
+  local IFS=$'\t'
+  printf '%s\n' "$*" | LC_ALL=C tr -d '\000-\010\013\014\016-\037\177' >> "$CERTS_ROWS"
+}
+
+certs__x509() { # < PEM (first certificate) -> "epoch<TAB>subject CN<TAB>issuer CN"
+  local out end sub iss e
+  out="$(openssl x509 -noout -enddate -subject -issuer -nameopt RFC2253 2>/dev/null)" || return 1
+  end="$(printf '%s\n' "$out" | sed -n 's/^notAfter=//p')"
+  sub="$(printf '%s\n' "$out" | sed -n 's/^subject=//p')"; iss="$(printf '%s\n' "$out" | sed -n 's/^issuer=//p')"
+  e="$(date -u -d "$end" +%s 2>/dev/null)" || return 1
+  printf '%s\t%s\t%s\n' "$e" "$(certs__cn "$sub")" "$(certs__cn "$iss")"
+}
+certs__cn() { # RFC2253 name -> its CN (or the whole name, shortened)
+  local n="$1" cn
+  cn="$(printf '%s' "$n" | sed -n 's/.*CN=\([^,]*\).*/\1/p')"
+  [ -n "$cn" ] || cn="${n:0:60}"
+  printf '%s' "${cn:--}"
+}
+
+certs__pem_soonest() { # file with one or more PEM certificates -> certs__x509 line of the soonest
+  local f="$1" dir c line best="" be=""
+  dir="$(mktemp -d "$CERTS_DIR/pem.XXXXXX")" || return 1
+  awk -v d="$dir" '/-----BEGIN CERTIFICATE-----/ { n++; f = d "/" n ".pem" }
+                   f != "" { print > f }
+                   /-----END CERTIFICATE-----/ { if (f != "") close(f); f = "" }' "$f"
+  for c in "$dir"/*.pem; do
+    [ -s "$c" ] || continue
+    line="$(certs__x509 < "$c")" || continue
+    if [ -z "$be" ] || [ "${line%%$'\t'*}" -lt "$be" ]; then best="$line"; be="${line%%$'\t'*}"; fi
+  done
+  rm -rf "$dir"
+  [ -n "$best" ] || return 1
+  printf '%s\n' "$best"
+}
+
+certs__b64() { # base64 or base64url text on stdin -> bytes (padding added)
+  local s; s="$(tr -d ' \n\r' | tr '_-' '/+')"
+  case $(( ${#s} % 4 )) in 2) s="$s==" ;; 3) s="$s=" ;; esac
+  printf '%s' "$s" | base64 -d 2>/dev/null
+}
+
+certs__jwt() { # JWT -> "exp<TAB>iss" (both may be empty; not a JWT -> fails)
+  local t="$1" p json exp iss
+  case "$t" in *.*.*) ;; *) return 1 ;; esac
+  p="${t#*.}"; p="${p%%.*}"
+  json="$(printf '%s' "$p" | certs__b64)" || return 1
+  exp="$(printf '%s' "$json" | LC_ALL=C grep -o '"exp" *: *[0-9]*' | head -n 1 | LC_ALL=C tr -dc '0-9')"
+  iss="$(printf '%s' "$json" | LC_ALL=C grep -o '"iss" *: *"[^"]*"' | head -n 1 | sed 's/.*: *"//; s/"$//')"
+  [ -n "$exp$iss" ] || return 1
+  printf '%s\t%s\n' "$exp" "$iss"
+}
+
+certs__kcfg() { "${KC[@]}" config view --minify --raw -o "jsonpath=$1" 2>/dev/null; }
+
+certs__host() { local u="${1#*://}"; u="${u%%/*}"; printf '%s' "${u:-$1}"; }
+certs__hostport() { # https://host:port/path -> "host port"
+  local u="${1#*://}" h p
+  u="${u%%/*}"; u="${u##*@}"
+  case "$u" in
+    \[*\]:*) h="${u%%]*}"; h="${h#[}"; p="${u##*]:}" ;;
+    \[*\]) h="${u#[}"; h="${h%]}"; p=443 ;;
+    *:*) h="${u%:*}"; p="${u##*:}" ;;
+    *) h="$u"; p=443 ;;
+  esac
+  printf '%s %s' "$h" "$p"
+}
+
+# where the kubeconfig of this context gets its trust and its identity from
+certs__kubeconfig() {
+  local server ca cafile cc ccfile tok idt rt cmd args line e iss exp cache f newest="" nf issuer="" a prev=""
+  server="$(certs__kcfg '{.clusters[0].cluster.server}')"
+  if [ -n "$server" ]; then
+    printf 'endpoint\tAPI endpoint\t%s\t%s\tapi\n' "$(certs__hostport "$server")" "$CTX_NAME" >> "$CERTS_DIR/probes"
+  fi
+  ca="$(certs__kcfg '{.clusters[0].cluster.certificate-authority-data}')"
+  cafile="$(certs__kcfg '{.clusters[0].cluster.certificate-authority}')"
+  if [ -n "$ca" ]; then printf '%s' "$ca" | certs__b64 > "$CERTS_DIR/ca.pem"
+  elif [ -n "$cafile" ] && [ -r "$cafile" ]; then cat -- "$cafile" > "$CERTS_DIR/ca.pem"; fi
+  if [ -s "$CERTS_DIR/ca.pem" ]; then
+    if line="$(certs__pem_soonest "$CERTS_DIR/ca.pem")"; then
+      IFS=$'\t' read -r e a iss <<< "$line"
+      certs__row KUBECONFIG "cluster CA (kubeconfig)" "$a" "$CTX_NAME" "$e" ok "issued by $iss" cert
+    else certs__row KUBECONFIG "cluster CA (kubeconfig)" - "$CTX_NAME" "" unreadable "not a PEM certificate" cert; fi
+  elif [ -n "$cafile" ]; then certs__row KUBECONFIG "cluster CA (kubeconfig)" "$cafile" "$CTX_NAME" "" unreadable "file not readable" cert
+  fi
+  rm -f "$CERTS_DIR/ca.pem"
+  cc="$(certs__kcfg '{.users[0].user.client-certificate-data}')"
+  ccfile="$(certs__kcfg '{.users[0].user.client-certificate}')"
+  if [ -n "$cc" ] || [ -n "$ccfile" ]; then
+    if [ -n "$cc" ]; then printf '%s' "$cc" | certs__b64 > "$CERTS_DIR/cc.pem"; elif [ -r "$ccfile" ]; then cat -- "$ccfile" > "$CERTS_DIR/cc.pem"; fi
+    if [ -s "$CERTS_DIR/cc.pem" ] && line="$(certs__pem_soonest "$CERTS_DIR/cc.pem")"; then
+      IFS=$'\t' read -r e a iss <<< "$line"
+      certs__row KUBECONFIG "client certificate" "$a" "$CTX_NAME" "$e" ok "issued by $iss - kubectl stops working when it expires" cert
+    else certs__row KUBECONFIG "client certificate" "${ccfile:--}" "$CTX_NAME" "" unreadable "certificate not readable" cert; fi
+    rm -f "$CERTS_DIR/cc.pem"
+  fi
+  tok="$(certs__kcfg '{.users[0].user.token}')"
+  if [ -n "$tok" ]; then
+    if line="$(certs__jwt "$tok")"; then IFS=$'\t' read -r exp iss <<< "$line"
+      if [ -n "$exp" ]; then certs__row LOGIN "bearer token" "${iss:-token}" "$CTX_NAME" "$exp" ok "a new token is needed after this" login
+      else certs__row LOGIN "bearer token" "${iss:-token}" "$CTX_NAME" "" no-expiry "token carries no expiry time" login; fi
+    else certs__row LOGIN "bearer token" token "$CTX_NAME" "" no-expiry "not a JWT - lifetime not visible here" login; fi
+  fi
+  unset tok
+  idt="$(certs__kcfg '{.users[0].user.auth-provider.config.id-token}')"
+  rt="$(certs__kcfg '{.users[0].user.auth-provider.config.refresh-token}')"
+  if [ -n "$idt$rt" ]; then certs__tokens "OIDC" "$idt" "$rt"; fi
+  unset idt rt
+  cmd="$(certs__kcfg '{.users[0].user.exec.command}')"
+  if [ -n "$cmd" ]; then
+    args="$(certs__kcfg '{.users[0].user.exec.args[*]}')"
+    case "$cmd $args" in
+      *oidc-login*|*kubelogin*)
+        cache="$HOME/.kube/cache/oidc-login"
+        for a in $args; do
+          case "$a" in --token-cache-dir=*) cache="${a#*=}" ;; --oidc-issuer-url=*) issuer="${a#*=}" ;; esac
+          case "$prev" in --token-cache-dir) cache="$a" ;; --oidc-issuer-url) issuer="$a" ;; esac
+          prev="$a"
+        done
+        cache="${cache/#\~/$HOME}"
+        case "$args" in *--token-cache-storage=keyring*|*"--token-cache-storage keyring"*)
+          certs__row LOGIN "OIDC login (kubelogin)" "${issuer:-oidc}" "$CTX_NAME" "" keyring "tokens are kept in the OS keyring - lifetime not visible here" login; return 0 ;; esac
+        # the newest cache entry for this issuer (the file name is a hash of the login settings)
+        for f in "$cache"/*; do
+          [ -f "$f" ] && [ -r "$f" ] || continue
+          case "$f" in *.lock) continue ;; esac
+          idt="$(LC_ALL=C grep -o '"id_token" *: *"[^"]*"' "$f" 2>/dev/null | head -n 1 | sed 's/.*: *"//; s/"$//')"
+          [ -n "$idt" ] || continue
+          if [ -n "$issuer" ]; then line="$(certs__jwt "$idt")" || continue
+            case "${line#*$'\t'}" in "${issuer%/}"|"${issuer%/}/") ;; *) continue ;; esac; fi
+          if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then newest="$f"; fi
+        done
+        if [ -n "$newest" ]; then
+          idt="$(LC_ALL=C grep -o '"id_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
+          rt="$(LC_ALL=C grep -o '"refresh_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
+          certs__tokens "OIDC" "$idt" "$rt"
+          unset idt rt
+        else
+          certs__row LOGIN "OIDC login (kubelogin)" "${issuer:-oidc}" "$CTX_NAME" "" not-logged-in "no cached login in ${cache/#$HOME/\~} - the next kubectl call opens a login" login
+        fi ;;
+      *) certs__row LOGIN "exec credential plugin" "${cmd##*/}" "$CTX_NAME" "" not-visible "the plugin manages the credential - lifetime not visible here" login ;;
+    esac
+  fi
+  return 0
+}
+
+certs__tokens() { # label id_token refresh_token
+  local label="$1" idt="$2" rt="$3" line exp iss
+  if [ -n "$idt" ] && line="$(certs__jwt "$idt")"; then IFS=$'\t' read -r exp iss <<< "$line"
+    certs__row LOGIN "$label ID token" "$(certs__host "${iss:-oidc}")" "$CTX_NAME" "$exp" "$([ -n "$exp" ] && echo ok || echo no-expiry)" "short-lived; renewed with the refresh token" idtoken
+  fi
+  if [ -n "$rt" ]; then
+    if line="$(certs__jwt "$rt")" && exp="${line%%$'\t'*}" && [ -n "$exp" ]; then iss="${line#*$'\t'}"
+      certs__row LOGIN "$label refresh token" "$(certs__host "${iss:-oidc}")" "$CTX_NAME" "$exp" ok "after this kubectl asks you to log in again" login
+    else certs__row LOGIN "$label refresh token" oidc "$CTX_NAME" "" not-visible "opaque token - lifetime set by the identity provider" login; fi
+  elif [ -n "$idt" ]; then certs__row LOGIN "$label refresh token" oidc "$CTX_NAME" "" none "no refresh token: a new login is needed when the ID token expires" login
+  fi
+}
+
+# API reads: CA bundles of webhooks and aggregated APIs, cert-manager certificates,
+# nodes (for the per-node TLS endpoints) and ingress TLS host names
+certs__api() {
+  local mode="$1" e a iss line k n w svc ca tgt ip ips role ver cnt=0 maxn="${KDASH_CERT_MAX_NODES:-60}" maxh="${KDASH_CERT_MAX_HOSTS:-20}"
+  health__read cert-webhooks validatingwebhookconfigurations.admissionregistration.k8s.io,mutatingwebhookconfigurations.admissionregistration.k8s.io no \
+    '{{range .items}}{{$o := .}}{{range .webhooks}}W|{{$o.kind}}|{{$o.metadata.name}}|{{.name}}|{{with .clientConfig.service}}{{.namespace}}/{{.name}}{{end}}{{with .clientConfig.url}}{{.}}{{end}}|{{.clientConfig.caBundle}}{{"\n"}}{{end}}{{end}}'
+  while IFS='|' read -r k a n w svc ca; do
+    [ "$k" = W ] || continue
+    case "$a" in Validating*) a="webhook CA (validating)" ;; Mutating*) a="webhook CA (mutating)" ;; *) a="webhook CA" ;; esac
+    if [ -z "$ca" ] || [ "$ca" = "<no value>" ]; then
+      case "$svc" in https://*) printf 'webhook\t%s\t%s\t%s\turl\n' "$a" "$(certs__hostport "$svc")" "$n" >> "$CERTS_DIR/probes" ;;
+        *) certs__row WEBHOOKS "$a" "$n" "${svc:--}" "" no-ca "no caBundle: the API server trusts its own roots" cert ;; esac
+      continue
+    fi
+    printf '%s' "$ca" | certs__b64 > "$CERTS_DIR/wh.pem"
+    if line="$(certs__pem_soonest "$CERTS_DIR/wh.pem")"; then IFS=$'\t' read -r e iss tgt <<< "$line"
+      certs__row WEBHOOKS "$a" "$n" "${svc:--}" "$e" ok "CA $iss - calls fail (x509) once it expires" cert
+    else certs__row WEBHOOKS "$a" "$n" "${svc:--}" "" unreadable "caBundle is not a PEM certificate" cert; fi
+  done < "$TOOLKIT_DIR/health-cert-webhooks.raw"
+  health__read cert-apiservices apiservices.apiregistration.k8s.io no \
+    '{{range .items}}{{$o := .}}{{with .spec.service}}A|{{$o.metadata.name}}|{{.namespace}}/{{.name}}|{{$o.spec.caBundle}}|{{$o.spec.insecureSkipTLSVerify}}|{{range $o.status.conditions}}{{if eq .type "Available"}}{{.status}} {{.reason}}{{end}}{{end}}{{"\n"}}{{end}}{{end}}'
+  while IFS='|' read -r k n svc ca w a; do
+    [ "$k" = A ] || continue
+    if [ "$w" = true ]; then certs__row "AGGREGATED APIS" "API service CA" "$n" "$svc" "" skip-verify "insecureSkipTLSVerify - no expiry to check (${a:-status unknown})" cert; continue; fi
+    if [ -z "$ca" ] || [ "$ca" = "<no value>" ]; then certs__row "AGGREGATED APIS" "API service CA" "$n" "$svc" "" no-ca "no caBundle (${a:-status unknown})" cert; continue; fi
+    printf '%s' "$ca" | certs__b64 > "$CERTS_DIR/as.pem"
+    if line="$(certs__pem_soonest "$CERTS_DIR/as.pem")"; then IFS=$'\t' read -r e iss tgt <<< "$line"
+      certs__row "AGGREGATED APIS" "API service CA" "$n" "$svc" "$e" ok "CA $iss - Available: ${a:-unknown}" cert
+    else certs__row "AGGREGATED APIS" "API service CA" "$n" "$svc" "" unreadable "caBundle is not a PEM certificate" cert; fi
+  done < "$TOOLKIT_DIR/health-cert-apiservices.raw"
+  rm -f "$CERTS_DIR/wh.pem" "$CERTS_DIR/as.pem"
+  health__read cert-manager certificates.cert-manager.io yes \
+    '{{range .items}}M|{{.metadata.namespace}}|{{.metadata.name}}|{{.spec.secretName}}|{{.status.notAfter}}|{{.status.renewalTime}}|{{range .status.conditions}}{{if eq .type "Ready"}}{{.status}} {{.reason}}{{end}}{{end}}{{"\n"}}{{end}}'
+  [ "$(health__state cert-manager)" != unavailable ] || health__status cert-manager not-installed 'no cert-manager Certificate API in this cluster'
+  while IFS='|' read -r k a n w e ren tgt; do
+    [ "$k" = M ] || continue
+    [ "$e" != "<no value>" ] || e=""; [ "$ren" != "<no value>" ] || ren=""
+    line=""; [ -z "$e" ] || line="$(date -u -d "$e" +%s 2>/dev/null)"
+    local rn="" re=""; [ -z "$ren" ] || re="$(date -u -d "$ren" +%s 2>/dev/null)"
+    if [ -n "$re" ] && [ "$re" -lt "$(date +%s)" ]; then rn="renewal overdue since ${ren%%T*} - check the issuer and its events"
+    elif [ -n "$re" ]; then rn="renews ${ren%%T*}"; else rn="no renewal time - check the issuer"; fi
+    certs__row CERT-MANAGER "cert-manager certificate" "$a/$n" "secret ${w:--}" "$line" "$([ -n "$line" ] && echo ok || echo not-issued)" "Ready ${tgt:-unknown}; $rn" cert
+  done < "$TOOLKIT_DIR/health-cert-manager.raw"
+  [ "$mode" = full ] || return 0
+  health__read cert-nodes nodes no \
+    '{{range .items}}N|{{.metadata.name}}|{{range .status.addresses}}{{if eq .type "InternalIP"}}{{.address}} {{end}}{{end}}|{{if index .metadata.labels "node-role.kubernetes.io/control-plane"}}cp{{else if index .metadata.labels "node-role.kubernetes.io/master"}}cp{{end}}|{{.status.nodeInfo.kubeletVersion}}{{"\n"}}{{end}}'
+  CERTS_RKE2=0
+  while IFS='|' read -r k n ips role ver; do
+    [ "$k" = N ] || continue
+    [ "$cnt" -lt "$maxn" ] || { CERTS_NODES_CUT=1; break; }; cnt=$((cnt + 1))
+    case "$ver" in *rke2*) CERTS_RKE2=1 ;; esac
+    ip="${ips%% *}"; [ -n "$ip" ] || continue
+    if [ "$role" = cp ]; then
+      printf 'node\tkube-apiserver\t%s 6443\t%s\tnode-api\n' "$ip" "$n" >> "$CERTS_DIR/probes"
+      case "$ver" in *rke2*) printf 'node\trke2 supervisor\t%s 9345\t%s\tnode-rke2\n' "$ip" "$n" >> "$CERTS_DIR/probes" ;; esac
+    fi
+    printf 'node\tkubelet\t%s 10250\t%s\tnode-kubelet\n' "$ip" "$n" >> "$CERTS_DIR/probes"
+  done < "$TOOLKIT_DIR/health-cert-nodes.raw"
+  health__read cert-ingress ingresses.networking.k8s.io yes \
+    '{{range .items}}{{$o := .}}{{range .spec.tls}}{{range .hosts}}T|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{.}}{{"\n"}}{{end}}{{end}}{{end}}'
+  cnt=0
+  while IFS='|' read -r k a n w; do
+    [ "$k" = T ] || continue
+    case "$w" in ''|\**) continue ;; esac
+    [ "$cnt" -lt "$maxh" ] || break; cnt=$((cnt + 1))
+    printf 'ingress\tingress TLS (%s)\t%s 443\t%s/%s\tingress\n' "$w" "$w" "$a" "$n" >> "$CERTS_DIR/probes"
+  done < <(LC_ALL=C sort -u -t '|' -k4,4 "$TOOLKIT_DIR/health-cert-ingress.raw")
+  return 0
+}
+
+certs__probe_one() { # group what host port object kind out
+  local g="$1" what="$2" h="$3" p="$4" obj="$5" kind="$6" out="$7" hp sni=() rc line e sub iss grp note st
+  case "$h" in *:*) hp="[$h]:$p" ;; *) hp="$h:$p" ;; esac
+  case "$h" in *[!0-9.]*) case "$h" in *:*) ;; *) sni=(-servername "$h") ;; esac ;; esac
+  timeout "${KDASH_CERT_TIMEOUT:-4}" openssl s_client -connect "$hp" "${sni[@]}" < /dev/null > "$out.pem" 2> "$out.err"; rc=$?
+  case "$kind" in
+    api) grp=ENDPOINTS; note="what kubectl connects to" ;;
+    node-api) grp=NODES; note="this server's API certificate" ;;
+    node-rke2) grp=NODES; note="RKE2 join / supervisor port" ;;
+    node-kubelet) grp=NODES; note="logs, exec and metrics go through it" ;;
+    ingress) grp=INGRESS; note="what clients of $obj see" ;;
+    url) grp=WEBHOOKS; note="webhook URL endpoint" ;;
+    *) grp=ENDPOINTS; note="" ;;
+  esac
+  if line="$(certs__x509 < "$out.pem")"; then
+    IFS=$'\t' read -r e sub iss <<< "$line"
+    case "$kind" in ingress|url) note="$note; CN $sub" ;; esac
+    printf '%s\t%s\t%s\t%s\t%s\tok\t%s\t%s\n' "$grp" "$what" "$obj" "$hp" "$e" "$note; issuer $iss" "$kind" > "$out"
+  else
+    if [ "$rc" = 124 ]; then st=unreachable; note="no answer in ${KDASH_CERT_TIMEOUT:-4}s from this host"
+    elif grep -qiE 'refused|no route|unreachable|Name or service not known|getaddrinfo|resolve' "$out.err"; then st=unreachable; note="$(grep -m1 -oiE 'connection refused|no route to host|network is unreachable|Name or service not known|getaddrinfo[^:]*' "$out.err") from this host"
+    else st="no-tls"; note="connected but no certificate was presented"; fi
+    printf '%s\t%s\t%s\t%s\t\t%s\t%s\t%s\n' "$grp" "$what" "$obj" "$hp" "$st" "$note" "$kind" > "$out"
+  fi
+  rm -f "$out.pem" "$out.err"
+}
+
+certs__probe_all() {
+  local max="${KDASH_CERT_PARALLEL:-8}" n=0 g what hp obj kind h p seen=" "
+  [ -s "$CERTS_DIR/probes" ] || { health__status cert-tls unknown 'no TLS endpoint to check'; return 0; }
+  command -v openssl >/dev/null 2>&1 || { health__status cert-tls unavailable 'openssl is not installed on this host; TLS endpoints not checked'; return 0; }
+  while IFS=$'\t' read -r g what hp obj kind; do
+    h="${hp% *}"; p="${hp##* }"
+    case "$seen" in *" $h:$p "*) continue ;; esac; seen="$seen$h:$p "
+    certs__probe_one "$g" "$what" "$h" "$p" "$obj" "$kind" "$CERTS_DIR/probe.$n" &
+    n=$((n + 1)); [ $((n % max)) -ne 0 ] || wait
+  done < "$CERTS_DIR/probes"
+  wait
+  cat "$CERTS_DIR"/probe.* >> "$CERTS_ROWS" 2>/dev/null; rm -f "$CERTS_DIR"/probe.*
+  local okn; okn="$(awk -F'\t' '$6 == "ok"' "$CERTS_ROWS" | awk -F'\t' '$8 ~ /^(api|node-|ingress|url)/' | wc -l | tr -d ' ')"
+  health__status cert-tls ok "$okn of $n TLS endpoints answered from this host"
+}
+
+# This host's own RKE2 certificates, when it is an RKE2 node and kdash may read them
+certs__local() {
+  local f line e sub iss base n=0
+  [ -d "$CERT_RKE2_DIR" ] || return 0
+  for f in "$CERT_RKE2_DIR"/server/tls/*.crt "$CERT_RKE2_DIR"/server/tls/etcd/*.crt "$CERT_RKE2_DIR"/agent/*.crt; do
+    [ -e "$f" ] || continue
+    [ -r "$f" ] || { CERTS_LOCAL_DENIED=1; continue; }
+    case "$f" in *-ca.crt|*/ca.crt) base="CA $(basename "$f" .crt)" ;; *) base="$(basename "$f" .crt)" ;; esac
+    line="$(certs__pem_soonest "$f")" || continue
+    IFS=$'\t' read -r e sub iss <<< "$line"
+    certs__row "THIS HOST (RKE2)" "$base" "$sub" "${f#$CERT_RKE2_DIR/}" "$e" ok "issuer $iss" "$(case "$base" in CA*) echo ca ;; *) echo rke2 ;; esac)"
+    n=$((n + 1))
+  done
+  if [ "$n" -gt 0 ]; then health__status cert-host ok "$n certificate files read under $CERT_RKE2_DIR"
+  elif [ "${CERTS_LOCAL_DENIED:-0}" = 1 ]; then health__status cert-host forbidden "files under $CERT_RKE2_DIR need root - run: sudo rke2 certificate check --output table"; fi
+  return 0
+}
+
+certs_collect() { # quick (kubeconfig + API endpoint + CA bundles) | full (adds nodes, ingress, this host)
+  local mode="${1:-full}"
+  [ -n "${TOOLKIT_DIR:-}" ] || return 1
+  CERTS_DIR="$TOOLKIT_DIR/certs-work"; rm -rf "$CERTS_DIR"; mkdir -p "$CERTS_DIR" || return 1
+  chmod 700 "$CERTS_DIR" 2>/dev/null
+  CERTS_ROWS="$CERTS_DIR/rows.tsv"; : > "$CERTS_ROWS"; : > "$CERTS_DIR/probes"
+  CERTS_NODES_CUT=0; CERTS_LOCAL_DENIED=0; CERTS_RKE2=0
+  certs__kubeconfig
+  health__status cert-kubeconfig ok "context $CTX_NAME read locally (tokens are never shown or stored)"
+  certs__api "$mode"
+  certs__probe_all
+  [ "$mode" != full ] || certs__local
+  printf 'mode=%s\nrke2=%s\nnodes_cut=%s\nat=%s\n' "$mode" "${CERTS_RKE2:-0}" "${CERTS_NODES_CUT:-0}" "$(date +%s)" > "$CERTS_DIR/meta"
+  rm -rf "$TOOLKIT_DIR/certs"; mv "$CERTS_DIR" "$TOOLKIT_DIR/certs"
+  certs_summary > "$TOOLKIT_DIR/certs.summary"
+  return 0
+}
+
+# rows -> rows with LEFT / STATUS decided (thresholds), sorted soonest first
+CERTS_GRADE_AWK='
+BEGIN { FS = OFS = "\t" }
+function left(s,   d, h, m, a) { a = s < 0 ? -s : s; d = int(a / 86400); h = int(a / 3600); m = int(a / 60)
+  t = d >= 2 ? d " d" : h >= 1 ? h " h" : m " min"; return s < 0 ? t " ago" : t }
+{ g = $1; what = $2; obj = $3; where = $4; e = $5; st = $6; note = $7; kind = $8
+  if (st != "ok" || e == "") {
+    lvl = (st ~ /unreachable|not-visible|keyring|no-ca|no-expiry|skip-verify|none|not-logged-in/) ? "{d}" : "{y}"
+    s = st; gsub(/-/, " ", s); rank = 4
+    if (st == "not-issued") { lvl = "{r}"; s = "NOT ISSUED"; rank = 1 }
+    if (st == "not-logged-in") s = "not logged in"
+    print rank, "99999999999", lvl s, "-", "-", what, obj, where, note, g, kind; next }
+  sec = e - now
+  if (kind == "idtoken") { lvl = sec < 0 ? "{d}" : "{g}"; s = sec < 0 ? "renews on use" : "OK"; rank = 3 }
+  else if (kind == "login") {
+    if (sec < 0) { lvl = "{y}"; s = "LOGIN NEEDED"; rank = 2 } else if (sec < 3600) { lvl = "{y}"; s = "WARNING"; rank = 2 } else { lvl = "{g}"; s = "OK"; rank = 3 } }
+  else {
+    if (sec < 0) { lvl = "{r}"; s = "EXPIRED"; rank = 0 }
+    else if (sec < crit * 86400) { lvl = "{r}"; s = "CRITICAL"; rank = 1 }
+    else if (sec < warn * 86400) { lvl = "{y}"; s = "WARNING"; rank = 2 }
+    else { lvl = "{g}"; s = "OK"; rank = 3 }
+    if ((kind ~ /^node-(api|rke2|kubelet)$/ && rke2 == "1") || kind == "rke2") if (sec >= 0 && sec < 120 * 86400) note = note "; RKE2 renews it on the next service restart" }
+  print rank, e, lvl s, left(sec), strftime_(e), what, obj, where, note, g, kind
+}
+function strftime_(e,   z, era, doe, yoe, y, doy, mp, d, m, sod) {
+  z = int(e / 86400) + 719468; era = int(z / 146097); doe = z - era * 146097
+  yoe = int((doe - int(doe / 1460) + int(doe / 36524) - int(doe / 146096)) / 365)
+  y = yoe + era * 400; doy = doe - (365 * yoe + int(yoe / 4) - int(yoe / 100)); mp = int((5 * doy + 2) / 153)
+  d = doy - int((153 * mp + 2) / 5) + 1; m = mp < 10 ? mp + 3 : mp - 9; if (m <= 2) y++
+  sod = e % 86400
+  return sprintf("%04d-%02d-%02d %02d:%02d", y, m, d, int(sod / 3600), int((sod % 3600) / 60))
+}'
+certs__graded() {
+  [ -s "$TOOLKIT_DIR/certs/rows.tsv" ] || return 0
+  LC_ALL=C awk -v now="$(date +%s)" -v warn="$CERT_WARN_DAYS" -v crit="$CERT_CRIT_DAYS" \
+    -v rke2="$(sed -n 's/^rke2=//p' "$TOOLKIT_DIR/certs/meta" 2>/dev/null)" "$CERTS_GRADE_AWK" "$TOOLKIT_DIR/certs/rows.tsv" |
+    LC_ALL=C sort -t $'\t' -k1,1n -k2,2n | cut -f3-
+}
+
+certs_summary() { # one line: "expired N critical N warning N login N soonest WHAT|LEFT"
+  certs__graded | awk -F'\t' '
+    { s = $1; sub(/^\{.\}/, "", s) }
+    s == "EXPIRED" { x++ } s == "CRITICAL" || s == "NOT ISSUED" { c++ } s == "WARNING" { w++ } s == "LOGIN NEEDED" { l++ }
+    s ~ /EXPIRED|CRITICAL|WARNING/ && first == "" { first = $4 " (" $5 ")" ; fl = $2 }
+    END { printf "expired=%d critical=%d warning=%d login=%d first=%s|%s\n", x, c, w, l, first, fl }'
+}
+
+certs_render() {
+  local d="$TOOLKIT_DIR/certs" meta mode rke2 cut
+  tk_title "CERTIFICATES AND LOGINS" "expiry of the TLS certificates and logins this cluster and your access depend on - TLS handshakes only, nothing is changed"
+  if [ ! -d "$d" ]; then
+    if [ -n "${TOOLKIT_PID:-}" ]; then printf '\nChecking certificates in the background (TLS handshakes to the API, nodes and ingress hosts)...\n'
+    else printf '\nNo certificate check yet.\n'; fi
+    return 0
+  fi
+  mode="$(sed -n 's/^mode=//p' "$d/meta")"; rke2="$(sed -n 's/^rke2=//p' "$d/meta")"; cut="$(sed -n 's/^nodes_cut=//p' "$d/meta")"
+  health__sources cert-kubeconfig cert-tls cert-webhooks cert-apiservices cert-manager $([ "$mode" = full ] && printf 'cert-nodes cert-ingress') $([ -f "$TOOLKIT_DIR/health-cert-host.status" ] && printf cert-host)
+  local all="$d/graded.tsv" sum
+  certs__graded > "$all"
+  sum="$(certs_summary)"
+  local x c w l
+  x="$(printf '%s' "$sum" | sed -n 's/.*expired=\([0-9]*\).*/\1/p')"; c="$(printf '%s' "$sum" | sed -n 's/.*critical=\([0-9]*\).*/\1/p')"
+  w="$(printf '%s' "$sum" | sed -n 's/.*warning=\([0-9]*\).*/\1/p')"; l="$(printf '%s' "$sum" | sed -n 's/.*login=\([0-9]*\).*/\1/p')"
+  { printf 'STATUS*\t>LEFT\tEXPIRES UTC\tWHAT\tOBJECT\tWHERE\tNOTE~\n'
+    awk -F'\t' '$3 != "-"' "$all" | cut -f1-7
+  } | tk_table "EXPIRY" "soonest first - warning under $CERT_WARN_DAYS days, critical under $CERT_CRIT_DAYS days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)" \
+      "$(awk -F'\t' '$3 == "-" { f = 1 } END { exit !f }' "$all" && printf 'no expiry dates could be read - see NOT CHECKED below' || printf 'nothing to check: no TLS endpoint, client certificate, token or CA bundle was found')" item items
+  { awk -F'\t' '{ s = $1; sub(/^\{.\}/, "", s) }
+      s == "EXPIRED"  { printf "{r}CRITICAL\t%s\t%s expired %s - TLS to it fails now\n", $5, $4, $2 }
+      s == "CRITICAL" { printf "{r}CRITICAL\t%s\t%s expires in %s (%s UTC)\n", $5, $4, $2, $3 }
+      s == "WARNING"  { printf "{y}WARNING\t%s\t%s expires in %s (%s UTC)\n", $5, $4, $2, $3 }
+      s == "LOGIN NEEDED" { printf "{y}WARNING\t%s\t%s expired %s - the next kubectl call asks you to log in\n", $5, $4, $2 }
+      s == "NOT ISSUED" { printf "{r}CRITICAL\t%s\t%s has no issued certificate (%s)\n", $5, $4, $7 }
+      $7 ~ /renewal overdue/ && s != "EXPIRED" && s != "CRITICAL" { printf "{y}WARNING\t%s\t%s: %s\n", $5, $4, substr($7, index($7, "renewal overdue")) }' "$all"
+    if [ -s "$TOOLKIT_DIR/events.tsv" ]; then
+      awk -F'\t' 'tolower($10) ~ /x509: certificate has expired|certificate has expired or is not yet valid|x509: certificate signed by unknown authority/ {
+        k = $2 "/" $3; if (k in S) next; S[k] = 1; m = $10; if (length(m) > 110) m = substr(m, 1, 107) "..."
+        printf "{r}CRITICAL\t%s\tevent %s: %s\n", ($1 != "" ? $1 "/" : "") $3, $6, m }' "$TOOLKIT_DIR/events.tsv"
+    fi
+  } | tk_by_severity | { printf 'SEVERITY*\tOBJECT\tFINDING\n'; cat; } |
+      tk_table "FINDINGS" "critical first; includes x509 errors in Kubernetes events" "nothing expires within $CERT_WARN_DAYS days" finding findings
+  if awk -F'\t' '$3 == "-" { f = 1 } END { exit !f }' "$all"; then
+    { printf 'STATE*\tWHAT\tOBJECT\tWHERE\tWHY~\n'
+      awk -F'\t' 'BEGIN { OFS = "\t" } $3 == "-" { print $1, $4, $5, $6, $7 }' "$all"
+    } | tk_table "NOT CHECKED" "no expiry date could be read for these from this host" "" item items
+  fi
+  { [ "$rke2" = 1 ] || [ -d "$CERT_RKE2_DIR" ] || grep -q 'kubelogin\|oidc\|^CERT-MANAGER' "$d/rows.tsv" 2>/dev/null || [ "$cut" = 1 ] || [ "$mode" != full ]; } &&
+    printf '\nNEXT STEPS  (printed only - kdash never changes certificates)\n'
+  if [ "$rke2" = 1 ] || [ -d "$CERT_RKE2_DIR" ]; then
+    tk_note "RKE2 server nodes, one at a time:  sudo rke2 certificate check --output table"
+    tk_note "renew:  sudo systemctl stop rke2-server && sudo rke2 certificate rotate && sudo systemctl start rke2-server   (agents: rke2-agent)"
+    tk_note "RKE2 renews certificates with under 120 days left whenever the service starts; a node that never restarts can expire silently. The CA is not rotated by this."
+  fi
+  grep -q 'kubelogin\|oidc' "$d/rows.tsv" 2>/dev/null && tk_note "OIDC login:  $(events_kubectl_prefix) get ns   (opens a new login when the refresh token has expired)"
+  grep -q '^CERT-MANAGER' "$d/rows.tsv" 2>/dev/null && tk_note "cert-manager:  $(events_kubectl_prefix) describe certificate -n NAMESPACE NAME   (cmctl renew -n NAMESPACE NAME forces a renewal)"
+  [ "$cut" != 1 ] || tk_note "only the first ${KDASH_CERT_MAX_NODES:-60} nodes were probed (KDASH_CERT_MAX_NODES)"
+  [ "$mode" = full ] || tk_note "quick check: nodes, ingress hosts and this host were not probed (open key C or run --certs for all)"
+  return 0
+}
+
+certs_exit_code() { # 0 nothing within the warning window, 1 warning / login, 2 critical or expired
+  local s; s="$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"
+  case "$s" in *expired=[1-9]*|*critical=[1-9]*) return 2 ;; *warning=[1-9]*|*login=[1-9]*) return 1 ;; esac
+  return 0
+}
+
+certs_age() { # seconds since the last full check (a large number when there is none)
+  local at mode
+  mode="$(sed -n 's/^mode=//p' "${TOOLKIT_DIR:-/nonexistent}/certs/meta" 2>/dev/null)"
+  at="$(sed -n 's/^at=//p' "${TOOLKIT_DIR:-/nonexistent}/certs/meta" 2>/dev/null)"
+  case "$mode:$at" in full:[0-9]*) printf '%s' "$(( $(date +%s) - at ))" ;; *) printf 999999 ;; esac
+}
+
+certs_badge() { # summary line -> short text for the header ("" when nothing is due)
+  local s="$1" x c w l t=""
+  x="$(printf '%s' "$s" | sed -n 's/.*expired=\([0-9]*\).*/\1/p')"; c="$(printf '%s' "$s" | sed -n 's/.*critical=\([0-9]*\).*/\1/p')"
+  w="$(printf '%s' "$s" | sed -n 's/.*warning=\([0-9]*\).*/\1/p')"; l="$(printf '%s' "$s" | sed -n 's/.*login=\([0-9]*\).*/\1/p')"
+  [ "${x:-0}" = 0 ] || t="$t${t:+, }$x EXPIRED"
+  [ "${c:-0}" = 0 ] || t="$t${t:+, }$c critical"
+  [ "${w:-0}" = 0 ] || t="$t${t:+, }$w expiring"
+  [ "${l:-0}" = 0 ] || t="$t${t:+, }login needed"
+  printf '%s' "$t"
+}
+
+# A quick check (kubeconfig, API endpoint, CA bundles) in the background at start and
+# then hourly; it only sets the header badge and flashes once when something is due.
+certs_quick_poll() {
+  [ "${KDASH_CERT_CHECK:-1}" = 1 ] || return 0
+  local now; now=$(date +%s)
+  if [ -n "${CERTQ_PID:-}" ] && ! kill -0 "$CERTQ_PID" 2>/dev/null; then
+    wait "$CERTQ_PID" 2>/dev/null || true; CERTQ_PID=""; CERTQ_NEXT=$((now + 3600))
+    local sum first; sum="$(cat "$TMPD/certq/certs.summary" 2>/dev/null)"
+    CERT_BADGE="$(certs_badge "$sum")"
+    if [ -n "$CERT_BADGE" ] && [ "${CERTQ_FLASHED:-0}" = 0 ]; then CERTQ_FLASHED=1
+      first="${sum##*first=}"; first="${first%%|*}"
+      declare -F flash >/dev/null && flash "certificates: $CERT_BADGE${first:+ - soonest: $first} - press C for details" 12
+      audit CERTS_WARNING "$sum"
+    fi
+  fi
+  # a full check (key C) is newer and more complete: it decides the badge
+  if [ -s "${TOOLKIT_DIR:-}/certs.summary" ]; then CERT_BADGE="$(certs_badge "$(cat "$TOOLKIT_DIR/certs.summary")")"; fi
+  if [ -z "${CERTQ_PID:-}" ] && [ "$now" -ge "${CERTQ_NEXT:-0}" ]; then
+    ( trap - EXIT INT TERM HUP; TOOLKIT_DIR="$TMPD/certq"; rm -rf "$TOOLKIT_DIR"; mkdir -p "$TOOLKIT_DIR"
+      certs_collect quick ) > /dev/null 2>&1 &
+    CERTQ_PID=$!; CERTQ_NEXT=$((now + 300))
+  fi
+  return 0
 }

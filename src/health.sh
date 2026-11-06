@@ -28,7 +28,7 @@ health__failure() {
     state=tls-error; detail='TLS verification failed; source unknown'
   elif grep -qiE 'timed out|timeout|deadline exceeded' "$err"; then
     state=timeout; detail='read timed out; source unknown'
-  elif grep -qiE 'connection refused|no route|unable to connect|connection reset|no such host' "$err"; then
+  elif grep -qiE 'connection refused|was refused|no route|unable to connect|connection reset|no such host|dial tcp|i/o timeout' "$err"; then
     state=unreachable; detail='API or metrics endpoint unreachable; source unknown'
   fi
   health__status "$source" "$state" "$detail"
@@ -145,7 +145,7 @@ health__sources() { # source... -> a table of where the data came from and how o
         state=collecting; detail='first read in progress; values appear when it completes'
       fi
       case "$epoch" in ''|*[!0-9]*) age='-' ;; *) age="$((now - epoch))s ago" ;; esac
-      [ "$state" != ok ] || detail='read succeeded'
+      [ "$state" != ok ] || case "$detail" in 'successful API read'*|'') detail='read succeeded' ;; esac
       printf '%s\t%s\t%s\t%s\n' "$source" "${state:-unknown}" "$age" "${detail:-not collected}"
     done
   } | TK_COUNT=0 tk_table "DATA SOURCES" "" "" source sources

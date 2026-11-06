@@ -1,5 +1,0 @@
-KIND	WORKLOAD	PODS	PODS_READY	UNSCHEDULED	NODES	MAX_PER_NODE	VERDICT	CPU_USED_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	DISTRIBUTION	DESIRED	READY_REPLICAS	UPDATED	AVAILABLE	ROLLOUT	CPU_REQ_m	RESTARTS	IMAGES	SCHEDULE	LAST_SCHEDULE
-Deployment	app-server	2	2	0	1	2	HA_RISK	6	0	24	192	dev:2	2	2	2	2	complete	50	0	busybox:1.36 busybox:1.36	-	-
-Job	completed-check	1	1	0	1	1	N/A	-	-	4	32	dev:1	-	-	-	-	-	5	0	-	-	-
-Pod	z-crash	1	0	0	1	1	N/A	-	-	4	32	dev:1	-	-	-	-	-	5	48	-	-	-
-Pod	z-pending	1	0	1	0	0	N/A+UNSCHEDULED+NOT_READY	-	-	4	32	-	-	-	-	-	-	5	0	-	-	-

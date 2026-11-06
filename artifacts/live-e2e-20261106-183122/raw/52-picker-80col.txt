@@ -1,0 +1,30 @@
+ KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e
+ pods    ● CrashLoopBackOff 1  ● Pending 1  ● Running 2  ● Succeeded 1
+ / search   view all (u)   X enables shell / upload / download   sort name
+┌──────────────────────────┬─────────┬───────┬─────┬────────┬─────────┬───────┐
+│ POD                      │ STATUS  │ READY │ RST │    CPU │     MEM │  %LIM │
+├──────────────────────────┼─────────┼───────┼─────┼────────┼─────────┼───────┤
+│ app-server-8~699bc-j6rk2 │ Running │ 2/2   │   0 │     3m │     0Mi │    0% │
+│ app-server-8~699bc-z8kl7 │ Running │ 2/2   │   0 │     2m │     0Mi │    0% │
+│ completed-check-m9swm    │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ z-crash                  │ CrashLo │ 0/1   │  74 │      - │       - │     - │
+│ z-pending                │ Pending │ 0/1   │   0 │      - │       - │     - │
+└──────────────────────────┴─────────┴───────┴─────┴────────┴─────────┴───────┘
+
+
+
+
+
+
+
+
+
+
+
+── 1 / 5   1 failing   1 pending / starting ────────────── live · refresh 2s ──
+┌─ MOVE ───────┬─ FIND ───────┬─ INSPECT ─────┬─ SHELL ───────┬─ LEAVE ───────┐
+│ j/k ↑↓ move  │ /  search    │ Enter summary │ S  shell      │ q  back       │
+│ PgUp/PgDn p~ │ u  needs at~ │ l / p logs /~ │ U  upload     │ Q  quit kdash │
+│ g / G first~ │ s  sort: na~ │ d / e descri~ │ D  download   │ r  refresh n~ │
+│ 12   go to ~ │ F  filters   │ w / c why / ~ │ X  enable S ~ │ ?  all keys   │
+└──────────────┴──────────────┴───────────────┴───────────────┴───────────────┘

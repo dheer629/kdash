@@ -68,6 +68,8 @@ END {
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
 '
 tk_table() { # title [subtitle] [empty-message] [one many] < TSV (header line first)
+  # Structured output keeps the table schema: one record per row, no borders and
+  # no colour markers. Header cells drop the width/align modifiers (> * ~).
   if [ "${TK_FORMAT:-text}" != text ]; then
     printf '# %s\n' "$1"
     LC_ALL=C awk -F'\t' -v fmt="$TK_FORMAT" '
@@ -92,6 +94,16 @@ tk_note() { # dim footnote line
 tk_title() { # view title + subtitle, then a blank line
   [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1;7m %s ~[0m  ~[90m%s~[0m\n' "$1" "$2"; else printf '%s  -  %s\n' "$1" "$2"; fi
+}
+toolkit_once() { # view [renderer arguments]; structured output keeps table schemas
+    local view="$1" TK_FORMAT="${OUTFMT:-text}"
+    shift
+    export TK_FORMAT
+    case "$view" in
+        services) health_render_services "$@" ;; storage) health_render_storage "$@" ;;
+        events) events_render "$@" ;; explain) explain_render "$@" ;;
+        certs) certs_render "$@" ;;
+    esac
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
 TK_TIME_AWK='

@@ -1,8 +1,0 @@
-KEY	POD	CONTAINER	READY	RESTARTS	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	WAITING
-app-server-8fb4699bc-j6rk2	app-server-8fb4699bc-j6rk2	app	Y	0	2	20	200	0	8	64	2	0	-	-
-app-server-8fb4699bc-j6rk2	app-server-8fb4699bc-j6rk2	sidecar	Y	0	1	5	50	0	4	32	1	0	-	-
-app-server-8fb4699bc-z8kl7	app-server-8fb4699bc-z8kl7	app	Y	0	2	20	200	0	8	64	2	0	-	-
-app-server-8fb4699bc-z8kl7	app-server-8fb4699bc-z8kl7	sidecar	Y	0	1	5	50	0	4	32	1	0	-	-
-completed-check-m9swm	completed-check-m9swm	check	N	0	-	5	50	-	4	32	-	-	-	-
-z-crash	z-crash	crash	N	49	-	5	50	-	4	32	-	-	Error	CrashLoopBackOff
-z-pending	z-pending	pending	-	0	-	5	50	-	4	32	-	-	-	-

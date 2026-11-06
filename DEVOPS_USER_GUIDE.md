@@ -27,14 +27,16 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4232/` follows this source; the older galleries support historical observations.
+`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4241/` follows this source; the older galleries support historical observations.
 
-## Current 4.23.2 validation and visual changes
+## Current 4.24.1 validation and visual changes
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261106-162543` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.2 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-20261106-162543/checks.tsv).
+Run `live-e2e-20261106-183122` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.24.1 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-20261106-183122/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
+
+
 
 
 
@@ -59,8 +61,8 @@ read behavior also have deterministic regression coverage.
 The current live run is named by [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt).
 Its `results.json`, `checks.tsv`, `inventory.json` and `captures.tsv` record the
 installed version, real WSL Kubernetes inventory, checks and every screen.
-[`samples/cli_4232/`](samples/cli_4232/README.md) contains the corresponding terminal
-renders and [`samples/html4232/`](samples/html4232/README.md) contains report output.
+[`samples/cli_4241/`](samples/cli_4241/README.md) contains the corresponding terminal
+renders and [`samples/html4241/`](samples/html4241/README.md) contains report output.
 The [4.23.1 terminal](samples/cli_423/README.md) and
 [HTML](samples/html423/README.md) galleries remain available. The older five-minute
 exercise below remains labelled 4.12.0; the 4.19.2 galleries also retain their

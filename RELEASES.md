@@ -1,18 +1,23 @@
 # Releases and downloads
 
-The current version is **4.23.2**, with interactive-mode switching from pod
-details and logs, visible mode/action hints, responsive inspector controls, and
-whole-line confirmation. It retains framed pickers, saved namespace defaults,
+The current version is **4.24.1**, which adds certificate and login expiry
+(`C`, `-v certs`, `--certs`): the API endpoint, kubeconfig client certificate and
+CA, node kubelets, webhook and API-service CAs, cert-manager Certificates,
+ingress hosts, RKE2 files on this host, and your login (bearer token, OIDC /
+kubelogin). A background quick check adds a header badge when something is due,
+and `--certs` exits non-zero for scripting. It retains interactive-mode
+switching from pod details and logs, framed pickers, saved namespace defaults,
 expandable bounded logs and checked file transfers. Its live WSL evidence is indexed by
 [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt), with terminal and report
-galleries in [`samples/cli_4232/`](samples/cli_4232/README.md) and
-[`samples/html4232/`](samples/html4232/README.md).
+galleries in [`samples/cli_4241/`](samples/cli_4241/README.md) and
+[`samples/html4241/`](samples/html4241/README.md).
 Published versions have their own immutable GitHub Releases, so you can download
 an exact historical release at any time:
 <https://github.com/dheer629/kdash/releases>
 
 | Version | Tag | What it adds | Download |
 |---|---|---|---|
+| 4.24.1 | `v4.24.1` | certificate and login expiry (`C`, `-v certs`, `--certs`), header badge, scriptable exit codes | [release](https://github.com/dheer629/kdash/releases/tag/v4.24.1) |
 | 4.23.2 | `v4.23.2` | interactive mode from pod details and logs; responsive inspector toggle/quit and whole-line confirmation; separate current WSL evidence | [release](https://github.com/dheer629/kdash/releases/tag/v4.23.2) |
 | 4.23.1 | `v4.23.1` | framed pickers and diagnostic tables, saved defaults, expanded logs, verified transfers; native WSL screenshots and current e2e evidence | [release](https://github.com/dheer629/kdash/releases/tag/v4.23.1) |
 | 4.14.0 | `v4.14.0` | opt-in shell in a container (`S`), upload (`U`) and download (`D`), audited as writes | [release](https://github.com/dheer629/kdash/releases/tag/v4.14.0) |
@@ -33,7 +38,7 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                              # kdash 4.23.2
+kdash --version                              # kdash 4.24.1
 ```
 
 For an existing checkout, update it without discarding local changes, then verify
@@ -57,10 +62,10 @@ does not require building or connecting to a cluster.
 ## Download and verify a specific version
 
 ```bash
-v=4.23.2
+v=4.24.1
 base=https://github.com/dheer629/kdash/releases/download/v$v
 curl -fsSLO "$base/kdash-$v.tar.gz" -O "$base/SHA256SUMS"
-sha256sum --ignore-missing -c SHA256SUMS      # must print: kdash-4.23.2.tar.gz: OK
+sha256sum --ignore-missing -c SHA256SUMS      # must print: kdash-4.24.1.tar.gz: OK
 tar -xzf "kdash-$v.tar.gz"
 bash kdash-bundle.sh                           # installs to ~/.local/bin
 kdash --version
@@ -86,7 +91,7 @@ configuration, reports and audit history.
 4. Commit and publish the change through the repository's configured branch rules.
    Run `bash scripts/validate-all.sh` again on the clean, published checkout.
 5. Only when publishing a release, tag that commit, for example
-   `git tag -a v4.23.2 -m "kdash 4.23.2" && git push origin v4.23.2`.
+   `git tag -a v4.24.1 -m "kdash 4.24.1" && git push origin v4.24.1`.
 
 Pushing the tag runs [.github/workflows/release.yml](.github/workflows/release.yml). It
 validates the tree, packages that commit with `scripts/package-release.sh`, and creates

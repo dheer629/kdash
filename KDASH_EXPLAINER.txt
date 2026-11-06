@@ -10,8 +10,8 @@ and which limitations must be stated whenever this output is shared. It is
 deliberately plain text: it can be read in the same terminal as the dashboard.
 The source version is now 4.23.2. Current WSL validation is indexed by
 artifacts/latest-e2e.txt, with the live screen manifest, results and cluster
-inventory in that run. Current screens are in samples/cli_4232/ and report samples
-in samples/html4232/. The detailed historical exercise below used 4.12.0; the
+inventory in that run. Current screens are in samples/cli_4241/ and report samples
+in samples/html4241/. The detailed historical exercise below used 4.12.0; the
 4.13.1, 4.14.0, 4.19.2 and 4.23.1 galleries retain their original versions.
 The 4.23.1 screenshots/reports remain in samples/cli_423/ and samples/html423/.
 
@@ -161,8 +161,8 @@ for both the installed copy and the repository file.
 artifacts/   the run itself: step logs, per-namespace live terminal capture, the
              recorded session, the reports and the audit log, plus run-metadata.json,
              controller-actions.json and RUN_INVENTORY.md
-samples/     the shareable result: current 4.23.2 screens in samples/cli_4232/
-             and reports in samples/html4232/; historical 4.19.2 screens and the
+samples/     the shareable result: current 4.23.2 screens in samples/cli_4241/
+             and reports in samples/html4241/; historical 4.19.2 screens and the
              views of the 4.12.0 run and the 4.13.1 views and inspector
              (samples/cli_413/), the 4.19.2 HTML reports (samples/html419/) and
              the older HTML reports with checksums (samples/html/)
@@ -284,7 +284,7 @@ capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
   * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
     screen at one moment, including colours and the pinned header/footer. It is
     viewport evidence: a long table continues below the visible 50 rows.
-  * The rendered PNG screenshots in samples/cli_4232/ (the current 4.23.2 interface),
+  * The rendered PNG screenshots in samples/cli_4241/ (the current 4.23.2 interface),
     samples/cli/ (4.12.0 run) and samples/cli_413/ (4.13.1: services, storage, events,
     explanations, doctor, inspector) replay those captures cell by cell. They are a
     faithful render of the captured screen, and each image states its namespace, view

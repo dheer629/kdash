@@ -1,0 +1,30 @@
+ KDASH 4.24.1 │ context kdash-local │ namespace kdash-e2e               audited
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:09:03 IST
+ match .*   sort cpu ▼ high first
+ ! pods 3/5 ready rst 74 oom 0 oomk 0 nolim 0 cpu 7m 1% lim mem 0Mi 0% lim wl 4
+     ev15m ! 0 ^ 0
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo›
+                                       │   ACTUAL (live)    │    ASSIGNED (req ›
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  ME›
+────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=3s metrics=available | Enter/i inspect | 8 services 9 stora›
+► Deployment app-server  (2 p~ 2/2   0 │      7 ·       0 · │     50    500    ›
+  app-server-8fb4699bc-j6rk2   2/2   0 │      4 ·       0 · │     25    250    ›
+      node dev   pool role:control-plane,master   ip 10.244.0.243   qos Burstab›
+    ├─ app                     Y     0 │      3 ·       0 · │     20    200    ›
+    └─ sidecar                 Y     0 │      1 ·       0 · │      5     50    ›
+  app-server-8fb4699bc-z8kl7   2/2   0 │      3 ·       0 · │     25    250    ›
+      node dev   pool role:control-plane,master   ip 10.244.0.244   qos Burstab›
+    ├─ app                     Y     0 │      2 ·       0 · │     20    200    ›
+    └─ sidecar                 Y     0 │      1 ·       0 · │      5     50    ›
+................................................................................
+► Job completed-check  (1 pod) 0/1   0 │      - ·       - · │      5     50    ›
+  completed-check-m9swm        0/1   0 │      - ·       - · │      5     50    ›
+      node dev   pool role:control-plane,master   ip 10.244.0.242   qos Burstab›
+    └─ check                   N     0 │      - ·       - · │      5     50    ›
+................................................................................
+► Pod z-crash  (1 pod)         0/1  74 │      - ·       - · │      5     50    ›
+────────────────────────────────────────────────────────────────────────────────
+TOTAL (5 pods, 4 workloads)         74 │      7 ·       - · │     65    650    ›
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9›
+ AUDITED session 20261107-000900-1736329 - every action is logged; use is your >

@@ -1,0 +1,4 @@
+NS	KIND	NAME	UID	TYPE	REASON	COUNT	FIRST	LAST	MESSAGE
+kdash-e2e	PersistentVolumeClaim	z-unbound	adcffa9f-14a0-4e3c-a42f-26b384e88ff5	Warning	ProvisioningFailed	1402	2026-11-06T12:38:07Z	2026-11-06T18:28:11Z	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
+kdash-e2e	Pod	z-crash	6a92c6fd-0be6-46c1-8aca-3ba913153f9e	Warning	BackOff	1594	2026-11-06T12:38:16Z	2026-11-06T18:28:00Z	Back-off restarting failed container crash in pod z-crash_kdash-e2e(6a92c6fd-0be6-46c1-8aca-3ba913153f9e)
+kdash-e2e	Pod	z-pending	497fbdc8-4a5b-4da4-9c76-bec7976cd910	Warning	FailedScheduling	67	2026-11-06T12:38:18.833273Z	2026-11-06T18:03:45.599561Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.

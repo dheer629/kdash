@@ -1,0 +1,43 @@
+SERVICES AND BACKENDS  -  observed configuration and readiness - reachability is not tested
+
+DATA SOURCES
+┌───────────┬───────┬────────┬────────────────┐
+│ SOURCE    │ STATE │   READ │ DETAIL         │
+├───────────┼───────┼────────┼────────────────┤
+│ services  │ ● ok  │ 1s ago │ read succeeded │
+│ pods      │ ● ok  │ 1s ago │ read succeeded │
+│ endpoints │ ● ok  │ 1s ago │ read succeeded │
+│ ingresses │ ● ok  │ 1s ago │ read succeeded │
+└───────────┴───────┴────────┴────────────────┘
+
+SERVICES  2 services
+┌─────────────────┬────────────┬───────────┬──────────┬───────┬───────────┬────────────────┬──────────────────────────┐
+│ SERVICE         │ STATUS     │ TYPE      │ SELECTED │ READY │ ENDPOINTS │ CLUSTER-IP     │ PORTS (name:port→target) │
+├─────────────────┼────────────┼───────────┼──────────┼───────┼───────────┼────────────────┼──────────────────────────┤
+│ app-server      │ ● OK       │ ClusterIP │        2 │     2 │ 2/2 ready │ 10.111.83.216  │ 80→8080                  │
+│ missing-backend │ ● NO MATCH │ ClusterIP │        0 │     0 │ 0/0 ready │ 10.104.104.128 │ 80→8080                  │
+└─────────────────┴────────────┴───────────┴──────────┴───────┴───────────┴────────────────┴──────────────────────────┘
+
+FINDINGS  1 finding   critical first
+┌────────────┬─────────────────┬──────────────────────────────────────────────────────────┐
+│ SEVERITY   │ OBJECT          │ FINDING                                                  │
+├────────────┼─────────────────┼──────────────────────────────────────────────────────────┤
+│ ● CRITICAL │ missing-backend │ selector app=does-not-exist matches no pod in this scope │
+└────────────┴─────────────────┴──────────────────────────────────────────────────────────┘
+
+BACKENDS  2 services   selector and the Ready pods it selects (first 3)
+┌─────────────────┬────────────────────────────────────────────────────────┬───────────────────────────┐
+│ SERVICE         │ READY BACKEND PODS                                     │ SELECTOR                  │
+├─────────────────┼────────────────────────────────────────────────────────┼───────────────────────────┤
+│ app-server      │ app-server-8fb4699bc-j6rk2, app-server-8fb4699bc-z8kl7 │ app=kdash-e2e,role=server │
+│ missing-backend │ none ready                                             │ app=does-not-exist        │
+└─────────────────┴────────────────────────────────────────────────────────┴───────────────────────────┘
+
+INGRESS ROUTES  1 route   service-backed rules
+┌────────────┬────────┬────────────┬───────┬─────────────┬─────────────────┐
+│ INGRESS    │ STATUS │ READY PODS │ CLASS │ HOST / PATH │ BACKEND SERVICE │
+├────────────┼────────┼────────────┼───────┼─────────────┼─────────────────┤
+│ app-server │ ● OK   │          2 │ -     │ kdash.test/ │ app-server:80   │
+└────────────┴────────┴────────────┴───────┴─────────────┴─────────────────┘
+
+  Readiness is what the API reports. DNS, ingress controllers, NetworkPolicy, routing, TLS and application responses are not tested.

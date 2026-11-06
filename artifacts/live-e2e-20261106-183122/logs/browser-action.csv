@@ -1,0 +1,7 @@
+"Severity","Section","Item","Status","Details","Next step"
+"CRITICAL","Workload Spread and HA","app-server","HA_RISK","kind Deployment · pods 2 · pods ready 2 · unscheduled 0 · nodes 1 · max per node 2","every replica on one node"
+"CRITICAL","Pods","z-crash","CrashLoopBackOff","ready 0/1 · restarts 73 · node dev · pool role:control-plane,master · pod ip 10.244.0.241 · host ip 172.18.0.2","kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100"
+"CRITICAL","Containers","z-crash","CrashLoopBackOff","container crash · ready N · restarts 73 · cpu request 5m · cpu limit 50m · mem request 4Mi","kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100"
+"CRITICAL","Workload Spread and HA","z-pending","N/AUNSCHEDULEDNOT_READY","kind Pod · pods 1 · pods ready 0 · unscheduled 1 · nodes 0 · max per node 0 · mem request 4Mi","kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending"
+"CRITICAL","Pod IP Assignments","z-pending","NO_IP","node (unscheduled) · pool (none) · kind Pod · workload z-pending · status Pending","pod has no IP yet"
+"WARNING","Pods","z-pending","Pending","ready 0/1 · restarts 0 · node (unscheduled) · pool (none) · qos Burstable · kind Pod","kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending"
