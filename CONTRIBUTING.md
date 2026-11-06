@@ -9,9 +9,9 @@ environments are as valuable as code.
 kdash is a single-maintainer project. The maintainer ([@dheer629](https://github.com/dheer629))
 owns the code, the releases and the published evidence:
 
-* **`main` is protected.** Nobody, including the maintainer's own automation,
-  pushes directly to it: changes arrive through a pull request that the
-  maintainer reviews and merges. Only the maintainer can merge or force-push.
+* **The maintainer controls `main`.** Outside contributions arrive through pull
+  requests for review. The protection settings below are a recommended setup;
+  their presence must be checked in GitHub rather than inferred from this file.
 * **Fork freely.** The MIT licence lets you copy, change and redistribute kdash
   under your own name. What it does not do is let anyone change *this*
   repository: that is what the branch protection and `CODEOWNERS` are for.
@@ -37,8 +37,9 @@ owns the code, the releases and the published evidence:
    coverage for changes to this boundary.
 2. **No new runtime dependency** beyond Bash 4+, `kubectl`, `awk` and coreutils.
    No `jq`, no mandatory Python, no runtime build step, no compiled binary.
-   Transfer archives may use optional `zip` or Python 3 when installed, with a
-   tar.gz fallback. Document optional tools and container requirements.
+   Transfer archives may use optional `zip` or Python 3 when installed, with plain-file downloads as the default and tar.gz available.
+   File verification uses SHA-256 when possible, a labelled MD5 fallback, or a
+   labelled size-only result when checksum tools are absent. Document optional tools and container requirements.
 3. **Portability.** It must run on busybox `awk` and on old terminals: avoid
    `%*s`, `\x` escapes and glyphs a PuTTY font cannot draw (use `--glyphs ascii`
    paths where in doubt).
@@ -73,7 +74,7 @@ bash scripts/validate-all.sh
 That one command checks the Bash syntax of every shipped script, that the
 installer embeds `kdash` and the uninstaller byte for byte, source-module and version
 synchronization, and every fixture test under `tests/` (none needs a cluster),
-every checksum (root, `samples/`, `samples/html/`, `samples/cli_419/`, `samples/cli_413/`, `samples/cli_414/`), the recorded
+every checksum (root, `samples/`, `samples/html/`, the current `samples/cli_423/` and `samples/html423/`, and historical galleries), the recorded
 run and its captures, the feature-screen run and its 22 captures plus manifest, the
 published samples, that no environment, product, site or personal name and no
 credential is in the tree, that every README reference resolves, that the README keeps
@@ -81,12 +82,42 @@ a direct download link for each published version, and that the working tree is 
 CI runs the same script ([.github/workflows/ci.yml](.github/workflows/ci.yml)), so a red
 build there means the pull request is not ready.
 
+## Live feature and screenshot validation
+
+Use [`scripts/live-e2e.py`](scripts/live-e2e.py) with the installed binary and a
+private kubeconfig for the local WSL cluster. The harness uses a dedicated
+`kdash-e2e` namespace and isolated tmux socket, preserving unrelated sessions.
+Its `checks.tsv`/`results.json` describe the assertions and limitations, while
+`captures.tsv` connects every live ANSI screen to its image and terminal size.
+Keep the kubeconfig and private credentials outside the published evidence.
+
+For native screenshots, the validation environment also needs tmux, Xvfb, xterm,
+xwininfo, ImageMagick, Python Pillow and pyte. Run the installed CLI with a private
+`KUBECONFIG` and `python3 scripts/live-e2e.py --repo "$PWD" --setup
+--context CONTEXT --native-screenshots`. Setup creates only the explicitly named
+test resources; the CLI keeps its normal dependency-light runtime.
+
+The optional browser checks use Playwright and an installed Chrome executable:
+`node scripts/validate-html.mjs --run artifacts/RUN --module PLAYWRIGHT_MODULE
+--browser CHROME_EXECUTABLE`. They exercise the real generated HTML and save
+`browser-results.json` plus browser screenshots. `python3 scripts/publish-live-samples.py`
+copies report bytes and updates current galleries from the successful run.
+Finally regenerate checksums and run the full publication validator. CI verifies
+the saved evidence and hashes without requiring cluster or browser access.
+
+For UI changes, cover narrow widths, ASCII and theme modes, selected rows, long
+names, wrapped key hints and the actual action result. Exercise transfers against
+disposable pod files and verify destination bytes; a browser screenshot alone
+does not prove a copy succeeded. Run fixture tests for denied/missing capabilities
+that the live cluster cannot supply. Keep older screenshots under their capture
+version and add the new gallery, rather than renaming old images.
+
 ## For the maintainer: how "nobody else can change it" is enforced
 
 The MIT licence makes kdash free to use, fork and change *your own copy*. Keeping
 *this* repository under one person's control is a repository setting, not a
-licence term, and it is set up like this on GitHub (Settings -> Branches ->
-branch protection rule for `main`):
+licence term. To enforce review in GitHub, configure Settings -> Branches ->
+branch protection rule for `main`:
 
 * Require a pull request before merging - 1 approval, dismiss stale approvals,
   require review from **CODEOWNERS** (`.github/CODEOWNERS` lists `@dheer629` for
@@ -121,10 +152,10 @@ gh api -X PUT repos/dheer629/kdash/branches/main/protection \
 JSON
 ```
 
-Two more settings that keep it maintainer-only: the repository has **no other
-collaborators** (so nobody else has write access at all), and *Settings ->
-Actions -> General* keeps the default `GITHUB_TOKEN` read-only, so a workflow
-cannot push to `main` either.
+For maintainer-only write access, keep the collaborator list limited to the
+maintainer and choose a read-only default `GITHUB_TOKEN` in Settings -> Actions ->
+General. Workflows that publish release assets request their own explicit
+`contents: write` permission.
 
 
 ## Licence of contributions

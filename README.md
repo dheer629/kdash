@@ -1,4 +1,4 @@
-# kdash 4.19.2
+# kdash 4.23.1
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -39,15 +39,20 @@ Press `?` in any view for an explanation of what is on screen.
 
 The dashboard is live, with pinned header/footer and a scrolling body. Views 1-6
 export text, TSV, CSV and HTML; Alerts appear in the HTML Overview. The newer
-diagnostics export text and raw diagnostic tables with `--report`. A live run
+diagnostics export text, CSV and TSV with `--once -o`, and raw diagnostic tables
+with `--report`. A live run
 records its model history, and `x` writes **one HTML file with the six detailed
 resource tabs plus the history since kdash started**.
 
 ## Releases and downloads
 
-The current source version is **4.19.2**: a live pod picker, `kdsh` shell launcher,
-interactive mode switching, browsable file transfers and corrected structured filters.
-Install it from a checkout; no 4.19.2 release assets are claimed here:
+The current version is **4.23.1**. It adds framed namespace, pod, container and
+file pickers; a persistent default namespace per context; a clearer inspector with
+expandable logs; and transfer preflight checks, conflict choices and file verification.
+The main dashboard retains its nine views, Events, explanations, live charts,
+history, reports and audit trail.
+
+Install the source checkout:
 
 ```bash
 git clone https://github.com/dheer629/kdash.git
@@ -55,16 +60,17 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                                    # kdash 4.19.2
+kdash --version                                    # kdash 4.23.1
 ```
 
-Published releases remain downloadable by version. The table below records earlier
-releases; their screenshots and captures describe those versions.
+Versioned releases retain their own downloads, documentation and screenshots.
+Older releases remain available alongside the current source.
 [All releases](https://github.com/dheer629/kdash/releases) |
 [how they are built](RELEASES.md).
 
 | Version | Released | Highlights | Download |
 |---|---|---|---|
+| **4.23.1** | 2026-11-06 | framed navigation and diagnostics, saved namespace defaults, expanded logs, verified transfers; real WSL validation and screenshots | [kdash](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash-4.23.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.23.1/SHA256SUMS) |
 | **4.14.0** | 2026-10-29 | opt-in shell in a container (`S`), file upload (`U`) and download (`D`), all audited as writes | [kdash](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash-4.14.0.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.14.0/SHA256SUMS) |
 | **4.13.1** | 2026-10-29 | installer summary lists every view and key | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-4.13.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.1/SHA256SUMS) |
 | **4.13.0** | 2026-10-29 | doctor, inspector (find, containers, export), services, storage, Events, `-A` fix | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.0/kdash-4.13.0.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.0/SHA256SUMS) |
@@ -83,124 +89,58 @@ kdash --version                                    # kdash 4.14.0
 
 ## Screenshots
 
-The gallery below contains saved live screens from **kdash 4.19.2** - the version this
-repository ships - on a local WSL vcluster (`kubectl` reads only, namespace `default`),
-rendered from the exact tmux capture with
-[`scripts/capture-terminal.py`](scripts/capture-terminal.py) - nothing is drawn by hand.
-The captures behind them and the full list are in
-[`samples/cli_419/`](samples/cli_419/README.md) and
-[`artifacts/view-screens-20261031-051739/raw/`](artifacts/view-screens-20261031-051739/raw).
-The names are placeholders: the context, the personal paths, the host and the other
-tenants of that shared development cluster were replaced by
-[`scripts/redact-run.sh`](scripts/redact-run.sh) before publication, exactly as described
-in [`samples/README.md`](samples/README.md).
-The 4.13.1, 4.14.0 and 4.12.0 captures are kept as historical evidence in
-[`samples/cli_413/`](samples/cli_413), [`samples/cli_414/`](samples/cli_414) and
-[`samples/cli/`](samples/cli); they show earlier interfaces, not this one.
+<!-- CURRENT_LIVE_RESULT -->
+Run `live-e2e-20261106-v4231` records **155 passed live checks**, **17 passed browser checks** and **74 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.1 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-20261106-v4231/checks.tsv).
+<!-- END_CURRENT_LIVE_RESULT -->
 
-### The views added in 4.13: services and storage
 
-| | |
+
+The current gallery is [`samples/cli_423/`](samples/cli_423/README.md), captured
+from the installed **kdash 4.23.1** against the Kubernetes cluster running in local
+Ubuntu WSL. The dedicated `kdash-e2e` namespace supplies real running workloads,
+services, storage and failure cases. The main images are actual xterm window
+screenshots captured while the installed CLI runs in WSL, on an isolated local
+Xvfb display. The gallery also includes cell-by-cell ANSI replays made with
+[`scripts/capture-terminal.py`](scripts/capture-terminal.py). Original ANSI/plain-text
+screens, geometry and screenshot hashes are retained with the run. Current data
+and namespace names are unchanged; older galleries retain their redaction notes.
+The [evidence index](artifacts/README.md) explains the run results and coverage.
+
+| View | Live screen | View | Live screen |
+|---|---|---|---|
+| 1 PODS | [pods](samples/cli_423/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_423/native/02-nodes.png) |
+| 3 WORKLOADS | [workloads](samples/cli_423/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_423/native/04-ip.png) |
+| 5 MEMORY | [memory](samples/cli_423/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_423/native/06-io.png) |
+| 7 ALERTS | [alerts](samples/cli_423/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_423/native/08-services.png) |
+| 9 STORAGE | [storage](samples/cli_423/native/09-storage.png) | E / ! | [Events](samples/cli_423/native/10-events.png) / [explanations](samples/cli_423/native/11-explain.png) |
+
+| Framed namespace selection | Framed pod selection |
 |---|---|
-| **8 SERVICES** - Ingress -> Service -> EndpointSlice -> ready pods: selector mismatches, unready backends, missing named target ports, selectorless and ExternalName services<br><img src="samples/cli_419/08-services.png" width="450" alt="kdash SERVICES view: service backend diagnostics"> | **9 STORAGE** - Pod -> PVC -> PV -> StorageClass: bound and pending claims, `claimRef` mismatches, declared mounts, storage Events, measured usage only when it exists<br><img src="samples/cli_419/09-storage.png" width="450" alt="kdash STORAGE view: PVC bindings, PVs and mounts"> |
+| <img src="samples/cli_423/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_423/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
 
-### Events, explanations, doctor - an alert to evidence to the next check
-
-| | |
+| Inspector summary | Log search |
 |---|---|
-| **E KUBERNETES EVENTS** - real Events with reason, involved object, count, first/last seen and coverage<br><img src="samples/cli_419/10-events.png" width="450" alt="kdash EVENTS view"> | **! INCIDENT EVIDENCE** - the observed fact, a *possible* explanation and the next read-only command<br><img src="samples/cli_419/11-explain.png" width="450" alt="kdash EXPLAIN view"> |
-| **DOCTOR** - kubeconfig, endpoint, TLS, RBAC, Metrics API and local reports, each classified with a next check<br><img src="samples/cli_419/13-doctor.png" width="450" alt="kdash doctor view"> | **1 PODS** - the current tab bar (`8 SVCS 9 STOR E EVENTS ! WHY`), health line and data freshness<br><img src="samples/cli_419/01-pods.png" width="450" alt="kdash PODS view with the new tab bar"> |
+| <img src="samples/cli_423/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary and wrapped key hints"> | <img src="samples/cli_423/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
 
-### Inspector: find in a pane, only matches, container drill-down
-
-| | |
+| Container download browser | Local upload browser |
 |---|---|
-| **`/` find** - every line stays visible, matches are highlighted, the header counts them (`137 matching`) and `n`/`N` jump<br><img src="samples/cli_419/17-inspector-find.png" width="450" alt="kdash inspector find"> | **`&` only matches** - the same 202-line Kafka log reduced to the 37 lines that matter<br><img src="samples/cli_419/18-inspector-only-matches.png" width="450" alt="kdash inspector only matches"> |
-| **`c` choose container** - ready, restarts, state, last exit and image per container; `1`-`9` opens one, `l`/`p` jumps to its logs<br><img src="samples/cli_419/19-inspector-containers.png" width="450" alt="kdash container picker"> | **`?` keys** - panes, find, level, follow, export, container switching<br><img src="samples/cli_419/20-inspector-help.png" width="450" alt="kdash inspector help"> |
+| <img src="samples/cli_423/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_423/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
 
-### Every view, on the vcluster
+See the [complete gallery and manifest](samples/cli_423/README.md) for every
+captured control, theme, narrow layout, report and transfer step, and
+[`samples/html423/`](samples/html423/README.md) for the generated HTML reports.
+Missing metrics or denied data appear as unavailable; the captures preserve what
+the cluster actually returned.
 
-| View | Screenshot |
+| Generated HTML overview | Recorded memory and CPU |
 |---|---|
-| **1 PODS** | <img src="samples/cli_419/01-pods.png" width="430" alt="PODS"> |
-| **2 NODE POOLS** | <img src="samples/cli_419/02-nodes.png" width="430" alt="NODE POOLS"> |
-| **3 WORKLOADS** | <img src="samples/cli_419/03-workloads.png" width="430" alt="WORKLOADS"> |
-| **4 IP POOL** | <img src="samples/cli_419/04-ip.png" width="430" alt="IP POOL"> |
-| **5 MEMORY** | <img src="samples/cli_419/05-mem.png" width="430" alt="MEMORY"> |
-| **6 NET & DISK IO** | <img src="samples/cli_419/06-io.png" width="430" alt="NET and DISK IO"> |
-| **7 ALERTS** | <img src="samples/cli_419/07-alerts.png" width="430" alt="ALERTS"> |
-| **8 SERVICES** | <img src="samples/cli_419/08-services.png" width="430" alt="SERVICES"> |
-| **9 STORAGE** | <img src="samples/cli_419/09-storage.png" width="430" alt="STORAGE"> |
-| **help (`?`)** | <img src="samples/cli_419/21-help-keys.png" width="430" alt="dashboard help"> |
+| <img src="samples/html423/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html423/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
 
-Narrow terminals: [1 PODS at 100 columns](samples/cli_419/22-pods-100col.png) ·
-[8 SERVICES at 100 columns](samples/cli_419/23-services-100col.png).
-Intermediate screens: [pod picker](samples/cli_419/14-inspector-pod-picker.png) ·
-[pod summary](samples/cli_419/15-inspector-summary.png) ·
-[previous logs](samples/cli_419/16-inspector-previous-logs.png).
-
-### Operations, exports and one-shot modes
-
-Captured live in the same run, from the same gallery
-([`samples/cli_419/`](samples/cli_419/README.md)):
-
-| | | |
-|---|---|---|
-| **`e` HTML menu, Enter writes it** - the all-tabs report plus history in one file, named in the footer when it is written<br><img src="samples/cli_419/44-html-report-written.png" width="450" alt="kdash all-tabs HTML report written"> | **`--report` evidence bundle** - text views, TSV, CSV and an index for one namespace<br><img src="samples/cli_419/50-report-bundle.png" width="450" alt="kdash evidence bundle"> |
-| **`--audit`** - every run, action, report and kubectl call, from one table<br><img src="samples/cli_419/51-audit-table.png" width="450" alt="kdash audit table"> | **`q` session summary** - context, namespace, duration and the retained session history<br><img src="samples/cli_419/46-session-summary.png" width="450" alt="kdash session close summary"> |
-
-That run also captured every control (namespace picker `n`, pod filter `/`, structured
-filters `F`, `d` details, `p` pods-only, sort `s`/`o`, pause `P`, theme `T`, node
-toggles `a`/`Z`, chart window `z`), the inspector's `w` export, the other one-shot
-modes (`-V`, `-h`, `--snapshot all`, `--audit-verify`, `--about`, `--audit-report`) and
-the first-run disclaimer gate; the HTML it produced is published in
-[`samples/html419/`](samples/html419). See the file list in
-[`samples/cli_419/README.md`](samples/cli_419/README.md) and the run's own manifest and
-verification log in
-[`artifacts/operation-screens-20261031-062953/`](artifacts/operation-screens-20261031-062953).
-
-### The 4.12.0 validation run (kept for reference)
-
-`orders-service-e2e` in the recorded run: 27 pods, 14 ready, a crash loop, an image
-error, an unschedulable pod and 1571 cumulative restarts. This is the run published
-in [`artifacts/wsl-validation-20261018-134816`](artifacts/wsl-validation-20261018-134816)
-(five minutes per namespace, three namespaces) and it is what the 4.12.0 images show.
-
-<img src="samples/cli_7_alerts_170col.png" width="900" alt="kdash ALERTS view from the 4.12.0 run: verdict, per-section health lines and every alert with the kubectl action to run">
-
-| | |
-|---|---|
-| **HTML report** - every tab plus the recorded history in one file, with filters and per-table CSV<br><img src="samples/html_overview.png" width="450" alt="kdash HTML namespace report"> | **Audit table** - `kdash --audit`: every run, action, report and kubectl call<br><img src="samples/cli_audit_log.png" width="450" alt="kdash audit table"> |
-
-| View | What it answers | Screenshot |
-|---|---|---|
-| **1 PODS** | what each pod and container uses, against its requests and limits | <img src="samples/cli/orders-service-e2e/01-pods.png" width="430" alt="PODS view"> |
-| **2 NODE POOLS** | this namespace against the whole cluster, per pool and per node | <img src="samples/cli/orders-service-e2e/02-nodes.png" width="430" alt="NODE POOLS view"> |
-| **3 WORKLOADS** | ready vs desired replicas, rollout, and where the pods actually run | <img src="samples/cli/orders-service-e2e/03-workloads.png" width="430" alt="WORKLOADS view"> |
-| **4 IP POOL** | pod IPs, node CIDR blocks, subnets, services, missing or duplicate IPs | <img src="samples/cli/orders-service-e2e/04-ip.png" width="430" alt="IP POOL view"> |
-| **5 MEMORY** | live memory and CPU charts, OOM risk and the memory growth forecast | <img src="samples/cli/orders-service-e2e/05-mem.png" width="430" alt="MEMORY view"> |
-| **6 NET & DISK IO** | network in / out and disk read / write per node and per pod | <img src="samples/cli/orders-service-e2e/06-io.png" width="430" alt="NET and DISK IO view"> |
-| **7 ALERTS** | everything that needs attention now, with the action for each signal | <img src="samples/cli/orders-service-e2e/07-alerts.png" width="430" alt="ALERTS view"> |
-
-The same seven views are published for two quieter namespaces:
-[`ml-service-prod`](samples/cli/ml-service-prod) (4 pods) and
-[`gitops-core`](samples/cli/gitops-core) (7 pods).
-
-### Around the dashboard
-
-[help screen](samples/cli_7_alerts_help.png) ·
-[help at 100 columns](samples/cli_7_alerts_help_narrow.png) ·
-[100-column layout](samples/cli_7_alerts_100col.png) ·
-[alerts over time, NEW and cleared](samples/cli_7_alerts_new_cleared.png) ·
-[first-run disclaimer](samples/cli_disclaimer_first_run.png) ·
-[declined disclaimer](samples/cli_disclaimer_declined.png) ·
-[report footer with the disclaimer](samples/html_report_disclaimer_footer.png) ·
-[HTML audit report](samples/html_audit_report.png) ·
-[all HTML samples](samples/html) · [checksums](samples/SHA256SUMS)
-
-The names in these images are generic placeholders, and the images are renders of
-the saved terminal screens (not window captures): see
-[`artifacts/README.md`](artifacts/README.md#redaction-the-names-here-are-placeholders).
+Earlier galleries remain labelled with their capture version:
+[4.19.2 terminal](samples/cli_419/README.md), [4.19.2 HTML](samples/html419/README.md),
+[4.14.0](samples/cli_414/README.md), [4.13.1](samples/cli_413/README.md), and
+[4.12.0](samples/cli/). They document those earlier runs.
 
 ## Install / upgrade from 3.x
 
@@ -618,18 +558,25 @@ and the HTML report has a NET & DISK IO tab and history charts. One-shot modes n
 
 ## Namespace picker
 
-`n` while running opens a full-screen list of namespaces: type a number, the name, or part
-of a name to filter (`A` = all namespaces, Enter = keep the current one). The list comes
-from `get namespaces`; when that is forbidden kdash offers what it can infer (namespaces
-seen in the all-namespaces pod read, kubeconfig contexts, `KDASH_NS_MAP`, recently used
-ones) and you can type any name. Recently used namespaces (per context) are listed first
-and marked `+`; pod counts are shown when the cluster pod read is allowed. Switching
-re-reads everything, starts a new history session for the new namespace, and keeps the
-old namespace when the new one is not readable.
+`n` opens a framed namespace table with access status, pod counts when available,
+the current/recent namespace and a reverse-video selected row. `j`/`k` or arrows
+move, PgUp/PgDn page, `g`/`G` jump to the ends, and digits jump to a row. `/` enters
+name filtering; Enter keeps the filter and Esc clears it. `t` accepts a namespace
+name that is absent from the list, `r` rechecks access and `A` selects all namespaces.
+Enter opens the selected namespace; `q`/Esc returns and `Q` quits kdash.
 
-`kdash -n` (no value) or `kdash --pick-ns` starts with the picker, and the picker opens
-automatically when the context has no namespace (instead of silently using `default`).
-Shortcut after install: `kdns`.
+`d` opens the selected namespace and saves it as this context's default in
+`$XDG_CONFIG_HOME/kdash.conf` (normally `~/.config/kdash.conf`), retaining other
+settings. Future starts can use that mapping without reopening the picker. `x`
+forgets the saved default for this context. This changes kdash's configuration,
+not the kubeconfig's current context or namespace.
+
+The namespace list comes from `get namespaces`. If that read is denied, kdash
+offers names inferred from readable pod inventory, kubeconfig contexts, configured
+mappings and recent selections; a typed name remains available. Switching rereads
+the inventory and starts a new history session. Failed access retains the previous
+namespace. `kdash -n`, `--pick-ns` and the installed `kdns` shortcut open this picker
+at startup; it also opens when the context supplies no namespace or saved mapping.
 
 ## Colours
 
@@ -798,20 +745,31 @@ resource values observed when attaching; those values are not a live metrics str
 of the same workload, and `kdquit` quits kdash. The last two helpers and pinned panel
 are Bash features; the `sh` fallback prints the connection information once.
 
-Uploads start in the directory where you launched kdash. Browse local files, mark
-files or directories with Space, press `u`, choose the container destination and
-review the summary before confirming. Existing destination names require an overwrite
-confirmation. Downloads browse the container: mark items, press `d`, then choose ZIP,
-tar.gz or plain files, the output directory and an optional archive name. They default
-to the launch directory (`KDASH_LAUNCH_DIR` overrides it). ZIP uses host `zip`, or
-optional `python3`; without either the default is tar.gz.
+Uploads start in the launch directory. Mark files or directories with Space,
+press `u`, choose the container destination and review the route, selected items
+and checks before confirming. The preflight checks required tools, readability,
+destination writability, available space when it can be measured, and existing
+destination names. Blocked checks prevent starting the transfer.
 
-The file browser supports `/` name filtering, Enter/right to open a directory,
-`h`/Backspace to go up, `p` for a path and `v` to preview the first 64 KiB of a file.
-Changing directories clears marks. Transfers show progress and can be cancelled with
-`q`; cancelled downloads remove the partial stream, while files already uploaded stay
-in the container. Upload verification compares `du` sizes with a filesystem tolerance,
-not file hashes. Archive downloads display a local SHA256 checksum.
+Downloads keep the original filenames by default and use the launch directory
+(`KDASH_LAUNCH_DIR` overrides it). In the review screen, `f` cycles plain files,
+ZIP when available, and tar.gz; `l` chooses another local directory and `n` renames
+an archive. Existing names prompt for **replace** or **keep both**, which allocates
+a name such as `report (2).txt`. ZIP uses optional host `zip` or `python3`.
+
+The framed file browser supports `/` filtering, Enter/right to open a directory,
+`h`/Backspace to go up, `p` to enter a path and `v` to preview the first 64 KiB.
+Changing directories clears marks. Transfers show a progress bar, bytes and rate;
+`q` cancels. Cancelled downloads remove temporary transfer files; already uploaded
+files can remain in the container.
+
+After copying, verification compares file counts, bytes and fingerprints on both
+sides: SHA-256 when available, MD5 as a labelled fallback, or counts and bytes
+when no checksum tool exists. Directory fingerprints include the sorted file
+hash/path list; symlinks compare their target text. The result screen reports
+verified, differing or unverified items and the method used. Archive downloads
+also show the archive's local SHA-256 and its integrity check. A size-only check
+does not prove matching contents.
 
 Browsed transfers stream `tar` through `kubectl exec`; listings, previews and size
 checks also use `exec` and count as writes under the guard. If browsing is unavailable,
@@ -819,25 +777,14 @@ kdash offers the typed-path `kubectl cp` flow. Both routes need `tar` in the ima
 the browser also needs a usable `sh`. Names and paths are passed as arguments rather
 than evaluated as host shell commands.
 
-The current interface, kdash 4.19.2, on a local vcluster (names redacted). The
-matching 4.14.0 captures, including the typed-path dialogs that predate the 4.19.2
-browser, are in [`samples/cli_414/`](samples/cli_414):
-
-| | |
-|---|---|
-| **`S` while interactive mode is off** - the dashboard says why, and the attempt is audited as `INTERACTIVE_BLOCKED`<br><img src="samples/cli_419/24-attach-blocked.png" width="450" alt="S refused while interactive mode is off"> | **`S` while it is on** - pick the pod; the footer carries `S shell U/D copy`<br><img src="samples/cli_419/27-shell-picker.png" width="450" alt="pod picker with the attach keys"> |
-| **inside the container** - a real shell: the dashboard handed its terminal over<br><img src="samples/cli_419/28-shell-inside.png" width="450" alt="shell prompt inside the container"> | **after `exit`** - back on the dashboard, `attach shell … exited rc=0`<br><img src="samples/cli_419/29-back-in-dashboard.png" width="450" alt="dashboard after the shell exited"> |
-| **`D`** - the download browser: local files left, container files right, with a review before the copy<br><img src="samples/cli_419/30-download-prompt.png" width="450" alt="download browser"> | **`D` done (4.14.0)** - `/etc/hostname` copied out, `CP_DOWN` + `CP_END rc=0 bytes=32`<br><img src="samples/cli_414/11-download-done.png" width="450" alt="download completed"> |
-| **`U`** - the upload browser<br><img src="samples/cli_419/31-upload-prompt.png" width="450" alt="upload browser"> | **`X` gate** - the same session with interactive mode turned on, audited as a mode change<br><img src="samples/cli_419/26-interactive-on.png" width="450" alt="interactive mode enabled, with the audit line"> |
-
-The raw capture of every step is in
-[`artifacts/view-screens-20261031-051739`](artifacts/view-screens-20261031-051739)
-(4.19.2) and
-[`artifacts/feature-screens-20261029-161848-attach`](artifacts/feature-screens-20261029-161848-attach)
-(4.14.0), redacted with [`scripts/redact-run.sh`](scripts/redact-run.sh) like the rest
-of `samples/` (see [`samples/cli_419/README.md`](samples/cli_419/README.md) and
-[`samples/cli_414/README.md`](samples/cli_414/README.md) for the audit lines that back
-each image).
+The current flow is captured in the [4.23.1 gallery](samples/cli_423/README.md):
+[shell pod list](samples/cli_423/native/25-shell-picker.png),
+[shell inside the container](samples/cli_423/native/26-shell-inside.png),
+[download browser](samples/cli_423/native/31-download-browser.png) and
+[upload browser](samples/cli_423/native/27-upload-browser.png). The gallery's manifest
+pairs each image with its raw live screen. Earlier typed-path and browser flows
+remain in the [4.14.0](samples/cli_414/README.md) and
+[4.19.2](samples/cli_419/README.md) historical galleries.
 
 Worth knowing:
 
@@ -965,6 +912,33 @@ journalctl -t kdash --since today # syslog copy
 | 5 | disclaimer not accepted |
 | 6 | `KDASH_AUDIT_REQUIRED=1` and no audit file writable |
 | 126 | (kubectl wrapper) a verb that could change the cluster was refused |
+
+## Changes in 4.23.1
+
+- Framed namespace, pod, container, inspector and file screens with column
+  borders, reverse-video selection, grouped key panels and width-aware clipping.
+  Unicode and ASCII frames follow the selected glyph mode; themes retain the
+  terminal's own background. Doctor, Services, Storage, Events and explanations
+  also use bordered diagnostic tables.
+- Namespace navigation uses arrows, pages, row jumps and explicit `/` filtering;
+  `d` saves a per-context default and `x` clears it.
+- Inspector context, pod/container identity, status and resource data are grouped
+  into a framed header. Pane/read/move hints wrap as whole key-label pairs.
+  `+` expands the fetched log tail fourfold and `A` requests all retained logs,
+  both still bounded by the configured byte cap. Logs wrap long lines by default;
+  `W` toggles wrapping. The initial tail is 5,000 lines (`KDASH_LOG_TAIL`, up to
+  1,000,000) and the byte cap is 8 MiB (`KDASH_LOG_LIMIT_BYTES`, up to 256 MiB).
+  `/`, `n`/`N`, `&`, log levels, follow and explicit `w` export remain available.
+- Transfers add tool/permission/space checks, boxed reviews and results, progress
+  bars, SHA-256/MD5 or size-only verification, and plain-file downloads by default.
+  Downloads resolve existing names with replace or keep-both choices; archive
+  formats remain optional.
+- Printed investigation commands retain the selected context and kubeconfig.
+  Installer reruns retain their own managed shortcut names and explain when a
+  fresh shell or PATH update is needed.
+- The synchronized standalone CLI, five source modules, embedded installer and
+  uninstaller share this version. Fresh WSL live evidence and current screenshots
+  are indexed in [artifacts](artifacts/README.md) and [samples](samples/README.md).
 
 ## Changes in 4.19.2
 

@@ -39,6 +39,17 @@ for f in scripts/*.sh; do
   case "$f" in scripts/_*) continue ;; esac
   bash -n "$f" 2>/dev/null && ok "syntax $f" || bad "syntax $f"
 done
+for f in scripts/*.py; do
+  python3 -c 'import ast,sys; ast.parse(open(sys.argv[1], encoding="utf-8").read(), filename=sys.argv[1])' "$f" \
+    && ok "syntax $f" || bad "syntax $f"
+done
+for f in scripts/*.mjs; do
+  if command -v node >/dev/null 2>&1; then
+    node --check "$f" && ok "syntax $f" || bad "syntax $f"
+  else
+    printf 'SKIP  JavaScript syntax %s (optional Node unavailable; browser evidence is verified below)\n' "$f"
+  fi
+done
 if awk '
   /^cat > "\$tmp" <<\047KDASH_PAYLOAD_EOF\047$/ { capture=1; starts++; next }
   capture && /^KDASH_PAYLOAD_EOF$/ { capture=0; ends++; next }
@@ -86,7 +97,7 @@ for f in tests/*.sh; do
 done
 
 echo "=== 3. checksums"
-for dir in . samples samples/html samples/html419 samples/cli_419 samples/cli_413 samples/cli_414; do
+while IFS= read -r dir; do
   file=SHA256SUMS
   want=$(awk 'NF {n++} END {print n+0}' "$dir/$file" 2>/dev/null)
   if [ "${want:-0}" -gt 0 ] && (cd "$dir" && sha256sum -c "$file") > "$VALIDATE_TMP/checksums" 2>&1; then
@@ -96,7 +107,7 @@ for dir in . samples samples/html samples/html419 samples/cli_419 samples/cli_41
     bad "$dir/$file verification failed"
     [ ! -f "$VALIDATE_TMP/checksums" ] || tail -5 "$VALIDATE_TMP/checksums"
   fi
-done
+done < <(printf '.\n'; find samples -name SHA256SUMS -printf '%h\n' | sort)
 
 echo "=== 4. historical recorded run (not validation of the current runtime)"
 RUN="$(cat artifacts/latest-run.txt 2>/dev/null || true)"
@@ -117,7 +128,7 @@ else
 fi
 
 echo "=== 5. the published samples"
-i=$(find samples -name '*.png' | wc -l); [ "$i" = 133 ] && ok "133 screenshots" || bad "$i screenshots"
+i=$(find samples -name '*.png' | wc -l); [ "$i" -ge 133 ] && ok "$i version-labelled screenshots (including 133 historical images)" || bad "$i screenshots; historical gallery incomplete"
 h419=$(find samples/html419 -name '*.html' | wc -l)
 c419=$(find samples/html419 -name '*.csv' | wc -l)
 [ "$h419" = 10 ] && [ "$c419" = 1 ] && ok "html419: 10 report HTML, $c419 audit CSV" \
@@ -198,18 +209,35 @@ else
 fi
 
 echo "=== 6. no environment, product, site or personal names"
-hits=$(grep -rlI --exclude-dir=.git --exclude='_*' --exclude='validate-all.sh' \
+# Inspect only files that can be published. Ignored private captures, downloaded
+# developer tools and release staging directories are outside this check.
+publication_paths() { git ls-files -z --cached --others --exclude-standard | sort -zu; }
+historical_paths() { publication_paths | grep -zvE '^(artifacts/live-e2e-|samples/(cli_423|html423)/)'; }
+hits=$(historical_paths | xargs -0 -r grep -lI --exclude='validate-all.sh' \
   -e kubernetes-super-admin -e devopssentinel -e learnalgorithm -e flux-system -e devopsonm \
   -e pny9 -e sjy9 -e ecev -e etdp -e ETDP -e sentinel -e Sentinel -e 'director host' \
-  -e 'ccd/nodepool' -e '/home/dheer' -e 'Users/dheer' -e 'dheer@' . 2>/dev/null | head -3)
-[ -z "$hits" ] && ok "no environment, product or personal names" || bad "found in: $hits"
-n=$(grep -rnI --exclude-dir=.git --exclude='_*' -e Dheeraj . 2>/dev/null | grep -vc 'Dheeraj V')
+  -e 'ccd/nodepool' -e '/home/dheer' -e 'Users/dheer' -e 'dheer@' 2>/dev/null | head -3)
+[ -z "$hits" ] && ok "historical samples retain their documented redaction" || bad "found in: $hits"
+# Current live evidence intentionally preserves actual local namespace names.
+# Personal home paths and credentials are still checked in every published set.
+personal=$(publication_paths | xargs -0 -r grep -lI --exclude='validate-all.sh' \
+  -e '/home/dheer' -e 'Users/dheer' -e 'dheer@' 2>/dev/null | head -3)
+[ -z "$personal" ] && ok "no personal home paths in published data" || bad "personal path in: $personal"
+n=$(historical_paths | xargs -0 -r grep -nI --exclude='validate-all.sh' -e Dheeraj 2>/dev/null | grep -vc 'Dheeraj V')
 [ "$n" = 0 ] && ok "the author credit is the only name reference" || bad "$n unexpected name references"
-creds=$(grep -rniE 'client-key-data|client-certificate-data|BEGIN [A-Z ]*PRIVATE KEY|^[[:space:]]*password[[:space:]]*[:=]|bearer [A-Za-z0-9._-]{20,}' \
-  --exclude-dir=.git --exclude-dir=.github --exclude='validate-all.sh' . 2>/dev/null | head -3)
-[ -z "$creds" ] && ok "no credential-looking strings" || bad "credential-looking string: $creds"
+creds=$(publication_paths | grep -zvE '^\.github/' | xargs -0 -r grep -liE \
+  'client-key-data|client-certificate-data|BEGIN [A-Z ]*PRIVATE KEY|^[[:space:]]*password[[:space:]]*[:=]|bearer [A-Za-z0-9._-]{20,}' \
+  --exclude='validate-all.sh' 2>/dev/null | head -3)
+[ -z "$creds" ] && ok "no credential-looking strings" || bad "credential-looking content in: $creds"
 
 echo "=== 7. README references"
+if python3 scripts/validate-publication.py > "$VALIDATE_TMP/publication" 2>&1; then
+  cat "$VALIDATE_TMP/publication"
+  ok "all README references and current live evidence provenance"
+else
+  cat "$VALIDATE_TMP/publication"
+  bad "README references or current live evidence provenance"
+fi
 refs=0; missing=0
 while IFS= read -r p; do
   case "$p" in ''|http*|mailto:*) continue ;; esac

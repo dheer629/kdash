@@ -1,0 +1,75 @@
+file	columns	rows	title	png
+raw/01-pods.ansi	170	50	kdash 4.23.1 | PODS live requests, limits and measured usage	samples/cli_423/01-pods.png
+raw/02-nodes.ansi	170	50	kdash 4.23.1 | NODE POOLS real allocatable capacity and namespace share	samples/cli_423/02-nodes.png
+raw/03-workloads.ansi	170	50	kdash 4.23.1 | WORKLOADS live replicas and placement	samples/cli_423/03-workloads.png
+raw/04-ip.ansi	170	50	kdash 4.23.1 | IP POOL real pod, node and service addresses	samples/cli_423/04-ip.png
+raw/05-mem.ansi	170	50	kdash 4.23.1 | MEMORY live history and pod usage	samples/cli_423/05-mem.png
+raw/06-io.ansi	170	50	kdash 4.23.1 | NETWORK AND DISK IO capability and live samples	samples/cli_423/06-io.png
+raw/07-alerts.ansi	170	50	kdash 4.23.1 | ALERTS real unhealthy fixture workloads	samples/cli_423/07-alerts.png
+raw/08-services.ansi	170	50	kdash 4.23.1 | SERVICES ingress, ready endpoints and missing backend	samples/cli_423/08-services.png
+raw/09-storage.ansi	170	50	kdash 4.23.1 | STORAGE bound volume and pending claim	samples/cli_423/09-storage.png
+raw/10-events.ansi	170	50	kdash 4.23.1 | EVENTS real Kubernetes scheduler and kubelet events	samples/cli_423/10-events.png
+raw/11-explain.ansi	170	50	kdash 4.23.1 | INCIDENT EVIDENCE from actual failing workloads	samples/cli_423/11-explain.png
+raw/12-namespace-picker.ansi	170	50	kdash 4.23.1 | Framed namespace picker with access and persistent default controls	samples/cli_423/12-namespace-picker.png
+raw/13-namespace-filter.ansi	170	50	kdash 4.23.1 | Live namespace search and context-sensitive action panel	samples/cli_423/13-namespace-filter.png
+raw/67-namespace-saved-default.ansi	170	50	kdash 4.23.1 | A subsequent launch opens the namespace saved with d	samples/cli_423/67-namespace-saved-default.png
+raw/68-namespace-typed.ansi	170	50	kdash 4.23.1 | t opens an explicitly typed namespace	samples/cli_423/68-namespace-typed.png
+raw/14-pod-picker.ansi	170	50	kdash 4.23.1 | Framed live pod picker with CPU, memory, restarts and attention state	samples/cli_423/14-pod-picker.png
+raw/15-pod-picker-help.ansi	170	50	kdash 4.23.1 | Pod picker navigation, filters and action keys	samples/cli_423/15-pod-picker-help.png
+raw/16-container-picker.ansi	170	50	kdash 4.23.1 | Framed multi-container picker with resource/state columns	samples/cli_423/16-container-picker.png
+raw/17-inspector-summary.ansi	170	50	kdash 4.23.1 | Inspector summary of a real running pod	samples/cli_423/17-inspector-summary.png
+raw/18-inspector-logs.ansi	170	50	kdash 4.23.1 | Bounded timestamped logs from the live app container	samples/cli_423/18-inspector-logs.png
+raw/62-inspector-expand.ansi	170	50	kdash 4.23.1 | Expanded bounded log read from the live container	samples/cli_423/62-inspector-expand.png
+raw/63-inspector-all.ansi	170	50	kdash 4.23.1 | All available live container logs within the byte cap	samples/cli_423/63-inspector-all.png
+raw/64-inspector-nowrap.ansi	170	50	kdash 4.23.1 | Unwrapped logs with horizontal navigation	samples/cli_423/64-inspector-nowrap.png
+raw/65-inspector-json.ansi	170	50	kdash 4.23.1 | Readable JSON log formatting enabled	samples/cli_423/65-inspector-json.png
+raw/66-inspector-follow.ansi	170	50	kdash 4.23.1 | Live follow periodically refreshes actual container logs	samples/cli_423/66-inspector-follow.png
+raw/19-inspector-find.ansi	170	50	kdash 4.23.1 | Log search highlighting with context retained	samples/cli_423/19-inspector-find.png
+raw/20-inspector-only-matches.ansi	170	50	kdash 4.23.1 | Only matching warning lines from real logs	samples/cli_423/20-inspector-only-matches.png
+raw/21-inspector-help.ansi	170	50	kdash 4.23.1 | Inspector help for log filtering and export	samples/cli_423/21-inspector-help.png
+raw/22-inspector-export.ansi	170	50	kdash 4.23.1 | Visible log pane exported locally	samples/cli_423/22-inspector-export.png
+raw/32-command-palette.ansi	170	50	kdash 4.23.1 | Fixed-command palette	samples/cli_423/32-command-palette.png
+raw/33-doctor.ansi	170	50	kdash 4.23.1 | Live connection, TLS, RBAC and metrics checks	samples/cli_423/33-doctor.png
+raw/34-pod-filter.ansi	170	50	kdash 4.23.1 | Dashboard pod regular expression applied	samples/cli_423/34-pod-filter.png
+raw/35-structured-filters.ansi	170	50	kdash 4.23.1 | Atomic label, status, node, workload and unhealthy filters	samples/cli_423/35-structured-filters.png
+raw/36-detail-lines.ansi	170	50	kdash 4.23.1 | Toggle container detail lines	samples/cli_423/36-detail-lines.png
+raw/37-pods-only.ansi	170	50	kdash 4.23.1 | Pod totals without container rows	samples/cli_423/37-pods-only.png
+raw/38-sort-order.ansi	170	50	kdash 4.23.1 | Sort key and reverse direction	samples/cli_423/38-sort-order.png
+raw/39-paused-interval.ansi	170	50	kdash 4.23.1 | Paused collection and changed polling interval	samples/cli_423/39-paused-interval.png
+raw/40-theme-dark.ansi	170	50	kdash 4.23.1 | Dark colour theme	samples/cli_423/40-theme-dark.png
+raw/41-theme-light.ansi	170	50	kdash 4.23.1 | Light colour theme	samples/cli_423/41-theme-light.png
+raw/42-theme-mono.ansi	170	50	kdash 4.23.1 | Monochrome colour theme	samples/cli_423/42-theme-mono.png
+raw/43-node-scale.ansi	170	50	kdash 4.23.1 | Node scope and true-scale resource bars	samples/cli_423/43-node-scale.png
+raw/44-history-window.ansi	170	50	kdash 4.23.1 | Memory history with changed chart window	samples/cli_423/44-history-window.png
+raw/45-html-menu.ansi	170	50	kdash 4.23.1 | Local HTML report selection menu	samples/cli_423/45-html-menu.png
+raw/46-html-report-written.ansi	170	50	kdash 4.23.1 | All-tabs report generated from live session	samples/cli_423/46-html-report-written.png
+raw/47-dashboard-help.ansi	170	50	kdash 4.23.1 | Dashboard navigation and interactive controls	samples/cli_423/47-dashboard-help.png
+raw/48-session-summary.ansi	170	50	kdash 4.23.1 | Completed live session and retained history	samples/cli_423/48-session-summary.png
+raw/23-interactive-blocked.ansi	170	50	kdash 4.23.1 | Shell refused while interactive mode is disabled	samples/cli_423/23-interactive-blocked.png
+raw/24-interactive-confirmation.ansi	170	50	kdash 4.23.1 | Explicit interactive-mode confirmation	samples/cli_423/24-interactive-confirmation.png
+raw/25-shell-picker.ansi	170	50	kdash 4.23.1 | Shell-mode pod picker and action panel	samples/cli_423/25-shell-picker.png
+raw/26-shell-inside.ansi	170	50	kdash 4.23.1 | Actual shell inside the live app container	samples/cli_423/26-shell-inside.png
+raw/27-upload-browser.ansi	170	50	kdash 4.23.1 | Local framed file browser with enabled upload actions	samples/cli_423/27-upload-browser.png
+raw/28-upload-destination.ansi	170	50	kdash 4.23.1 | Remote destination browser before any transfer	samples/cli_423/28-upload-destination.png
+raw/29-upload-review.ansi	170	50	kdash 4.23.1 | Upload preflight checks and explicit review	samples/cli_423/29-upload-review.png
+raw/30-upload-result.ansi	170	50	kdash 4.23.1 | Real upload result with source and destination hashes	samples/cli_423/30-upload-result.png
+raw/70-directory-upload-review.ansi	170	50	kdash 4.23.1 | Directory upload preflight and recursive checksum checks	samples/cli_423/70-directory-upload-review.png
+raw/71-directory-upload-result.ansi	170	50	kdash 4.23.1 | Actual directory upload with recursive fingerprints	samples/cli_423/71-directory-upload-result.png
+raw/31-download-browser.ansi	170	50	kdash 4.23.1 | Remote framed file browser with selection and preview keys	samples/cli_423/31-download-browser.png
+raw/49-download-review.ansi	170	50	kdash 4.23.1 | Download preflight, selected format and name conflict checks	samples/cli_423/49-download-review.png
+raw/50-download-result.ansi	170	50	kdash 4.23.1 | Real download result and per-item hash verification	samples/cli_423/50-download-result.png
+raw/55-download-keep-review.ansi	170	50	kdash 4.23.1 | Download preflight, selected format and name conflict checks	samples/cli_423/55-download-keep-review.png
+raw/56-download-keep-result.ansi	170	50	kdash 4.23.1 | Real download result and per-item hash verification	samples/cli_423/56-download-keep-result.png
+raw/57-directory-download-review.ansi	170	50	kdash 4.23.1 | Download preflight, selected format and name conflict checks	samples/cli_423/57-directory-download-review.png
+raw/58-directory-download-result.ansi	170	50	kdash 4.23.1 | Real download result and per-item hash verification	samples/cli_423/58-directory-download-result.png
+raw/59-download-zip-review.ansi	170	50	kdash 4.23.1 | Download preflight, selected format and name conflict checks	samples/cli_423/59-download-zip-review.png
+raw/60-download-zip-result.ansi	170	50	kdash 4.23.1 | Real download result and per-item hash verification	samples/cli_423/60-download-zip-result.png
+raw/61-download-tgz-review.ansi	170	50	kdash 4.23.1 | Download preflight, selected format and name conflict checks	samples/cli_423/61-download-tgz-review.png
+raw/69-download-tgz-result.ansi	170	50	kdash 4.23.1 | Real download result and per-item hash verification	samples/cli_423/69-download-tgz-result.png
+raw/51-pods-100col.ansi	100	40	kdash 4.23.1 | PODS at 100 columns	samples/cli_423/51-pods-100col.png
+raw/52-picker-100col.ansi	100	40	kdash 4.23.1 | Framed pod picker at 100 columns	samples/cli_423/52-picker-100col.png
+raw/53-namespace-100col.ansi	100	40	kdash 4.23.1 | Namespace picker and action panel at 100 columns	samples/cli_423/53-namespace-100col.png
+raw/51-pods-80col.ansi	80	30	kdash 4.23.1 | PODS at 80 columns	samples/cli_423/51-pods-80col.png
+raw/52-picker-80col.ansi	80	30	kdash 4.23.1 | Framed pod picker at 80 columns	samples/cli_423/52-picker-80col.png
+raw/53-namespace-80col.ansi	80	30	kdash 4.23.1 | Namespace picker and action panel at 80 columns	samples/cli_423/53-namespace-80col.png
+raw/54-ascii-picker.ansi	170	50	kdash 4.23.1 | ASCII framed picker with colour disabled	samples/cli_423/54-ascii-picker.png

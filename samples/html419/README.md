@@ -1,5 +1,10 @@
 # kdash 4.19.2 HTML reports
 
+Historical capture set. For the current **4.23.1** interface and live validation,
+see the [terminal gallery](../cli_423/README.md), [HTML reports](../html423/README.md)
+and [evidence index](../../artifacts/README.md). This set retains its original
+version, values and capture method.
+
 The HTML that the 4.19.2 operation run produced, copied **byte for byte** from
 [`../../artifacts/operation-screens-20261031-062953/default/`](../../artifacts/operation-screens-20261031-062953).
 Nothing inside a report was edited or retyped; the run had already been redacted

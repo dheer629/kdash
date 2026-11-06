@@ -250,7 +250,7 @@ try:
     os.write(fd, b"\n")
     expect("POD DETAIL")
     expect("namespace beta")
-    expect("? keys")
+    expect("<?> keys")
     os.write(fd, b"l")
     expect("LOGS")
     expect("INFO started container=web")

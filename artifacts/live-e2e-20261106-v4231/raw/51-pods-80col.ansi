@@ -1,0 +1,30 @@
+[1;7m KDASH 4.23.1 │ context kdash-local │ namespace kdash-e2e               audited
+[0m [1;7m 1 PODS [0m [90m 2 NODES [39m [90m 3 WLOADS [39m [90m 4 IP [39m [90m 5 MEM [39m [90m 6 IO [39m [90m 7 ALERTS [39m  [1m18:25:08[0m[90m IST[39m
+ [90mmatch[39m .*   [1m[94msort cpu ▼ high first[0m
+[90m [1m[31m! pods 3/5 ready[0m[90m rst [35m8[90m oom [32m0[90m oomk [32m0[90m nolim [32m0[90m cpu [39m6m [32m1%[90m lim mem [39m0Mi [32m0%[90m lim wl [39m4
+    [90m ev15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mPOD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo[0;2m›
+[0m                                       [90m│[39m [1m[94m  ACTUAL (live)   [0m [90m│[39m [1m[35m   ASSIGNED (req [0;2m›
+[0mWORKLOAD / POD / CONTAINER     RDY RST [90m│[39m   CPUm T  MEM Mi T [90m│[39m CPUreq CPUlim  ME[2m›
+[0m[90m────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=4s metrics=available | Enter/i inspect | 8 services 9 stora[2m›
+[0;1m[35m► Deployment app-server  (2 p~[0m [32m2/2[39m [90m  0[39m [90m│[39m      6 [90m·[39m       0 [90m·[39m [90m│[39m     50    500    [2m›
+[0m[32m  app-server-8fb4699bc-j6rk2  [39m [32m2/2[39m [90m  0[39m [90m│[39m      4 [90m·[39m       0 [90m·[39m [90m│[39m     25    250    [2m›
+[0m      [90mnode dev   pool role:control-plane,master   ip 10.244.0.243   qos Burstab[2m[39m›
+[0m    ├─ app                     [32mY  [39m [90m  0[39m [90m│[39m      3 [90m·[39m       0 [90m·[39m [90m│[39m     20    200    [2m›
+[0m    └─ sidecar                 [32mY  [39m [90m  0[39m [90m│[39m      1 [90m·[39m       0 [90m·[39m [90m│[39m      5     50    [2m›
+[0m[32m  app-server-8fb4699bc-z8kl7  [39m [32m2/2[39m [90m  0[39m [90m│[39m      2 [90m·[39m       0 [90m·[39m [90m│[39m     25    250    [2m›
+[0m      [90mnode dev   pool role:control-plane,master   ip 10.244.0.244   qos Burstab[2m[39m›
+[0m    ├─ app                     [32mY  [39m [90m  0[39m [90m│[39m      1 [90m·[39m       0 [90m·[39m [90m│[39m     20    200    [2m›
+[0m    └─ sidecar                 [32mY  [39m [90m  0[39m [90m│[39m      1 [90m·[39m       0 [90m·[39m [90m│[39m      5     50    [2m›
+[0m[90m................................................................................
+[1m[35m► Job completed-check  (1 pod)[0m [1m[31m0/1[0m [90m  0[39m [90m│[39m      - [90m·[39m       - [90m·[39m [90m│[39m      5     50    [2m›
+[0m[90m  completed-check-m9swm       [39m [1m[31m0/1[0m [90m  0[39m [90m│[39m      - [90m·[39m       - [90m·[39m [90m│[39m      5     50    [2m›
+[0m      [90mnode dev   pool role:control-plane,master   ip 10.244.0.242   qos Burstab[2m[39m›
+[0;1m[31m    └─ check                  [0m [1m[31mN  [0m [90m  0[39m [90m│[39m      - [90m·[39m       - [90m·[39m [90m│[39m      5     50    [2m›
+[0m[90m................................................................................
+[1m[35m► Pod z-crash  (1 pod)        [0m [1m[31m0/1[0m [35m  8[39m [90m│[39m      - [90m·[39m       - [90m·[39m [90m│[39m      5     50    [2m›
+[0m[90m────────────────────────────────────────────────────────────────────────────────
+[1m[39mTOTAL (5 pods, 4 workloads)   [0m     [35m  8[39m [90m│[39m      6 [90m·[39m       - [90m·[39m [90m│[39m     65    650    [2m›
+[0m [90mlegend[39m cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9[2m›
+[0m[97m[45m AUDITED session 20261106-182504-197533 - every action is logged; use is your r>

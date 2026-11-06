@@ -185,7 +185,8 @@ test_shortcut_preservation() {
   grep -qE 'skipped=.*kdx.*kdsh.*kd' "$LOG" || fail 'taken shortcut names were not reported'
   grep -qF 'kdx-type=file' "$LOG" || fail 'unrelated kdx executable was shadowed by a shell function'
   grep -qF 'existing kdx' "$LOG" || fail 'unrelated kdx executable no longer resolves'
-  grep -qF '4.19.2' "$LOG" || fail 'a free shortcut did not launch the installed CLI'
+  expected_version="$(sed -n 's/^KDASH_VERSION="\([^"]*\)"$/\1/p' "$REPO/kdash")"
+  grep -qF "$expected_version" "$LOG" || fail 'a free shortcut did not launch the installed CLI'
   run_ok -c 'source "$HOME/.kdash-shell.bash"; declare -f kdsh'
   grep -qF '_kdash_run -X --shell-picker' "$LOG" || fail 'owned kdsh launcher prevented its shell shortcut'
   run_ok "$UNINSTALL" --prefix "$PREFIX"

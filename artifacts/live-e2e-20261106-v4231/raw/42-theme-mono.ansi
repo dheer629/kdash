@@ -1,0 +1,50 @@
+[7m KDASH 4.23.1 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                              read-only │ audited │ Dheeraj V [0m
+ [7m 1 PODS [0m  2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   [1m2026-11-06 18:21:05[0m IST
+ match .*   poll 3s  spec 20s/30s  session 18:18:28 up 2m37s   [1msort mem ▲ low first[0m
+ health [1m! pods 3/5 ready[0m  restarts 7  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 4m ░░░░░░ 1% lim  mem 1Mi ░░░░░░ 0% lim  │ workloads 4  │ events 15m ! 0 ^ 1
+ [1mPOD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)[0m
+                                             │ [1m  ACTUAL (live)   [0m │ [1m   ASSIGNED (req / limit)    [0m │ [1m     UTILISATION (used vs req / lim)      [0m
+WORKLOAD / POD / CONTAINER           RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=20s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1m►[0m [1mTIMELINE  18:18:28 -> 18:21:05 IST  (all since kdash started, z window, c hides graphs)[0m ───────────────────────────────────────────────────
+  [1mCPU used - namespace                        [0m                            [1mMEMORY used - namespace                     [0m
+      7m┤              ·               ·             ·                       1Mi┤              ·               ·             ·
+        │ ▄▄▄▄▄      ▄▄▄▄▄▄▄▄▄▄▄▄██████████          ·█▄▄▄▄▄▄▄██████            │              ·       ██      ·             ·              ██
+        │ █████▄▄▄▄▄▄██████████████████████          ·██████████████▄▄          │              ·       ██      ·             ·              ██
+      3m┤ █████████████████████████████████          ·████████████████       1Mi┤              ·       ██      ·             ·              ██
+        │ █████████████████████████████████          ·████████████████          │              ·       ██      ·             ·              ██
+        │ █████████████████████████████████          ·████████████████          │              ·       ██      ·             ·              ██
+      0m└┴─────────────┴───────────────┴─────────────┴───────────────┴       0Mi└┴─────────────┴───────────────┴─────────────┴───────────────┴
+         18:18:28                  18:19:46                   18:21:05           18:18:28                  18:19:46                   18:21:05
+  events                         ^                                        events                         ^
+  now [1m4m[0m  min 4m  avg 5m  max [1m6m[0m @ 18:20:57                               now [1m1Mi[0m  min 0Mi  avg 0Mi  max [1m1Mi[0m @ 18:21:05
+  request 65m (above)  limit 650m (above)  1% of limit                    request 36Mi (above)  limit 288Mi (above)  0% of limit
+
+[1m►[0m [1mPODS[0m ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1m► Job completed-check  (1 pod)      [0m [1m0/1[0m   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+  completed-check-m9swm              [1m0/1[0m   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.242   qos Burstable   status Succeeded
+[1m    └─ check                        [0m [1mN  [0m   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+..............................................................................................................................................
+[1m► Pod z-crash  (1 pod)              [0m [1m0/1[0m   7 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+[1m  z-crash                           [0m [1m0/1[0m   7 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.241   qos Burstable   status CrashLoopBackOff   last-[2m›
+[0;1m    └─ crash                        [0m [1mN  [0m   7 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+        waiting CrashLoopBackOff   last-exit Error
+..............................................................................................................................................
+[1m► Pod z-pending  (1 pod)            [0m [1m0/1[0m   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+[1m  z-pending                         [0m [1m0/1[0m   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+[1m    └─ pending                      [0m [1m-  [0m   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+..............................................................................................................................................
+[1m► Deployment app-server  (2 pods)   [0m 2/2   0 │      4 ·       1 · │     50    500      24     192 │   8.0   0.8 ░░░░░░░░   4.2   0.5 ░░░░░░░░
+  app-server-8fb4699bc-j6rk2         2/2   0 │      2 ·       0 · │     25    250      12      96 │   8.0   0.8 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ██______█████___  mem ░░░░░░░░░░░░░░░░  pk 1Mi    node dev   pool role:control-plane,master   ip 10.244.0.243   qos Burstable   status Running
+    ├─ app                           Y     0 │      1 ·       0 · │     20    200       8      64 │   5.0   0.5 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+    └─ sidecar                       Y     0 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+  app-server-8fb4699bc-z8kl7         2/2   0 │      2 ·       1 · │     25    250      12      96 │   8.0   0.8 ░░░░░░░░   8.3   1.0 ░░░░░░░░
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[1mTOTAL (5 pods, 4 workloads)         [0m       7 │      4 ·       1 · │     65    650      36     288 │   6.2   0.6 ░░░░░░░░   2.8   0.3 ░░░░░░░░
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+[7m colour theme: mono | ○ LIVE 18:21:05  next 1s  data 2s old  spec 20/30s  fetch 0.0s  poll 3s  AUDITED | pods | rows 1-37/40 | ? help  1-9 view  n ns  s sort(mem rev)  [0m

@@ -1,18 +1,18 @@
 # kdash DevOps user guide
 
-This guide describes the kdash 4.19.2 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
+This guide describes the kdash 4.23.1 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
 
 The current source can be installed with `git clone https://github.com/dheer629/kdash.git`,
 `cd kdash`, `sha256sum -c SHA256SUMS`, then `bash kdash-bundle.sh`.
 Run `exec bash -l` to load shell shortcuts and completion. Versioned downloads in
-[RELEASES.md](RELEASES.md) describe already published releases; committing 4.19.2 source
+[RELEASES.md](RELEASES.md) describe already published releases; committing source
 does not itself publish new release assets.
 
 ## What the recorded run actually produced
 
 The captured validation run below used 4.12.0; the later feature galleries used
 4.13.1 and 4.14.0. They remain evidence of those versions and do not validate the
-4.19.2 terminal layout or interactive browser against a live cluster.
+4.23.1 terminal layout or interactive browser against a live cluster.
 
 The following evidence table describes the exercise on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
 
@@ -27,7 +27,55 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **current 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_419/` follows this source; the other galleries support the historical observations.
+`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_423/` follows this source; the older galleries support historical observations.
+
+## Current 4.23.1 validation and visual changes
+
+<!-- CURRENT_LIVE_RESULT -->
+Run `live-e2e-20261106-v4231` records **155 passed live checks**, **17 passed browser checks** and **74 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.1 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-20261106-v4231/checks.tsv).
+<!-- END_CURRENT_LIVE_RESULT -->
+
+
+
+Current screenshots include native xterm windows captured live inside WSL on an
+isolated Xvfb display, plus separately labelled ANSI replays. They preserve actual
+local namespace names and values. The test runner uses its own kubeconfig and
+tmux socket; it does not rewrite the user's default Kubernetes context.
+
+The local cluster has one node, so this run validates displayed placement and
+capacity data without proving behavior across multiple nodes. CPU/memory comes
+from metrics-server and I/O rates from two real kubelet cAdvisor samples. Bound
+and Pending PVCs exercise storage joins; volume usage remains unknown when the
+local provisioner supplies no volume-usage metric. Prometheus-source and denied
+read behavior also have deterministic regression coverage.
+
+The current live run is named by [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt).
+Its `results.json`, `checks.tsv`, `inventory.json` and `captures.tsv` record the
+installed version, real WSL Kubernetes inventory, checks and every screen.
+[`samples/cli_423/`](samples/cli_423/README.md) contains the corresponding terminal
+renders and [`samples/html423/`](samples/html423/README.md) contains report output.
+The older five-minute exercise below remains labelled 4.12.0; the 4.19.2 galleries
+also retain their recorded version.
+
+4.23.1 adds boxed tables and reverse-video selection to namespace, pod, container,
+inspector and file screens. Titles, table borders, aligned columns and grouped key
+panels share one width-aware layout. Whole key-label pairs wrap together. ASCII
+glyph mode and monochrome/light/dark themes remain selectable.
+
+In the namespace picker, arrows or `j`/`k` move, PgUp/PgDn page, `g`/`G` jump,
+digits select a row, `/` filters and `t` accepts an unlisted name. Enter opens it;
+`d` opens it and saves this context's default in kdash.conf; `x` forgets the default;
+`r` refreshes access checks and `A` opens all namespaces. `q`/Esc cancels and `Q`
+quits. Saved defaults do not edit kubeconfig.
+
+The inspector uses framed identity/status rows and wrapped pane/read/move hints.
+In a current/previous log pane, `+` increases the requested tail fourfold and `A`
+requests all retained logs, while the byte cap still applies. This does not recover
+logs already rotated away by Kubernetes. Long lines wrap by default; `W` toggles
+wrapping. Defaults are 5,000 lines (`KDASH_LOG_TAIL`, up to 1,000,000) and 8 MiB
+(`KDASH_LOG_LIMIT_BYTES`, up to 256 MiB). `/` search, `n`/`N` match navigation, `&`
+only-matches, `L` levels, follow and deliberate `w` export remain available.
 
 ## 1. Open the correct environment
 
@@ -292,7 +340,7 @@ artifacts/wsl-validation-<run-id>/
     audit/                 audit_YYYYMM.log (+ CSV and HTML audit export)
 samples/
   cli/<namespace>/01-pods.png ... 07-alerts.png   rendered screenshots of views 1-7 (4.12.0 run)
-  cli_419/01-pods.png ... 31-upload-prompt.png    the current 4.19.2 interface: every view,
+  cli_419/01-pods.png ... 31-upload-prompt.png    the historical 4.19.2 interface: every view,
                                                   the palette, doctor, the inspector, the
                                                   help, narrow layouts and the opt-in
                                                   interactive mode, from
@@ -394,22 +442,32 @@ cluster telemetry. `exit` / Ctrl-D returns to kdash, `kdswitch` returns to relat
 pods of the same workload, and `kdquit` leaves kdash. Without Bash the `sh` fallback
 prints a one-time header and has no `kdswitch` / `kdquit` helpers.
 
-For an upload, browse local files and directories (starting in the launch directory),
-mark with Space, press `u`, select the container destination and review the summary.
-It asks before overwriting existing destination names. For a download, browse the
-container, mark items and press `d`. Review the output directory and format: ZIP,
-tar.gz or plain files. ZIP uses host `zip`, or optional `python3`; otherwise tar.gz
-is the default. Local output starts in the launch directory; `KDASH_LAUNCH_DIR`
-overrides it. `/` filters names, Enter opens directories, `h` / Backspace goes up,
-`p` accepts a path and `v` previews the first 64 KiB of a file. Marks are scoped to
-one directory. Summaries let you go back or cancel before copying.
+For an upload, browse local files and directories from the launch directory, mark
+with Space, press `u`, select the container destination and review. Preflight checks
+show required tools, source readability, destination writability, free space when
+known, and existing names. A blocked check prevents the copy. Uploads confirm
+existing destination names before overwriting.
 
-Browsed copies stream `tar` through `kubectl exec`; remote listings, previews and
-size checks also use `exec`. When the browser cannot run, kdash falls back to the
-typed-path `kubectl cp` dialog. Transfers show bytes/rate and accept `q` to cancel.
-Cancelled downloads discard the partial stream; already-uploaded files remain in
-the container. Upload verification compares `du` sizes with a filesystem tolerance,
-not hashes; archive downloads display a local SHA256 checksum.
+Downloads keep original names by default. In the review, `f` cycles plain files,
+ZIP when available, and tar.gz; `l` selects another local directory; `n` changes an
+archive name. Name conflicts offer `r` replace or `k` keep both (`name (2).ext`).
+Output starts in the launch directory unless `KDASH_LAUNCH_DIR` overrides it.
+ZIP uses optional host `zip` or `python3`. `/` filters names, Enter opens a directory,
+`h`/Backspace goes up, `p` accepts a path and `v` previews the first 64 KiB. Marks
+belong to one directory. The review lets you return or cancel before copying.
+
+Browsed copies stream `tar` through `kubectl exec`; remote listing, preview and
+verification reads also use `exec`. If browsing is unavailable, kdash offers the
+typed-path `kubectl cp` dialog. Progress shows bytes/rate and accepts `q` to cancel.
+Cancelled downloads remove temporary transfer files; already uploaded files can
+remain in the container.
+
+Results compare counts, bytes and fingerprints at source and destination. SHA-256
+is preferred, MD5 is a labelled fallback, and missing checksum tools leave a
+labelled counts/bytes check. Directory fingerprints include sorted file hashes and
+paths; symlinks compare target text. The result distinguishes verified, differing
+and unverified items. Archive downloads also show local SHA-256 and archive
+integrity checks. Size-only verification does not establish byte identity.
 
 What to expect, and what to record:
 

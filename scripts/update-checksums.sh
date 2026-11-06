@@ -15,7 +15,8 @@ shopt -s nullglob
            ENHANCEMENT_ROADMAP.md artifacts/README.md samples/README.md \
            samples/cli_413/README.md samples/cli_414/README.md \
            samples/cli_419/README.md samples/html419/README.md \
-           src/*.sh tests/*.sh scripts/*.sh scripts/*.py \
+           samples/cli_423/README.md samples/html423/README.md \
+           src/*.sh tests/*.sh scripts/*.sh scripts/*.py scripts/*.mjs \
            .editorconfig .gitattributes .gitignore .github/CODEOWNERS \
            .github/PULL_REQUEST_TEMPLATE.md .github/ISSUE_TEMPLATE/*.md \
            .github/ISSUE_TEMPLATE/*.yml .github/workflows/*.yml samples/*.png; do
@@ -25,10 +26,15 @@ shopt -s nullglob
 } > SHA256SUMS
 
 # Each published screenshot set carries its own manifest.
-for set in samples/cli_413 samples/cli_414 samples/cli_419; do
+for set in samples/cli_413 samples/cli_414 samples/cli_419 samples/cli_423; do
   [ -d "$set" ] || continue
-  ( cd "$set" && sha256sum ./*.png > SHA256SUMS )
+  ( cd "$set" && find . -type f -name '*.png' -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS )
   printf '%s/SHA256SUMS written: %s entries\n' "$set" "$(wc -l < "$set/SHA256SUMS")"
 done
+
+# Current HTML exports and browser screenshots retain their actual report bytes.
+if [ -d samples/html423 ]; then
+  ( cd samples/html423; find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS )
+fi
 
 printf 'SHA256SUMS written: %s entries\n' "$(wc -l < SHA256SUMS)"

@@ -1,0 +1,156 @@
+check	status	detail
+installed-source-identical	PASS	installed binary and repository CLI have the same SHA-256
+real-cluster-inventory	PASS	12 Kubernetes objects; pod app-server-8fb4699bc-j6rk2
+view-workloads	PASS	exit 0; 3328 bytes
+view-pods	PASS	exit 0; 4354 bytes
+view-nodes	PASS	exit 0; 6621 bytes
+view-mem	PASS	exit 0; 4766 bytes
+view-ip	PASS	exit 0; 3644 bytes
+view-services	PASS	exit 0; 5816 bytes
+view-alerts	PASS	exit 0; 3875 bytes
+view-events	PASS	exit 0; 13160 bytes
+view-storage	PASS	exit 0; 13365 bytes
+view-explain	PASS	exit 0; 8563 bytes
+tsv-pods	PASS	exit 0; 1774 bytes
+tsv-workloads	PASS	exit 0; 983 bytes
+tsv-nodes	PASS	exit 0; 1883 bytes
+tsv-mem	PASS	exit 0; 1260 bytes
+tsv-ip	PASS	exit 0; 983 bytes
+tsv-services	PASS	exit 0; 827 bytes
+tsv-storage	PASS	exit 0; 2701 bytes
+tsv-events	PASS	exit 0; 4321 bytes
+tsv-explain	PASS	exit 0; 2060 bytes
+csv-pods	PASS	exit 0; 1739 bytes
+csv-nodes	PASS	exit 0; 1863 bytes
+csv-workloads	PASS	exit 0; 952 bytes
+csv-ip	PASS	exit 0; 983 bytes
+csv-mem	PASS	exit 0; 1236 bytes
+csv-services	PASS	exit 0; 969 bytes
+csv-storage	PASS	exit 0; 3025 bytes
+csv-events	PASS	exit 0; 4859 bytes
+csv-explain	PASS	exit 0; 2222 bytes
+all-views	PASS	exit 0; 27706 bytes
+events	PASS	exit 0; 13160 bytes
+doctor	PASS	exit 0; 3809 bytes
+explain	PASS	exit 0; 5528 bytes
+inspect-summary	PASS	exit 0; 875 bytes
+inspect-logs	PASS	exit 0; 65717 bytes
+inspect-previous	PASS	exit 0; 136 bytes
+filter-label	PASS	exit 0; 2618 bytes
+filter-status	PASS	exit 0; 2615 bytes
+filter-workload	PASS	exit 0; 2620 bytes
+filter-unhealthy	PASS	exit 0; 2619 bytes
+filter-regex	PASS	exit 0; 2608 bytes
+ascii-no-color	PASS	exit 0; 3839 bytes
+flat-pods	PASS	exit 0; 3031 bytes
+no-cluster-metrics-io	PASS	exit 0; 4354 bytes
+compare	PASS	exit 0; 5120 bytes
+view-io	PASS	exit 0; 3933 bytes
+snapshot-combined	PASS	exit 0; 257 bytes
+snapshot-all	PASS	exit 0; 913 bytes
+snapshot-selection	PASS	exit 0; 389 bytes
+report-bundle	PASS	exit 0; 282 bytes
+all-namespaces	PASS	exit 0; 4382 bytes
+empty-filter	PASS	exit 3; 1230 bytes
+invalid-option	PASS	exit 2; 58 bytes
+version	PASS	exit 0; 13 bytes
+help	PASS	exit 0; 15552 bytes
+completion	PASS	exit 0; 2365 bytes
+about	PASS	exit 0; 1251 bytes
+real-data-pods	PASS	observed app-server in installed CLI output
+real-data-services	PASS	observed missing-backend in installed CLI output
+real-data-storage	PASS	observed z-unbound in installed CLI output
+capture-01-pods	PASS	PODS live requests, limits and measured usage
+capture-02-nodes	PASS	NODE POOLS real allocatable capacity and namespace share
+capture-03-workloads	PASS	WORKLOADS live replicas and placement
+capture-04-ip	PASS	IP POOL real pod, node and service addresses
+capture-05-mem	PASS	MEMORY live history and pod usage
+capture-06-io	PASS	NETWORK AND DISK IO capability and live samples
+capture-07-alerts	PASS	ALERTS real unhealthy fixture workloads
+capture-08-services	PASS	SERVICES ingress, ready endpoints and missing backend
+capture-09-storage	PASS	STORAGE bound volume and pending claim
+capture-10-events	PASS	EVENTS real Kubernetes scheduler and kubelet events
+capture-11-explain	PASS	INCIDENT EVIDENCE from actual failing workloads
+capture-12-namespace-picker	PASS	Framed namespace picker with access and persistent default controls
+capture-13-namespace-filter	PASS	Live namespace search and context-sensitive action panel
+namespace-save-default	PASS	d writes the selected namespace into the isolated user's context mapping
+capture-67-namespace-saved-default	PASS	A subsequent launch opens the namespace saved with d
+namespace-default-next-launch	PASS	new process with no -n selected the persisted namespace
+namespace-clear-default	PASS	x removes the saved mapping without changing other settings
+capture-68-namespace-typed	PASS	t opens an explicitly typed namespace
+namespace-typed-name	PASS	typed namespace opened the real workload
+capture-14-pod-picker	PASS	Framed live pod picker with CPU, memory, restarts and attention state
+capture-15-pod-picker-help	PASS	Pod picker navigation, filters and action keys
+capture-16-container-picker	PASS	Framed multi-container picker with resource/state columns
+capture-17-inspector-summary	PASS	Inspector summary of a real running pod
+capture-18-inspector-logs	PASS	Bounded timestamped logs from the live app container
+capture-62-inspector-expand	PASS	Expanded bounded log read from the live container
+capture-63-inspector-all	PASS	All available live container logs within the byte cap
+capture-64-inspector-nowrap	PASS	Unwrapped logs with horizontal navigation
+capture-65-inspector-json	PASS	Readable JSON log formatting enabled
+capture-66-inspector-follow	PASS	Live follow periodically refreshes actual container logs
+capture-19-inspector-find	PASS	Log search highlighting with context retained
+capture-20-inspector-only-matches	PASS	Only matching warning lines from real logs
+capture-21-inspector-help	PASS	Inspector help for log filtering and export
+capture-22-inspector-export	PASS	Visible log pane exported locally
+capture-32-command-palette	PASS	Fixed-command palette
+capture-33-doctor	PASS	Live connection, TLS, RBAC and metrics checks
+capture-34-pod-filter	PASS	Dashboard pod regular expression applied
+capture-35-structured-filters	PASS	Atomic label, status, node, workload and unhealthy filters
+capture-36-detail-lines	PASS	Toggle container detail lines
+capture-37-pods-only	PASS	Pod totals without container rows
+capture-38-sort-order	PASS	Sort key and reverse direction
+capture-39-paused-interval	PASS	Paused collection and changed polling interval
+capture-40-theme-dark	PASS	Dark colour theme
+capture-41-theme-light	PASS	Light colour theme
+capture-42-theme-mono	PASS	Monochrome colour theme
+capture-43-node-scale	PASS	Node scope and true-scale resource bars
+capture-44-history-window	PASS	Memory history with changed chart window
+capture-45-html-menu	PASS	Local HTML report selection menu
+capture-46-html-report-written	PASS	All-tabs report generated from live session
+capture-47-dashboard-help	PASS	Dashboard navigation and interactive controls
+capture-48-session-summary	PASS	Completed live session and retained history
+capture-23-interactive-blocked	PASS	Shell refused while interactive mode is disabled
+capture-24-interactive-confirmation	PASS	Explicit interactive-mode confirmation
+capture-25-shell-picker	PASS	Shell-mode pod picker and action panel
+capture-26-shell-inside	PASS	Actual shell inside the live app container
+capture-27-upload-browser	PASS	Local framed file browser with enabled upload actions
+capture-28-upload-destination	PASS	Remote destination browser before any transfer
+capture-29-upload-review	PASS	Upload preflight checks and explicit review
+capture-30-upload-result	PASS	Real upload result with source and destination hashes
+upload-roundtrip-bytes	PASS	uploaded file read independently through kubectl exec and compared byte for byte
+capture-70-directory-upload-review	PASS	Directory upload preflight and recursive checksum checks
+capture-71-directory-upload-result	PASS	Actual directory upload with recursive fingerprints
+directory-upload-bytes	PASS	independent kubectl read confirms the uploaded nested file bytes
+capture-31-download-browser	PASS	Remote framed file browser with selection and preview keys
+capture-49-download-review	PASS	Download preflight, selected format and name conflict checks
+capture-50-download-result	PASS	Real download result and per-item hash verification
+download-default-plain-replace	PASS	default plain-file download replaced the existing local file after explicit r
+capture-55-download-keep-review	PASS	Download preflight, selected format and name conflict checks
+capture-56-download-keep-result	PASS	Real download result and per-item hash verification
+download-keep-both	PASS	explicit k preserved the old file and created upload (2).txt with real container bytes
+capture-57-directory-download-review	PASS	Download preflight, selected format and name conflict checks
+capture-58-directory-download-result	PASS	Real download result and per-item hash verification
+directory-download-replace	PASS	directory replacement restored nested file bytes from the real container
+capture-59-download-zip-review	PASS	Download preflight, selected format and name conflict checks
+capture-60-download-zip-result	PASS	Real download result and per-item hash verification
+capture-61-download-tgz-review	PASS	Download preflight, selected format and name conflict checks
+capture-69-download-tgz-result	PASS	Real download result and per-item hash verification
+download-zip-bytes	PASS	ZIP archive opened independently; nested file matches uploaded source bytes
+download-tgz-bytes	PASS	tar.gz archive opened independently; nested file matches uploaded source bytes
+capture-51-pods-100col	PASS	PODS at 100 columns
+capture-52-picker-100col	PASS	Framed pod picker at 100 columns
+capture-53-namespace-100col	PASS	Namespace picker and action panel at 100 columns
+capture-51-pods-80col	PASS	PODS at 80 columns
+capture-52-picker-80col	PASS	Framed pod picker at 80 columns
+capture-53-namespace-80col	PASS	Namespace picker and action panel at 80 columns
+capture-54-ascii-picker	PASS	ASCII framed picker with colour disabled
+session-report	PASS	exit 0; 287 bytes
+audit-events	PASS	exit 0; 18626 bytes
+audit-grep	PASS	exit 0; 2679 bytes
+audit-verify	PASS	exit 0; 110 bytes
+audit-export	PASS	exit 0; 218 bytes
+export-artifacts	PASS	14 HTML reports, 16 CSV files, 257 TSV files
+inspector-export-artifact	PASS	visible inspector log pane saved locally
+html-real-data	PASS	combined HTML contains the actual healthy and crashing fixture pod names
+screenshots-rendered	PASS	74 PNGs faithfully rendered from live tmux ANSI captures

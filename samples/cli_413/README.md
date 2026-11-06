@@ -1,5 +1,10 @@
 # kdash 4.13.1 screenshots
 
+Historical capture set. For the current **4.23.1** interface and live validation,
+see the [terminal gallery](../cli_423/README.md), [HTML reports](../html423/README.md)
+and [evidence index](../../artifacts/README.md). This set retains its original
+version, values and capture method.
+
 22 saved live screens from **kdash 4.13.1** (`~/.local/bin/kdash`, built from commit
 `6a3b2f7`) running against a local WSL vcluster (namespace `default`, 5 s poll).
 
@@ -7,12 +12,12 @@ The names are placeholders, as in the rest of `samples/`: the context is shown a
 `devops-admin@local-cluster`, the personal paths as `/home/demo`, the host as `node`,
 and the other tenants of that shared development cluster as `ml-service-prod`,
 `ml-service-dev` and `gitops-core`. The captures were rewritten with
-[`scripts/redact-run.sh`](../redact-run.sh) using a private mapping that is not in this
+[`scripts/redact-run.sh`](../../scripts/redact-run.sh) using a private mapping that is not in this
 repository, and the images were re-rendered afterwards so text and pixels agree.
 
 Nothing here is drawn or retyped: each screen was captured with
 `tmux capture-pane -e -p` while the dashboard was live and then rendered cell by cell
-with [`scripts/capture-terminal.py`](../capture-terminal.py) (pyte + Pillow). The raw
+with [`scripts/capture-terminal.py`](../../scripts/capture-terminal.py) (pyte + Pillow). The raw
 captures - `.ansi` with colours and `.txt` as plain text - are published next to the
 manifest in
 [`artifacts/feature-screens-20261029-151233/`](../../artifacts/feature-screens-20261029-151233).

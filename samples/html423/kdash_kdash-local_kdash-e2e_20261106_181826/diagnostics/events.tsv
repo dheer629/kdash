@@ -1,0 +1,36 @@
+NS	KIND	NAME	UID	TYPE	REASON	COUNT	FIRST	LAST	MESSAGE
+kdash-e2e	PersistentVolumeClaim	z-unbound	adcffa9f-14a0-4e3c-a42f-26b384e88ff5	Warning	ProvisioningFailed	42	2026-11-06T12:38:07Z	2026-11-06T12:48:18Z	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
+kdash-e2e	Pod	z-crash	6a92c6fd-0be6-46c1-8aca-3ba913153f9e	Warning	BackOff	45	2026-11-06T12:38:16Z	2026-11-06T12:48:09Z	Back-off restarting failed container crash in pod z-crash_kdash-e2e(6a92c6fd-0be6-46c1-8aca-3ba913153f9e)
+kdash-e2e	Pod	z-crash	6a92c6fd-0be6-46c1-8aca-3ba913153f9e	Normal	Created	5	2026-11-06T12:38:08Z	2026-11-06T12:39:40Z	Created container crash
+kdash-e2e	Pod	z-crash	6a92c6fd-0be6-46c1-8aca-3ba913153f9e	Normal	Pulled	5	2026-11-06T12:38:08Z	2026-11-06T12:39:40Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	z-crash	6a92c6fd-0be6-46c1-8aca-3ba913153f9e	Normal	Started	5	2026-11-06T12:38:09Z	2026-11-06T12:39:40Z	Started container crash
+kdash-e2e	Pod	z-pending	497fbdc8-4a5b-4da4-9c76-bec7976cd910	Warning	FailedScheduling	2	2026-11-06T12:38:18.833273Z	2026-11-06T12:38:21.377343Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Normal	Created	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Created container app
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Normal	Created	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Created container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Normal	Pulled	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Normal	Pulled	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Normal	Started	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Started container app
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Normal	Started	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Started container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Normal	Created	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Created container app
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Normal	Created	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Created container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Normal	Pulled	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Normal	Pulled	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Normal	Started	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Started container app
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Normal	Started	1	2026-11-06T12:38:19Z	2026-11-06T12:38:19Z	Started container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Normal	Scheduled	1	2026-11-06T12:38:18.839133Z	2026-11-06T12:38:18.839133Z	Successfully assigned kdash-e2e/app-server-8fb4699bc-z8kl7 to dev
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Normal	Scheduled	1	2026-11-06T12:38:18.837917Z	2026-11-06T12:38:18.837917Z	Successfully assigned kdash-e2e/app-server-8fb4699bc-j6rk2 to dev
+kdash-e2e	Job	completed-check	ef3e1a26-f004-4b99-b9f4-06bc1134d344	Normal	Completed	1	2026-11-06T12:38:11Z	2026-11-06T12:38:11Z	Job completed
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Warning	FailedScheduling	1	2026-11-06T12:38:09.370376Z	2026-11-06T12:38:09.370376Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Warning	FailedScheduling	1	2026-11-06T12:38:09.370328Z	2026-11-06T12:38:09.370328Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Pod	completed-check-m9swm	13224c1b-94dd-49c5-9d78-f78d4df5669d	Normal	Created	1	2026-11-06T12:38:09Z	2026-11-06T12:38:09Z	Created container check
+kdash-e2e	Pod	completed-check-m9swm	13224c1b-94dd-49c5-9d78-f78d4df5669d	Normal	Pulled	1	2026-11-06T12:38:09Z	2026-11-06T12:38:09Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	completed-check-m9swm	13224c1b-94dd-49c5-9d78-f78d4df5669d	Normal	Started	1	2026-11-06T12:38:09Z	2026-11-06T12:38:09Z	Started container check
+kdash-e2e	Pod	completed-check-m9swm	13224c1b-94dd-49c5-9d78-f78d4df5669d	Normal	Scheduled	1	2026-11-06T12:38:07.964883Z	2026-11-06T12:38:07.964883Z	Successfully assigned kdash-e2e/completed-check-m9swm to dev
+kdash-e2e	Pod	z-pending	497fbdc8-4a5b-4da4-9c76-bec7976cd910	Warning	FailedScheduling	1	2026-11-06T12:38:07.944132Z	2026-11-06T12:38:07.944132Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Pod	z-crash	6a92c6fd-0be6-46c1-8aca-3ba913153f9e	Normal	Scheduled	1	2026-11-06T12:38:07.931820Z	2026-11-06T12:38:07.931820Z	Successfully assigned kdash-e2e/z-crash to dev
+kdash-e2e	Pod	app-server-8fb4699bc-z8kl7	4e3ed165-e95f-409d-bd26-68bea205e6f5	Warning	FailedScheduling	1	2026-11-06T12:38:07.873226Z	2026-11-06T12:38:07.873226Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Pod	app-server-8fb4699bc-j6rk2	6460b617-6de3-411e-8fab-cf1916733480	Warning	FailedScheduling	1	2026-11-06T12:38:07.864542Z	2026-11-06T12:38:07.864542Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Deployment	app-server	828e9990-4aaa-418c-b9ac-19e9a092aa62	Normal	ScalingReplicaSet	1	2026-11-06T12:38:07Z	2026-11-06T12:38:07Z	Scaled up replica set app-server-8fb4699bc to 2
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulCreate	1	2026-11-06T12:38:07Z	2026-11-06T12:38:07Z	Created pod: app-server-8fb4699bc-j6rk2
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulCreate	1	2026-11-06T12:38:07Z	2026-11-06T12:38:07Z	Created pod: app-server-8fb4699bc-z8kl7
+kdash-e2e	Job	completed-check	ef3e1a26-f004-4b99-b9f4-06bc1134d344	Normal	SuccessfulCreate	1	2026-11-06T12:38:07Z	2026-11-06T12:38:07Z	Created pod: completed-check-m9swm

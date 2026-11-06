@@ -178,6 +178,11 @@ fetch_adopt() {
     [ "$FETCH_FAILURES" = 0 ] || delay=$(( 2 ** (FETCH_FAILURES > 5 ? 5 : FETCH_FAILURES) ))
     FETCH_NEXT=$(( $(date +%s) + ${delay%.*} ))
     build_model; session_tick; FETCH_AT=$(date +%s)
+    NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv" 2>/dev/null)
+    # the first answer from the API decides the "no pods" hint (the start screen has none yet)
+    if [ "${NOPODS_CHECK:-0}" = 1 ] && [ "$SPEC_OK" = 1 ]; then NOPODS_CHECK=0
+      [ "${NPODS:-0}" -gt 0 ] || { declare -F flash >/dev/null && flash "no pods match \"$FILTER\" in $NS - n picks another namespace, / changes the filter" 15; }
+    fi
 }
 
 fetch() {
@@ -273,6 +278,16 @@ toolkit_filters_changed() {
         NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv" 2>/dev/null)
         declare -F flash >/dev/null && flash "filters: $(filter_desc) - ${NPODS:-0} pod(s)" 6
     fi
+}
+
+toolkit_once() { # view [renderer arguments]; structured output keeps table schemas
+    local view="$1" TK_FORMAT="${OUTFMT:-text}"
+    shift
+    export TK_FORMAT
+    case "$view" in
+        services) health_render_services "$@" ;; storage) health_render_storage "$@" ;;
+        events) events_render "$@" ;; explain) explain_render "$@" ;;
+    esac
 }
 
 toolkit_export() {

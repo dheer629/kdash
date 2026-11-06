@@ -47,3 +47,7 @@ LICENSE          text eol=lf
 # Evidence and images are byte-exact: never normalise them.
 *.ansi           -text
 *.png            -text
+*.log            -text
+*.env            -text
+*.epoch          -text
+*.iso            -text

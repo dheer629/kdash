@@ -1,7 +1,11 @@
-# kdash 4.19.2 screenshots - the current interface
+# kdash 4.19.2 screenshots - historical interface
 
-55 saved live screens from **kdash 4.19.2** (`~/.local/bin/kdash`, the same file as
-`kdash` in this repository) running against a local WSL vcluster (namespace
+Historical capture set. For the current **4.23.1** interface and live validation,
+see the [terminal gallery](../cli_423/README.md), [HTML reports](../html423/README.md)
+and [evidence index](../../artifacts/README.md). This set retains its original
+version, values and capture method.
+
+55 saved live screens from **kdash 4.19.2** (the installed file used in that historical run) running against a local WSL vcluster (namespace
 `default`, 5 s poll, 170x50 and 100x40 terminals): screens `01`-`31` show the
 interface itself, `32`-`55` show what you can do with it - the dashboard controls,
 the exports and the one-shot modes.
@@ -10,19 +14,19 @@ The names are placeholders, as in the rest of `samples/`: the context is shown a
 `devops-admin@local-cluster`, the personal paths as `/home/demo`, the host as
 `node`, the operator as `demo`, and the other tenants of that shared development
 cluster as `ml-service-prod`, `ml-service-dev` and `gitops-core`. The captures were
-rewritten with [`scripts/redact-run.sh`](../redact-run.sh) using a private mapping
+rewritten with [`scripts/redact-run.sh`](../../scripts/redact-run.sh) using a private mapping
 that is not in this repository, and the images were re-rendered afterwards so text
 and pixels agree.
 
 Nothing here is drawn or retyped: each screen was captured with
 `tmux capture-pane -e -p` while the dashboard was live and then rendered cell by
-cell with [`scripts/capture-terminal.py`](../capture-terminal.py) (pyte + Pillow).
+cell with [`scripts/capture-terminal.py`](../../scripts/capture-terminal.py) (pyte + Pillow).
 The raw captures - `.ansi` with colours and `.txt` as plain text - are published
 next to the manifest in
 [`artifacts/view-screens-20261031-051739/`](../../artifacts/view-screens-20261031-051739),
 which
-[`scripts/capture-view-screens.sh`](../capture-view-screens.sh) produced and
-[`scripts/render-captures.ps1`](../render-captures.ps1) rendered into this folder.
+[`scripts/capture-view-screens.sh`](../../scripts/capture-view-screens.sh) produced and
+[`scripts/render-captures.ps1`](../../scripts/render-captures.ps1) rendered into this folder.
 
 | File | Screen |
 |---|---|
@@ -67,7 +71,7 @@ held 1152 lines of which 823 matched `INFO`, and the namespace really holds thre
 
 The second run behind these screens
 ([`artifacts/operation-screens-20261031-062953/`](../../artifacts/operation-screens-20261031-062953),
-produced by [`scripts/capture-operation-screens.sh`](../capture-operation-screens.sh))
+produced by [`scripts/capture-operation-screens.sh`](../../scripts/capture-operation-screens.sh))
 captured each control and each mode while it ran, and then checked the files it
 produced - the run's `README.txt` lists them.
 

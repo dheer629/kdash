@@ -5,11 +5,51 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.23.1] - 2026-11-06
+
+### Added
+- Shared boxed-table primitives: Unicode/ASCII borders, aligned columns, selected
+  rows, status chips, progress bars and width-aware key panels across namespace,
+  pod, container, inspector and file screens.
+- Namespace picker navigation, filtering, typed unlisted names and access refresh;
+  `d` saves a default per context and `x` removes it from kdash.conf.
+- Inspector framed identity/status summary, wrapped key hints, fourfold log-tail
+  expansion with `+` and all-retained-log requests with `A`, both byte-bounded;
+  long-line wrapping with `W`, a 5,000-line/8 MiB default and configurable caps.
+- Transfer preflight checks for tools, readability, destination writability,
+  space and conflicts; per-item source/destination verification using SHA-256,
+  labelled MD5 fallback or labelled counts/bytes-only checks.
+- Download conflict choices (replace/keep both), boxed transfer reviews/results
+  and archive integrity reporting.
+- Current live WSL e2e harness and version-labelled terminal/report galleries;
+  evidence is indexed by `artifacts/latest-e2e.txt`.
+
+### Changed
+- Plain files with original names are the download default. ZIP and tar.gz remain
+  selectable in the review screen; local archive creation tools are optional.
+- Imported the supplied bundle into the standalone CLI and all five source
+  modules; the build check verifies byte-identical embedded payloads.
+- Refreshed all README files and operating/release documentation, retaining
+  earlier screenshots and versioned downloads under their original versions.
+
+### Fixed
+- Saved namespace defaults are safely shell-quoted, apply before kubeconfig
+  defaults, and yield to explicit `-n` / `-A` selections.
+- Unicode frame junctions and clipping retain valid UTF-8 in both C and UTF-8
+  locales, including narrow terminals and monochrome mode.
+- Transfer fingerprints include nested symlinks and empty directories. Copy
+  mismatches return failure and are audited; corrupt archives never replace an
+  existing destination.
+- Diagnostic `-o csv` / `-o tsv` now emits structured tables rather than framed
+  text. I/O source detection retries when the initial node inventory arrives.
+- Printed investigation commands retain the selected context and kubeconfig.
+- Installer reruns preserve their managed shortcuts and explain login-shell/PATH
+  activation without claiming commands are already available in the caller.
+
 ## [4.19.2] - Unreleased
 
-This is the current source version. A source commit does not publish a GitHub
-Release or its download assets; the published 4.14.0 and older releases remain
-available separately.
+This historical source revision was not published as a separate release.
+Its screenshots and captures remain available; 4.23.1 supersedes its interface.
 
 ### Added
 - `kdx` (`kdash -X`) and `kdsh [FILTER]` (`kdash -X --shell-picker`) commands beside

@@ -1,5 +1,10 @@
 # kdash 4.14.0 attachments - screenshots
 
+Historical capture set. For the current **4.23.1** interface and live validation,
+see the [terminal gallery](../cli_423/README.md), [HTML reports](../html423/README.md)
+and [evidence index](../../artifacts/README.md). This set retains its original
+version, values and capture method.
+
 Seven saved live screens of the opt-in shell and file copy, taken against a local WSL
 vcluster (namespace `default`) with **kdash 4.14.0**:
 
@@ -14,12 +19,12 @@ vcluster (namespace `default`) with **kdash 4.14.0**:
 | `12-upload-prompt.png` | `U`: the upload prompt (local file, then remote path) |
 
 Same method as every other set in `samples/`: `tmux capture-pane -e -p` while live,
-replayed cell by cell with [`scripts/capture-terminal.py`](../capture-terminal.py), never
+replayed cell by cell with [`scripts/capture-terminal.py`](../../scripts/capture-terminal.py), never
 drawn by hand. The raw captures are in
 [`artifacts/feature-screens-20261029-161848-attach`](../../artifacts/feature-screens-20261029-161848-attach),
 and the names are placeholders (context `devops-admin@local-cluster`, paths
 `/home/demo`, tenants `ml-service-prod` / `ml-service-dev` / `gitops-core`), rewritten
-with [`scripts/redact-run.sh`](../redact-run.sh) before rendering.
+with [`scripts/redact-run.sh`](../../scripts/redact-run.sh) before rendering.
 
 What the audit log of that session recorded (the evidence behind the images):
 

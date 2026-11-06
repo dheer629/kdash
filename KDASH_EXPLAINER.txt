@@ -1,4 +1,4 @@
-KDASH 4.19.2 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
+KDASH 4.23.1 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
 =========================================================================
 
 WHAT THIS FILE IS
@@ -8,9 +8,11 @@ exercise in this repository produced. It explains what every view answers, how t
 read the numbers without over-claiming, where the proof of each statement lives,
 and which limitations must be stated whenever this output is shared. It is
 deliberately plain text: it can be read in the same terminal as the dashboard.
-The source version is now 4.19.2. The detailed exercise below used 4.12.0, and
-later feature captures used 4.13.1 / 4.14.0. Those captures retain their original
-versions; they are not live-cluster validation of 4.19.2 or its new screens.
+The source version is now 4.23.1. Current WSL validation is indexed by
+artifacts/latest-e2e.txt, with the live screen manifest, results and cluster
+inventory in that run. Current screens are in samples/cli_423/ and report samples
+in samples/html423/. The detailed historical exercise below used 4.12.0; the
+4.13.1, 4.14.0 and 4.19.2 galleries retain their original versions.
 
 CURRENT SOURCE: INSTALL AND NAVIGATE
 ------------------------------------
@@ -19,11 +21,11 @@ CURRENT SOURCE: INSTALL AND NAVIGATE
   sha256sum -c SHA256SUMS
   bash kdash-bundle.sh
   exec bash -l
-  kdash --version                         # kdash 4.19.2
+  kdash --version                         # kdash 4.23.1
 
 The bundle installs without a build or a cluster connection. Published historical
 releases and the separate release-publishing workflow are described in RELEASES.md;
-committing this source does not itself publish a 4.19.2 Release or download assets.
+committing source alone does not publish a Release; see the versioned download links.
 
 The current CLI has nine resource views: 1 Pods, 2 Node Pools, 3 Workloads, 4 IP,
 5 Memory, 6 Network/Disk IO, 7 Alerts, 8 Services and 9 Storage. E opens Kubernetes
@@ -59,25 +61,43 @@ related pods of the same workload, and kdquit leaves kdash. The sh fallback prin
 connection information once and has no Bash helpers. Q quits from kdash navigation
 screens; use exit or kdquit inside a container shell.
 
-U and D open local/container file browsers. Mark files or directories with Space,
-use u (upload) or d (download), then review and confirm. / filters, Enter opens a
-directory, h/Backspace goes up, p takes a path and v previews the first 64 KiB.
-Marks belong to one directory. Uploads select a destination and confirm existing
-names before overwrite; downloads offer ZIP, tar.gz or plain files. They start in
-the launch directory, overridden by KDASH_LAUNCH_DIR. ZIP uses zip or optional
-python3 on the host; otherwise tar.gz is the default. Browser copies stream tar
-through kubectl exec; the typed-path kubectl cp flow is a fallback if browsing is
-unavailable. The container needs tar, and browsing also needs sh.
+Namespace selection now uses a framed table with a reverse-video selected row
+and grouped key hints. j/k or arrows move, PgUp/PgDn page, g/G jump, digits go to
+a row, / filters and t accepts an unlisted name. Enter opens, d opens and saves
+the namespace as this context's default in kdash.conf, x clears that default,
+r rechecks access and A opens all namespaces. q/Esc cancels; Q quits. The saved
+mapping belongs to kdash and does not change kubeconfig.
 
-Transfers show progress; q cancels. A partial download stream is removed, while
-files already uploaded remain in the container. Upload verification compares du
-sizes with a filesystem tolerance, not hashes; an archive download displays its
-local SHA256. Shell output and copied content stay outside the automatic model,
-reports, evidence bundles and session history. Remote browser listings/previews
-and size checks use exec and count as writes in the guard, even when they only
-read. Read-request and command timeouts do not cap interactive exec/cp streams.
-X switches record INTERACTIVE_ON/OFF; EXEC/EXEC_END and CP_UP/CP_DOWN/CP_END record
-attachments, and a transfer summary cancellation records CP_CANCEL.
+Pod, container, inspector and file screens also use frames, aligned columns,
+selected rows and key panels fitted to the terminal. ASCII glyph mode and themes
+remain available. Inspector key-label pairs wrap together; + increases the log
+tail fourfold and A requests all retained logs, still bounded by the byte cap.
+Long log lines wrap by default (W toggles). Defaults are 5,000 lines via
+KDASH_LOG_TAIL (up to 1,000,000) and 8 MiB via KDASH_LOG_LIMIT_BYTES (up to 256 MiB).
+
+U and D open local/container file browsers. Mark with Space, use u or d, and
+review the route, selected items, tools, permissions, free space and name conflicts
+before copying. / filters, Enter opens a directory, h/Backspace goes up, p takes
+a path and v previews the first 64 KiB. Changing directories clears the marks.
+Downloads keep original names by default; f selects plain files, optional ZIP or
+tar.gz, l changes the local folder and n renames an archive. Existing local names
+offer replace or keep both (name (2).ext). ZIP needs host zip or optional python3.
+Output starts in the launch directory unless KDASH_LAUNCH_DIR overrides it.
+
+Copies stream tar through kubectl exec; typed-path kubectl cp is the fallback.
+The container needs tar, and browsing also needs sh. Progress includes bytes/rate
+and q cancels. Temporary downloads are removed; uploaded files can remain.
+Verification compares counts, bytes and fingerprints: SHA-256 preferred, labelled
+MD5 fallback, or explicitly size-only when checksum tools are missing. Directory
+fingerprints include sorted file hashes and paths; symlinks compare target text.
+Result screens distinguish verified, differing and unverified items. Archive
+downloads additionally show their local hash and archive integrity check.
+
+Shell output and copied contents stay outside automatic reports, model and
+history. Remote listing/preview/verification also use exec and count as writes.
+Interactive streams have no read-request or read-command timeout. Mode switches
+record INTERACTIVE_ON/OFF; EXEC/EXEC_END and CP_UP/CP_DOWN/CP_END record actions;
+cancelling in the review records CP_CANCEL.
 
 The installer preserves user aliases and occupied shortcut names. A kdash alias
 can still take precedence; command kdash reaches the installed CLI. kdx/kdsh
@@ -135,8 +155,8 @@ for both the installed copy and the repository file.
 artifacts/   the run itself: step logs, per-namespace live terminal capture, the
              recorded session, the reports and the audit log, plus run-metadata.json,
              controller-actions.json and RUN_INVENTORY.md
-samples/     the shareable result: rendered screenshots of the current 4.19.2
-             interface and of what it does (samples/cli_419/, 55 screens), the
+samples/     the shareable result: current 4.23.1 screens in samples/cli_423/
+             and reports in samples/html423/; historical 4.19.2 screens and the
              views of the 4.12.0 run and the 4.13.1 views and inspector
              (samples/cli_413/), the 4.19.2 HTML reports (samples/html419/) and
              the older HTML reports with checksums (samples/html/)
@@ -258,7 +278,7 @@ capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
   * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
     screen at one moment, including colours and the pinned header/footer. It is
     viewport evidence: a long table continues below the visible 50 rows.
-  * The rendered PNG screenshots in samples/cli_419/ (the current 4.19.2 interface),
+  * The rendered PNG screenshots in samples/cli_423/ (the current 4.23.1 interface),
     samples/cli/ (4.12.0 run) and samples/cli_413/ (4.13.1: services, storage, events,
     explanations, doctor, inspector) replay those captures cell by cell. They are a
     faithful render of the captured screen, and each image states its namespace, view
@@ -370,7 +390,7 @@ Two practical findings are baked into it:
     its own. Without that, captures come back with a status line and the wrong height.
 12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
 --------------------------------------------------
-Current behavior (4.19.2, including the diagnostic features added in 4.13.0):
+Current behavior (4.23.1, including the diagnostic features added in 4.13.0):
   * the all-namespaces route (-A) is fixed: the flag now follows the resource
     (get pods --all-namespaces). Version 4.12.0 had an argument-order defect there;
     on that version use an explicit -n NAME. Never read a failed -A as "the

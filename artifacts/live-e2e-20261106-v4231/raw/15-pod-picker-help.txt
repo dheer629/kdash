@@ -1,0 +1,50 @@
+ KDASH │ SELECT POD │ KEYS │ context kdash-local │ namespace kdash-e2e                                                                                    any key returns
+
+  MOVE        j / k / arrows     one row          PgDn / PgUp / space / b   one page
+              g / G / Home / End first / last     12 (digits)  jump to row 12 of the list
+  FIND        /                  type to filter: every word must match the pod name,
+                                 status or node (e.g. "/fileserver3 failed")
+              Esc                clear the filter    u  only pods that need attention
+              s                  sort: name, status (worst first), restarts, cpu, mem, mem% of limit
+              F                  structured filters (label / status / node / workload)
+  ACT ON THE  Enter / i          summary          l  current logs      p  previous logs
+  SELECTED    d                  describe         e  events            w  why (event hypotheses)
+  POD         c                  pick a container first, then inspect
+              S / U / D          shell / upload / download (interactive mode)
+              X                  interactive mode on / off (asks first; also: kdx, kdash -X)
+  OTHER       r                  re-read now (the list also refreshes every poll)
+              q                  back to the dashboard     Q  quit kdash (from any screen)
+
+  Colours: green running and ready, magenta pending / starting / terminating,
+  red failing / not ready / >= 90% of memory limit, grey completed.
+  "needs attention" = failing, pending or restarted pods.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

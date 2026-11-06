@@ -42,35 +42,55 @@ END {
   print ""; print t
   if (nr == 0) { print "  " K("90", empty != "" ? empty : "none"); exit }
   for (i = 1; i < nc; i++) if (WD[i] > 56) WD[i] = 56
+  # framed: │ c1 │ c2 │ ... │  -> 1 + sum(width + 3) characters
   if (W > 0) {
-    tot = 2; for (i = 1; i <= nc; i++) tot += WD[i] + (i > 1 ? 2 : 0)
-    # the last column (long free text) gives way first, then the widest middle
-    # column, and the first column (the object name) last of all
+    tot = 1; for (i = 1; i <= nc; i++) tot += WD[i] + 3
     while (tot > W && WD[nc] > 24) { WD[nc]--; tot-- }
     while (tot > W) { m = 0; for (i = 2; i < nc; i++) if (!ST[i] && !RA[i] && WD[i] > 20 && (m == 0 || WD[i] > WD[m])) m = i
       if (m == 0) break; WD[m]--; tot-- }
     while (tot > W && WD[1] > 40) { WD[1]--; tot-- }      # beyond this, h / l pans
-    if (tot > W) { WD[nc] -= tot - W; if (WD[nc] < 12) WD[nc] = 12 }
   }
-  h = "  "; for (i = 1; i <= nc; i++) h = h (i > 1 ? "  " : "") pad(cut(H[i], WD[i]), (i < nc || TKC) ? WD[i] : 0, RA[i])
-  if (TKC) print K("1;4", h)
-  else { print h; r = "  "; for (i = 1; i <= nc; i++) { r = r (i > 1 ? "  " : ""); lw = (i < nc) ? WD[i] : (WD[i] > 40 ? 40 : WD[i]); for (j = 0; j < lw; j++) r = r "-" } print r }
-  for (n = 1; n <= nr; n++) { line = "  "
+  if (ENVIRON["TK_GLYPH"] == "ascii") { BTL = BTR = BBL = BBR = BLT = BRT = BTT = BBT = BX = "+"; BH = "-"; BV = "|" }
+  else { BTL = "\342\224\214"; BTR = "\342\224\220"; BBL = "\342\224\224"; BBR = "\342\224\230"; BLT = "\342\224\234"; BRT = "\342\224\244"
+         BTT = "\342\224\254"; BBT = "\342\224\264"; BX = "\342\224\274"; BH = "\342\224\200"; BV = "\342\224\202" }
+  print K("90", hline(BTL, BTT, BTR))
+  h = K("90", BV); for (i = 1; i <= nc; i++) h = h " " K("1", pad(cut(H[i], WD[i]), WD[i], RA[i])) " " K("90", BV)
+  print h
+  print K("90", hline(BLT, BX, BRT))
+  for (n = 1; n <= nr; n++) { line = K("90", BV)
     for (i = 1; i <= nc; i++) { v = cut(CE[n, i], WD[i]); c = occ(CL[n, i])
       if (ST[i] && c == "") { c = sev(substr(CE[n, i], length(DOT) + 2)) }
       if (c == "" && DM[i]) c = "90"
-      line = line (i > 1 ? "  " : "") K(c, pad(v, i < nc ? WD[i] : 0, RA[i])) }
-    sub(/ +$/, "", line); print line }
-}'
+      line = line " " K(c, pad(v, WD[i], RA[i])) " " K("90", BV) }
+    print line }
+  print K("90", hline(BBL, BBT, BBR))
+}
+function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
+'
 tk_table() { # title [subtitle] [empty-message] [one many] < TSV (header line first)
+  if [ "${TK_FORMAT:-text}" != text ]; then
+    printf '# %s\n' "$1"
+    LC_ALL=C awk -F'\t' -v fmt="$TK_FORMAT" '
+      { out=""; for (i=1; i<=NF; i++) {
+          v=$i
+          if (NR==1) { sub(/^>/,"",v); sub(/[*~]$/,"",v) }
+          else sub(/^\{[rygbd]\}/,"",v)
+          if (fmt=="csv") { gsub(/"/,"\"\"",v); v="\"" v "\"" }
+          out=out (i>1 ? (fmt=="csv" ? "," : "\t") : "") v
+        } print out }
+    '
+    return
+  fi
   LC_ALL=C awk -v title="$1" -v sub_="${2:-}" -v empty="${3:-}" -v one="${4:-item}" -v many="${5:-items}" -v count="${TK_COUNT:-1}" "$TK_TABLE_AWK"
 }
 tk_by_severity() { LC_ALL=C awk -F'\t' '{ r = ($1 ~ /CRIT/) ? 1 : ($1 ~ /WARN/) ? 2 : 3; print r "\t" $0 }' | LC_ALL=C sort -t $'\t' -k1,1n -k3,3 | cut -f2-; }
 tk_colorize() { sed 's/~\[\([0-9;]*\)m/\x1b[\1m/g'; }
 tk_note() { # dim footnote line
+  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '  ~[90m%s~[0m\n' "$*"; else printf '  %s\n' "$*"; fi
 }
 tk_title() { # view title + subtitle, then a blank line
+  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1;7m %s ~[0m  ~[90m%s~[0m\n' "$1" "$2"; else printf '%s  -  %s\n' "$1" "$2"; fi
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
@@ -112,6 +132,16 @@ events_scope_key() {
 events_text() {
     # Prevent object/event strings from injecting terminal controls or rows.
     LC_ALL=C awk 'BEGIN { ORS = "" } { gsub(/[[:cntrl:]]/, " "); if (NR > 1) printf " "; printf "%s", $0 }'
+}
+
+events_kubectl_prefix() {    # "kubectl --context X [--kubeconfig Y]" for printed commands
+    local arg next=0 config=""
+    for arg in "${KC[@]}"; do
+        if [ "$next" = 1 ]; then config="$arg"; next=0; continue; fi
+        case "$arg" in --kubeconfig) next=1 ;; --kubeconfig=*) config="${arg#*=}" ;; esac
+    done
+    printf 'kubectl --context %q' "$(events_context)"
+    [ -z "$config" ] || printf ' --kubeconfig %q' "$config"
 }
 
 events_command() {    # namespace, verb/resource/arguments: printable Bash command
@@ -283,7 +313,7 @@ events_render() {    # optional namespace, pod; rendering never calls the API
 explain_render() {    # optional namespace, pod; hypotheses never assert causation
     local namespace="${1:-}" pod="${2:-}" d="${TOOLKIT_DIR:-/tmp}/why-view" command_prefix
     if [ "$#" -eq 0 ] && [ "${ALL_NS:-0}" != 1 ]; then namespace="${NS:-}"; fi
-    command_prefix="$(events_command "")"
+    command_prefix="$(events_kubectl_prefix)"
     mkdir -p "$d"
     tk_title "WHY - INCIDENT EVIDENCE" "warning events grouped into possible explanations - timing alone does not establish a cause"
     events_header "$namespace" "$pod"
@@ -317,7 +347,7 @@ explain_render() {    # optional namespace, pod; hypotheses never assert causati
         function q(s,   quote) {
             if (s ~ /^[A-Za-z0-9._\/:=-]+$/) return s
             quote = sprintf("%c", 39)
-            gsub(quote, quote "\\\\" quote quote, s)
+            gsub(quote, quote "\\" quote quote, s)
             return quote s quote
         }
         BEGIN { NOW = now; prefix = ENVIRON["EVENTS_COMMAND_PREFIX"]

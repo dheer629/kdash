@@ -1,0 +1,32 @@
+WHY - INCIDENT EVIDENCE  -  warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context kdash-local
+┌────────┬───────┬────────┬─────────────────────────┬────────────────┐
+│ SOURCE │ STATE │   READ │ SCOPE                   │ DETAIL         │
+├────────┼───────┼────────┼─────────────────────────┼────────────────┤
+│ events │ ● ok  │ 0s ago │ kdash-e2e / pod z-crash │ read succeeded │
+└────────┴───────┴────────┴─────────────────────────┴────────────────┘
+
+WARNING EVIDENCE  1 item   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────┬─────────┬───────┬──────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT      │ REASON  │ COUNT │ CATEGORY │ MESSAGE                                                                                                   │
+├───┼───────────┼─────────────┼─────────┼───────┼──────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 5s        │ Pod/z-crash │ BackOff │    45 │ restart  │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(6a92c6fd-0be6-46c1-8aca-3ba913153f9e) │
+└───┴───────────┴─────────────┴─────────┴───────┴──────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+POSSIBLE EXPLANATIONS  1 category   hypotheses to check, not conclusions
+┌──────────┬──────────┬──────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY │ EVIDENCE │ POSSIBLE EXPLANATION                                                     │
+├──────────┼──────────┼──────────────────────────────────────────────────────────────────────────┤
+│ restart  │ #1       │ a container may be exiting repeatedly - the event alone does not say why │
+└──────────┴──────────┴──────────────────────────────────────────────────────────────────────────┘
+
+NEXT READ-ONLY CHECKS  2 checks   copy and run - all of them only read
+┌───┬────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ NEXT READ-ONLY CHECK                                                                           │
+├───┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ kubectl --context kdash-local -n kdash-e2e describe pod z-crash                                │
+│ 1 │ kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100 │
+└───┴────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.

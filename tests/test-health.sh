@@ -135,7 +135,9 @@ printf 'NS\tKIND\tNAME\tUID\tTYPE\tREASON\tCOUNT\tFIRST\tLAST\tMESSAGE\ndemo\tPo
 pass=0
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 contains() { grep -Fq -- "$2" "$1" || fail "$1 lacks: $2"; }
-matches() { grep -Eq -- "$2" "$1" || fail "$1 does not match: $2"; }
+# Table frames are presentation; keep asserting the joined cell values across
+# both the Unicode and ASCII column separators.
+matches() { sed 's/│/ /g; s/|/ /g' "$1" | grep -Eq -- "$2" || fail "$1 does not match: $2"; }
 absent() { if grep -Fq -- "$2" "$1"; then fail "$1 unexpectedly contains: $2"; fi; }
 ok() { pass=$((pass+1)); printf 'PASS %s\n' "$*"; }
 

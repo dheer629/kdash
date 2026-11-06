@@ -74,11 +74,15 @@ inspector_logs() { # ns pod container current|previous output-file
     --tail="$INSPECTOR_TAIL" --limit-bytes="$INSPECTOR_BYTES" --timestamps=true "${flags[@]}" || rc=$?
   # what was read, for the status rule: lines, bytes, whether a limit was reached
   local nl nb; nl=$(awk 'END { print NR }' "$dest.body"); nb=$(wc -c < "$dest.body" | tr -d ' ')
-  INSPECTOR_LOGINFO="$nl lines, $(xfer_hsize "$nb")"
-  if [ "$INSPECTOR_TAIL" = -1 ]; then INSPECTOR_LOGINFO+=" - everything the kubelet has"
-  elif [ "$nl" -ge "$INSPECTOR_TAIL" ]; then INSPECTOR_LOGINFO+=" - newest $INSPECTOR_TAIL only: + more, A all"
-  else INSPECTOR_LOGINFO+=" - complete"; fi
-  [ ! -f "$dest.body.capped" ] || { INSPECTOR_LOGINFO+=" - $(xfer_hsize "$INSPECTOR_BYTES") limit reached: A reads more"; rm -f -- "$dest.body.capped"; }
+  INSPECTOR_LOGINFO="$nl lines $(xfer_hsize "$nb")"
+  if [ "$INSPECTOR_TAIL" = -1 ]; then INSPECTOR_LOGINFO+=", all the kubelet keeps"
+  elif [ "$nl" -ge "$INSPECTOR_TAIL" ]; then INSPECTOR_LOGINFO+=", newest only (+ more, A all)"
+  else INSPECTOR_LOGINFO+=", complete"; fi
+  if [ -f "$dest.body.capped" ]; then
+    INSPECTOR_LOGINFO+=", $(xfer_hsize "$INSPECTOR_BYTES") cap reached"
+    [ "$INSPECTOR_BYTES" -ge 268435456 ] || INSPECTOR_LOGINFO+=' (A reads more)'
+    rm -f -- "$dest.body.capped"
+  fi
   printf '%s' "$INSPECTOR_LOGINFO" > "$dest.info"
   cat "$dest.body" > "$dest"; rm -f -- "$dest.body"
   [ "$mode" != previous ] || [ "$rc" = 0 ] || printf '\nPrevious logs require a previously terminated instance of this container.\n' >> "$dest"
@@ -209,10 +213,10 @@ inspector_search_prompt() {  # pane name [only]; sets INSPECTOR_SEARCH and INSPE
       "$([ "$mode" = only ] && printf '&' || printf '/')"
     IFS= read -r line </dev/tty || { printf '\033[?25l'; return 1; }
     printf '\033[?25l'
-    case "$line" in q|Q) return 1 ;; esac
+    case "$line" in q|Q|*$'\e'*) return 1 ;; esac
     if [ -z "$line" ]; then INSPECTOR_SEARCH=""; INSPECTOR_ONLY=0; return 0; fi
     if inspector_pattern_ok "$line"; then
-      INSPECTOR_SEARCH="$line"
+      INSPECTOR_SEARCH="$line"; INSPECTOR_JUMPED=""
       [ "$mode" = only ] && INSPECTOR_ONLY=1 || INSPECTOR_ONLY=0
       return 0
     fi
@@ -378,7 +382,7 @@ inspector_container_picker() { # ns pod dir
   # terminal) must not pick a container the operator has not seen yet
   while IFS= read -rsn1 -t 0.05 _k </dev/tty; do :; done
   while :; do
-    picker_size; rows=$((PK_ROWS - 9)); [ "$rows" -ge 3 ] || rows=3
+    picker_size; rows=$((PK_ROWS - 15)); [ "$rows" -ge 3 ] || rows=3     # bar, 2 info + blank, frame (4), rule, panel (6)
     [ "$chosen" -ge "$top" ] || top=$chosen
     [ "$chosen" -lt $((top + rows)) ] || top=$((chosen - rows + 1))
     # title bar, the pod, the containers
@@ -397,61 +401,71 @@ inspector_container_picker() { # ns pod dir
       [ "$nrun" = "$n" ] || line+="   ${PC_WARN}only a running container can be attached to${PC_R}"
     fi
     pk_fit "${line}${PC_R}" "$((PK_COLS - 1))"; buf+="$PK_FIT"$'\033[K\n\033[K\n'
-    # header
-    printf -v line '   %2s  %-*s  %-*s  %-*s  %3s  %-*s  %-*s  %s' '#' "$w_n" CONTAINER "$w_t" TYPE "$w_r" READY RST "$w_s" STATE "$w_l" 'LAST EXIT' IMAGE
-    line="${line:0:$((PK_COLS - 1))}"; printf -v line '%-*s' "$((PK_COLS - 1))" "$line"
-    buf+="${PC_HDR}${line}${PC_R}"$'\033[K\n'
-    for ((i = 0; i < rows; i++)); do
+    # the containers, framed: # CONTAINER TYPE READY RST STATE LAST-EXIT IMAGE
+    bx_init
+    local W=$((PK_COLS - 1)) V_="${BX_C}${BX_V}${BX_R}" cell out kk sty
+    local -a hd=('#' CONTAINER TYPE READY RST STATE 'LAST EXIT' IMAGE) cells
+    local al="rlllrlll"
+    bx_layout "$W" 7 2 "$w_n" "$w_t" "$w_r" 3 "$w_s" "$w_l" 20
+    local -a cw=("${BX_CW[@]}")
+    bx_sep "$W" t "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_TL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
+    out="$V_"; for ((kk = 0; kk < 8; kk++)); do
+      if [ "${al:kk:1}" = r ]; then printf -v cell " %*s " "${cw[kk]}" "${hd[kk]:0:${cw[kk]}}"; else printf -v cell " %-*s " "${cw[kk]}" "${hd[kk]:0:${cw[kk]}}"; fi
+      out+="${PC_B}${cell}${PC_R}${V_}"; done
+    buf+="$out"$'\033[K\n'
+    bx_sep "$W" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
+    local shown=$((n - top < rows ? n - top : rows))
+    for ((i = 0; i < shown; i++)); do
       k=$((top + i))
-      [ "$k" -lt "$n" ] || { buf+=$'\033[K\n'; continue; }
       image="${IM[k]}"
       # without the registry host, as in the shell header: name and tag tell them apart
       case "${image%%/*}" in *.*|*:*|localhost) [ "$image" = "${image%%/*}" ] || image="${image#*/}" ;; esac
-      len=$((PK_COLS - 3 - 2 - 2 - w_n - 2 - w_t - 2 - w_r - 2 - 3 - 2 - w_s - 2 - w_l - 2 - 1))
-      [ "$len" -ge 8 ] || len=8
       # images: keep the end (name:tag), that is what tells them apart
-      [ "${#image}" -le "$len" ] || image="~${image:$(( ${#image} - len + 1 ))}"
-      if [ "$k" = "$chosen" ]; then
-        printf -v line '%s %2s  %-*s  %-*s  %-*s  %3s  %-*s  %-*s  %s' "$PC_PTR" "$((k + 1))" "$w_n" "${N[k]:0:$w_n}" "$w_t" "${T[k]}" "$w_r" "${RD[k]}" "${RS[k]}" "$w_s" "${ST[k]:0:$w_s}" "$w_l" "${LX[k]:0:$w_l}" "$image"
-        line="${line:0:$((PK_COLS - 2))}"; pad=$((PK_COLS - 2 - ${#line})); [ "$pad" -ge 0 ] || pad=0; printf -v pad '%*s' "$pad" ''
-        buf+=" ${PC_INV}${PC_B}${line}${pad}${PC_R}"$'\033[K\n'
-      elif [ -n "$banner" ] && [ "${ST[k]}" != Running ]; then
-        # not attachable: shown dimmed, so it is clear why it cannot be picked
-        printf -v line '   %2s  %-*s  %-*s  %-*s  %3s  %-*s  %-*s  %s' "$((k + 1))" "$w_n" "${N[k]:0:$w_n}" "$w_t" "${T[k]}" "$w_r" "${RD[k]}" "${RS[k]}" "$w_s" "${ST[k]:0:$w_s}" "$w_l" "${LX[k]:0:$w_l}" "$image"
-        buf+="${PC_D}${line:0:$PK_COLS}${PC_R}"$'\033[K\n'
-      else
-        case "${ST[k]}" in
-          Running) stc="$PC_OK" ;; Completed|"no status yet") stc="$PC_D" ;;
-          *CrashLoop*|*Error*|*OOMKilled*|*ImagePull*|*ErrImage*|*ConfigError*) stc="$PC_BAD" ;; *) stc="$PC_WARN" ;;
-        esac
-        local row_=""
-        printf -v line '   %2s  %s%-*s%s  %s%-*s%s  ' "$((k + 1))" "$PC_B" "$w_n" "${N[k]:0:$w_n}" "$PC_R" "$PC_D" "$w_t" "${T[k]}" "$PC_R"
-        row_+="$line"
-        [ "${RD[k]}" = ready ] && row_+="$PC_OK" || row_+="$PC_WARN"
-        printf -v line '%-*s%s  ' "$w_r" "${RD[k]}" "$PC_R"; row_+="$line"
-        [ "${RS[k]}" = 0 ] || [ "${RS[k]}" = "?" ] || row_+="$PC_WARN"
-        printf -v line '%3s%s  %s%-*s%s  ' "${RS[k]}" "$PC_R" "$stc" "$w_s" "${ST[k]:0:$w_s}" "$PC_R"; row_+="$line"
-        [ "${LX[k]}" = - ] && row_+="$PC_D" || row_+="$PC_BAD"
-        printf -v line '%-*s%s  %s' "$w_l" "${LX[k]:0:$w_l}" "$PC_R" "$image"; row_+="$line"
-        pk_fit "$row_" "$((PK_COLS - 1))"; buf+="$PK_FIT"$'\033[K\n'
-      fi
+      [ "${#image}" -le "${cw[7]}" ] || image="~${image:$(( ${#image} - cw[7] + 1 ))}"
+      cells=("$((k + 1))" "${N[k]}" "${T[k]}" "${RD[k]}" "${RS[k]}" "${ST[k]}" "${LX[k]}" "$image")
+      case "${ST[k]}" in
+        Running) stc="$PC_OK" ;; Completed|"no status yet") stc="$PC_D" ;;
+        *CrashLoop*|*Error*|*OOMKilled*|*ImagePull*|*ErrImage*|*ConfigError*) stc="$PC_BAD" ;; *) stc="$PC_WARN" ;;
+      esac
+      local dim=""; [ -n "$banner" ] && [ "${ST[k]}" != Running ] && dim="$PC_D"   # not attachable
+      if [ "$k" = "$chosen" ]; then out="$V_${PC_INV}${PC_B}"; else out="$V_"; fi
+      for ((kk = 0; kk < 8; kk++)); do
+        if [ "${al:kk:1}" = r ]; then printf -v cell " %*s " "${cw[kk]}" "${cells[kk]:0:${cw[kk]}}"; else printf -v cell " %-*s " "${cw[kk]}" "${cells[kk]:0:${cw[kk]}}"; fi
+        if [ "$k" = "$chosen" ]; then out+="$cell"; [ "$kk" = 7 ] || out+="$BX_V"; continue; fi
+        sty="$dim"
+        if [ -z "$dim" ]; then case "$kk" in
+          1) sty="$PC_B" ;; 2) sty="$PC_D" ;; 3) [ "${RD[k]}" = ready ] && sty="$PC_OK" || sty="$PC_WARN" ;;
+          4) { [ "${RS[k]}" = 0 ] || [ "${RS[k]}" = "?" ]; } || sty="$PC_WARN" ;; 5) sty="$stc" ;;
+          6) [ "${LX[k]}" = - ] && sty="$PC_D" || sty="$PC_BAD" ;; 7) sty="$PC_D" ;; esac; fi
+        if [ -n "$sty" ]; then out+="${sty}${cell}${PC_R}${V_}"; else out+="${cell}${V_}"; fi
+      done
+      [ "$k" != "$chosen" ] || out+="${PC_R}${V_}"
+      buf+="$out"$'\033[K\n'
     done
+    bx_sep "$W" b "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_BL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_BR}${BX_R}"$'\033[K\n'
+    for ((i = shown; i < rows; i++)); do buf+=$'\033[K\n'; done
     # status rule: a message when there is one, otherwise where the cursor is
     if [ -n "$msg" ]; then ui_vlen "$msg"; [ "$UI_VL" -le $((PK_COLS - 8)) ] || { msg="${msg:0:$((PK_COLS - 10))}~"; ui_vlen "$msg"; }
       ui_rule "$((PK_COLS - 1))" "${PC_WARN}${msg}${PC_R}" "$UI_VL" "" 0
     else ui_vlen "$((chosen + 1)) / $n"; ui_rule "$((PK_COLS - 1))" "${PC_B}$((chosen + 1))${PC_R}${PC_D} / ${n}${PC_R}" "$UI_VL" "${PC_D}audited${PC_R}" 7; fi
     buf+="$UI_RULE"$'\033[K\n'
-    local f1 f2 act
+    local act; case "$purpose" in shell) act="open a shell in it" ;; up) act="upload into it" ;; down) act="download from it" ;; *) act="inspect it" ;; esac
+    local okc=1; [ -n "$banner" ] && [ "${ST[chosen]}" != Running ] && okc=0
     if [ -n "$banner" ]; then
-      case "$purpose" in shell) act="open shell" ;; up) act="upload here" ;; *) act="download from here" ;; esac
-      ui_keys "$((PK_COLS - 1))" Enter "$act" 1-9 pick q back Q "quit kdash" j/k move; f1="$UI_KEYS"
-      ui_keys "$((PK_COLS - 1))" exit "in the shell returns to kdash" kdswitch "related pods" kdquit "leaves kdash"; f2="$UI_KEYS"
-      [ "$purpose" = shell ] || { ui_keys "$((PK_COLS - 1))" next "browse the container, pick files, review, confirm" audited "every transfer is logged"; f2="$UI_KEYS"; }
+      bx_panel "$PK_COLS" 4 MOVE CHOOSE "$([ "$purpose" = shell ] && echo 'IN THE SHELL' || echo 'NEXT')" LEAVE \
+        "j/k ${PC_UP}${PC_DN}|move|1" "g / G|first / last|1" "1-9|pick by number|1" "|$n containers|0" \
+        "Enter|${act}|$okc" "|only running ones can be used|0" "|$napp app$([ "$ninit" = 0 ] || echo ", $ninit init")$([ "$ndbg" = 0 ] || echo ", $ndbg debug")|0" "|runs with your RBAC, audited|0" \
+        "$([ "$purpose" = shell ] && echo exit)|$([ "$purpose" = shell ] && echo 'back to kdash' || echo 'browse the container')|1" "$([ "$purpose" = shell ] && echo kdswitch)|$([ "$purpose" = shell ] && echo 'related pods' || echo 'pick files, review')|1" \
+        "$([ "$purpose" = shell ] && echo kdquit)|$([ "$purpose" = shell ] && echo 'leave kdash' || echo 'then confirm or cancel')|1" "||0" \
+        "q / Esc|back|1" "Q|quit kdash|1" "||0" "||0"
     else
-      ui_keys "$((PK_COLS - 1))" Enter inspect l logs p "previous logs" 1-9 open q back Q "quit kdash" j/k move; f1="$UI_KEYS"
-      ui_keys "$((PK_COLS - 1))" all "containers of the pod, including init and debug"; f2="$UI_KEYS"
+      bx_panel "$PK_COLS" 4 MOVE INSPECT LOGS LEAVE \
+        "j/k ${PC_UP}${PC_DN}|move|1" "g / G|first / last|1" "1-9|open by number|1" "|$n containers|0" \
+        "Enter / i|summary of it|1" "|$napp app$([ "$ninit" = 0 ] || echo ", $ninit init")$([ "$ndbg" = 0 ] || echo ", $ndbg debug")|0" "||0" "||0" \
+        "l|logs|1" "p|previous logs|1" "||0" "||0" \
+        "q / Esc|back|1" "Q|quit kdash|1" "||0" "||0"
     fi
-    buf+="$f1"$'\033[K\n'"$f2"$'\033[K'
+    buf+="$BX_PANEL"
     printf '%s\033[J' "$buf"
     picker_key 60 || continue
     msg=""
@@ -537,17 +551,39 @@ inspector_pane_title() { # pane -> title shown in the bar
     current) printf 'LOGS' ;; previous) printf 'PREVIOUS LOGS' ;; *) printf '%s' "$1" | tr '[:lower:]' '[:upper:]' ;;
   esac
 }
+# The pod detail key rows: three groups (PANES, READ, MOVE) of whole "<key> label"
+# pairs; a group that does not fit the width continues on the next row -> IK_LINES
+inspector_keylines() {
+  IK_LINES=()
+  _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download
+  _ik_group READ W "wrap $([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo on || echo off)" J "JSON $([ "${INSPECTOR_JSON:-0}" = 1 ] && echo on || echo off)" \
+    "+" "4x lines" A "all lines" "left/right" pan f "follow $([ "${follow:-0}" = 1 ] && printf on || printf off)" L "level ${INSPECTOR_LEVEL_NAME:-all}" w export
+  _ik_group MOVE / find "&" "only matches" "n/N" "next / prev" "j/k" scroll g/G "top / end" r reload "?" keys q back Q quit
+}
+_ik_group() { # title pairs...
+  local w=$((${INSPECTOR_COLS:-100} - 1)) line used=7 k a add
+  printf -v line '%s%-5s%s  ' "$PC_D" "$1" "$PC_R"; shift
+  while [ $# -ge 2 ]; do
+    k=$1; a=$2; shift 2
+    ui_vlen "<$k> $a"; add=$((UI_VL + 2))
+    if [ $((used + add)) -gt "$w" ] && [ "$used" -gt 7 ]; then IK_LINES+=("$line"); line="       "; used=7; fi
+    line+="${PC_B}<${k}>${PC_R} ${a}  "; used=$((used + add))
+  done
+  IK_LINES+=("$line")
+}
 inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   local ns="$1" pod="$2" d="$3" pane="${INSPECTOR_PANE:-summary}" loaded="" reload=1 viewdirty=1 rows_stale=1
   local body="$3/body" view="$3/view" matchf="$3/matches"
   local offset=0 count=0 total=0 matches=0 msg="" rows pid rc keep_offset=0 follow=0 atbottom=0 vcols=0 hoff=0
+  INSPECTOR_JUMPED=""
   local container file="" target=0 idx=0 cline="" pinfo=""
   container="$(inspect_container_for "$ns" "$pod")"     # never a container of another pod
   local INSPECTOR_REFRESH_EVENTS=0
   INSPECTOR_PANE=""
   inspector_limits          # tail/bytes/follow defaults must exist in this shell too
   while :; do
-    inspector_size; rows=$((INSPECTOR_ROWS - 8))      # 4 header rows, 3 key rows, 1 message row
+    # bar + framed header (4), the key rows (3, more when a narrow screen wraps them), 1 message row
+    inspector_size; picker_colors; inspector_keylines; rows=$((INSPECTOR_ROWS - 6 - ${#IK_LINES[@]})); [ "$rows" -ge 3 ] || rows=3
     if [ "$loaded" != "$pane" ] || [ "$reload" = 1 ]; then
       picker_colors
       ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $(inspector_pane_title "$pane") "
@@ -592,9 +628,11 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       viewdirty=0; count="$INSPECTOR_VIEW_LINES"; matches="$INSPECTOR_MATCHES"; vcols="$INSPECTOR_COLS"
       total="$(awk 'END { print NR }' "$body" 2>/dev/null || printf 0)"
       # A new search starts at its first match, which is what an operator expects.
-      if [ -n "${INSPECTOR_SEARCH:-}" ] && [ "$matches" -gt 0 ]; then
+      # Only when the search text changes: reloads, follow and resizes keep the position.
+      if [ -n "${INSPECTOR_SEARCH:-}" ] && [ "$matches" -gt 0 ] && [ "$INSPECTOR_SEARCH" != "${INSPECTOR_JUMPED:-}" ]; then
         cur=1; offset=$(($(awk 'NR == 1 {print $1}' "$matchf") - 1)); msg="match 1/$matches"
       fi
+      INSPECTOR_JUMPED="${INSPECTOR_SEARCH:-}"
     fi
     [ "$offset" -lt 0 ] && offset=0
     [ "$offset" -le "$((count > rows ? count - rows : 0))" ] || offset=$((count > rows ? count - rows : 0))
@@ -602,40 +640,42 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     # title bar, pod, container, then a rule that says where in the pane we are
     local c_n="" c_rd="" c_rs="" c_st="" c_lx="" c_im="" stc hdr
     IFS=$'\t' read -r _ c_n c_rd c_rs c_st c_lx c_im < <(awk -F '\t' -v want="$container" '$2 == want { print; exit }' "$d/rows" 2>/dev/null) || true
-    ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $(inspector_pane_title "$pane") "
+    ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $(inspector_pane_title "$pane") "
     hdr="${UI_BAR}"$'\033[K\n'
-    pk_fit " ${PC_D}pod${PC_R}        ${PC_B}${pod}${PC_R}" "$((INSPECTOR_COLS - 1))"; hdr+="$PK_FIT"$'\033[K\n'
+    bx_init
+    local IW=$((INSPECTOR_COLS - 1)) rinfo="audited"; [ "$follow" = 1 ] && rinfo="follow ${INSPECTOR_FOLLOW_SECS:-5}s"
+    bx_top "$IW" "$(inspector_pane_title "$pane")" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
+    bx_row "$IW" "${PC_D}POD      ${PC_R}  ${PC_B}${pod}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     if [ -n "$c_n" ]; then
       case "$c_st" in Running) stc="$PC_OK" ;; Completed) stc="$PC_D" ;; *CrashLoop*|*Error*|*OOMKilled*|*ImagePull*|*ErrImage*) stc="$PC_BAD" ;; *) stc="$PC_WARN" ;; esac
       case "${c_im%%/*}" in *.*|*:*|localhost) [ "$c_im" = "${c_im%%/*}" ] || c_im="${c_im#*/}" ;; esac
-      cline=" ${PC_D}container${PC_R}  ${PC_B}${c_n}${PC_R}   ${stc}${PC_DOT} ${c_st}${PC_R}   ${PC_D}${c_rd}${PC_R}   ${PC_D}restarts${PC_R} ${c_rs}"
+      cline="${PC_D}CONTAINER${PC_R}  ${PC_B}${c_n}${PC_R}   ${stc}${PC_DOT} ${c_st}${PC_R}   ${PC_D}${c_rd}${PC_R}   ${PC_D}restarts${PC_R} ${c_rs}"
       [ "$c_lx" = - ] || [ -z "$c_lx" ] || cline+="   ${PC_D}last exit${PC_R} ${PC_BAD}${c_lx}${PC_R}"
       cline+="   ${PC_D}${c_im}${PC_R}"
-    else cline=" ${PC_D}container${PC_R}  ${container:-${PC_D}none reported${PC_R}}"; fi
-    pk_fit "$cline" "$((INSPECTOR_COLS - 1))"; hdr+="$PK_FIT"$'\033[K\n'
+    else cline="${PC_D}CONTAINER${PC_R}  ${container:-${PC_D}none reported${PC_R}}"; fi
+    bx_row "$IW" "$cline"; hdr+="$BX_LINE"$'\033[K\n'
     # where we are (screen rows), how many lines, what was read and how lines are shown
     pinfo="rows $((count ? offset + 1 : 0))-$((offset + rows < count ? offset + rows : count)) / $count"
-    if [ "${INSPECTOR_VIEW_LOGICAL:-$total}" != "$total" ]; then pinfo="$pinfo ${PC_MID} ${INSPECTOR_VIEW_LOGICAL} of $total lines"
-    else pinfo="$pinfo ${PC_MID} $total lines"; fi
-    [ "${INSPECTOR_WRAP:-1}" = 1 ] && pinfo="$pinfo ${PC_MID} wrap" || pinfo="$pinfo ${PC_MID} no wrap$([ "$hoff" = 0 ] || printf ' +%s' "$hoff")"
-    [ "${INSPECTOR_JSON:-0}" != 1 ] || pinfo="$pinfo ${PC_MID} readable JSON"
+    # what was read (log panes: lines, size, complete or not); wrap and JSON state is on the READ key line
+    [ "${INSPECTOR_VIEW_LOGICAL:-$total}" = "$total" ] || pinfo="$pinfo ${PC_MID} ${INSPECTOR_VIEW_LOGICAL} shown"
+    case "$pane" in
+      current|previous) if [ -s "$body.info" ]; then pinfo="$pinfo ${PC_MID} $(cat "$body.info")"; else pinfo="$pinfo ${PC_MID} $total lines"; fi ;;
+      *) pinfo="$pinfo ${PC_MID} $total lines" ;;
+    esac
     [ -z "${INSPECTOR_SEARCH:-}" ] || {
       if [ "${INSPECTOR_ONLY:-0}" = 1 ]; then pinfo="$pinfo ${PC_MID} only /$INSPECTOR_SEARCH ($matches)"
       else pinfo="$pinfo ${PC_MID} /$INSPECTOR_SEARCH ($matches matching)"; fi; }
-    case "$pane" in current|previous) [ ! -s "$body.info" ] || pinfo="$pinfo ${PC_MID} $(cat "$body.info")" ;; esac
+    [ "${INSPECTOR_WRAP:-1}" = 1 ] || [ "$hoff" = 0 ] || pinfo="$pinfo ${PC_MID} pan +$hoff"
     case "${INSPECTOR_LEVEL_NAME:-all}" in all) ;; *) pinfo="$pinfo ${PC_MID} level $INSPECTOR_LEVEL_NAME" ;; esac
-    ui_vlen "$pinfo"; [ "$UI_VL" -le $((INSPECTOR_COLS - 20)) ] || { pinfo="${pinfo:0:$((INSPECTOR_COLS - 22))}~"; ui_vlen "$pinfo"; }
-    local pw=$UI_VL rinfo="audited"; [ "$follow" = 1 ] && rinfo="follow ${INSPECTOR_FOLLOW_SECS:-5}s"
-    ui_rule "$((INSPECTOR_COLS - 1))" "${PC_B}${pinfo}${PC_R}" "$pw" "${PC_D}${rinfo}${PC_R}" "${#rinfo}"
-    printf '\033[H\033[2J%s%s\033[K\n' "$hdr" "$UI_RULE"
+    ui_vlen "$pinfo"; [ "$UI_VL" -le $((INSPECTOR_COLS - 12)) ] || { pinfo="${pinfo:0:$((INSPECTOR_COLS - 14))}~"; }
+    bx_bot "$IW" "${PC_B}${pinfo}${PC_R}" ""
+    printf '\033[H\033[2J%s%s\033[K\n' "$hdr" "$BX_LINE"
     inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo 0 || echo "$hoff")"
-    ui_keys "$((INSPECTOR_COLS - 1))" s summary d describe e events "!" why l logs p "previous logs" c container S shell U upload D download
-    printf '\033[%s;1H%s\033[J' "$((INSPECTOR_ROWS - 3))" "$UI_KEYS"
-    ui_keys "$((INSPECTOR_COLS - 1))" W "wrap $([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo on || echo off)" J "readable JSON $([ "${INSPECTOR_JSON:-0}" = 1 ] && echo on || echo off)" \
-      "+" "4x more lines" A "all lines" "<- ->" "pan (wrap off)" f "follow $([ "$follow" = 1 ] && printf on || printf off)" L "level ${INSPECTOR_LEVEL_NAME:-all}" w "export the view"
-    printf '\033[%s;1H%s\033[K' "$((INSPECTOR_ROWS - 2))" "$UI_KEYS"
-    ui_keys "$((INSPECTOR_COLS - 1))" q back Q quit / find "&" "only matches" "n/N" "next / prev" "j/k Space/b g/G" scroll r reload "?" keys
-    printf '\033[%s;1H%s\033[K' "$((INSPECTOR_ROWS - 1))" "$UI_KEYS"
+    # k9s-style hints: panes, reading tools, moving / leaving (wrapped on narrow screens)
+    inspector_keylines
+    local kr=$((INSPECTOR_ROWS - ${#IK_LINES[@]})) kl   # the message row stays last
+    printf '\033[%s;1H\033[J' "$kr"
+    for kl in "${IK_LINES[@]}"; do printf '\033[%s;1H%s\033[K' "$kr" "$kl"; kr=$((kr + 1)); done
     if [ -n "$msg" ]; then
       printf '\033[%s;1H\033[1;33m %s\033[0m\033[K' "$INSPECTOR_ROWS" "${msg:0:$((INSPECTOR_COLS - 2))}"
     else
@@ -702,8 +742,8 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
            *) msg='follow applies to the log panes (l current, p previous)' ;;
          esac ;;
       w) # the export has whole lines (not the wrapped screen rows)
-         inspector_view_build "$body" "$view.x" "$matchf.x" 0; viewdirty=1
-         local xn="$INSPECTOR_VIEW_LINES"
+         inspector_view_build "$body" "$view.x" "$matchf.x" 0
+         local xn="$INSPECTOR_VIEW_LINES"; INSPECTOR_VIEW_LINES="$count"; INSPECTOR_MATCHES="$matches"
          if file="$(inspector_export "$view.x" "$ns" "$pod" "$container" "$pane" "$total" "$matches")"; then
            msg="exported $xn complete line(s) to $file"
            declare -F audit >/dev/null && audit INSPECT_EXPORT "namespace=$ns pod=$pod container=${container:--} pane=$pane lines=$xn search=${INSPECTOR_SEARCH:-none} level=${INSPECTOR_LEVEL_NAME:-all} file=$file"
@@ -793,7 +833,10 @@ picker_colors() {
   # header row of a table: bold + underlined (reads on light and dark backgrounds)
   if [ "${COLOR:-1}" = 1 ]; then PC_HDR=$'\033[1;4m'; else PC_HDR=""; fi
   # a glyph is 1 character in a UTF-8 locale but 3 bytes in the C locale
-  UI_BYTES=0; [ "${#PC_SEP}" -le 1 ] || UI_BYTES=1
+  # Detect the locale independently of the chosen border set: file names and
+  # log text may contain UTF-8 even when --ascii chooses plain border glyphs.
+  local utf8_probe=$'\342\224\202'
+  UI_BYTES=0; [ "${#utf8_probe}" -le 1 ] || UI_BYTES=1
 }
 
 # ---- shared screen chrome: title bar, rules and key hints look the same on every
@@ -864,7 +907,7 @@ ui_keys() { # width pairs... -> UI_KEYS
 # Cut a coloured line to the visible width (escape sequences are copied, not counted).
 # A line that wraps would scroll the whole picker and push its title off the screen.
 pk_fit() { # string width -> PK_FIT
-  local str="$1" w="$2" out="" i=0 n=${#1} vis=0 ch j
+  local str="$1" w="$2" out="" i=0 n=${#1} vis=0 ch j step
   if [ "$n" -le "$w" ]; then PK_FIT="$str"; return 0; fi
   while [ "$i" -lt "$n" ]; do
     ch="${str:i:1}"
@@ -873,7 +916,13 @@ pk_fit() { # string width -> PK_FIT
       out+="${str:i:$((j - i + 1))}"; i=$((j + 1)); continue
     fi
     [ "$vis" -lt "$w" ] || break
-    out+="$ch"; vis=$((vis + 1)); i=$((i + 1))
+    # In the C locale Bash slices bytes. Keep each UTF-8 glyph intact and count
+    # its leading byte once, so clipping a framed row cannot split its border.
+    step=1
+    if [ "${UI_BYTES:-0}" = 1 ]; then
+      case "$ch" in [$'\302'-$'\337']) step=2 ;; [$'\340'-$'\357']) step=3 ;; [$'\360'-$'\364']) step=4 ;; esac
+    fi
+    out+="${str:i:step}"; vis=$((vis + 1)); i=$((i + step))
   done
   PK_FIT="$out${PC_R:-}"
 }
@@ -903,6 +952,24 @@ picker_load() { # dir
                "$PICKER_ROWS_AWK" "$MODEL/pods.tsv" | inspector_clean | LC_ALL=C sort -t $'\t' "${order[@]}")
   fi
   IFS= read -r PK_HDR < "$d/pick.hdr" || PK_HDR=""
+  # plain cells for the framed table: namespace, pod, status, ready, restarts, cpu,
+  # memory, % of limit, node (+ last exit); widths from the data
+  PK_TNS=(); PK_TPOD=(); PK_TST=(); PK_TRD=(); PK_TRS=(); PK_TCPU=(); PK_TMEM=(); PK_TLIM=(); PK_TND=()
+  unset PK_RCACHE; declare -gA PK_RCACHE=()          # formatted rows, per row and width
+  PK_WNS=9; PK_WST=6; PK_WND=4; PK_WPOD=3
+  local k x y
+  for ((k = 0; k < ${#PK_KEY[@]}; k++)); do
+    x="${PK_KEY[k]}"; PK_TNS+=("${x%%/*}"); PK_TPOD+=("${x#*/}")
+    y="${PK_B[k]}"; y="${y%"${y##*[! ]}"}"; PK_TST+=("$y")
+    y="${PK_C1[k]// /}"; PK_TRD+=("$y"); y="${PK_C2[k]// /}"; PK_TRS+=("$y")
+    read -r x y <<< "${PK_C3[k]}"; PK_TCPU+=("$x"); PK_TMEM+=("$y")
+    y="${PK_C4[k]// /}"; PK_TLIM+=("$y"); PK_TND+=("${PK_C5[k]}")
+    [ "${#PK_TNS[k]}" -le "$PK_WNS" ] || PK_WNS=${#PK_TNS[k]}
+    [ "${#PK_TST[k]}" -le "$PK_WST" ] || PK_WST=${#PK_TST[k]}
+    [ "${#PK_TND[k]}" -le "$PK_WND" ] || PK_WND=${#PK_TND[k]}
+    [ "${#PK_TPOD[k]}" -le "$PK_WPOD" ] || PK_WPOD=${#PK_TPOD[k]}
+  done
+  [ "$PK_WNS" -le 24 ] || PK_WNS=24; [ "$PK_WST" -le 18 ] || PK_WST=18; [ "$PK_WND" -le 40 ] || PK_WND=40
   # status summary, worst first: "Running 120  Succeeded 20  Failed 2"
   PK_SUM=""; PK_SUMV=(); PK_NBAD=0; PK_NWARN=0
   local sev cnt st col
@@ -933,7 +1000,7 @@ picker_filter() {
 
 picker_draw() {
   local nv=${#PK_V[@]} rows top i j a b c ml rc line len pad buf banner mode sel_key title right status_col
-  rows=$((PK_ROWS - 7)); [ "$rows" -ge 3 ] || rows=3
+  rows=$((PK_ROWS - 14)); [ "$rows" -ge 3 ] || rows=3       # bar, 2 info lines, frame (4), rule, key panel (6)
   [ "$PK_SEL" -lt "$nv" ] || PK_SEL=$((nv > 0 ? nv - 1 : 0)); [ "$PK_SEL" -ge 0 ] || PK_SEL=0
   [ "$PK_SEL" -ge "$PK_TOP" ] || PK_TOP=$PK_SEL
   [ "$PK_SEL" -lt $((PK_TOP + rows)) ] || PK_TOP=$((PK_SEL - rows + 1))
@@ -977,38 +1044,70 @@ picker_draw() {
     pk_fit "$cl" "$((PK_COLS - 1))"; buf+="$PK_FIT"
   fi
   buf+=$'\033[K\n'
-  line="   ${PK_HDR}"; line="${line:0:$((PK_COLS - 1))}"; printf -v line '%-*s' "$((PK_COLS - 1))" "$line"
-  buf+="${PC_HDR}${line}${PC_R}"$'\033[K\n'
-  for ((i = 0; i < rows; i++)); do
+  # ---- the pods, framed: [NAMESPACE] POD STATUS READY RST CPU MEM %LIM NODE
+  bx_init
+  local W=$((PK_COLS - 1)) allns="${ALL_NS:-0}" pw nw=$PK_WNS
+  local -a cw al hd
+  if [ "$allns" = 1 ]; then hd=(NAMESPACE POD STATUS READY RST CPU MEM %LIM NODE); al="llllrrrrl"
+    BX_FLEX_MIN=24 bx_layout "$W" 1 "$nw" "$PK_WPOD" "$PK_WST" 5 3 6 7 5 "$PK_WND"
+  else hd=(POD STATUS READY RST CPU MEM %LIM NODE); al="lllrrrrl"
+    BX_FLEX_MIN=24 bx_layout "$W" 0 "$PK_WPOD" "$PK_WST" 5 3 6 7 5 "$PK_WND"; fi
+  # narrow screens: the NODE column (last) goes first so the pod name stays readable
+  if [ "$W" -lt 100 ]; then hd=("${hd[@]:0:${#hd[@]}-1}"); al="${al:0:${#al}-1}"
+    if [ "$allns" = 1 ]; then BX_FLEX_MIN=20 bx_layout "$W" 1 "$nw" "$PK_WPOD" "$PK_WST" 5 3 6 7 5
+    else BX_FLEX_MIN=24 bx_layout "$W" 0 "$PK_WPOD" "$PK_WST" 5 3 6 7 5; fi; fi
+  cw=("${BX_CW[@]}")
+  local V_="${BX_C}${BX_V}${BX_R}" ncol=${#cw[@]} k cell out sty
+  # rows are built with printf on plain text, colour is wrapped around the padded cell
+  bx_sep "$W" t "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_TL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
+  out="$V_"; for ((k = 0; k < ncol; k++)); do
+    if [ "${al:k:1}" = r ]; then printf -v cell " %*s " "${cw[k]}" "${hd[k]:0:${cw[k]}}"; else printf -v cell " %-*s " "${cw[k]}" "${hd[k]:0:${cw[k]}}"; fi
+    out+="${PC_B}${cell}${PC_R}${V_}"; done
+  buf+="$out"$'\033[K\n'
+  bx_sep "$W" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
+  local shown=$((nv - top < rows ? nv - top : rows)); [ "$shown" -ge 1 ] || shown=1
+  for ((i = 0; i < shown; i++)); do
     j=$((top + i))
     if [ "$j" -ge "$nv" ]; then
-      if [ "$i" = 0 ]; then
-        if [ "${#PK_KEY[@]}" = 0 ]; then buf+="   ${PC_D}no pods in the model - F edits filters, r re-reads${PC_R}"
-        else buf+="   ${PC_WARN}nothing matches${PC_R} ${PC_D}- Esc clears the filter, u shows all pods${PC_R}"; fi
-      fi
-      buf+=$'\033[K\n'; continue
+      bx_row "$W" "$([ "${#PK_KEY[@]}" = 0 ] && printf '%sno pods in the model - F edits filters, r re-reads%s' "$PC_D" "$PC_R" || printf '%snothing matches%s %s- Esc clears the filter, u shows all pods%s' "$PC_WARN" "$PC_R" "$PC_D" "$PC_R")"
+      buf+="$BX_LINE"$'\033[K\n'; continue
     fi
-    j=${PK_V[j]}; a="${PK_A[j]}"; b="${PK_B[j]}"
-    c="${PK_C1[j]}${PK_C2[j]}${PK_C3[j]}${PK_C4[j]}${PK_C5[j]}"
-    len=$((PK_COLS - 4 - ${#a} - ${#b})); [ "$len" -ge 0 ] || len=0; c="${c:0:$len}"
+    j=${PK_V[j]}
+    local pn="${PK_TPOD[j]}" pwid
+    if [ "$allns" = 1 ]; then pwid=${cw[1]}; else pwid=${cw[0]}; fi
+    # long pod names keep their start and their hash / ordinal end
+    if [ "${#pn}" -gt "$pwid" ]; then local h=$(( (pwid - 1) / 2 )); pn="${pn:0:$((pwid - 1 - h))}~${pn: -$h}"; fi
+    local -a cells=()
+    [ "$allns" = 1 ] && cells+=("${PK_TNS[j]}")
+    cells+=("$pn" "${PK_TST[j]}" "${PK_TRD[j]}" "${PK_TRS[j]}" "${PK_TCPU[j]}" "${PK_TMEM[j]}" "${PK_TLIM[j]}" "${PK_TND[j]}")
+    local ck="$j|$W"
+    if [ $((top + i)) != "$PK_SEL" ] && [ -n "${PK_RCACHE[$ck]:-}" ]; then buf+="${PK_RCACHE[$ck]}"$'\033[K\n'; continue; fi
     if [ $((top + i)) = "$PK_SEL" ]; then
-      line="${PC_PTR} ${a}${b}${c}"; pad=$((PK_COLS - 2 - ${#line})); [ "$pad" -ge 0 ] || pad=0
-      printf -v pad '%*s' "$pad" ''
-      buf+=" ${PC_INV}${PC_B}${line}${pad}${PC_R}"$'\033[K\n'
+      out="$V_${PC_INV}${PC_B}"
+      for ((k = 0; k < ncol; k++)); do
+        if [ "${al:k:1}" = r ]; then printf -v cell " %*s " "${cw[k]}" "${cells[k]:0:${cw[k]}}"; else printf -v cell " %-*s " "${cw[k]}" "${cells[k]:0:${cw[k]}}"; fi
+        out+="$cell"; [ "$k" = $((ncol - 1)) ] || out+="$BX_V"
+      done
+      buf+="${out}${PC_R}${V_}"$'\033[K\n'
     else
-      case "${PK_CLS[j]}" in bad) status_col="$PC_BAD" ;; warn) status_col="$PC_WARN" ;; done) status_col="$PC_D" ;; *) status_col="$PC_OK" ;; esac
-      line="   ${a}${status_col}${b}${PC_R}"
-      if [ "${PK_CLS[j]}" = done ]; then line+="${PC_D}${c}${PC_R}"
-      elif [ "${#c}" -ge "$(( ${#PK_C1[j]} + ${#PK_C2[j]} + ${#PK_C3[j]} + ${#PK_C4[j]} ))" ]; then
-        # restarts and memory % of limit stand out when they matter
-        case "${PK_ML[j]}" in 2) ml="$PC_BAD" ;; 1) ml="$PC_WARN" ;; *) ml="" ;; esac
-        rc=""; [ "${PK_RST[j]}" != 1 ] || rc="$PC_WARN"
-        line+="${PK_C1[j]}${rc}${PK_C2[j]}${PC_R}${PK_C3[j]}${ml}${PK_C4[j]}${PC_R}${PC_D}${c:$(( ${#PK_C1[j]} + ${#PK_C2[j]} + ${#PK_C3[j]} + ${#PK_C4[j]} ))}${PC_R}"
-      else line+="$c"; fi
-      buf+="$line"$'\033[K\n'
+      local stc rsc mlc dim=""
+      case "${PK_CLS[j]}" in bad) stc="$PC_BAD" ;; warn) stc="$PC_WARN" ;; done) stc="$PC_D"; dim="$PC_D" ;; *) stc="$PC_OK" ;; esac
+      rsc=""; [ "${PK_RST[j]}" != 1 ] || rsc="$PC_WARN"
+      case "${PK_ML[j]}" in 2) mlc="$PC_BAD" ;; 1) mlc="$PC_WARN" ;; *) mlc="" ;; esac
+      out="$V_"
+      for ((k = 0; k < ncol; k++)); do
+        if [ "${al:k:1}" = r ]; then printf -v cell " %*s " "${cw[k]}" "${cells[k]:0:${cw[k]}}"; else printf -v cell " %-*s " "${cw[k]}" "${cells[k]:0:${cw[k]}}"; fi
+        sty="$dim"
+        case "${hd[k]}" in STATUS) sty="$stc" ;; RST) [ -z "$rsc" ] || sty="$rsc" ;; %LIM) [ -z "$mlc" ] || sty="$mlc" ;; NODE) [ -n "$dim" ] || sty="$PC_D" ;; esac
+        if [ -n "$sty" ]; then out+="${sty}${cell}${PC_R}${V_}"; else out+="${cell}${V_}"; fi
+      done
+      PK_RCACHE[$ck]="$out"
+      buf+="$out"$'\033[K\n'
     fi
   done
-  # position rule + keys
+  bx_sep "$W" b "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_BL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_BR}${BX_R}"$'\033[K\n'
+  for ((i = shown; i < rows; i++)); do buf+=$'\033[K\n'; done
+  # ---- position / last action, then the key panel
   local up=$top dn=$((nv - top - rows)) lp=() rp=()
   [ "$dn" -ge 0 ] || dn=0
   lp=("$PC_B" "$((nv ? PK_SEL + 1 : 0))" "$PC_D" " / ${nv}")
@@ -1020,16 +1119,25 @@ picker_draw() {
   if [ "${PAUSED:-0}" = 1 ]; then rp=("$PC_WARN" "PAUSED"); else rp=("$PC_D" "live ${PC_MID} refresh ${INTERVAL:-2}s"); fi
   ui_seg 28 "${rp[@]}"
   ui_rule "$((PK_COLS - 1))" "$ls" "$lw" "$UI_SEG" "$UI_SEGW"; buf+="$UI_RULE"$'\033[K\n'
-  local f1 f2
+  local cur=""; [ "$nv" = 0 ] || { cur="${PK_TPOD[${PK_V[PK_SEL]}]}"; [ "${#cur}" -le 30 ] || cur="${cur:0:14}~${cur: -14}"; }
+  local on=0; [ -n "$cur" ] && on=1
+  local ion=0 xl="enable S / U / D"; interactive_enabled && { ion=$on; xl="interactive: on"; }
   if [ -n "${KDASH_ATTACH_ACTION:-}" ]; then
-    case "$KDASH_ATTACH_ACTION" in S) mode="open shell" ;; U) mode="upload" ;; *) mode="download" ;; esac
-    ui_keys "$((PK_COLS - 1))" Enter "$mode" q dashboard Q "quit kdash" / search u attention j/k move "PgUp/PgDn" page 12 "go to row"; f1="$UI_KEYS"
-    ui_keys "$((PK_COLS - 1))" exit "in the shell returns here" kdswitch "related pods" kdquit "leaves kdash" audited "runs with your RBAC"; f2="$UI_KEYS"
+    case "$KDASH_ATTACH_ACTION" in S) mode="open a shell in" ;; U) mode="upload into" ;; *) mode="download from" ;; esac
+    bx_panel "$PK_COLS" 4 MOVE FIND "IN THE SHELL" "$(case "$KDASH_ATTACH_ACTION" in S) echo SHELL;; U) echo UPLOAD;; *) echo DOWNLOAD;; esac)" \
+      "j/k ${PC_UP}${PC_DN}|move|1" "PgUp/PgDn|page|1" "g / G|first / last|1" "12|go to row 12|1" \
+      "/|search pod / status / node|1" "u|needs attention only|1" "Esc|clear the search|1" "|${nv} of ${#PK_KEY[@]} pods|0" \
+      "exit|back to this list|1" "kdswitch|related pods|1" "kdquit|leave kdash|1" "|runs with your RBAC|0" \
+      "Enter|${mode} the highlighted pod|$on" "|then: pick the container|0" "q|back to the dashboard|1" "Q|quit kdash|1"
   else
-    ui_keys "$((PK_COLS - 1))" Enter summary l logs p "prev logs" d describe e events w why c containers S shell U upload D download; f1="$UI_KEYS"
-    ui_keys "$((PK_COLS - 1))" q back Q quit / search u attention s sort F filters r refresh "?" help j/k move 12 "go to row"; f2="$UI_KEYS"
+    bx_panel "$PK_COLS" 5 MOVE FIND INSPECT "SHELL ${PC_MID} FILES" LEAVE \
+      "j/k ${PC_UP}${PC_DN}|move|1" "PgUp/PgDn|page|1" "g / G|first / last|1" "12|go to row 12|1" \
+      "/|search|1" "u|needs attention|1" "s|sort: ${PK_SORT}|1" "F|filters|1" \
+      "Enter|summary|$on" "l / p|logs / previous logs|$on" "d / e|describe / events|$on" "w / c|why / containers|$on" \
+      "S|shell|$ion" "U|upload|$ion" "D|download|$ion" "X|$xl|1" \
+      "q|back|1" "Q|quit kdash|1" "r|refresh now|1" "?|all keys|1"
   fi
-  buf+="$f1"$'\033[K\n'"$f2"$'\033[K'
+  buf+="$BX_PANEL"
   printf '%s\033[J' "$buf"
 }
 
@@ -1262,10 +1370,11 @@ inspector_filter_prompt() {
     ui_screen "POD FILTERS" "structured, AND-combined"
     printf ' label=%s\n status=%s\n node=%s\n workload=%s\n unhealthy=%s\n\n' \
       "${KDASH_LABEL_SELECTOR:-}" "${KDASH_STATUS_FILTER:-}" "${KDASH_NODE_FILTER:-}" "${KDASH_WORKLOAD_FILTER:-}" "${KDASH_UNHEALTHY:-0}"
-    printf ' Enter semicolon-separated fields; omitted fields stay unchanged.\n Example: label=app in (api,worker);status=Pending|CrashLoop;unhealthy=1\n Node uses an exact match; status and workload use extended regex.\n Empty value clears a field. Type clear to reset all; Enter cancels.\n%s\n\033[?25h filters > ' "$msg"
+    printf ' Enter semicolon-separated fields; omitted fields stay unchanged.\n Example: label=app in (api,worker);status=Pending|CrashLoop;unhealthy=1\n Node uses an exact match; status and workload use extended regex.\n Empty value clears a field. Type clear to reset all; Enter or Esc cancels.\n%s\n\033[?25h filters > ' "$msg"
     IFS= read -r line </dev/tty || { printf '\033[?25l'; return 1; }
     printf '\033[?25l'
-    [ -n "$line" ] || return 1
+    # Esc, q or an empty line cancels (Esc arrives as a raw byte in a line read).
+    case "$line" in ''|q|Q|*$'\e'*) return 1 ;; esac
     if msg="$(inspector_filter_apply "$line" 2>&1)"; then
       # Apply in this shell too: command substitution above isolated assignments.
       inspector_filter_apply "$line" || return 2
@@ -1280,6 +1389,7 @@ inspector_palette() {
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
   printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n services / storage / events / explain / doctor\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
   IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
+  case "$command" in *$'\e'*) return 0 ;; esac
   case "$command" in
     '') return 0 ;; inspect|i) inspector_open ;; filter|F) inspector_filter_prompt ;;
     quit|exit|Q) kdash_quit palette ;;

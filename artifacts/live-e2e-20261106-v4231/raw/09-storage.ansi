@@ -1,0 +1,50 @@
+[1;7m KDASH 4.23.1 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [1;7m 9 STOR [0m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-06 18:19:04[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 2s  spec 5s/30s  session [39m18:18:28[90m up [39m36s   [1m[94msort cpu ▼ high first[0m
+[90m health [1m[31m! pods 3/5 ready[0m[90m  restarts [35m6[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [32m0[90m  │ cpu [39m5m [32m░░░░░░[39m [32m1%[90m lim  mem [39m0Mi [32m░░░░░░[39m [32m0%[90m lim  │ workloads [39m4[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+Data pods=fresh age=5s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1;7m PERSISTENT STORAGE [0m  [90mclaims, volumes and classes - capacity is allocation; usage only from kubelet volume samples[39m
+
+[1mDATA SOURCES[0m
+[90m┌────────────────┬───────────┬────────┬─────────────────────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1mSOURCE        [0m [90m│[39m [1mSTATE    [0m [90m│[39m [1m  READ[0m [90m│[39m [1mDETAIL                                                                 [0m [90m│[39m
+[90m├────────────────┼───────────┼────────┼─────────────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m pvcs           [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
+[90m│[39m pods           [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
+[90m│[39m pvs            [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
+[90m│[39m storageclasses [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
+[90m│[39m volume-metrics [90m│[39m [35m● unknown[39m [90m│[39m 7s ago [90m│[39m [90mno configured or existing Prometheus source; measured PVC usage unknown[39m [90m│[39m
+[90m└────────────────┴───────────┴────────┴─────────────────────────────────────────────────────────────────────────┘[39m
+
+[1mPERSISTENT VOLUME CLAIMS[0m  [90m2 claims   USED / USE% need kubelet volume samples (Prometheus) - none here[39m
+[90m┌───────────┬───────────┬─────────┬──────────┬──────┬──────┬────────┬─────────────────────────────────┬─────────────────────────────────────────────────┬────────────────┐
+│[39m [1mCLAIM    [0m [90m│[39m [1mSTATUS   [0m [90m│[39m [1mREQUEST[0m [90m│[39m [1mCAPACITY[0m [90m│[39m [1mUSED[0m [90m│[39m [1mUSE%[0m [90m│[39m [1mACCESS[0m [90m│[39m [1mCLASS                          [0m [90m│[39m [1mPODS                                           [0m [90m│[39m [1mVOLUME        [0m [90m│
+├───────────┼───────────┼─────────┼──────────┼──────┼──────┼────────┼─────────────────────────────────┼─────────────────────────────────────────────────┼────────────────┤
+│[39m app-data  [90m│[39m [32m● Bound  [39m [90m│[39m    64Mi [90m│[39m     64Mi [90m│[39m    - [90m│[39m    - [90m│[39m RWX    [90m│[39m -                               [90m│[39m app-server-8fb4699bc-z8kl7, app-server-8fb4699~ [90m│[39m [90mkdash-e2e-data[39m [90m│
+│[39m z-unbound [90m│[39m [35m● Pending[39m [90m│[39m    32Mi [90m│[39m        - [90m│[39m    - [90m│[39m    - [90m│[39m RWO    [90m│[39m kdash-e2e-intentionally-missing [90m│[39m z-pending                                       [90m│[39m [35munbound       [39m [90m│
+└───────────┴───────────┴─────────┴──────────┴──────┴──────┴────────┴─────────────────────────────────┴─────────────────────────────────────────────────┴────────────────┘
+
+[1m[39mFINDINGS[0m  [90m2 findings   critical first[39m
+[90m┌────────────┬───────────┬──────────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1mSEVERITY  [0m [90m│[39m [1mOBJECT   [0m [90m│[39m [1mFINDING                                                     [0m [90m│[39m
+[90m├────────────┼───────────┼──────────────────────────────────────────────────────────────┤[39m
+[90m│[39m [1m[31m● CRITICAL[0m [90m│[39m z-unbound [90m│[39m claim is Pending - not bound to a volume                     [90m│[39m
+[90m│[39m [35m● WARNING [39m [90m│[39m z-unbound [90m│[39m storage class kdash-e2e-intentionally-missing does not exist [90m│[39m
+[90m└────────────┴───────────┴──────────────────────────────────────────────────────────────┘[39m
+
+[1mMOUNTS[0m  [90m3 mounts   declared in pod specs - a declaration does not prove the mount succeeded[39m
+[90m┌───────────┬────────────────────────────┬────────────┬───────────┬────────────┬────────────┐[39m
+[90m│[39m [1mCLAIM    [0m [90m│[39m [1mPOD                       [0m [90m│[39m [1mPOD STATUS[0m [90m│[39m [1mCONTAINER[0m [90m│[39m [1mMOUNT PATH[0m [90m│[39m [1mMODE      [0m [90m│[39m
+[90m├───────────┼────────────────────────────┼────────────┼───────────┼────────────┼────────────┤[39m
+[90m│[39m app-data  [90m│[39m app-server-8fb4699bc-j6rk2 [90m│[39m [32m● Running [39m [90m│[39m app       [90m│[39m /data      [90m│[39m read-write [90m│[39m
+[90m│[39m app-data  [90m│[39m app-server-8fb4699bc-z8kl7 [90m│[39m [32m● Running [39m [90m│[39m app       [90m│[39m /data      [90m│[39m read-write [90m│[39m
+[90m│[39m z-unbound [90m│[39m z-pending                  [90m│[39m [35m● Pending [39m [90m│[39m pending   [90m│[39m /data      [90m│[39m read-write [90m│[39m
+[90m└───────────┴────────────────────────────┴────────────┴───────────┴────────────┴────────────┘[39m
+
+[1mPERSISTENT VOLUMES[0m  [90m1 volume   bound to the claims above[39m
+[90m┌────────────────┬─────────┬──────────┬─────────┬───────┬────────────────────┬────────┐[39m
+[90m│[39m [1mVOLUME        [0m [90m│[39m [1mSTATUS [0m [90m│[39m [1mCAPACITY[0m [90m│[39m [1mRECLAIM[0m [90m│[39m [1mCLASS[0m [90m│[39m [1mCLAIM             [0m [90m│[39m [1mDRIVER[0m [90m│[39m
+[90m├────────────────┼─────────┼──────────┼─────────┼───────┼────────────────────┼────────┤[39m
+[90m│[39m kdash-e2e-data [90m│[39m [32m● Bound[39m [90m│[39m     64Mi [90m│[39m Retain  [90m│[39m -     [90m│[39m kdash-e2e/app-data [90m│[39m [90m-     [39m [90m│[39m
+8 services | 9 storage | E events | ! why | j/k scroll | h/l pan | i inspect | : commands | q quit
+[7m ● LIVE 18:19:04  next 1s  data 1s old  spec 5/30s  fetch 0.0s  poll 2s  AUDITED | storage | rows 1-43/66 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause      [0m

@@ -1,0 +1,598 @@
+Context: kdash-local | Namespace: kdash-e2e | Pod: app-server-8fb4699bc-j6rk2
+
+2026-11-06T12:38:19.340452398Z 2026-11-06T12:38:19+00:00 INFO request=0 service=app-server healthy=true
+2026-11-06T12:38:19.341383212Z 2026-11-06T12:38:19+00:00 WARN request=0 demonstration warning from live workload
+2026-11-06T12:38:21.342390375Z 2026-11-06T12:38:21+00:00 INFO request=1 service=app-server healthy=true
+2026-11-06T12:38:21.343049220Z 2026-11-06T12:38:21+00:00 WARN request=1 demonstration warning from live workload
+2026-11-06T12:38:23.343919803Z 2026-11-06T12:38:23+00:00 INFO request=2 service=app-server healthy=true
+2026-11-06T12:38:23.344491593Z 2026-11-06T12:38:23+00:00 WARN request=2 demonstration warning from live workload
+2026-11-06T12:38:25.345449337Z 2026-11-06T12:38:25+00:00 INFO request=3 service=app-server healthy=true
+2026-11-06T12:38:25.345967525Z 2026-11-06T12:38:25+00:00 WARN request=3 demonstration warning from live workload
+2026-11-06T12:38:27.347040533Z 2026-11-06T12:38:27+00:00 INFO request=4 service=app-server healthy=true
+2026-11-06T12:38:27.347633896Z 2026-11-06T12:38:27+00:00 WARN request=4 demonstration warning from live workload
+2026-11-06T12:38:29.349211380Z 2026-11-06T12:38:29+00:00 INFO request=5 service=app-server healthy=true
+2026-11-06T12:38:29.349925598Z 2026-11-06T12:38:29+00:00 WARN request=5 demonstration warning from live workload
+2026-11-06T12:38:31.351027261Z 2026-11-06T12:38:31+00:00 INFO request=6 service=app-server healthy=true
+2026-11-06T12:38:31.351738317Z 2026-11-06T12:38:31+00:00 WARN request=6 demonstration warning from live workload
+2026-11-06T12:38:33.352570295Z 2026-11-06T12:38:33+00:00 INFO request=7 service=app-server healthy=true
+2026-11-06T12:38:33.353340292Z 2026-11-06T12:38:33+00:00 WARN request=7 demonstration warning from live workload
+2026-11-06T12:38:35.354256352Z 2026-11-06T12:38:35+00:00 INFO request=8 service=app-server healthy=true
+2026-11-06T12:38:35.354740525Z 2026-11-06T12:38:35+00:00 WARN request=8 demonstration warning from live workload
+2026-11-06T12:38:37.355841263Z 2026-11-06T12:38:37+00:00 INFO request=9 service=app-server healthy=true
+2026-11-06T12:38:37.356731214Z 2026-11-06T12:38:37+00:00 WARN request=9 demonstration warning from live workload
+2026-11-06T12:38:39.357818391Z 2026-11-06T12:38:39+00:00 INFO request=10 service=app-server healthy=true
+2026-11-06T12:38:39.358738378Z 2026-11-06T12:38:39+00:00 WARN request=10 demonstration warning from live workload
+2026-11-06T12:38:41.359499338Z 2026-11-06T12:38:41+00:00 INFO request=11 service=app-server healthy=true
+2026-11-06T12:38:41.360086658Z 2026-11-06T12:38:41+00:00 WARN request=11 demonstration warning from live workload
+2026-11-06T12:38:43.361346390Z 2026-11-06T12:38:43+00:00 INFO request=12 service=app-server healthy=true
+2026-11-06T12:38:43.362025491Z 2026-11-06T12:38:43+00:00 WARN request=12 demonstration warning from live workload
+2026-11-06T12:38:45.363375690Z 2026-11-06T12:38:45+00:00 INFO request=13 service=app-server healthy=true
+2026-11-06T12:38:45.364013154Z 2026-11-06T12:38:45+00:00 WARN request=13 demonstration warning from live workload
+2026-11-06T12:38:47.365242936Z 2026-11-06T12:38:47+00:00 INFO request=14 service=app-server healthy=true
+2026-11-06T12:38:47.366271620Z 2026-11-06T12:38:47+00:00 WARN request=14 demonstration warning from live workload
+2026-11-06T12:38:49.367368002Z 2026-11-06T12:38:49+00:00 INFO request=15 service=app-server healthy=true
+2026-11-06T12:38:49.368011154Z 2026-11-06T12:38:49+00:00 WARN request=15 demonstration warning from live workload
+2026-11-06T12:38:51.369263593Z 2026-11-06T12:38:51+00:00 INFO request=16 service=app-server healthy=true
+2026-11-06T12:38:51.369789671Z 2026-11-06T12:38:51+00:00 WARN request=16 demonstration warning from live workload
+2026-11-06T12:38:53.371768753Z 2026-11-06T12:38:53+00:00 INFO request=17 service=app-server healthy=true
+2026-11-06T12:38:53.372268169Z 2026-11-06T12:38:53+00:00 WARN request=17 demonstration warning from live workload
+2026-11-06T12:38:55.373740976Z 2026-11-06T12:38:55+00:00 INFO request=18 service=app-server healthy=true
+2026-11-06T12:38:55.374277163Z 2026-11-06T12:38:55+00:00 WARN request=18 demonstration warning from live workload
+2026-11-06T12:38:57.375764864Z 2026-11-06T12:38:57+00:00 INFO request=19 service=app-server healthy=true
+2026-11-06T12:38:57.376327346Z 2026-11-06T12:38:57+00:00 WARN request=19 demonstration warning from live workload
+2026-11-06T12:38:59.377334730Z 2026-11-06T12:38:59+00:00 INFO request=20 service=app-server healthy=true
+2026-11-06T12:38:59.378038184Z 2026-11-06T12:38:59+00:00 WARN request=20 demonstration warning from live workload
+2026-11-06T12:39:01.379800359Z 2026-11-06T12:39:01+00:00 INFO request=21 service=app-server healthy=true
+2026-11-06T12:39:01.380728210Z 2026-11-06T12:39:01+00:00 WARN request=21 demonstration warning from live workload
+2026-11-06T12:39:03.382040634Z 2026-11-06T12:39:03+00:00 INFO request=22 service=app-server healthy=true
+2026-11-06T12:39:03.382721167Z 2026-11-06T12:39:03+00:00 WARN request=22 demonstration warning from live workload
+2026-11-06T12:39:05.384267124Z 2026-11-06T12:39:05+00:00 INFO request=23 service=app-server healthy=true
+2026-11-06T12:39:05.384812042Z 2026-11-06T12:39:05+00:00 WARN request=23 demonstration warning from live workload
+2026-11-06T12:39:07.386031753Z 2026-11-06T12:39:07+00:00 INFO request=24 service=app-server healthy=true
+2026-11-06T12:39:07.386660588Z 2026-11-06T12:39:07+00:00 WARN request=24 demonstration warning from live workload
+2026-11-06T12:39:09.388044284Z 2026-11-06T12:39:09+00:00 INFO request=25 service=app-server healthy=true
+2026-11-06T12:39:09.388554993Z 2026-11-06T12:39:09+00:00 WARN request=25 demonstration warning from live workload
+2026-11-06T12:39:11.389771621Z 2026-11-06T12:39:11+00:00 INFO request=26 service=app-server healthy=true
+2026-11-06T12:39:11.390401198Z 2026-11-06T12:39:11+00:00 WARN request=26 demonstration warning from live workload
+2026-11-06T12:39:13.391653158Z 2026-11-06T12:39:13+00:00 INFO request=27 service=app-server healthy=true
+2026-11-06T12:39:13.392166584Z 2026-11-06T12:39:13+00:00 WARN request=27 demonstration warning from live workload
+2026-11-06T12:39:15.393434245Z 2026-11-06T12:39:15+00:00 INFO request=28 service=app-server healthy=true
+2026-11-06T12:39:15.393905171Z 2026-11-06T12:39:15+00:00 WARN request=28 demonstration warning from live workload
+2026-11-06T12:39:17.395184701Z 2026-11-06T12:39:17+00:00 INFO request=29 service=app-server healthy=true
+2026-11-06T12:39:17.395947253Z 2026-11-06T12:39:17+00:00 WARN request=29 demonstration warning from live workload
+2026-11-06T12:39:19.397249016Z 2026-11-06T12:39:19+00:00 INFO request=30 service=app-server healthy=true
+2026-11-06T12:39:19.398052192Z 2026-11-06T12:39:19+00:00 WARN request=30 demonstration warning from live workload
+2026-11-06T12:39:21.399503515Z 2026-11-06T12:39:21+00:00 INFO request=31 service=app-server healthy=true
+2026-11-06T12:39:21.400049626Z 2026-11-06T12:39:21+00:00 WARN request=31 demonstration warning from live workload
+2026-11-06T12:39:23.401518394Z 2026-11-06T12:39:23+00:00 INFO request=32 service=app-server healthy=true
+2026-11-06T12:39:23.402127783Z 2026-11-06T12:39:23+00:00 WARN request=32 demonstration warning from live workload
+2026-11-06T12:39:25.403261873Z 2026-11-06T12:39:25+00:00 INFO request=33 service=app-server healthy=true
+2026-11-06T12:39:25.403795968Z 2026-11-06T12:39:25+00:00 WARN request=33 demonstration warning from live workload
+2026-11-06T12:39:27.405437485Z 2026-11-06T12:39:27+00:00 INFO request=34 service=app-server healthy=true
+2026-11-06T12:39:27.406037110Z 2026-11-06T12:39:27+00:00 WARN request=34 demonstration warning from live workload
+2026-11-06T12:39:29.407396290Z 2026-11-06T12:39:29+00:00 INFO request=35 service=app-server healthy=true
+2026-11-06T12:39:29.408021691Z 2026-11-06T12:39:29+00:00 WARN request=35 demonstration warning from live workload
+2026-11-06T12:39:31.409241056Z 2026-11-06T12:39:31+00:00 INFO request=36 service=app-server healthy=true
+2026-11-06T12:39:31.409841307Z 2026-11-06T12:39:31+00:00 WARN request=36 demonstration warning from live workload
+2026-11-06T12:39:33.411450907Z 2026-11-06T12:39:33+00:00 INFO request=37 service=app-server healthy=true
+2026-11-06T12:39:33.412031227Z 2026-11-06T12:39:33+00:00 WARN request=37 demonstration warning from live workload
+2026-11-06T12:39:35.413204556Z 2026-11-06T12:39:35+00:00 INFO request=38 service=app-server healthy=true
+2026-11-06T12:39:35.413973047Z 2026-11-06T12:39:35+00:00 WARN request=38 demonstration warning from live workload
+2026-11-06T12:39:37.415560595Z 2026-11-06T12:39:37+00:00 INFO request=39 service=app-server healthy=true
+2026-11-06T12:39:37.416449387Z 2026-11-06T12:39:37+00:00 WARN request=39 demonstration warning from live workload
+2026-11-06T12:39:39.417459534Z 2026-11-06T12:39:39+00:00 INFO request=40 service=app-server healthy=true
+2026-11-06T12:39:39.418151062Z 2026-11-06T12:39:39+00:00 WARN request=40 demonstration warning from live workload
+2026-11-06T12:39:41.419356794Z 2026-11-06T12:39:41+00:00 INFO request=41 service=app-server healthy=true
+2026-11-06T12:39:41.419917623Z 2026-11-06T12:39:41+00:00 WARN request=41 demonstration warning from live workload
+2026-11-06T12:39:43.421181384Z 2026-11-06T12:39:43+00:00 INFO request=42 service=app-server healthy=true
+2026-11-06T12:39:43.421916404Z 2026-11-06T12:39:43+00:00 WARN request=42 demonstration warning from live workload
+2026-11-06T12:39:45.422951917Z 2026-11-06T12:39:45+00:00 INFO request=43 service=app-server healthy=true
+2026-11-06T12:39:45.423557098Z 2026-11-06T12:39:45+00:00 WARN request=43 demonstration warning from live workload
+2026-11-06T12:39:47.424849901Z 2026-11-06T12:39:47+00:00 INFO request=44 service=app-server healthy=true
+2026-11-06T12:39:47.425510152Z 2026-11-06T12:39:47+00:00 WARN request=44 demonstration warning from live workload
+2026-11-06T12:39:49.427325765Z 2026-11-06T12:39:49+00:00 INFO request=45 service=app-server healthy=true
+2026-11-06T12:39:49.428015789Z 2026-11-06T12:39:49+00:00 WARN request=45 demonstration warning from live workload
+2026-11-06T12:39:51.429198564Z 2026-11-06T12:39:51+00:00 INFO request=46 service=app-server healthy=true
+2026-11-06T12:39:51.429704658Z 2026-11-06T12:39:51+00:00 WARN request=46 demonstration warning from live workload
+2026-11-06T12:39:53.430883271Z 2026-11-06T12:39:53+00:00 INFO request=47 service=app-server healthy=true
+2026-11-06T12:39:53.431400681Z 2026-11-06T12:39:53+00:00 WARN request=47 demonstration warning from live workload
+2026-11-06T12:39:55.432928157Z 2026-11-06T12:39:55+00:00 INFO request=48 service=app-server healthy=true
+2026-11-06T12:39:55.433502674Z 2026-11-06T12:39:55+00:00 WARN request=48 demonstration warning from live workload
+2026-11-06T12:39:57.435895175Z 2026-11-06T12:39:57+00:00 INFO request=49 service=app-server healthy=true
+2026-11-06T12:39:57.436399902Z 2026-11-06T12:39:57+00:00 WARN request=49 demonstration warning from live workload
+2026-11-06T12:39:59.437783311Z 2026-11-06T12:39:59+00:00 INFO request=50 service=app-server healthy=true
+2026-11-06T12:39:59.438338871Z 2026-11-06T12:39:59+00:00 WARN request=50 demonstration warning from live workload
+2026-11-06T12:40:01.439483661Z 2026-11-06T12:40:01+00:00 INFO request=51 service=app-server healthy=true
+2026-11-06T12:40:01.440078547Z 2026-11-06T12:40:01+00:00 WARN request=51 demonstration warning from live workload
+2026-11-06T12:40:03.441401454Z 2026-11-06T12:40:03+00:00 INFO request=52 service=app-server healthy=true
+2026-11-06T12:40:03.441938892Z 2026-11-06T12:40:03+00:00 WARN request=52 demonstration warning from live workload
+2026-11-06T12:40:05.443473718Z 2026-11-06T12:40:05+00:00 INFO request=53 service=app-server healthy=true
+2026-11-06T12:40:05.444199581Z 2026-11-06T12:40:05+00:00 WARN request=53 demonstration warning from live workload
+2026-11-06T12:40:07.445577387Z 2026-11-06T12:40:07+00:00 INFO request=54 service=app-server healthy=true
+2026-11-06T12:40:07.446127903Z 2026-11-06T12:40:07+00:00 WARN request=54 demonstration warning from live workload
+2026-11-06T12:40:09.447165589Z 2026-11-06T12:40:09+00:00 INFO request=55 service=app-server healthy=true
+2026-11-06T12:40:09.447796039Z 2026-11-06T12:40:09+00:00 WARN request=55 demonstration warning from live workload
+2026-11-06T12:40:11.448877096Z 2026-11-06T12:40:11+00:00 INFO request=56 service=app-server healthy=true
+2026-11-06T12:40:11.449353311Z 2026-11-06T12:40:11+00:00 WARN request=56 demonstration warning from live workload
+2026-11-06T12:40:13.450547309Z 2026-11-06T12:40:13+00:00 INFO request=57 service=app-server healthy=true
+2026-11-06T12:40:13.451081559Z 2026-11-06T12:40:13+00:00 WARN request=57 demonstration warning from live workload
+2026-11-06T12:40:15.452176000Z 2026-11-06T12:40:15+00:00 INFO request=58 service=app-server healthy=true
+2026-11-06T12:40:15.452795414Z 2026-11-06T12:40:15+00:00 WARN request=58 demonstration warning from live workload
+2026-11-06T12:40:17.453972589Z 2026-11-06T12:40:17+00:00 INFO request=59 service=app-server healthy=true
+2026-11-06T12:40:17.454478569Z 2026-11-06T12:40:17+00:00 WARN request=59 demonstration warning from live workload
+2026-11-06T12:40:19.455798307Z 2026-11-06T12:40:19+00:00 INFO request=60 service=app-server healthy=true
+2026-11-06T12:40:19.456731306Z 2026-11-06T12:40:19+00:00 WARN request=60 demonstration warning from live workload
+2026-11-06T12:40:21.457924796Z 2026-11-06T12:40:21+00:00 INFO request=61 service=app-server healthy=true
+2026-11-06T12:40:21.458526905Z 2026-11-06T12:40:21+00:00 WARN request=61 demonstration warning from live workload
+2026-11-06T12:40:23.459754757Z 2026-11-06T12:40:23+00:00 INFO request=62 service=app-server healthy=true
+2026-11-06T12:40:23.460372886Z 2026-11-06T12:40:23+00:00 WARN request=62 demonstration warning from live workload
+2026-11-06T12:40:25.461649595Z 2026-11-06T12:40:25+00:00 INFO request=63 service=app-server healthy=true
+2026-11-06T12:40:25.462580025Z 2026-11-06T12:40:25+00:00 WARN request=63 demonstration warning from live workload
+2026-11-06T12:40:27.464201154Z 2026-11-06T12:40:27+00:00 INFO request=64 service=app-server healthy=true
+2026-11-06T12:40:27.464723531Z 2026-11-06T12:40:27+00:00 WARN request=64 demonstration warning from live workload
+2026-11-06T12:40:29.466395555Z 2026-11-06T12:40:29+00:00 INFO request=65 service=app-server healthy=true
+2026-11-06T12:40:29.466895024Z 2026-11-06T12:40:29+00:00 WARN request=65 demonstration warning from live workload
+2026-11-06T12:40:31.468041214Z 2026-11-06T12:40:31+00:00 INFO request=66 service=app-server healthy=true
+2026-11-06T12:40:31.468617525Z 2026-11-06T12:40:31+00:00 WARN request=66 demonstration warning from live workload
+2026-11-06T12:40:33.470340431Z 2026-11-06T12:40:33+00:00 INFO request=67 service=app-server healthy=true
+2026-11-06T12:40:33.470658405Z 2026-11-06T12:40:33+00:00 WARN request=67 demonstration warning from live workload
+2026-11-06T12:40:35.471755853Z 2026-11-06T12:40:35+00:00 INFO request=68 service=app-server healthy=true
+2026-11-06T12:40:35.472406570Z 2026-11-06T12:40:35+00:00 WARN request=68 demonstration warning from live workload
+2026-11-06T12:40:37.473393716Z 2026-11-06T12:40:37+00:00 INFO request=69 service=app-server healthy=true
+2026-11-06T12:40:37.474146919Z 2026-11-06T12:40:37+00:00 WARN request=69 demonstration warning from live workload
+2026-11-06T12:40:39.475769627Z 2026-11-06T12:40:39+00:00 INFO request=70 service=app-server healthy=true
+2026-11-06T12:40:39.476410379Z 2026-11-06T12:40:39+00:00 WARN request=70 demonstration warning from live workload
+2026-11-06T12:40:41.477550847Z 2026-11-06T12:40:41+00:00 INFO request=71 service=app-server healthy=true
+2026-11-06T12:40:41.478191133Z 2026-11-06T12:40:41+00:00 WARN request=71 demonstration warning from live workload
+2026-11-06T12:40:43.480299332Z 2026-11-06T12:40:43+00:00 INFO request=72 service=app-server healthy=true
+2026-11-06T12:40:43.480959930Z 2026-11-06T12:40:43+00:00 WARN request=72 demonstration warning from live workload
+2026-11-06T12:40:45.481705125Z 2026-11-06T12:40:45+00:00 INFO request=73 service=app-server healthy=true
+2026-11-06T12:40:45.482394937Z 2026-11-06T12:40:45+00:00 WARN request=73 demonstration warning from live workload
+2026-11-06T12:40:47.483345571Z 2026-11-06T12:40:47+00:00 INFO request=74 service=app-server healthy=true
+2026-11-06T12:40:47.484063749Z 2026-11-06T12:40:47+00:00 WARN request=74 demonstration warning from live workload
+2026-11-06T12:40:49.485259023Z 2026-11-06T12:40:49+00:00 INFO request=75 service=app-server healthy=true
+2026-11-06T12:40:49.485657056Z 2026-11-06T12:40:49+00:00 WARN request=75 demonstration warning from live workload
+2026-11-06T12:40:51.486932676Z 2026-11-06T12:40:51+00:00 INFO request=76 service=app-server healthy=true
+2026-11-06T12:40:51.487536046Z 2026-11-06T12:40:51+00:00 WARN request=76 demonstration warning from live workload
+2026-11-06T12:40:53.488625820Z 2026-11-06T12:40:53+00:00 INFO request=77 service=app-server healthy=true
+2026-11-06T12:40:53.489153557Z 2026-11-06T12:40:53+00:00 WARN request=77 demonstration warning from live workload
+2026-11-06T12:40:55.490442345Z 2026-11-06T12:40:55+00:00 INFO request=78 service=app-server healthy=true
+2026-11-06T12:40:55.491063752Z 2026-11-06T12:40:55+00:00 WARN request=78 demonstration warning from live workload
+2026-11-06T12:40:57.492184176Z 2026-11-06T12:40:57+00:00 INFO request=79 service=app-server healthy=true
+2026-11-06T12:40:57.492742582Z 2026-11-06T12:40:57+00:00 WARN request=79 demonstration warning from live workload
+2026-11-06T12:40:59.493955470Z 2026-11-06T12:40:59+00:00 INFO request=80 service=app-server healthy=true
+2026-11-06T12:40:59.494676481Z 2026-11-06T12:40:59+00:00 WARN request=80 demonstration warning from live workload
+2026-11-06T12:41:01.496203880Z 2026-11-06T12:41:01+00:00 INFO request=81 service=app-server healthy=true
+2026-11-06T12:41:01.496986583Z 2026-11-06T12:41:01+00:00 WARN request=81 demonstration warning from live workload
+2026-11-06T12:41:03.498060050Z 2026-11-06T12:41:03+00:00 INFO request=82 service=app-server healthy=true
+2026-11-06T12:41:03.499093633Z 2026-11-06T12:41:03+00:00 WARN request=82 demonstration warning from live workload
+2026-11-06T12:41:05.500223660Z 2026-11-06T12:41:05+00:00 INFO request=83 service=app-server healthy=true
+2026-11-06T12:41:05.500770500Z 2026-11-06T12:41:05+00:00 WARN request=83 demonstration warning from live workload
+2026-11-06T12:41:07.501992384Z 2026-11-06T12:41:07+00:00 INFO request=84 service=app-server healthy=true
+2026-11-06T12:41:07.502932385Z 2026-11-06T12:41:07+00:00 WARN request=84 demonstration warning from live workload
+2026-11-06T12:41:09.504051967Z 2026-11-06T12:41:09+00:00 INFO request=85 service=app-server healthy=true
+2026-11-06T12:41:09.504724617Z 2026-11-06T12:41:09+00:00 WARN request=85 demonstration warning from live workload
+2026-11-06T12:41:11.506257831Z 2026-11-06T12:41:11+00:00 INFO request=86 service=app-server healthy=true
+2026-11-06T12:41:11.506829566Z 2026-11-06T12:41:11+00:00 WARN request=86 demonstration warning from live workload
+2026-11-06T12:41:13.507909787Z 2026-11-06T12:41:13+00:00 INFO request=87 service=app-server healthy=true
+2026-11-06T12:41:13.508591602Z 2026-11-06T12:41:13+00:00 WARN request=87 demonstration warning from live workload
+2026-11-06T12:41:15.509728855Z 2026-11-06T12:41:15+00:00 INFO request=88 service=app-server healthy=true
+2026-11-06T12:41:15.510321688Z 2026-11-06T12:41:15+00:00 WARN request=88 demonstration warning from live workload
+2026-11-06T12:41:17.511582431Z 2026-11-06T12:41:17+00:00 INFO request=89 service=app-server healthy=true
+2026-11-06T12:41:17.512325799Z 2026-11-06T12:41:17+00:00 WARN request=89 demonstration warning from live workload
+2026-11-06T12:41:19.513258796Z 2026-11-06T12:41:19+00:00 INFO request=90 service=app-server healthy=true
+2026-11-06T12:41:19.513945417Z 2026-11-06T12:41:19+00:00 WARN request=90 demonstration warning from live workload
+2026-11-06T12:41:21.514964050Z 2026-11-06T12:41:21+00:00 INFO request=91 service=app-server healthy=true
+2026-11-06T12:41:21.515505916Z 2026-11-06T12:41:21+00:00 WARN request=91 demonstration warning from live workload
+2026-11-06T12:41:23.516692569Z 2026-11-06T12:41:23+00:00 INFO request=92 service=app-server healthy=true
+2026-11-06T12:41:23.517243081Z 2026-11-06T12:41:23+00:00 WARN request=92 demonstration warning from live workload
+2026-11-06T12:41:25.518425043Z 2026-11-06T12:41:25+00:00 INFO request=93 service=app-server healthy=true
+2026-11-06T12:41:25.519174977Z 2026-11-06T12:41:25+00:00 WARN request=93 demonstration warning from live workload
+2026-11-06T12:41:27.520505732Z 2026-11-06T12:41:27+00:00 INFO request=94 service=app-server healthy=true
+2026-11-06T12:41:27.521216104Z 2026-11-06T12:41:27+00:00 WARN request=94 demonstration warning from live workload
+2026-11-06T12:41:29.522349158Z 2026-11-06T12:41:29+00:00 INFO request=95 service=app-server healthy=true
+2026-11-06T12:41:29.523192606Z 2026-11-06T12:41:29+00:00 WARN request=95 demonstration warning from live workload
+2026-11-06T12:41:31.524723573Z 2026-11-06T12:41:31+00:00 INFO request=96 service=app-server healthy=true
+2026-11-06T12:41:31.525144875Z 2026-11-06T12:41:31+00:00 WARN request=96 demonstration warning from live workload
+2026-11-06T12:41:33.526299661Z 2026-11-06T12:41:33+00:00 INFO request=97 service=app-server healthy=true
+2026-11-06T12:41:33.526894462Z 2026-11-06T12:41:33+00:00 WARN request=97 demonstration warning from live workload
+2026-11-06T12:41:35.528115658Z 2026-11-06T12:41:35+00:00 INFO request=98 service=app-server healthy=true
+2026-11-06T12:41:35.528729647Z 2026-11-06T12:41:35+00:00 WARN request=98 demonstration warning from live workload
+2026-11-06T12:41:37.530031088Z 2026-11-06T12:41:37+00:00 INFO request=99 service=app-server healthy=true
+2026-11-06T12:41:37.530715792Z 2026-11-06T12:41:37+00:00 WARN request=99 demonstration warning from live workload
+2026-11-06T12:41:39.531768849Z 2026-11-06T12:41:39+00:00 INFO request=100 service=app-server healthy=true
+2026-11-06T12:41:39.532633191Z 2026-11-06T12:41:39+00:00 WARN request=100 demonstration warning from live workload
+2026-11-06T12:41:41.533517284Z 2026-11-06T12:41:41+00:00 INFO request=101 service=app-server healthy=true
+2026-11-06T12:41:41.534301388Z 2026-11-06T12:41:41+00:00 WARN request=101 demonstration warning from live workload
+2026-11-06T12:41:43.536100707Z 2026-11-06T12:41:43+00:00 INFO request=102 service=app-server healthy=true
+2026-11-06T12:41:43.536690530Z 2026-11-06T12:41:43+00:00 WARN request=102 demonstration warning from live workload
+2026-11-06T12:41:45.537920433Z 2026-11-06T12:41:45+00:00 INFO request=103 service=app-server healthy=true
+2026-11-06T12:41:45.538546206Z 2026-11-06T12:41:45+00:00 WARN request=103 demonstration warning from live workload
+2026-11-06T12:41:47.539902842Z 2026-11-06T12:41:47+00:00 INFO request=104 service=app-server healthy=true
+2026-11-06T12:41:47.540699439Z 2026-11-06T12:41:47+00:00 WARN request=104 demonstration warning from live workload
+2026-11-06T12:41:49.541601045Z 2026-11-06T12:41:49+00:00 INFO request=105 service=app-server healthy=true
+2026-11-06T12:41:49.542483737Z 2026-11-06T12:41:49+00:00 WARN request=105 demonstration warning from live workload
+2026-11-06T12:41:51.543266862Z 2026-11-06T12:41:51+00:00 INFO request=106 service=app-server healthy=true
+2026-11-06T12:41:51.543961234Z 2026-11-06T12:41:51+00:00 WARN request=106 demonstration warning from live workload
+2026-11-06T12:41:53.544808220Z 2026-11-06T12:41:53+00:00 INFO request=107 service=app-server healthy=true
+2026-11-06T12:41:53.545377217Z 2026-11-06T12:41:53+00:00 WARN request=107 demonstration warning from live workload
+2026-11-06T12:41:55.546460285Z 2026-11-06T12:41:55+00:00 INFO request=108 service=app-server healthy=true
+2026-11-06T12:41:55.547024998Z 2026-11-06T12:41:55+00:00 WARN request=108 demonstration warning from live workload
+2026-11-06T12:41:57.548118739Z 2026-11-06T12:41:57+00:00 INFO request=109 service=app-server healthy=true
+2026-11-06T12:41:57.548751888Z 2026-11-06T12:41:57+00:00 WARN request=109 demonstration warning from live workload
+2026-11-06T12:41:59.549629125Z 2026-11-06T12:41:59+00:00 INFO request=110 service=app-server healthy=true
+2026-11-06T12:41:59.550264959Z 2026-11-06T12:41:59+00:00 WARN request=110 demonstration warning from live workload
+2026-11-06T12:42:01.551370893Z 2026-11-06T12:42:01+00:00 INFO request=111 service=app-server healthy=true
+2026-11-06T12:42:01.551973467Z 2026-11-06T12:42:01+00:00 WARN request=111 demonstration warning from live workload
+2026-11-06T12:42:03.553391047Z 2026-11-06T12:42:03+00:00 INFO request=112 service=app-server healthy=true
+2026-11-06T12:42:03.554157786Z 2026-11-06T12:42:03+00:00 WARN request=112 demonstration warning from live workload
+2026-11-06T12:42:05.556075216Z 2026-11-06T12:42:05+00:00 INFO request=113 service=app-server healthy=true
+2026-11-06T12:42:05.556809013Z 2026-11-06T12:42:05+00:00 WARN request=113 demonstration warning from live workload
+2026-11-06T12:42:07.558267856Z 2026-11-06T12:42:07+00:00 INFO request=114 service=app-server healthy=true
+2026-11-06T12:42:07.559004091Z 2026-11-06T12:42:07+00:00 WARN request=114 demonstration warning from live workload
+2026-11-06T12:42:09.559905772Z 2026-11-06T12:42:09+00:00 INFO request=115 service=app-server healthy=true
+2026-11-06T12:42:09.560555320Z 2026-11-06T12:42:09+00:00 WARN request=115 demonstration warning from live workload
+2026-11-06T12:42:11.561499363Z 2026-11-06T12:42:11+00:00 INFO request=116 service=app-server healthy=true
+2026-11-06T12:42:11.562049497Z 2026-11-06T12:42:11+00:00 WARN request=116 demonstration warning from live workload
+2026-11-06T12:42:13.563218948Z 2026-11-06T12:42:13+00:00 INFO request=117 service=app-server healthy=true
+2026-11-06T12:42:13.563876713Z 2026-11-06T12:42:13+00:00 WARN request=117 demonstration warning from live workload
+2026-11-06T12:42:15.565713564Z 2026-11-06T12:42:15+00:00 INFO request=118 service=app-server healthy=true
+2026-11-06T12:42:15.566300332Z 2026-11-06T12:42:15+00:00 WARN request=118 demonstration warning from live workload
+2026-11-06T12:42:17.567638088Z 2026-11-06T12:42:17+00:00 INFO request=119 service=app-server healthy=true
+2026-11-06T12:42:17.568332745Z 2026-11-06T12:42:17+00:00 WARN request=119 demonstration warning from live workload
+2026-11-06T12:42:19.569487874Z 2026-11-06T12:42:19+00:00 INFO request=120 service=app-server healthy=true
+2026-11-06T12:42:19.570060800Z 2026-11-06T12:42:19+00:00 WARN request=120 demonstration warning from live workload
+2026-11-06T12:42:21.571136047Z 2026-11-06T12:42:21+00:00 INFO request=121 service=app-server healthy=true
+2026-11-06T12:42:21.571912486Z 2026-11-06T12:42:21+00:00 WARN request=121 demonstration warning from live workload
+2026-11-06T12:42:23.573482178Z 2026-11-06T12:42:23+00:00 INFO request=122 service=app-server healthy=true
+2026-11-06T12:42:23.574071324Z 2026-11-06T12:42:23+00:00 WARN request=122 demonstration warning from live workload
+2026-11-06T12:42:25.575399603Z 2026-11-06T12:42:25+00:00 INFO request=123 service=app-server healthy=true
+2026-11-06T12:42:25.575875770Z 2026-11-06T12:42:25+00:00 WARN request=123 demonstration warning from live workload
+2026-11-06T12:42:27.577062920Z 2026-11-06T12:42:27+00:00 INFO request=124 service=app-server healthy=true
+2026-11-06T12:42:27.577746826Z 2026-11-06T12:42:27+00:00 WARN request=124 demonstration warning from live workload
+2026-11-06T12:42:29.579068364Z 2026-11-06T12:42:29+00:00 INFO request=125 service=app-server healthy=true
+2026-11-06T12:42:29.579413222Z 2026-11-06T12:42:29+00:00 WARN request=125 demonstration warning from live workload
+2026-11-06T12:42:31.580469556Z 2026-11-06T12:42:31+00:00 INFO request=126 service=app-server healthy=true
+2026-11-06T12:42:31.581136294Z 2026-11-06T12:42:31+00:00 WARN request=126 demonstration warning from live workload
+2026-11-06T12:42:33.582411597Z 2026-11-06T12:42:33+00:00 INFO request=127 service=app-server healthy=true
+2026-11-06T12:42:33.583168282Z 2026-11-06T12:42:33+00:00 WARN request=127 demonstration warning from live workload
+2026-11-06T12:42:35.584106276Z 2026-11-06T12:42:35+00:00 INFO request=128 service=app-server healthy=true
+2026-11-06T12:42:35.584853599Z 2026-11-06T12:42:35+00:00 WARN request=128 demonstration warning from live workload
+2026-11-06T12:42:37.585845759Z 2026-11-06T12:42:37+00:00 INFO request=129 service=app-server healthy=true
+2026-11-06T12:42:37.586539902Z 2026-11-06T12:42:37+00:00 WARN request=129 demonstration warning from live workload
+2026-11-06T12:42:39.587688079Z 2026-11-06T12:42:39+00:00 INFO request=130 service=app-server healthy=true
+2026-11-06T12:42:39.588490204Z 2026-11-06T12:42:39+00:00 WARN request=130 demonstration warning from live workload
+2026-11-06T12:42:41.589516553Z 2026-11-06T12:42:41+00:00 INFO request=131 service=app-server healthy=true
+2026-11-06T12:42:41.590066627Z 2026-11-06T12:42:41+00:00 WARN request=131 demonstration warning from live workload
+2026-11-06T12:42:43.591441369Z 2026-11-06T12:42:43+00:00 INFO request=132 service=app-server healthy=true
+2026-11-06T12:42:43.592059266Z 2026-11-06T12:42:43+00:00 WARN request=132 demonstration warning from live workload
+2026-11-06T12:42:45.593790426Z 2026-11-06T12:42:45+00:00 INFO request=133 service=app-server healthy=true
+2026-11-06T12:42:45.594324524Z 2026-11-06T12:42:45+00:00 WARN request=133 demonstration warning from live workload
+2026-11-06T12:42:47.595511112Z 2026-11-06T12:42:47+00:00 INFO request=134 service=app-server healthy=true
+2026-11-06T12:42:47.596019494Z 2026-11-06T12:42:47+00:00 WARN request=134 demonstration warning from live workload
+2026-11-06T12:42:49.596855374Z 2026-11-06T12:42:49+00:00 INFO request=135 service=app-server healthy=true
+2026-11-06T12:42:49.597420649Z 2026-11-06T12:42:49+00:00 WARN request=135 demonstration warning from live workload
+2026-11-06T12:42:51.598428862Z 2026-11-06T12:42:51+00:00 INFO request=136 service=app-server healthy=true
+2026-11-06T12:42:51.598973062Z 2026-11-06T12:42:51+00:00 WARN request=136 demonstration warning from live workload
+2026-11-06T12:42:53.599969075Z 2026-11-06T12:42:53+00:00 INFO request=137 service=app-server healthy=true
+2026-11-06T12:42:53.600627554Z 2026-11-06T12:42:53+00:00 WARN request=137 demonstration warning from live workload
+2026-11-06T12:42:55.601798462Z 2026-11-06T12:42:55+00:00 INFO request=138 service=app-server healthy=true
+2026-11-06T12:42:55.602327436Z 2026-11-06T12:42:55+00:00 WARN request=138 demonstration warning from live workload
+2026-11-06T12:42:57.603435104Z 2026-11-06T12:42:57+00:00 INFO request=139 service=app-server healthy=true
+2026-11-06T12:42:57.604183928Z 2026-11-06T12:42:57+00:00 WARN request=139 demonstration warning from live workload
+2026-11-06T12:42:59.605099796Z 2026-11-06T12:42:59+00:00 INFO request=140 service=app-server healthy=true
+2026-11-06T12:42:59.605660962Z 2026-11-06T12:42:59+00:00 WARN request=140 demonstration warning from live workload
+2026-11-06T12:43:01.606604260Z 2026-11-06T12:43:01+00:00 INFO request=141 service=app-server healthy=true
+2026-11-06T12:43:01.607129844Z 2026-11-06T12:43:01+00:00 WARN request=141 demonstration warning from live workload
+2026-11-06T12:43:03.608432796Z 2026-11-06T12:43:03+00:00 INFO request=142 service=app-server healthy=true
+2026-11-06T12:43:03.609000603Z 2026-11-06T12:43:03+00:00 WARN request=142 demonstration warning from live workload
+2026-11-06T12:43:05.610323716Z 2026-11-06T12:43:05+00:00 INFO request=143 service=app-server healthy=true
+2026-11-06T12:43:05.610941047Z 2026-11-06T12:43:05+00:00 WARN request=143 demonstration warning from live workload
+2026-11-06T12:43:07.611746471Z 2026-11-06T12:43:07+00:00 INFO request=144 service=app-server healthy=true
+2026-11-06T12:43:07.612306496Z 2026-11-06T12:43:07+00:00 WARN request=144 demonstration warning from live workload
+2026-11-06T12:43:09.613155435Z 2026-11-06T12:43:09+00:00 INFO request=145 service=app-server healthy=true
+2026-11-06T12:43:09.613748299Z 2026-11-06T12:43:09+00:00 WARN request=145 demonstration warning from live workload
+2026-11-06T12:43:11.614820127Z 2026-11-06T12:43:11+00:00 INFO request=146 service=app-server healthy=true
+2026-11-06T12:43:11.615381430Z 2026-11-06T12:43:11+00:00 WARN request=146 demonstration warning from live workload
+2026-11-06T12:43:13.616346448Z 2026-11-06T12:43:13+00:00 INFO request=147 service=app-server healthy=true
+2026-11-06T12:43:13.616897614Z 2026-11-06T12:43:13+00:00 WARN request=147 demonstration warning from live workload
+2026-11-06T12:43:15.618219869Z 2026-11-06T12:43:15+00:00 INFO request=148 service=app-server healthy=true
+2026-11-06T12:43:15.618738990Z 2026-11-06T12:43:15+00:00 WARN request=148 demonstration warning from live workload
+2026-11-06T12:43:17.619746038Z 2026-11-06T12:43:17+00:00 INFO request=149 service=app-server healthy=true
+2026-11-06T12:43:17.620291980Z 2026-11-06T12:43:17+00:00 WARN request=149 demonstration warning from live workload
+2026-11-06T12:43:19.621417549Z 2026-11-06T12:43:19+00:00 INFO request=150 service=app-server healthy=true
+2026-11-06T12:43:19.621980503Z 2026-11-06T12:43:19+00:00 WARN request=150 demonstration warning from live workload
+2026-11-06T12:43:21.623014299Z 2026-11-06T12:43:21+00:00 INFO request=151 service=app-server healthy=true
+2026-11-06T12:43:21.623600580Z 2026-11-06T12:43:21+00:00 WARN request=151 demonstration warning from live workload
+2026-11-06T12:43:23.624536153Z 2026-11-06T12:43:23+00:00 INFO request=152 service=app-server healthy=true
+2026-11-06T12:43:23.625050971Z 2026-11-06T12:43:23+00:00 WARN request=152 demonstration warning from live workload
+2026-11-06T12:43:25.626253147Z 2026-11-06T12:43:25+00:00 INFO request=153 service=app-server healthy=true
+2026-11-06T12:43:25.626795434Z 2026-11-06T12:43:25+00:00 WARN request=153 demonstration warning from live workload
+2026-11-06T12:43:27.627888682Z 2026-11-06T12:43:27+00:00 INFO request=154 service=app-server healthy=true
+2026-11-06T12:43:27.628418662Z 2026-11-06T12:43:27+00:00 WARN request=154 demonstration warning from live workload
+2026-11-06T12:43:29.629450949Z 2026-11-06T12:43:29+00:00 INFO request=155 service=app-server healthy=true
+2026-11-06T12:43:29.630095427Z 2026-11-06T12:43:29+00:00 WARN request=155 demonstration warning from live workload
+2026-11-06T12:43:31.631084842Z 2026-11-06T12:43:31+00:00 INFO request=156 service=app-server healthy=true
+2026-11-06T12:43:31.631771159Z 2026-11-06T12:43:31+00:00 WARN request=156 demonstration warning from live workload
+2026-11-06T12:43:33.632723773Z 2026-11-06T12:43:33+00:00 INFO request=157 service=app-server healthy=true
+2026-11-06T12:43:33.633349023Z 2026-11-06T12:43:33+00:00 WARN request=157 demonstration warning from live workload
+2026-11-06T12:43:35.634411688Z 2026-11-06T12:43:35+00:00 INFO request=158 service=app-server healthy=true
+2026-11-06T12:43:35.634912697Z 2026-11-06T12:43:35+00:00 WARN request=158 demonstration warning from live workload
+2026-11-06T12:43:37.636016354Z 2026-11-06T12:43:37+00:00 INFO request=159 service=app-server healthy=true
+2026-11-06T12:43:37.636642032Z 2026-11-06T12:43:37+00:00 WARN request=159 demonstration warning from live workload
+2026-11-06T12:43:39.637513786Z 2026-11-06T12:43:39+00:00 INFO request=160 service=app-server healthy=true
+2026-11-06T12:43:39.638026769Z 2026-11-06T12:43:39+00:00 WARN request=160 demonstration warning from live workload
+2026-11-06T12:43:41.639291226Z 2026-11-06T12:43:41+00:00 INFO request=161 service=app-server healthy=true
+2026-11-06T12:43:41.639612378Z 2026-11-06T12:43:41+00:00 WARN request=161 demonstration warning from live workload
+2026-11-06T12:43:43.641346209Z 2026-11-06T12:43:43+00:00 INFO request=162 service=app-server healthy=true
+2026-11-06T12:43:43.641950246Z 2026-11-06T12:43:43+00:00 WARN request=162 demonstration warning from live workload
+2026-11-06T12:43:45.643142840Z 2026-11-06T12:43:45+00:00 INFO request=163 service=app-server healthy=true
+2026-11-06T12:43:45.643641329Z 2026-11-06T12:43:45+00:00 WARN request=163 demonstration warning from live workload
+2026-11-06T12:43:47.644648334Z 2026-11-06T12:43:47+00:00 INFO request=164 service=app-server healthy=true
+2026-11-06T12:43:47.645219642Z 2026-11-06T12:43:47+00:00 WARN request=164 demonstration warning from live workload
+2026-11-06T12:43:49.646100199Z 2026-11-06T12:43:49+00:00 INFO request=165 service=app-server healthy=true
+2026-11-06T12:43:49.646576388Z 2026-11-06T12:43:49+00:00 WARN request=165 demonstration warning from live workload
+2026-11-06T12:43:51.647796049Z 2026-11-06T12:43:51+00:00 INFO request=166 service=app-server healthy=true
+2026-11-06T12:43:51.648376829Z 2026-11-06T12:43:51+00:00 WARN request=166 demonstration warning from live workload
+2026-11-06T12:43:53.649383977Z 2026-11-06T12:43:53+00:00 INFO request=167 service=app-server healthy=true
+2026-11-06T12:43:53.650080620Z 2026-11-06T12:43:53+00:00 WARN request=167 demonstration warning from live workload
+2026-11-06T12:43:55.651268314Z 2026-11-06T12:43:55+00:00 INFO request=168 service=app-server healthy=true
+2026-11-06T12:43:55.651845568Z 2026-11-06T12:43:55+00:00 WARN request=168 demonstration warning from live workload
+2026-11-06T12:43:57.652656236Z 2026-11-06T12:43:57+00:00 INFO request=169 service=app-server healthy=true
+2026-11-06T12:43:57.653127221Z 2026-11-06T12:43:57+00:00 WARN request=169 demonstration warning from live workload
+2026-11-06T12:43:59.654048318Z 2026-11-06T12:43:59+00:00 INFO request=170 service=app-server healthy=true
+2026-11-06T12:43:59.654667579Z 2026-11-06T12:43:59+00:00 WARN request=170 demonstration warning from live workload
+2026-11-06T12:44:01.655634147Z 2026-11-06T12:44:01+00:00 INFO request=171 service=app-server healthy=true
+2026-11-06T12:44:01.656325257Z 2026-11-06T12:44:01+00:00 WARN request=171 demonstration warning from live workload
+2026-11-06T12:44:03.657357346Z 2026-11-06T12:44:03+00:00 INFO request=172 service=app-server healthy=true
+2026-11-06T12:44:03.657945867Z 2026-11-06T12:44:03+00:00 WARN request=172 demonstration warning from live workload
+2026-11-06T12:44:05.658969803Z 2026-11-06T12:44:05+00:00 INFO request=173 service=app-server healthy=true
+2026-11-06T12:44:05.659519925Z 2026-11-06T12:44:05+00:00 WARN request=173 demonstration warning from live workload
+2026-11-06T12:44:07.660643024Z 2026-11-06T12:44:07+00:00 INFO request=174 service=app-server healthy=true
+2026-11-06T12:44:07.661267022Z 2026-11-06T12:44:07+00:00 WARN request=174 demonstration warning from live workload
+2026-11-06T12:44:09.662169602Z 2026-11-06T12:44:09+00:00 INFO request=175 service=app-server healthy=true
+2026-11-06T12:44:09.662734573Z 2026-11-06T12:44:09+00:00 WARN request=175 demonstration warning from live workload
+2026-11-06T12:44:11.664056709Z 2026-11-06T12:44:11+00:00 INFO request=176 service=app-server healthy=true
+2026-11-06T12:44:11.664437025Z 2026-11-06T12:44:11+00:00 WARN request=176 demonstration warning from live workload
+2026-11-06T12:44:13.666452025Z 2026-11-06T12:44:13+00:00 INFO request=177 service=app-server healthy=true
+2026-11-06T12:44:13.666943787Z 2026-11-06T12:44:13+00:00 WARN request=177 demonstration warning from live workload
+2026-11-06T12:44:15.668061112Z 2026-11-06T12:44:15+00:00 INFO request=178 service=app-server healthy=true
+2026-11-06T12:44:15.668833011Z 2026-11-06T12:44:15+00:00 WARN request=178 demonstration warning from live workload
+2026-11-06T12:44:17.669857970Z 2026-11-06T12:44:17+00:00 INFO request=179 service=app-server healthy=true
+2026-11-06T12:44:17.670397215Z 2026-11-06T12:44:17+00:00 WARN request=179 demonstration warning from live workload
+2026-11-06T12:44:19.671638284Z 2026-11-06T12:44:19+00:00 INFO request=180 service=app-server healthy=true
+2026-11-06T12:44:19.671936136Z 2026-11-06T12:44:19+00:00 WARN request=180 demonstration warning from live workload
+2026-11-06T12:44:21.673173592Z 2026-11-06T12:44:21+00:00 INFO request=181 service=app-server healthy=true
+2026-11-06T12:44:21.673849717Z 2026-11-06T12:44:21+00:00 WARN request=181 demonstration warning from live workload
+2026-11-06T12:44:23.674974623Z 2026-11-06T12:44:23+00:00 INFO request=182 service=app-server healthy=true
+2026-11-06T12:44:23.675505061Z 2026-11-06T12:44:23+00:00 WARN request=182 demonstration warning from live workload
+2026-11-06T12:44:25.677190458Z 2026-11-06T12:44:25+00:00 INFO request=183 service=app-server healthy=true
+2026-11-06T12:44:25.677754770Z 2026-11-06T12:44:25+00:00 WARN request=183 demonstration warning from live workload
+2026-11-06T12:44:27.678701753Z 2026-11-06T12:44:27+00:00 INFO request=184 service=app-server healthy=true
+2026-11-06T12:44:27.679380227Z 2026-11-06T12:44:27+00:00 WARN request=184 demonstration warning from live workload
+2026-11-06T12:44:29.680656522Z 2026-11-06T12:44:29+00:00 INFO request=185 service=app-server healthy=true
+2026-11-06T12:44:29.681345909Z 2026-11-06T12:44:29+00:00 WARN request=185 demonstration warning from live workload
+2026-11-06T12:44:31.682418292Z 2026-11-06T12:44:31+00:00 INFO request=186 service=app-server healthy=true
+2026-11-06T12:44:31.682975995Z 2026-11-06T12:44:31+00:00 WARN request=186 demonstration warning from live workload
+2026-11-06T12:44:33.684039488Z 2026-11-06T12:44:33+00:00 INFO request=187 service=app-server healthy=true
+2026-11-06T12:44:33.684644877Z 2026-11-06T12:44:33+00:00 WARN request=187 demonstration warning from live workload
+2026-11-06T12:44:35.685658529Z 2026-11-06T12:44:35+00:00 INFO request=188 service=app-server healthy=true
+2026-11-06T12:44:35.686211715Z 2026-11-06T12:44:35+00:00 WARN request=188 demonstration warning from live workload
+2026-11-06T12:44:37.687276839Z 2026-11-06T12:44:37+00:00 INFO request=189 service=app-server healthy=true
+2026-11-06T12:44:37.687779575Z 2026-11-06T12:44:37+00:00 WARN request=189 demonstration warning from live workload
+2026-11-06T12:44:39.688771974Z 2026-11-06T12:44:39+00:00 INFO request=190 service=app-server healthy=true
+2026-11-06T12:44:39.689336270Z 2026-11-06T12:44:39+00:00 WARN request=190 demonstration warning from live workload
+2026-11-06T12:44:41.690541153Z 2026-11-06T12:44:41+00:00 INFO request=191 service=app-server healthy=true
+2026-11-06T12:44:41.691142418Z 2026-11-06T12:44:41+00:00 WARN request=191 demonstration warning from live workload
+2026-11-06T12:44:43.692167298Z 2026-11-06T12:44:43+00:00 INFO request=192 service=app-server healthy=true
+2026-11-06T12:44:43.692733945Z 2026-11-06T12:44:43+00:00 WARN request=192 demonstration warning from live workload
+2026-11-06T12:44:45.694038121Z 2026-11-06T12:44:45+00:00 INFO request=193 service=app-server healthy=true
+2026-11-06T12:44:45.694933320Z 2026-11-06T12:44:45+00:00 WARN request=193 demonstration warning from live workload
+2026-11-06T12:44:47.695938601Z 2026-11-06T12:44:47+00:00 INFO request=194 service=app-server healthy=true
+2026-11-06T12:44:47.696511478Z 2026-11-06T12:44:47+00:00 WARN request=194 demonstration warning from live workload
+2026-11-06T12:44:49.697776761Z 2026-11-06T12:44:49+00:00 INFO request=195 service=app-server healthy=true
+2026-11-06T12:44:49.698255632Z 2026-11-06T12:44:49+00:00 WARN request=195 demonstration warning from live workload
+2026-11-06T12:44:51.699704480Z 2026-11-06T12:44:51+00:00 INFO request=196 service=app-server healthy=true
+2026-11-06T12:44:51.700089483Z 2026-11-06T12:44:51+00:00 WARN request=196 demonstration warning from live workload
+2026-11-06T12:44:53.701156703Z 2026-11-06T12:44:53+00:00 INFO request=197 service=app-server healthy=true
+2026-11-06T12:44:53.701901841Z 2026-11-06T12:44:53+00:00 WARN request=197 demonstration warning from live workload
+2026-11-06T12:44:55.702889321Z 2026-11-06T12:44:55+00:00 INFO request=198 service=app-server healthy=true
+2026-11-06T12:44:55.703477643Z 2026-11-06T12:44:55+00:00 WARN request=198 demonstration warning from live workload
+2026-11-06T12:44:57.704964017Z 2026-11-06T12:44:57+00:00 INFO request=199 service=app-server healthy=true
+2026-11-06T12:44:57.705588251Z 2026-11-06T12:44:57+00:00 WARN request=199 demonstration warning from live workload
+2026-11-06T12:44:59.706731980Z 2026-11-06T12:44:59+00:00 INFO request=200 service=app-server healthy=true
+2026-11-06T12:44:59.707415454Z 2026-11-06T12:44:59+00:00 WARN request=200 demonstration warning from live workload
+2026-11-06T12:45:01.708618465Z 2026-11-06T12:45:01+00:00 INFO request=201 service=app-server healthy=true
+2026-11-06T12:45:01.709307814Z 2026-11-06T12:45:01+00:00 WARN request=201 demonstration warning from live workload
+2026-11-06T12:45:03.710619364Z 2026-11-06T12:45:03+00:00 INFO request=202 service=app-server healthy=true
+2026-11-06T12:45:03.711190018Z 2026-11-06T12:45:03+00:00 WARN request=202 demonstration warning from live workload
+2026-11-06T12:45:05.712736545Z 2026-11-06T12:45:05+00:00 INFO request=203 service=app-server healthy=true
+2026-11-06T12:45:05.713342959Z 2026-11-06T12:45:05+00:00 WARN request=203 demonstration warning from live workload
+2026-11-06T12:45:07.714412389Z 2026-11-06T12:45:07+00:00 INFO request=204 service=app-server healthy=true
+2026-11-06T12:45:07.715511046Z 2026-11-06T12:45:07+00:00 WARN request=204 demonstration warning from live workload
+2026-11-06T12:45:09.716060742Z 2026-11-06T12:45:09+00:00 INFO request=205 service=app-server healthy=true
+2026-11-06T12:45:09.716577649Z 2026-11-06T12:45:09+00:00 WARN request=205 demonstration warning from live workload
+2026-11-06T12:45:11.717737923Z 2026-11-06T12:45:11+00:00 INFO request=206 service=app-server healthy=true
+2026-11-06T12:45:11.718377129Z 2026-11-06T12:45:11+00:00 WARN request=206 demonstration warning from live workload
+2026-11-06T12:45:13.719249248Z 2026-11-06T12:45:13+00:00 INFO request=207 service=app-server healthy=true
+2026-11-06T12:45:13.719896450Z 2026-11-06T12:45:13+00:00 WARN request=207 demonstration warning from live workload
+2026-11-06T12:45:15.721517295Z 2026-11-06T12:45:15+00:00 INFO request=208 service=app-server healthy=true
+2026-11-06T12:45:15.722262463Z 2026-11-06T12:45:15+00:00 WARN request=208 demonstration warning from live workload
+2026-11-06T12:45:17.724131490Z 2026-11-06T12:45:17+00:00 INFO request=209 service=app-server healthy=true
+2026-11-06T12:45:17.724289901Z 2026-11-06T12:45:17+00:00 WARN request=209 demonstration warning from live workload
+2026-11-06T12:45:19.725511888Z 2026-11-06T12:45:19+00:00 INFO request=210 service=app-server healthy=true
+2026-11-06T12:45:19.726139457Z 2026-11-06T12:45:19+00:00 WARN request=210 demonstration warning from live workload
+2026-11-06T12:45:21.727002866Z 2026-11-06T12:45:21+00:00 INFO request=211 service=app-server healthy=true
+2026-11-06T12:45:21.727677035Z 2026-11-06T12:45:21+00:00 WARN request=211 demonstration warning from live workload
+2026-11-06T12:45:23.728784322Z 2026-11-06T12:45:23+00:00 INFO request=212 service=app-server healthy=true
+2026-11-06T12:45:23.729369464Z 2026-11-06T12:45:23+00:00 WARN request=212 demonstration warning from live workload
+2026-11-06T12:45:25.730490450Z 2026-11-06T12:45:25+00:00 INFO request=213 service=app-server healthy=true
+2026-11-06T12:45:25.731411973Z 2026-11-06T12:45:25+00:00 WARN request=213 demonstration warning from live workload
+2026-11-06T12:45:27.732582924Z 2026-11-06T12:45:27+00:00 INFO request=214 service=app-server healthy=true
+2026-11-06T12:45:27.733324563Z 2026-11-06T12:45:27+00:00 WARN request=214 demonstration warning from live workload
+2026-11-06T12:45:29.734607705Z 2026-11-06T12:45:29+00:00 INFO request=215 service=app-server healthy=true
+2026-11-06T12:45:29.735240717Z 2026-11-06T12:45:29+00:00 WARN request=215 demonstration warning from live workload
+2026-11-06T12:45:31.736420771Z 2026-11-06T12:45:31+00:00 INFO request=216 service=app-server healthy=true
+2026-11-06T12:45:31.737026989Z 2026-11-06T12:45:31+00:00 WARN request=216 demonstration warning from live workload
+2026-11-06T12:45:33.738338843Z 2026-11-06T12:45:33+00:00 INFO request=217 service=app-server healthy=true
+2026-11-06T12:45:33.738834900Z 2026-11-06T12:45:33+00:00 WARN request=217 demonstration warning from live workload
+2026-11-06T12:45:35.739733521Z 2026-11-06T12:45:35+00:00 INFO request=218 service=app-server healthy=true
+2026-11-06T12:45:35.740308367Z 2026-11-06T12:45:35+00:00 WARN request=218 demonstration warning from live workload
+2026-11-06T12:45:37.741307831Z 2026-11-06T12:45:37+00:00 INFO request=219 service=app-server healthy=true
+2026-11-06T12:45:37.742235385Z 2026-11-06T12:45:37+00:00 WARN request=219 demonstration warning from live workload
+2026-11-06T12:45:39.742966607Z 2026-11-06T12:45:39+00:00 INFO request=220 service=app-server healthy=true
+2026-11-06T12:45:39.743457975Z 2026-11-06T12:45:39+00:00 WARN request=220 demonstration warning from live workload
+2026-11-06T12:45:41.744591272Z 2026-11-06T12:45:41+00:00 INFO request=221 service=app-server healthy=true
+2026-11-06T12:45:41.745181609Z 2026-11-06T12:45:41+00:00 WARN request=221 demonstration warning from live workload
+2026-11-06T12:45:43.746408494Z 2026-11-06T12:45:43+00:00 INFO request=222 service=app-server healthy=true
+2026-11-06T12:45:43.746850971Z 2026-11-06T12:45:43+00:00 WARN request=222 demonstration warning from live workload
+2026-11-06T12:45:45.747840840Z 2026-11-06T12:45:45+00:00 INFO request=223 service=app-server healthy=true
+2026-11-06T12:45:45.748363614Z 2026-11-06T12:45:45+00:00 WARN request=223 demonstration warning from live workload
+2026-11-06T12:45:47.749510371Z 2026-11-06T12:45:47+00:00 INFO request=224 service=app-server healthy=true
+2026-11-06T12:45:47.750145879Z 2026-11-06T12:45:47+00:00 WARN request=224 demonstration warning from live workload
+2026-11-06T12:45:49.751393487Z 2026-11-06T12:45:49+00:00 INFO request=225 service=app-server healthy=true
+2026-11-06T12:45:49.751964759Z 2026-11-06T12:45:49+00:00 WARN request=225 demonstration warning from live workload
+2026-11-06T12:45:51.753034052Z 2026-11-06T12:45:51+00:00 INFO request=226 service=app-server healthy=true
+2026-11-06T12:45:51.753559814Z 2026-11-06T12:45:51+00:00 WARN request=226 demonstration warning from live workload
+2026-11-06T12:45:53.754568222Z 2026-11-06T12:45:53+00:00 INFO request=227 service=app-server healthy=true
+2026-11-06T12:45:53.755300222Z 2026-11-06T12:45:53+00:00 WARN request=227 demonstration warning from live workload
+2026-11-06T12:45:55.756252699Z 2026-11-06T12:45:55+00:00 INFO request=228 service=app-server healthy=true
+2026-11-06T12:45:55.757047022Z 2026-11-06T12:45:55+00:00 WARN request=228 demonstration warning from live workload
+2026-11-06T12:45:57.758320479Z 2026-11-06T12:45:57+00:00 INFO request=229 service=app-server healthy=true
+2026-11-06T12:45:57.758892862Z 2026-11-06T12:45:57+00:00 WARN request=229 demonstration warning from live workload
+2026-11-06T12:45:59.760436323Z 2026-11-06T12:45:59+00:00 INFO request=230 service=app-server healthy=true
+2026-11-06T12:45:59.761000794Z 2026-11-06T12:45:59+00:00 WARN request=230 demonstration warning from live workload
+2026-11-06T12:46:01.762201067Z 2026-11-06T12:46:01+00:00 INFO request=231 service=app-server healthy=true
+2026-11-06T12:46:01.762744268Z 2026-11-06T12:46:01+00:00 WARN request=231 demonstration warning from live workload
+2026-11-06T12:46:03.764035521Z 2026-11-06T12:46:03+00:00 INFO request=232 service=app-server healthy=true
+2026-11-06T12:46:03.764775093Z 2026-11-06T12:46:03+00:00 WARN request=232 demonstration warning from live workload
+2026-11-06T12:46:05.765927988Z 2026-11-06T12:46:05+00:00 INFO request=233 service=app-server healthy=true
+2026-11-06T12:46:05.766546332Z 2026-11-06T12:46:05+00:00 WARN request=233 demonstration warning from live workload
+2026-11-06T12:46:07.767383289Z 2026-11-06T12:46:07+00:00 INFO request=234 service=app-server healthy=true
+2026-11-06T12:46:07.767912891Z 2026-11-06T12:46:07+00:00 WARN request=234 demonstration warning from live workload
+2026-11-06T12:46:09.770624787Z 2026-11-06T12:46:09+00:00 INFO request=235 service=app-server healthy=true
+2026-11-06T12:46:09.772065748Z 2026-11-06T12:46:09+00:00 WARN request=235 demonstration warning from live workload
+2026-11-06T12:46:11.773957040Z 2026-11-06T12:46:11+00:00 INFO request=236 service=app-server healthy=true
+2026-11-06T12:46:11.774897752Z 2026-11-06T12:46:11+00:00 WARN request=236 demonstration warning from live workload
+2026-11-06T12:46:13.776011784Z 2026-11-06T12:46:13+00:00 INFO request=237 service=app-server healthy=true
+2026-11-06T12:46:13.776539567Z 2026-11-06T12:46:13+00:00 WARN request=237 demonstration warning from live workload
+2026-11-06T12:46:15.778190286Z 2026-11-06T12:46:15+00:00 INFO request=238 service=app-server healthy=true
+2026-11-06T12:46:15.778999380Z 2026-11-06T12:46:15+00:00 WARN request=238 demonstration warning from live workload
+2026-11-06T12:46:17.780063787Z 2026-11-06T12:46:17+00:00 INFO request=239 service=app-server healthy=true
+2026-11-06T12:46:17.780543051Z 2026-11-06T12:46:17+00:00 WARN request=239 demonstration warning from live workload
+2026-11-06T12:46:19.781886251Z 2026-11-06T12:46:19+00:00 INFO request=240 service=app-server healthy=true
+2026-11-06T12:46:19.782453963Z 2026-11-06T12:46:19+00:00 WARN request=240 demonstration warning from live workload
+2026-11-06T12:46:21.783836668Z 2026-11-06T12:46:21+00:00 INFO request=241 service=app-server healthy=true
+2026-11-06T12:46:21.784485969Z 2026-11-06T12:46:21+00:00 WARN request=241 demonstration warning from live workload
+2026-11-06T12:46:23.785662675Z 2026-11-06T12:46:23+00:00 INFO request=242 service=app-server healthy=true
+2026-11-06T12:46:23.786278011Z 2026-11-06T12:46:23+00:00 WARN request=242 demonstration warning from live workload
+2026-11-06T12:46:25.787900224Z 2026-11-06T12:46:25+00:00 INFO request=243 service=app-server healthy=true
+2026-11-06T12:46:25.788382425Z 2026-11-06T12:46:25+00:00 WARN request=243 demonstration warning from live workload
+2026-11-06T12:46:27.789480709Z 2026-11-06T12:46:27+00:00 INFO request=244 service=app-server healthy=true
+2026-11-06T12:46:27.790059961Z 2026-11-06T12:46:27+00:00 WARN request=244 demonstration warning from live workload
+2026-11-06T12:46:29.791255042Z 2026-11-06T12:46:29+00:00 INFO request=245 service=app-server healthy=true
+2026-11-06T12:46:29.791824230Z 2026-11-06T12:46:29+00:00 WARN request=245 demonstration warning from live workload
+2026-11-06T12:46:31.792687178Z 2026-11-06T12:46:31+00:00 INFO request=246 service=app-server healthy=true
+2026-11-06T12:46:31.793570221Z 2026-11-06T12:46:31+00:00 WARN request=246 demonstration warning from live workload
+2026-11-06T12:46:33.795073012Z 2026-11-06T12:46:33+00:00 INFO request=247 service=app-server healthy=true
+2026-11-06T12:46:33.795667605Z 2026-11-06T12:46:33+00:00 WARN request=247 demonstration warning from live workload
+2026-11-06T12:46:35.796989937Z 2026-11-06T12:46:35+00:00 INFO request=248 service=app-server healthy=true
+2026-11-06T12:46:35.797389333Z 2026-11-06T12:46:35+00:00 WARN request=248 demonstration warning from live workload
+2026-11-06T12:46:37.799101721Z 2026-11-06T12:46:37+00:00 INFO request=249 service=app-server healthy=true
+2026-11-06T12:46:37.799519164Z 2026-11-06T12:46:37+00:00 WARN request=249 demonstration warning from live workload
+2026-11-06T12:46:39.801112778Z 2026-11-06T12:46:39+00:00 INFO request=250 service=app-server healthy=true
+2026-11-06T12:46:39.802079427Z 2026-11-06T12:46:39+00:00 WARN request=250 demonstration warning from live workload
+2026-11-06T12:46:41.802862547Z 2026-11-06T12:46:41+00:00 INFO request=251 service=app-server healthy=true
+2026-11-06T12:46:41.803436350Z 2026-11-06T12:46:41+00:00 WARN request=251 demonstration warning from live workload
+2026-11-06T12:46:43.804288963Z 2026-11-06T12:46:43+00:00 INFO request=252 service=app-server healthy=true
+2026-11-06T12:46:43.804869670Z 2026-11-06T12:46:43+00:00 WARN request=252 demonstration warning from live workload
+2026-11-06T12:46:45.805854663Z 2026-11-06T12:46:45+00:00 INFO request=253 service=app-server healthy=true
+2026-11-06T12:46:45.806429520Z 2026-11-06T12:46:45+00:00 WARN request=253 demonstration warning from live workload
+2026-11-06T12:46:47.807474154Z 2026-11-06T12:46:47+00:00 INFO request=254 service=app-server healthy=true
+2026-11-06T12:46:47.808066726Z 2026-11-06T12:46:47+00:00 WARN request=254 demonstration warning from live workload
+2026-11-06T12:46:49.809012476Z 2026-11-06T12:46:49+00:00 INFO request=255 service=app-server healthy=true
+2026-11-06T12:46:49.809560756Z 2026-11-06T12:46:49+00:00 WARN request=255 demonstration warning from live workload
+2026-11-06T12:46:51.810626915Z 2026-11-06T12:46:51+00:00 INFO request=256 service=app-server healthy=true
+2026-11-06T12:46:51.811181016Z 2026-11-06T12:46:51+00:00 WARN request=256 demonstration warning from live workload
+2026-11-06T12:46:53.812322638Z 2026-11-06T12:46:53+00:00 INFO request=257 service=app-server healthy=true
+2026-11-06T12:46:53.812874202Z 2026-11-06T12:46:53+00:00 WARN request=257 demonstration warning from live workload
+2026-11-06T12:46:55.814584766Z 2026-11-06T12:46:55+00:00 INFO request=258 service=app-server healthy=true
+2026-11-06T12:46:55.815259747Z 2026-11-06T12:46:55+00:00 WARN request=258 demonstration warning from live workload
+2026-11-06T12:46:57.816920170Z 2026-11-06T12:46:57+00:00 INFO request=259 service=app-server healthy=true
+2026-11-06T12:46:57.817665485Z 2026-11-06T12:46:57+00:00 WARN request=259 demonstration warning from live workload
+2026-11-06T12:46:59.818960290Z 2026-11-06T12:46:59+00:00 INFO request=260 service=app-server healthy=true
+2026-11-06T12:46:59.819456726Z 2026-11-06T12:46:59+00:00 WARN request=260 demonstration warning from live workload
+2026-11-06T12:47:01.821349248Z 2026-11-06T12:47:01+00:00 INFO request=261 service=app-server healthy=true
+2026-11-06T12:47:01.821913472Z 2026-11-06T12:47:01+00:00 WARN request=261 demonstration warning from live workload
+2026-11-06T12:47:03.823485011Z 2026-11-06T12:47:03+00:00 INFO request=262 service=app-server healthy=true
+2026-11-06T12:47:03.825285733Z 2026-11-06T12:47:03+00:00 WARN request=262 demonstration warning from live workload
+2026-11-06T12:47:05.825807529Z 2026-11-06T12:47:05+00:00 INFO request=263 service=app-server healthy=true
+2026-11-06T12:47:05.826394786Z 2026-11-06T12:47:05+00:00 WARN request=263 demonstration warning from live workload
+2026-11-06T12:47:07.827999447Z 2026-11-06T12:47:07+00:00 INFO request=264 service=app-server healthy=true
+2026-11-06T12:47:07.828663302Z 2026-11-06T12:47:07+00:00 WARN request=264 demonstration warning from live workload
+2026-11-06T12:47:09.830730684Z 2026-11-06T12:47:09+00:00 INFO request=265 service=app-server healthy=true
+2026-11-06T12:47:09.831387024Z 2026-11-06T12:47:09+00:00 WARN request=265 demonstration warning from live workload
+2026-11-06T12:47:11.832921031Z 2026-11-06T12:47:11+00:00 INFO request=266 service=app-server healthy=true
+2026-11-06T12:47:11.833718759Z 2026-11-06T12:47:11+00:00 WARN request=266 demonstration warning from live workload
+2026-11-06T12:47:13.834515875Z 2026-11-06T12:47:13+00:00 INFO request=267 service=app-server healthy=true
+2026-11-06T12:47:13.835045622Z 2026-11-06T12:47:13+00:00 WARN request=267 demonstration warning from live workload
+2026-11-06T12:47:15.836214341Z 2026-11-06T12:47:15+00:00 INFO request=268 service=app-server healthy=true
+2026-11-06T12:47:15.836809108Z 2026-11-06T12:47:15+00:00 WARN request=268 demonstration warning from live workload
+2026-11-06T12:47:17.837893307Z 2026-11-06T12:47:17+00:00 INFO request=269 service=app-server healthy=true
+2026-11-06T12:47:17.838435813Z 2026-11-06T12:47:17+00:00 WARN request=269 demonstration warning from live workload
+2026-11-06T12:47:19.839378491Z 2026-11-06T12:47:19+00:00 INFO request=270 service=app-server healthy=true
+2026-11-06T12:47:19.839877217Z 2026-11-06T12:47:19+00:00 WARN request=270 demonstration warning from live workload
+2026-11-06T12:47:21.841133239Z 2026-11-06T12:47:21+00:00 INFO request=271 service=app-server healthy=true
+2026-11-06T12:47:21.841833924Z 2026-11-06T12:47:21+00:00 WARN request=271 demonstration warning from live workload
+2026-11-06T12:47:23.842789745Z 2026-11-06T12:47:23+00:00 INFO request=272 service=app-server healthy=true
+2026-11-06T12:47:23.843345011Z 2026-11-06T12:47:23+00:00 WARN request=272 demonstration warning from live workload
+2026-11-06T12:47:25.844612700Z 2026-11-06T12:47:25+00:00 INFO request=273 service=app-server healthy=true
+2026-11-06T12:47:25.845255198Z 2026-11-06T12:47:25+00:00 WARN request=273 demonstration warning from live workload
+2026-11-06T12:47:27.846215687Z 2026-11-06T12:47:27+00:00 INFO request=274 service=app-server healthy=true
+2026-11-06T12:47:27.846759467Z 2026-11-06T12:47:27+00:00 WARN request=274 demonstration warning from live workload
+2026-11-06T12:47:29.847905533Z 2026-11-06T12:47:29+00:00 INFO request=275 service=app-server healthy=true
+2026-11-06T12:47:29.848642412Z 2026-11-06T12:47:29+00:00 WARN request=275 demonstration warning from live workload
+2026-11-06T12:47:31.851077249Z 2026-11-06T12:47:31+00:00 INFO request=276 service=app-server healthy=true
+2026-11-06T12:47:31.852117090Z 2026-11-06T12:47:31+00:00 WARN request=276 demonstration warning from live workload
+2026-11-06T12:47:33.853094637Z 2026-11-06T12:47:33+00:00 INFO request=277 service=app-server healthy=true
+2026-11-06T12:47:33.853686032Z 2026-11-06T12:47:33+00:00 WARN request=277 demonstration warning from live workload
+2026-11-06T12:47:35.854763846Z 2026-11-06T12:47:35+00:00 INFO request=278 service=app-server healthy=true
+2026-11-06T12:47:35.855314418Z 2026-11-06T12:47:35+00:00 WARN request=278 demonstration warning from live workload
+2026-11-06T12:47:37.856652894Z 2026-11-06T12:47:37+00:00 INFO request=279 service=app-server healthy=true
+2026-11-06T12:47:37.857409651Z 2026-11-06T12:47:37+00:00 WARN request=279 demonstration warning from live workload
+2026-11-06T12:47:39.858389243Z 2026-11-06T12:47:39+00:00 INFO request=280 service=app-server healthy=true
+2026-11-06T12:47:39.858937697Z 2026-11-06T12:47:39+00:00 WARN request=280 demonstration warning from live workload
+2026-11-06T12:47:41.860129978Z 2026-11-06T12:47:41+00:00 INFO request=281 service=app-server healthy=true
+2026-11-06T12:47:41.860884879Z 2026-11-06T12:47:41+00:00 WARN request=281 demonstration warning from live workload
+2026-11-06T12:47:43.861778371Z 2026-11-06T12:47:43+00:00 INFO request=282 service=app-server healthy=true
+2026-11-06T12:47:43.862301816Z 2026-11-06T12:47:43+00:00 WARN request=282 demonstration warning from live workload
+2026-11-06T12:47:45.863258012Z 2026-11-06T12:47:45+00:00 INFO request=283 service=app-server healthy=true
+2026-11-06T12:47:45.863780803Z 2026-11-06T12:47:45+00:00 WARN request=283 demonstration warning from live workload
+2026-11-06T12:47:47.864999612Z 2026-11-06T12:47:47+00:00 INFO request=284 service=app-server healthy=true
+2026-11-06T12:47:47.865472584Z 2026-11-06T12:47:47+00:00 WARN request=284 demonstration warning from live workload
+2026-11-06T12:47:49.866691222Z 2026-11-06T12:47:49+00:00 INFO request=285 service=app-server healthy=true
+2026-11-06T12:47:49.867302179Z 2026-11-06T12:47:49+00:00 WARN request=285 demonstration warning from live workload
+2026-11-06T12:47:51.868512705Z 2026-11-06T12:47:51+00:00 INFO request=286 service=app-server healthy=true
+2026-11-06T12:47:51.869211622Z 2026-11-06T12:47:51+00:00 WARN request=286 demonstration warning from live workload
+2026-11-06T12:47:53.870304055Z 2026-11-06T12:47:53+00:00 INFO request=287 service=app-server healthy=true
+2026-11-06T12:47:53.870879893Z 2026-11-06T12:47:53+00:00 WARN request=287 demonstration warning from live workload
+2026-11-06T12:47:55.872185901Z 2026-11-06T12:47:55+00:00 INFO request=288 service=app-server healthy=true
+2026-11-06T12:47:55.872949737Z 2026-11-06T12:47:55+00:00 WARN request=288 demonstration warning from live workload
+2026-11-06T12:47:57.874219145Z 2026-11-06T12:47:57+00:00 INFO request=289 service=app-server healthy=true
+2026-11-06T12:47:57.874915398Z 2026-11-06T12:47:57+00:00 WARN request=289 demonstration warning from live workload
+2026-11-06T12:47:59.876163844Z 2026-11-06T12:47:59+00:00 INFO request=290 service=app-server healthy=true
+2026-11-06T12:47:59.876765879Z 2026-11-06T12:47:59+00:00 WARN request=290 demonstration warning from live workload
+2026-11-06T12:48:01.877967406Z 2026-11-06T12:48:01+00:00 INFO request=291 service=app-server healthy=true
+2026-11-06T12:48:01.878536955Z 2026-11-06T12:48:01+00:00 WARN request=291 demonstration warning from live workload
+2026-11-06T12:48:03.879729421Z 2026-11-06T12:48:03+00:00 INFO request=292 service=app-server healthy=true
+2026-11-06T12:48:03.880290629Z 2026-11-06T12:48:03+00:00 WARN request=292 demonstration warning from live workload
+2026-11-06T12:48:05.881552090Z 2026-11-06T12:48:05+00:00 INFO request=293 service=app-server healthy=true
+2026-11-06T12:48:05.882076834Z 2026-11-06T12:48:05+00:00 WARN request=293 demonstration warning from live workload
+2026-11-06T12:48:07.883108175Z 2026-11-06T12:48:07+00:00 INFO request=294 service=app-server healthy=true
+2026-11-06T12:48:07.883666395Z 2026-11-06T12:48:07+00:00 WARN request=294 demonstration warning from live workload
+2026-11-06T12:48:09.884879751Z 2026-11-06T12:48:09+00:00 INFO request=295 service=app-server healthy=true
+2026-11-06T12:48:09.885387870Z 2026-11-06T12:48:09+00:00 WARN request=295 demonstration warning from live workload
+2026-11-06T12:48:11.886473393Z 2026-11-06T12:48:11+00:00 INFO request=296 service=app-server healthy=true
+2026-11-06T12:48:11.886959529Z 2026-11-06T12:48:11+00:00 WARN request=296 demonstration warning from live workload
+2026-11-06T12:48:13.888176920Z 2026-11-06T12:48:13+00:00 INFO request=297 service=app-server healthy=true
+2026-11-06T12:48:13.888952146Z 2026-11-06T12:48:13+00:00 WARN request=297 demonstration warning from live workload

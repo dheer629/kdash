@@ -1,0 +1,8 @@
+kdash HTML snapshots  (kdash-local / kdash-e2e)
+  /workspace/kdash/artifacts/live-e2e-20261106-v4231/reports/kdash_pod_container_resources_kdash-local_kdash-e2e_20261106_181825.html
+  /workspace/kdash/artifacts/live-e2e-20261106-v4231/reports/kdash_node_pools_worker_nodes_kdash-local_kdash-e2e_20261106_181825.html
+  /workspace/kdash/artifacts/live-e2e-20261106-v4231/reports/kdash_workloads_per_worker_node_kdash-local_kdash-e2e_20261106_181825.html
+  /workspace/kdash/artifacts/live-e2e-20261106-v4231/reports/kdash_namespace_ip_pool_kdash-local_kdash-e2e_20261106_181825.html
+  /workspace/kdash/artifacts/live-e2e-20261106-v4231/reports/kdash_memory_dashboard_kdash-local_kdash-e2e_20261106_181825.html
+  /workspace/kdash/artifacts/live-e2e-20261106-v4231/reports/kdash_network_disk_io_kdash-local_kdash-e2e_20261106_181825.html
+  index   /workspace/kdash/artifacts/live-e2e-20261106-v4231/reports/index.html

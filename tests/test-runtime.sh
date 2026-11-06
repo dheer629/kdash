@@ -105,13 +105,26 @@ if ! grep -q '^# BEGIN KDASH MODULES$' "$REPO/kdash"; then
 fi
 
 SCENARIO=normal run_cli --doctor -n default > "$TEST_ROOT/doctor" 2> "$TEST_ROOT/doctor.err"
+sed -i 's/│/ /g; s/|/ /g' "$TEST_ROOT/doctor"
 grep -Eq 'pods[[:space:]]+.*PASS[[:space:]]+readable' "$TEST_ROOT/doctor" || fail 'doctor did not classify pods as readable'
 grep -Eq 'metrics[[:space:]]+.*INFO[[:space:]]+API or metrics unavailable' "$TEST_ROOT/doctor" || fail 'doctor did not classify unavailable metrics'
 assert_has "$TEST_ROOT/doctor" 'requests / limits'
 assert_has "$TEST_ROOT/doctor" 'Read-only checks complete'
+# Explicit machine-readable output must never fall back to boxed terminal text.
+for diagnostic in services storage events explain; do
+  run_cli --once -n default -v "$diagnostic" -o csv > "$TEST_ROOT/$diagnostic.csv"
+  assert_has "$TEST_ROOT/$diagnostic.csv" '"SOURCE","STATE"'
+  assert_absent "$TEST_ROOT/$diagnostic.csv" '│'
+  run_cli --once -n default -v "$diagnostic" -o tsv > "$TEST_ROOT/$diagnostic.tsv"
+  assert_has "$TEST_ROOT/$diagnostic.tsv" $'SOURCE\tSTATE'
+done
+run_cli -n default --events -o csv > "$TEST_ROOT/events-option.csv"
+assert_has "$TEST_ROOT/events-option.csv" '"SOURCE","STATE"'
 if SCENARIO=tls run_cli --doctor -n default > "$TEST_ROOT/tls" 2>&1; then fail 'doctor TLS failure returned success'; fi
+sed -i 's/│/ /g; s/|/ /g' "$TEST_ROOT/tls"
 grep -Eq 'pods[[:space:]]+.*FAIL[[:space:]]+TLS certificate validation failed' "$TEST_ROOT/tls" || fail 'doctor lost TLS classification'
 if SCENARIO=rbac run_cli --doctor -n default > "$TEST_ROOT/rbac" 2>&1; then fail 'doctor RBAC failure returned success'; fi
+sed -i 's/│/ /g; s/|/ /g' "$TEST_ROOT/rbac"
 grep -Eq 'pods[[:space:]]+.*FAIL[[:space:]]+RBAC denied' "$TEST_ROOT/rbac" || fail 'doctor lost RBAC classification'
 
 : > "$FIXTURE_CALLS"
@@ -197,13 +210,29 @@ extract_function() {
   assert_has "$AUDIT_KLOG" REFUSED
 )
 
+# Source detection must retry as soon as the first asynchronous inventory exists.
+(
+  source <(extract_function io_detect)
+  TMPD="$TEST_ROOT/io-startup"; MODEL="$TMPD/model"; mkdir -p "$MODEL"
+  : > "$MODEL/nodes.tsv"
+  SVC="$TMPD/services"; : > "$SVC"
+  IO=1; IO_STATE=off; PROM_URL=''; PROM_SVC=''
+  fixture_cadvisor() { printf '# HELP container_network_receive_bytes_total actual counters\n'; }
+  KC=(fixture_cadvisor)
+  io_detect
+  [ "$IO_STATE" = off ] || fail 'empty initial model cached an unavailable I/O source'
+  printf 'POOL\tNODE\tCPU\tMEM\tPODS\nworkers\tworker-a\t4\t8Gi\t1\n' > "$MODEL/nodes.tsv"
+  io_detect
+  [ "$IO_STATE" = kubelet ] || fail 'I/O source did not recover when a hosting node appeared'
+)
+
 # Test asynchronous adoption using real background Bash workers and isolated
 # snapshots. A successful recovery must clear backoff and adopt the new data.
 (
   set -uo pipefail
   source "$REPO/src/runtime.sh"
   source "$REPO/src/events.sh"
-  TMPD="$TEST_ROOT/async"; mkdir -p "$TMPD"
+  TMPD="$TEST_ROOT/async"; MODEL="$TMPD/model"; mkdir -p "$MODEL"
   for file in spec top topprev nodes topnode svc cluster workloads; do printf 'old\n' > "$TMPD/$file"; done
   SPEC="$TMPD/spec"; TOPC="$TMPD/top"; TOPP="$TMPD/topprev"; NODES="$TMPD/nodes"
   TOPN_F="$TMPD/topnode"; SVC="$TMPD/svc"; CLUS="$TMPD/cluster"; WLS="$TMPD/workloads"
@@ -213,7 +242,7 @@ extract_function() {
   io_tick() { :; }
   refresh_spec() { sleep 1; printf 'recovered\n' > "$SPEC"; SPEC_OK=1; SPEC_AT=$(date +%s); }
   refresh_top() { printf 'metrics\n' > "$TOPC"; TOP_OK=1; TOP_AT=$(date +%s); }
-  build_model() { cp "$SPEC" "$TEST_ROOT/adopted"; }; session_tick() { :; }
+  build_model() { cp "$SPEC" "$TEST_ROOT/adopted"; printf 'pods\t1\n' > "$MODEL/meta.tsv"; }; session_tick() { :; }
   toolkit_init
   FETCH_FAILURES=3
   tick="${EPOCHREALTIME:-$SECONDS}"

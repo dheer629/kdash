@@ -1,0 +1,40 @@
+ KDASH 4.23.1 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e            audited
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-06 18:24:56 IST
+ match .*   sort cpu ▼ high first
+ ! pods 3/5 ready rst 8 oom 0 oomk 0 nolim 0 cpu 7m 1% lim mem 1Mi 0% lim wl 4 ev15m ! 0 ^ 0
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat lis›
+                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILI›
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ›
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=3s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explai›
+► TIMELINE  18:24:54 -> 18:24:56 IST  (all since kdash started, z window, c hides graphs) ─────────
+  CPU used - namespace
+         one sample so far - the chart starts with the 2nd (run kdash live)
+  MEMORY used - namespace
+         one sample so far - the chart starts with the 2nd (run kdash live)
+
+► PODS ────────────────────────────────────────────────────────────────────────────────────────────
+► Deployment app-server  (2 p~ 2/2   0 │      7 ·       1 · │     50    500      24     192 │  14.0›
+  app-server-8fb4699bc-j6rk2   2/2   0 │      4 ·       1 · │     25    250      12      96 │  16.0›
+      cpu ░░                mem ░░                pk 1Mi    node dev   pool role:control-plane,mast›
+    ├─ app                     Y     0 │      3 ·       1 · │     20    200       8      64 │  15.0›
+    └─ sidecar                 Y     0 │      1 ·       0 · │      5     50       4      32 │  20.0›
+  app-server-8fb4699bc-z8kl7   2/2   0 │      3 ·       0 · │     25    250      12      96 │  12.0›
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,mast›
+    ├─ app                     Y     0 │      2 ·       0 · │     20    200       8      64 │  10.0›
+    └─ sidecar                 Y     0 │      1 ·       0 · │      5     50       4      32 │  20.0›
+....................................................................................................
+► Job completed-check  (1 pod) 0/1   0 │      - ·       - · │      5     50       4      32 │     -›
+  completed-check-m9swm        0/1   0 │      - ·       - · │      5     50       4      32 │     -›
+      cpu                   mem                             node dev   pool role:control-plane,mast›
+    └─ check                   N     0 │      - ·       - · │      5     50       4      32 │     -›
+....................................................................................................
+► Pod z-crash  (1 pod)         0/1   8 │      - ·       - · │      5     50       4      32 │     -›
+  z-crash                      0/1   8 │      - ·       - · │      5     50       4      32 │     -›
+      cpu                   mem                             node dev   pool role:control-plane,mast›
+    └─ crash                   N     8 │      - ·       - · │      5     50       4      32 │     -›
+        waiting CrashLoopBackOff   last-exit Error
+────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (5 pods, 4 workloads)          8 │      7 ·       1 · │     65    650      36     288 │  10.8›
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / O›
+ AUDITED session 20261106-182453-195691 - every action is logged; use is your responsibility (kdash>

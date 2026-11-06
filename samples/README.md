@@ -1,13 +1,27 @@
 # kdash samples
 
-This gallery covers every version this repository has published: the **current
-4.19.2 interface** in [`cli_419/`](cli_419) (31 screens of a live run), the
-historical feature captures of 4.13.1 and 4.14.0 in [`cli_413/`](cli_413) and
-[`cli_414/`](cli_414), and the 4.12.0 validation run's views in [`cli/`](cli).
-Each gallery names the version it was captured from and is never relabeled as
-another version's.
+<!-- CURRENT_LIVE_RESULT -->
+Run `live-e2e-20261106-v4231` records **155 passed live checks**, **17 passed browser checks** and **74 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.1 in namespace `kdash-e2e`.
+[Inspect the recorded checks](../artifacts/live-e2e-20261106-v4231/checks.tsv).
+<!-- END_CURRENT_LIVE_RESULT -->
 
-The names in these samples are placeholders. Before publication the cluster
+
+
+The current **4.23.1** terminal gallery is [`cli_423/`](cli_423/README.md),
+captured from the installed utility against real Kubernetes workloads in local WSL.
+Its raw ANSI/plain-text screens and verification results are indexed by
+[`../artifacts/latest-e2e.txt`](../artifacts/latest-e2e.txt). The corresponding
+report files are in [`html423/`](html423/README.md). The `native/` gallery contains
+actual live WSL xterm screenshots; companion PNGs replay saved ANSI captures.
+Current values and local namespace names are preserved unchanged.
+
+Earlier captures remain available under their original versions:
+**4.19.2** in [`cli_419/`](cli_419/README.md) and [`html419/`](html419/README.md),
+**4.13.1 / 4.14.0** in [`cli_413/`](cli_413/README.md) and
+[`cli_414/`](cli_414/README.md), and **4.12.0** in [`cli/`](cli).
+Those older galleries are historical evidence, not screenshots of the current UI.
+
+The names in the historical samples below are placeholders. Before publication the cluster
 context, the namespaces, the namespace-derived pod prefixes, the operator and host
 names, the home-directory paths and the product / organisation wording were
 replaced with generic values (`devops-admin@local-cluster`, `orders-service-e2e`,
@@ -23,11 +37,10 @@ Shareable examples produced by the validation run `wsl-validation-20261018-13481
 (kdash 4.12.0, context `devops-admin@local-cluster`, three namespaces, five minutes
 each). The raw evidence behind every file here is in `../artifacts/`.
 
-## 4.19.2 screenshots - the current interface
+## 4.19.2 screenshots - historical interface
 
-`samples/cli_419/` holds 55 screens from **kdash 4.19.2** - the same file this
-repository ships - against a local WSL vcluster (namespace `default`, 5 s poll).
-Screens `01`-`31` cover the whole current interface: the nine views plus `E` events
+`samples/cli_419/` holds 55 screens from **kdash 4.19.2** - the source version used for that run - against a local WSL vcluster (namespace `default`, 5 s poll).
+Screens `01`-`31` cover the whole 4.19.2 interface: the nine views plus `E` events
 and `!` explanations, the `:` command palette, the doctor, the inspector (pod picker,
 summary, previous logs, `/` find, `&` only matches, `c` container picker and its
 key map), the dashboard help, two 100-column layouts and the opt-in interactive mode
