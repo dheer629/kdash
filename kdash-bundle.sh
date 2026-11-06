@@ -43,7 +43,7 @@ set -uo pipefail
 # A damaged PATH from an earlier shell start-up must not stop the repair.
 PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; export PATH
 
-VERSION="4.23.1"
+VERSION="4.23.2"
 PREFIX=""; DO_SHELL=1; UNINSTALL=0; KEEP_OLD=0; CHECK_ONLY=0; DRY_RUN=0
 BEGIN_MARK="# >>> kdash setup >>>"
 END_MARK="# <<< kdash setup <<<"
@@ -395,7 +395,7 @@ cat > "$tmp" <<'KDASH_PAYLOAD_EOF'
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.23.1"
+KDASH_VERSION="4.23.2"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"
@@ -7610,7 +7610,8 @@ inspector_help() {
   printf '  +  read 4x more lines        A  read every line the kubelet keeps (KDASH_LOG_MAX_BYTES)\n'
   printf '     the rule shows what was read: "5000 lines, 3.1 MiB - complete" or "- newest 5000 only"\n\n'
   printf ' S  shell in the container    U  upload a file             D  download a file\n'
-  printf ' S/U/D need --allow-interactive: they run in your name and are audited writes.\n'
+  printf ' X  enable/disable interactive mode here; y + Enter confirms enabling.\n'
+  printf ' S/U/D need interactive mode: they run in your name and are audited writes.\n'
   printf ' / keeps the context around every match and highlights it; & hides everything else.\n'
   printf ' A lowercase pattern ignores case: /error finds ERROR and error.\n'
   printf ' n and N wrap around and put the match at the top of the pane.\n'
@@ -7631,7 +7632,8 @@ inspector_pane_title() { # pane -> title shown in the bar
 # pairs; a group that does not fit the width continues on the next row -> IK_LINES
 inspector_keylines() {
   IK_LINES=()
-  _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download
+  _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download \
+    X "interactive $([ "${KDASH_ALLOW_INTERACTIVE:-0}" = 1 ] && printf on || printf off)"
   _ik_group READ W "wrap $([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo on || echo off)" J "JSON $([ "${INSPECTOR_JSON:-0}" = 1 ] && echo on || echo off)" \
     "+" "4x lines" A "all lines" "left/right" pan f "follow $([ "${follow:-0}" = 1 ] && printf on || printf off)" L "level ${INSPECTOR_LEVEL_NAME:-all}" w export
   _ik_group MOVE / find "&" "only matches" "n/N" "next / prev" "j/k" scroll g/G "top / end" r reload "?" keys q back Q quit
@@ -7685,7 +7687,10 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       ) & pid=$!
       while kill -0 "$pid" 2>/dev/null; do
         INSPECTOR_KEY=""; IFS= read -rsn1 -t 0.1 INSPECTOR_KEY </dev/tty || true
-        case "$INSPECTOR_KEY" in q|b|$'\033')
+        case "$INSPECTOR_KEY" in
+          Q) kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; kdash_quit "pod detail loading" ;;
+          X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
+          q|b|$'\033')
           kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
           return 0 ;;
         esac
@@ -7719,7 +7724,9 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $(inspector_pane_title "$pane") "
     hdr="${UI_BAR}"$'\033[K\n'
     bx_init
-    local IW=$((INSPECTOR_COLS - 1)) rinfo="audited"; [ "$follow" = 1 ] && rinfo="follow ${INSPECTOR_FOLLOW_SECS:-5}s"
+    local IW=$((INSPECTOR_COLS - 1)) rinfo="READ-ONLY"
+    interactive_enabled && rinfo="INTERACTIVE"
+    rinfo+=" / audited"; [ "$follow" = 1 ] && rinfo+=" / follow ${INSPECTOR_FOLLOW_SECS:-5}s"
     bx_top "$IW" "$(inspector_pane_title "$pane")" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     bx_row "$IW" "${PC_D}POD      ${PC_R}  ${PC_B}${pod}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     if [ -n "$c_n" ]; then
@@ -7773,6 +7780,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       Q) kdash_quit inspector ;;
       s) pane=summary ;; d) pane=describe ;; e) pane=events ;; '!') pane=explain ;; l) pane=current ;; p) pane=previous ;;
       # Interactive attachments (opt-in): the pod and container you are looking at.
+      X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
       S|U|D)
          if ! interactive_enabled; then msg="$(interactive_hint)"
          else
@@ -8086,9 +8094,11 @@ picker_draw() {
   case "${KDASH_ATTACH_ACTION:-}" in
     S) banner=" ${PC_PTR} Enter opens a SHELL " ;; U) banner=" ${PC_PTR} Enter UPLOADS into the pod " ;; D) banner=" ${PC_PTR} Enter DOWNLOADS from the pod " ;; *) banner="" ;;
   esac
-  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
   if interactive_enabled; then mode="INTERACTIVE"; else mode="READ-ONLY"; fi
-  right=" ${mode} ${PC_SEP} ${#PK_V[@]} of ${#PK_KEY[@]} pods "
+  # Keep the permission state in the left title: optional right-hand chips are
+  # hidden on narrow terminals, which must never hide whether writes are enabled.
+  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} ${mode} ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
+  right=" ${#PK_V[@]} of ${#PK_KEY[@]} pods "
   ui_bar "$PK_COLS" "$title" "$right" "$banner"
   buf=$'\033[H'"${UI_BAR}"$'\033[K\n'
   # status counts, worst first; a status that does not fit is left out whole
@@ -8504,26 +8514,66 @@ interactive_hint() {
     printf 'interactive actions are off (read-only). Press X to turn them on, or start kdash with kdx / kdash -X.'
 }
 
-# X key: switch interactive mode on (with a y/N confirmation) or off without restarting.
+# X key: switch interactive mode on (with a whole-line confirmation) or off.
 # The kubectl guard reads the exported KDASH_ALLOW_INTERACTIVE on every call, so the
 # change applies at once. Both directions are audited.
 interactive_toggle() {
-    local ans="" rows
+    local ans="" key="" cols old_int interrupted=0 confirmed=0 read_rc
     if interactive_enabled; then
         KDASH_ALLOW_INTERACTIVE=0; export KDASH_ALLOW_INTERACTIVE
         declare -F audit >/dev/null && audit INTERACTIVE_OFF "by key X"
         INTERACTIVE_MSG="interactive mode OFF - kdash is read-only again"
         return 0
     fi
-    rows="${KDASH_LINES:-$(tput lines 2>/dev/null || echo 24)}"
-    printf '\033[%s;1H\033[K\033[?25h\033[1;97;41m Turn on interactive mode? S shell / U upload / D download run in YOUR name and are audited writes. [y/N] \033[0m ' "$rows"
-    IFS= read -rsn1 ans </dev/tty || ans=""
-    printf '\033[?25l'
-    case "$ans" in
-        y|Y) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
+    if [ ! -t 0 ] || [ ! -t 1 ]; then
+        INTERACTIVE_MSG="interactive mode stays off - confirmation requires a terminal"
+        declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X reason=no-terminal"
+        return 0
+    fi
+    old_int="$(trap -p INT)"
+    trap 'interrupted=1' INT
+    cols="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+    case "$cols" in ''|*[!0-9]*) cols=80 ;; esac
+    [ "$cols" -ge 24 ] || cols=24
+    # A separate modal fits narrow screens and never writes beyond the last row.
+    printf '\033[r\033[H\033[2J\033[?25h Turn on interactive mode?\n\n'
+    printf '%s\n' 'S shell / U upload / D download run in YOUR name and are audited writes.' \
+        'This enables interactive actions for this kdash session only.' | fold -s -w "$((cols - 2))"
+    printf '\n [y/N] Enter confirms; Esc, q or Ctrl-C cancels.\n > '
+    while [ "$interrupted" = 0 ]; do
+        key=""
+        if IFS= read -rsn1 -t 0.2 key </dev/tty; then :
+        else
+            read_rc=$?
+            # A signal can arrive between the loop condition and read. A short
+            # timeout guarantees cancellation is observed without another key.
+            [ "$read_rc" -gt 128 ] && [ "$interrupted" = 0 ] && continue
+            break
+        fi
+        [ "$interrupted" = 0 ] || break
+        case "$key" in
+            ''|$'\r') confirmed=1; break ;;
+            $'\033'|$'\003'|$'\004'|q|Q) break ;;
+            $'\177'|$'\b') [ -z "$ans" ] || { ans="${ans%?}"; printf '\b \b'; } ;;
+            $'\025') while [ -n "$ans" ]; do ans="${ans%?}"; printf '\b \b'; done ;;
+            *) if [[ "$key" == [[:print:]] ]] && [ "${#ans}" -lt 32 ]; then ans+="$key"; printf '%s' "$key"; fi ;;
+        esac
+    done
+    # Modal input must not become dashboard actions (CRLF, an Escape sequence,
+    # or the remainder of a pasted answer). The bounded drain never waits on a
+    # new line and leaves ordinary keys typed after the redraw to the caller.
+    local discard i
+    for ((i = 0; i < 32; i++)); do
+        IFS= read -rsn1 -t 0.01 discard </dev/tty || break
+    done
+    if [ -n "$old_int" ]; then eval "$old_int"; else trap - INT; fi
+    printf '\033[?25l\033[H\033[2J'
+    case "$confirmed:$interrupted:${ans,,}" in
+        1:0:y|1:0:yes) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
              declare -F audit >/dev/null && audit INTERACTIVE_ON "by key X"
              INTERACTIVE_MSG="interactive mode ON - S shell, U upload, D download (X turns it off)" ;;
-        *)   INTERACTIVE_MSG="interactive mode stays off" ;;
+        *)   declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X"
+             INTERACTIVE_MSG="interactive mode stays off" ;;
     esac
     return 0
 }

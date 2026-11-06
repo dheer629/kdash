@@ -1,0 +1,5 @@
+NODE,POOL,KIND,WORKLOAD,PODS,PODS_READY,RESTARTS,CPU_USED_m,MEM_USED_Mi,MEM_REQ_Mi,POD_NAMES
+dev,"role:control-plane,master",Deployment,app-server,2,2,0,6,0,24,"app-server-8fb4699bc-j6rk2,app-server-8fb4699bc-z8kl7"
+dev,"role:control-plane,master",Job,completed-check,1,1,0,,,4,completed-check-m9swm
+dev,"role:control-plane,master",Pod,z-crash,1,0,48,,,4,z-crash
+(unscheduled),(none),Pod,z-pending,1,0,0,,,4,z-pending

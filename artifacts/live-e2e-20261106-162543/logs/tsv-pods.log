@@ -1,0 +1,17 @@
+# pods
+KEY	NAMESPACE	POD	STATUS	READY	RESTARTS	NODE	POOL	POD_IP	HOST_IP	QOS	KIND	WORKLOAD	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	CONTAINERS	HOST_NETWORK
+app-server-8fb4699bc-j6rk2	kdash-e2e	app-server-8fb4699bc-j6rk2	Running	2/2	0	dev	role:control-plane,master	10.244.0.243	172.18.0.2	Burstable	Deployment	app-server	2	25	250	1	12	96	2	1	-	2	false
+app-server-8fb4699bc-z8kl7	kdash-e2e	app-server-8fb4699bc-z8kl7	Running	2/2	0	dev	role:control-plane,master	10.244.0.244	172.18.0.2	Burstable	Deployment	app-server	3	25	250	0	12	96	3	0	-	2	false
+completed-check-m9swm	kdash-e2e	completed-check-m9swm	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.242	172.18.0.2	Burstable	Job	completed-check	-	5	50	-	4	32	-	-	-	1	false
+z-crash	kdash-e2e	z-crash	CrashLoopBackOff	0/1	48	dev	role:control-plane,master	10.244.0.241	172.18.0.2	Burstable	Pod	z-crash	-	5	50	-	4	32	-	-	Error	1	false
+z-pending	kdash-e2e	z-pending	Pending	0/1	0	(unscheduled)	(none)	-	-	Burstable	Pod	z-pending	-	5	50	-	4	32	-	-	-	1	false
+
+# containers
+KEY	POD	CONTAINER	READY	RESTARTS	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	WAITING
+app-server-8fb4699bc-j6rk2	app-server-8fb4699bc-j6rk2	app	Y	0	1	20	200	1	8	64	1	1	-	-
+app-server-8fb4699bc-j6rk2	app-server-8fb4699bc-j6rk2	sidecar	Y	0	1	5	50	0	4	32	1	0	-	-
+app-server-8fb4699bc-z8kl7	app-server-8fb4699bc-z8kl7	app	Y	0	2	20	200	0	8	64	2	0	-	-
+app-server-8fb4699bc-z8kl7	app-server-8fb4699bc-z8kl7	sidecar	Y	0	1	5	50	0	4	32	1	0	-	-
+completed-check-m9swm	completed-check-m9swm	check	N	0	-	5	50	-	4	32	-	-	-	-
+z-crash	z-crash	crash	N	48	-	5	50	-	4	32	-	-	Error	CrashLoopBackOff
+z-pending	z-pending	pending	-	0	-	5	50	-	4	32	-	-	-	-

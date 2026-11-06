@@ -1,6 +1,6 @@
 # kdash DevOps user guide
 
-This guide describes the kdash 4.23.1 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
+This guide describes the kdash 4.23.2 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
 
 The current source can be installed with `git clone https://github.com/dheer629/kdash.git`,
 `cd kdash`, `sha256sum -c SHA256SUMS`, then `bash kdash-bundle.sh`.
@@ -12,7 +12,7 @@ does not itself publish new release assets.
 
 The captured validation run below used 4.12.0; the later feature galleries used
 4.13.1 and 4.14.0. They remain evidence of those versions and do not validate the
-4.23.1 terminal layout or interactive browser against a live cluster.
+4.23.2 terminal layout or interactive browser against a live cluster.
 
 The following evidence table describes the exercise on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
 
@@ -27,14 +27,20 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_423/` follows this source; the older galleries support historical observations.
+`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4232/` follows this source; the older galleries support historical observations.
 
-## Current 4.23.1 validation and visual changes
+## Current 4.23.2 validation and visual changes
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261106-v4231` records **155 passed live checks**, **17 passed browser checks** and **74 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.1 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-20261106-v4231/checks.tsv).
+Run `live-e2e-20261106-162543` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.2 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-20261106-162543/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
+
+
+
+
+
+
 
 
 
@@ -53,12 +59,14 @@ read behavior also have deterministic regression coverage.
 The current live run is named by [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt).
 Its `results.json`, `checks.tsv`, `inventory.json` and `captures.tsv` record the
 installed version, real WSL Kubernetes inventory, checks and every screen.
-[`samples/cli_423/`](samples/cli_423/README.md) contains the corresponding terminal
-renders and [`samples/html423/`](samples/html423/README.md) contains report output.
-The older five-minute exercise below remains labelled 4.12.0; the 4.19.2 galleries
-also retain their recorded version.
+[`samples/cli_4232/`](samples/cli_4232/README.md) contains the corresponding terminal
+renders and [`samples/html4232/`](samples/html4232/README.md) contains report output.
+The [4.23.1 terminal](samples/cli_423/README.md) and
+[HTML](samples/html423/README.md) galleries remain available. The older five-minute
+exercise below remains labelled 4.12.0; the 4.19.2 galleries also retain their
+recorded version.
 
-4.23.1 adds boxed tables and reverse-video selection to namespace, pod, container,
+4.23.1 introduced boxed tables and reverse-video selection to namespace, pod, container,
 inspector and file screens. Titles, table borders, aligned columns and grouped key
 panels share one width-aware layout. Whole key-label pairs wrap together. ASCII
 glyph mode and monochrome/light/dark themes remain selectable.
@@ -68,6 +76,13 @@ digits select a row, `/` filters and `t` accepts an unlisted name. Enter opens i
 `d` opens it and saves this context's default in kdash.conf; `x` forgets the default;
 `r` refreshes access checks and `A` opens all namespaces. `q`/Esc cancels and `Q`
 quits. Saved defaults do not edit kubeconfig.
+
+In 4.23.2, `X` also works directly in the inspector summary and log panes.
+The header shows read-only or interactive mode and the key panel/help lists the
+available actions. Type `y`, `Y`, `yes` or `YES`, then Enter, to enable mode;
+Esc, `q`, Ctrl-C and Ctrl-D cancel. `X` disables immediately. The entire response
+is consumed by the prompt, so Enter cannot open a pod or shell after it closes.
+`X` and `Q` also respond while an inspector object/log read is pending.
 
 The inspector uses framed identity/status rows and wrapped pane/read/move hints.
 In a current/previous log pane, `+` increases the requested tail fourfold and `A`
@@ -284,7 +299,7 @@ CPU values such as `250m` mean 250 millicores, or 0.25 of a CPU core. Memory use
 | `P`, `+`, `-` | Pause/resume data refresh; adjust the poll interval |
 | `T`, `z` | Cycle theme; select chart time window |
 | `x`, `e` | Export an all-tabs namespace report; open the export menu |
-| `X` | Enable interactive mode after `y` confirmation, or disable it immediately |
+| `X` | Enable interactive mode with `y` / `yes` then Enter, or disable immediately; also in inspector summary/log panes |
 | `S`, `U`, `D` | In interactive mode: shell, upload, download |
 | `q`, `Q` | `q` quits the dashboard or returns from a picker; `Q` quits kdash from navigation screens and finalizes session/audit records |
 
@@ -417,7 +432,8 @@ Exit codes: `0` success, `1` runtime failure, `2` usage error, `3` no pods match
 ## Shell in a container and file copy (opt-in, audited writes)
 
 kdash reads the cluster by default. Shells and file transfers require explicit
-interactive mode. Use `X` and confirm `y` during a run, or start with:
+interactive mode. Use `X` in the dashboard, pod list or inspector, type `y` or
+`yes` and press Enter to enable it during a run, or start with:
 
 ```bash
 kdx -k /path/kubeconfig -c my-context -n default     # dashboard, interactive mode on

@@ -1,0 +1,50 @@
+
+root@app$ printf 'KDASH_DETAIL_MODE_OK\n'; id
+KDASH_DETAIL_MODE_OK
+uid=0(root) gid=0(root) groups=0(root),10(wheel)
+root@app$ exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;7m KDASH [0m  shell closed  [1mapp-server-8fb4699bc-j6rk2[0m  [90mcontainer[39m [1mapp[0m  [90mexit status[39m 0  [90mduration[39m 5s  [90maudited[39m
+[1;7m KDASH [0m  session closed  [90mcontext[39m kdash-local  [90mnamespace[39m kdash-e2e  [90mduration[39m 3m 20s  [90maudited[39m
+        [90mhistory[39m  /tmp/kdash-run/artifacts/live-e2e-20261106-162543/reports/sessions/kdash_kdash-local_kdash-e2e_20261106_215613
+        [90mreport[39m   kdash --session-report latest   [90m(every tab + the full history as HTML)[39m
+
+Pane is dead (status 0, Fri Nov  6 21:59:33 2026)

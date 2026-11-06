@@ -1,21 +1,28 @@
 # kdash samples
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261106-v4231` records **155 passed live checks**, **17 passed browser checks** and **74 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.1 in namespace `kdash-e2e`.
-[Inspect the recorded checks](../artifacts/live-e2e-20261106-v4231/checks.tsv).
+Run `live-e2e-20261106-162543` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.2 in namespace `kdash-e2e`.
+[Inspect the recorded checks](../artifacts/live-e2e-20261106-162543/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
 
-The current **4.23.1** terminal gallery is [`cli_423/`](cli_423/README.md),
+
+
+
+
+
+
+The current **4.23.2** terminal gallery is [`cli_4232/`](cli_4232/README.md),
 captured from the installed utility against real Kubernetes workloads in local WSL.
 Its raw ANSI/plain-text screens and verification results are indexed by
 [`../artifacts/latest-e2e.txt`](../artifacts/latest-e2e.txt). The corresponding
-report files are in [`html423/`](html423/README.md). The `native/` gallery contains
+report files are in [`html4232/`](html4232/README.md). The `native/` gallery contains
 actual live WSL xterm screenshots; companion PNGs replay saved ANSI captures.
 Current values and local namespace names are preserved unchanged.
 
 Earlier captures remain available under their original versions:
+**4.23.1** in [`cli_423/`](cli_423/README.md) and [`html423/`](html423/README.md),
 **4.19.2** in [`cli_419/`](cli_419/README.md) and [`html419/`](html419/README.md),
 **4.13.1 / 4.14.0** in [`cli_413/`](cli_413/README.md) and
 [`cli_414/`](cli_414/README.md), and **4.12.0** in [`cli/`](cli).

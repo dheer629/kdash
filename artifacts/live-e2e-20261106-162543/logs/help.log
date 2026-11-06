@@ -1,0 +1,249 @@
+kdash 4.23.2 - live Kubernetes namespace operations dashboard
+author Dheeraj V
+
+DISCLAIMER - kdash is provided as is, without warranty of any kind. The 
+person running this utility is solely responsible for its use, for having 
+authorisation to access the clusters and namespaces it reads, and for any 
+decision or action taken on its output. kdash only reads the cluster unless 
+interactive mode is enabled explicitly (--allow-interactive), which adds a 
+shell inside a container and file copy in or out of one: those two run in the 
+user's name with the user's rights and are NOT read-only. Every run is 
+AUDITED: the user, host, origin, context, namespace, every action taken in 
+the dashboard, every report written, every kubectl call and every interactive 
+attachment are logged and stored (local audit log, central audit log when 
+configured, and syslog).
+
+USAGE
+  kdash [POD-REGEX] [OPTIONS]
+
+  POD-REGEX is an extended regular expression matched against pod names.
+  Omit it to show every pod in scope. It applies to every view.
+
+VIEWS  (-v VIEW, or keys 1-9 / E / ! / Tab while running)
+  1  pods        pod / container usage vs requests and limits     (default)
+  2  nodes       node pools: namespace usage per worker node vs allocatable
+  3  workloads   pods per worker node by workload + replica spread / HA risk
+  4  ip          namespace IP pool: pod IPs, node IP blocks, subnets, services
+  5  mem         live memory dashboard: trend, node bars, top pods, OOM risk
+  6  io          network in / out and disk read / write per worker node and pod
+  7  alerts      live critical summary: every section on one page, each alert
+                 with its age, live value, trend and the kubectl action
+  8  services    service/backend readiness, ports, routes and findings
+  9  storage     PVC/PV health, mounts, events and available volume metrics
+  E  events      Kubernetes Events, age, source and repeated occurrences
+  !  explain     event-backed hypotheses with read-only next checks
+     all         every view, one after another (with --once / --report)
+
+TARGETING
+  -n, --namespace NS     namespace (default: saved choice, then context namespace)
+  -n, --pick-ns          no NS given: pick from the namespace list (also key n
+                         while running; automatic when the context has none)
+  -A, --all-namespaces   every namespace you can read
+  -c, --context NAME     context; a unique substring is accepted
+  -k, --kubeconfig PATH  kubeconfig file (default: $KUBECONFIG or ~/.kube/config)
+  In the namespace picker: arrows/j/k move, / filters, t types an unlisted name,
+  Enter opens, A opens every namespace, d opens and saves this context's default,
+  x forgets the saved default, q/Esc cancels. Access is checked with your RBAC.
+
+REFRESH
+  -i, --interval SEC     usage poll period                    (default 2)
+  -R, --spec-ttl SEC     pods / nodes / services re-read      (default 30)
+  -1, --once             render one frame and exit
+
+OUTPUT
+  -v, --view VIEW        pods | nodes | workloads | ip | mem | io | alerts |
+                         services | storage | events | explain | all
+  -o, --output FMT       with --once: text | tsv | csv         (default text)
+      --snapshot [SEL]   write HTML, then exit. No SEL: ONE file with every
+                         tab (overview, 5 views, history). If kdash is running
+                         live on this namespace, its history is included.
+                         SEL = separate files: current | all | 2 | 25 | nodes,mem
+      --session-report [latest|DIR]
+                         rebuild the all-tabs report from a recorded live
+                         session after kdash exited (no cluster access needed)
+      --report [DIR]     write a full evidence bundle (text + TSV + CSV) and a
+                         combined HTML dashboard, then exit
+                         (default DIR: ~/kdash_reports, or $KDASH_REPORT_DIR)
+      --top N            rows in "top pods" lists              (default 15)
+      --pool-label KEY   node label that names the node pool (default: auto)
+      --no-node-metrics  never call kubectl top node
+      --no-cluster       skip the cluster-wide pod read (all namespaces); the
+                         NODE POOLS cluster graph then shows capacity only
+      --no-io            no network / disk IO collection (view 6)
+      --prom-url URL     read IO rates from this Prometheus (curl, /federate)
+      --prom-svc SVC     ...or from a Prometheus service through the API proxy:
+                         [namespace/]name:port (default: auto-detect in the namespace)
+      --io-wait SEC      one-shot modes (--once, --snapshot): sample IO twice
+                         SEC seconds apart so rates can be shown
+      --compare NS,NS    compare this namespace with exactly these namespaces
+                         (default: the whole cluster, or - without cluster-wide
+                         rights - every namespace you can read)
+      --bell             ring the terminal bell when a new critical event appears
+                         (OOMKilled, CrashLoop, NotReady node ...; KDASH_BELL=1)
+      --no-zoom          NODE POOLS: true-scale bars (default: small shares are
+                         magnified, % values stay true; key Z toggles)
+      --hosting-nodes    NODE POOLS: only nodes running this namespace
+                         (default: every node, key a toggles)
+
+VIEW OPTIONS
+  -s, --sort KEY         cpu | mem | cpupct | mempct | name | restarts (default
+                         cpu); applies to every view. Key s cycles, o reverses.
+      --reverse          lowest first (names Z-A)
+      --window DUR       time charts show the last DUR: 15m | 1h | 6h | 24h |
+                         all (default: all since kdash started; key z cycles)
+      --flat             PODS: one flat list (default: grouped by workload, key w)
+  -P, --pods-only        pod totals only (pods view)
+  -C, --containers       force container rows (overrides -P)
+  -D, --no-detail        hide detail lines
+      --ascii            ASCII bars and arrows (same as --glyphs ascii)
+      --glyphs SET       safe (default: blocks every terminal font has, also
+                         PuTTY / MobaXterm) | full (finer sparklines) | ascii
+  -N, --no-color         disable colour
+      --theme NAME       safe (default: readable on black and white) | dark |
+                         light | mono       (key T cycles while running)
+  -S, --no-altscreen     draw in the normal buffer
+
+DIAGNOSTICS (read-only)
+      --doctor          connection, TLS, RBAC, metrics and report diagnostics
+      --events          actual Kubernetes Events, then exit
+      --explain [POD]   event-backed hypotheses and next checks, then exit
+      --inspect POD     pod/container summary (use -n NAME), then exit
+      --container NAME --logs current|previous   explicit bounded log inspection
+      --selector LABELS --status REGEX --node NAME --workload REGEX --unhealthy
+      --request-timeout SEC  per-request seconds (default 5; hard command cap 12)
+      -v services|storage   service/backend map or PVC/PV health (keys 8/9)
+  Enter/i inspector   : command palette   F structured filters
+  E Kubernetes Events   ! explanations   8 services   9 storage
+
+OTHER
+  -X, --allow-interactive  enable S shell / U upload / D download (shell shortcut: kdx;
+                         or press X while running)
+      --shell-picker     start on the pod list in shell mode (shell shortcut: kdsh). With
+                         a pod name (kdsh fileserver3) one match opens its shell directly.
+                         In the shell: exit = back to the list, kdswitch = pods of the same
+                         workload, kdquit = leave kdash.
+      --install [DIR]    install as "kdash"
+      --completion bash  print a bash completion script
+  -V, --version          print version
+  -h, --help             this help
+
+KEYS WHILE RUNNING
+  1-9 / Tab     switch view       x         HTML report: all tabs + history so far
+  e             HTML menu: all-tabs report, current view, views 1-6, or the bundle
+  j k / arrows  scroll            space b   page down / up
+  h l / arrows  pan left / right  0         back to column 1
+  g G           top / bottom      /         change pod filter (empty = all)
+  p             pods-only         d         toggle detail lines
+  s             cycle sort key    o         reverse sort order
+  w             PODS: group by workload / flat list       r   re-read spec now
+  n             pick namespace    a         NODE POOLS: all nodes / hosting only
+  T             colour theme      z         chart window 15m/1h/6h/24h/all
+  Z             NODE POOLS: auto zoom / true scale
+  P             pause / resume live refresh  + -  poll interval 1..60 s
+  X             interactive mode on / off (asks first, audited)
+  S             open a shell in the selected container  (opt-in, see below)
+  U             upload a file into the container         (opt-in, see below)
+  D             download a file from the container       (opt-in, see below)
+  q             quit                  Q   quit at once from any screen (pod list, inspector ...)
+
+INTERACTIVE (opt-in, audited writes)
+  kdash is read-only by default. A shell in a container and copying files in or out
+  of one are the only actions that can change something, so they are refused unless
+  interactive mode is enabled, by any of:
+      kdx                           shell shortcut (= kdash -X); kdsh opens a shell picker
+      kdash -X                      short for --allow-interactive
+      X                             key in a running kdash (asks y/N; X again turns it off)
+      KDASH_ALLOW_INTERACTIVE=1     environment or kdash.conf (always on)
+  Then S / U / D pick a pod and container: S opens bash when available, else sh;
+  U / D browse local and container files, review the selection, then stream tar over
+  kubectl exec. Downloads default to the host directory where kdash was launched.
+  Downloads keep their original names by default. f cycles optional ZIP (zip or
+  python3), tar.gz and plain files. Existing names ask: replace or keep both.
+  Review screens check tar, readability, writable destinations and free space;
+  results compare SHA-256, MD5, or file count and bytes when no hash tool exists.
+  kubectl cp is the fallback when browsing is unavailable.
+  The same keys work in the inspector on the pod and container you are looking at.
+  They run in your name with your RBAC, they need pods/exec permission, kubectl cp
+  also needs a tar inside the image, and each use is audited as a write (EXEC,
+  CP_UP, CP_DOWN). Without the flag, kubectl is still refused with exit 126.
+  Inspector logs: + reads 4x more lines; A reads all retained kubelet lines up to
+  KDASH_LOG_MAX_BYTES (default 256 MiB). W toggles wrapping, J readable JSON,
+  / finds, & shows only matches, L filters levels, f follows and w exports.
+  Framed lists and review/result tables support Unicode or --ascii borders,
+  colour or --no-color, and terminal resizing.
+
+TIME
+  Every clock in the dashboard and in the HTML report is this host's clock
+  and time zone (date +%Z). TZ=UTC kdash  shows everything in UTC. The HTML
+  report can switch between host, browser and UTC time.
+  MEMORY and IO draw time charts from the session history: start, middle and
+  end times on the axis, window start -> end, now / min / avg / max with the
+  time of the peak, request (-) and limit (=) lines, and event markers
+  (! critical, ^ warning). The MEMORY view also forecasts memory growth per
+  pod: a linear trend over the last KDASH_FORECAST_WINDOW seconds (default
+  1800) with the clock time a pod would reach its memory limit.
+
+SESSION HISTORY
+  A live run records namespace totals, memory per worker node, every pod and
+  change events (added / removed / restarts / OOMKilled / rescheduled / OOM
+  risk / node state) into $KDASH_REPORT_DIR/sessions/ (newest 30 kept).
+  KDASH_SAMPLE_EVERY=SEC sets the sample period (default 15). Past
+  KDASH_SESSION_MAX_MB (default 64) older samples are thinned to half.
+
+READING THE VIEWS
+  ACTUAL        measured via kubectl top. T: up / down / flat since last poll.
+  ASSIGNED      requests and limits from the pod spec.
+  %LIM >= 90    red: CPU throttling or OOMKill risk.
+  NODE BARS     solid = this namespace, shaded = other namespaces (needs
+                node metrics), light = free allocatable memory.
+  HA_RISK       a workload with 2+ replicas whose pods all sit on one node.
+  SKEWED        one node holds more replicas than an even spread would.
+  "-"           unset, unknown or not permitted.
+
+CONFIGURATION  (later overrides earlier)
+  /etc/kdash.conf, $XDG_CONFIG_HOME/kdash.conf, environment, flags
+  KDASH_NS KDASH_CONTEXT KDASH_KUBECONFIG KDASH_INTERVAL KDASH_SPEC_TTL
+  KDASH_FILTER KDASH_KUBECTL KDASH_NS_MAP KDASH_VIEW KDASH_POOL_LABEL
+  KDASH_TOPN KDASH_HISTORY KDASH_NODE_METRICS KDASH_REPORT_DIR KDASH_THEME
+  KDASH_CLUSTER KDASH_ALL_NODES KDASH_WINDOW KDASH_FORECAST_WINDOW KDASH_ZOOM KDASH_COMPARE_NS KDASH_NS_SCAN
+  KDASH_SAMPLE_EVERY KDASH_SESSION_KEEP KDASH_SESSION_MAX_MB
+  KDASH_COLUMNS KDASH_LINES   NO_COLOR disables colour.
+  KDASH_LOG_TAIL KDASH_LOG_LIMIT_BYTES KDASH_LOG_MAX_BYTES KDASH_INSPECT_FOLLOW
+
+AUDIT  (every run is logged; see the disclaimer at the top)
+      --about            author, disclaimer, where this run is audited
+      --audit [N]        last N audit events (default 40)
+      --audit-all        ... including the central log (/var/log/kdash)
+      --audit-grep RE    ... only events matching RE (user, namespace, event)
+      --audit-verify     check the hash chain of every audit file (edits /
+                         deletions break it)
+      --audit-report [DIR]  audit log as HTML + CSV
+      --accept-disclaimer   accept the disclaimer for this user (automation;
+                         also KDASH_ACCEPT_DISCLAIMER=1)
+  Logged: start / end (user, sudo user, uid, host, SSH client, tty, context,
+  namespace, arguments), every action in the live dashboard, namespace
+  switches (allowed / denied), alerts, every report written (path + sha256),
+  kubectl calls (counted per command shape) and failures. kubectl verbs that
+  could change the cluster are refused. Files: KDASH_AUDIT_DIR (default
+  ~/kdash_reports/audit), KDASH_AUDIT_CENTRAL (default /var/log/kdash when
+  writable), syslog (logger -t kdash, KDASH_AUDIT_SYSLOG=0 turns it off).
+  KDASH_AUDIT_REQUIRED=1 refuses to run when no audit file can be written.
+
+EXIT CODES
+  0 success   1 runtime error   2 usage error   3 no pods matched
+  5 disclaimer not accepted   6 audit required but not writable
+
+EXAMPLES
+  kdash                                  every pod, live
+  kdash -v nodes                         node pools for the namespace, live
+  kdash -v workloads '^order-svc-1-'     where those pods run, HA spread
+  kdash -v ip --once                     IP pool snapshot
+  kdash -v mem -i 5                      memory dashboard, 5 s poll
+  kdash -v all --once > snapshot.txt     every view as plain text
+  kdash -v nodes --once -o csv           node pool table as CSV
+  kdash --snapshot                       one HTML, all tabs (+ history if live)
+  kdash --session-report latest          all tabs + history of the last live run
+  kdash -v nodes --snapshot current      node pools only, one HTML
+  kdash --snapshot all                   five HTML reports, one per view
+  kdash --snapshot 25                    node pools + memory, one HTML each
+  kdash --report                         combined HTML + TSV evidence bundle

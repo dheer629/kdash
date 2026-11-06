@@ -1,0 +1,50 @@
+[1;7m KDASH 4.23.2 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [1;7m 7 ALERTS [0m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-06 21:56:43[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 2s  spec 29s/30s  session [39m21:56:13[90m up [39m30s   [1m[94msort cpu ▼ high first[0m
+[90m health [1m[31m! pods 3/5 ready[0m[90m  restarts [35m48[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [32m0[90m  │ cpu [39m6m [32m░░░░░░[39m [32m1%[90m lim  mem [39m0Mi [32m░░░░░░[39m [32m0%[90m lim  │ workloads [39m4[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mALERTS   live critical summary of every section, with the action for each signal[0m
+ [1;7m[31m  CRITICAL  [0m  [1m[31m2[0m [90mcritical[39m   [1m[35m3[0m [90mwarning[39m   [90m0[39m [90mnew[39m   [90m0[39m [90mcleared in 5 min[39m   [90mrules run every refresh (2s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000[39m
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=29s metrics=available | Enter/i inspect | 8 services 9 storage E events ! explain : commands
+[1m[94m►[0m [1mSECTIONS[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1m[31m●[0m [1mPODS      [0m [1m[31m3/5[0m ready  rst 48  [1m[31m1 crit[0m [35m1 warn[39m                                      [32m●[39m [1mMEMORY    [0m 0Mi / 288Mi lim [32m 0.0[39m%  [90m0 >=90%[39m  [90m0 no-limit[39m  [94m░░░░░░░░░░░░[39m
+  [32m●[39m [1mNODES     [0m 1 hosting  [32m0 NotReady[39m  max node mem [32m27.5[39m% dev                         [1m[31m●[0m [1mWORKLOADS [0m 4  [32m0 degraded[39m  [35m1 HA risk[39m  [90m0 rolling[39m
+  [35m●[39m [1mIP        [0m 4 pod IPs  [35m1 no IP[39m  [90m0 duplicate[39m  2 svc                                [32m●[39m [1mTRAFFIC   [0m in [1m343B/s[0m out [1m438B/s[0m  disk r 0B/s w 0B/s  [32m░░░░░[39m
+
+[1m[94m►[0m [1mACTIVE ALERTS  5 (2 critical, 3 warning)   critical first, NEW first, action under each[0m [90m───────────────────────────────────────────────────────────────────────────────[39m
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE                           TREND
+  [1m[31m![0m [1;7m[31mNEW  [0m  PODS      [1mz-crash                       [0m [1m[31mCrashLoopBackOff  [0m restarts 48, ready 0/1               [94m          [39m
+                   [90m↳ [36mkubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100[39m
+  [1m[31m![0m [1;7m[31mNEW  [0m  WORKLOADS [1mPod/z-pending                 [0m [1m[31mUNSCHEDULED       [0m 1 pod(s) not placed
+                   [90m↳ [36mkubectl -n kdash-e2e get events --field-selector reason=FailedScheduling[39m
+  [35m^[39m [1;7m[31mNEW  [0m  PODS      [1mz-pending                     [0m [35mPending           [39m node (unscheduled)
+                   [90m↳ [36mkubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending[39m
+  [35m^[39m [1;7m[31mNEW  [0m  WORKLOADS [1mDeployment/app-server         [0m [35mHA_RISK           [39m 2 replicas on 1 node
+                   [90m↳ [36mkubectl -n kdash-e2e get pods -o wide | grep app-server   (topologySpreadConstraints)[39m
+  [35m^[39m [1;7m[31mNEW  [0m  IP        [1mz-pending                     [0m [35mNO_IP             [39m status Pending
+                   [90m↳ [36mkubectl -n kdash-e2e describe pod z-pending[39m
+
+[1m[94m►[0m [1mLIVE TOP CONSUMERS[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1mmemory % of limit                                     [0m  [1mCPU % of limit                                        [0m  [1mtraffic in+out (ns 782B/s)[0m
+  [32m  0.0[39m app-server-8fb4699bc-j6rk2                        [32m  1.2[39m app-server-8fb4699bc-j6rk2                           426B/s [94m████░░░░[39m app-server-8fb4699bc-z8kl7
+  [32m  0.0[39m app-server-8fb4699bc-z8kl7                        [32m  1.2[39m app-server-8fb4699bc-z8kl7                           356B/s [32m████░░░░[39m app-server-8fb4699bc-j6rk2
+
+
+
+
+[1m[94m►[0m [1mEVENTS  last hour[0m [90m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1mEVENTS[0m [90m1 in window[39m   [32m! 0[39m [90mcritical[39m   [32m^ 0[39m [90mwarning[39m
+  [90m21:56:14      [39m [90m-[39m [90mSESSION         [39m kdash-e2e                                [90mkdash 4.23.2 started on Dheeraj by root - filter .*[39m
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS[2m›
+[0;7m ○ LIVE 21:56:43  next 1s  data 1s old  spec 29/30s  fetch 0.0s  poll 2s  AUDITED | alerts | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit   [0m

@@ -1,0 +1,50 @@
+ KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e                                                                                   5 of 5 pods
+ pods    ● CrashLoopBackOff 1  ● Pending 1  ● Running 2  ● Succeeded 1
+ / search   view all (u)   X enables shell / upload / download   sort name
+┌────────────────────────────────────────────────────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┬──────────────────────┐
+│ POD                                                                                │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │ NODE                 │
+├────────────────────────────────────────────────────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┼──────────────────────┤
+│ app-server-8fb4699bc-j6rk2                                                         │ Running          │ 2/2   │   0 │     3m │     0Mi │    0% │ dev                  │
+│ app-server-8fb4699bc-z8kl7                                                         │ Running          │ 2/2   │   0 │     2m │     0Mi │    0% │ dev                  │
+│ completed-check-m9swm                                                              │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                  │
+│ z-crash                                                                            │ CrashLoopBackOff │ 0/1   │  49 │      - │       - │     - │ dev  last-exit Error │
+│ z-pending                                                                          │ Pending          │ 0/1   │   0 │      - │       - │     - │ (unscheduled)        │
+└────────────────────────────────────────────────────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┴──────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── 1 / 5   1 failing   1 pending / starting ──────────────────────────────────────────────────────────────────────────────────────────────────────── live · refresh 2s ──
+┌─ MOVE ──────────────────┬─ FIND ─────────────┬─ INSPECT ───────────────────┬─ SHELL · FILES ─────┬─ LEAVE ────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ /  search          │ Enter  summary              │ S  shell            │ q  back                                                            │
+│ PgUp/PgDn  page         │ u  needs attention │ l / p  logs / previous logs │ U  upload           │ Q  quit kdash                                                      │
+│ g / G      first / last │ s  sort: name      │ d / e  describe / events    │ D  download         │ r  refresh now                                                     │
+│ 12         go to row 12 │ F  filters         │ w / c  why / containers     │ X  enable S / U / D │ ?  all keys                                                        │
+└─────────────────────────┴────────────────────┴─────────────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────────────┘

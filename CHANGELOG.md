@@ -5,6 +5,22 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.23.2] - 2026-11-06
+
+### Fixed
+- `X` now enables or disables interactive mode directly from pod inspector
+  summary and log panes. The header displays the mode and the key panel/help
+  show the toggle and available shell/file actions.
+- Inspector `X` and `Q` respond while object or log reads are pending.
+- Enabling interactive mode accepts `y`, `Y`, `yes` or `YES` followed by Enter;
+  Esc, `q`, Ctrl-C or Ctrl-D cancel. The prompt consumes the full response so
+  Enter cannot leak into the caller and open a pod or shell. It fits 80 columns.
+
+### Changed
+- Current publication helpers derive gallery paths from the selected run rather
+  than overwriting the 4.23.1 gallery. New 4.23.2 captures and report samples keep
+  the earlier release's raw evidence and screenshots available.
+
 ## [4.23.1] - 2026-11-06
 
 ### Added

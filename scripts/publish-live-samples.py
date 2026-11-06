@@ -1,22 +1,64 @@
 """Finalize documentation from the successful live run after report publication."""
 from pathlib import Path
+import argparse
 import shutil
 import csv
 import json
+import re
 
 root = Path(__file__).resolve().parent.parent
-run_name = (root / 'artifacts/latest-e2e.txt').read_text(encoding='utf8').strip()
-run = root / 'artifacts' / run_name
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--run', help='Run directory; defaults to artifacts/latest-e2e.txt')
+parser.add_argument('--gallery', help='Terminal gallery directory relative to repository root')
+parser.add_argument('--html-gallery', help='HTML gallery directory relative to repository root')
+args = parser.parse_args()
+run = (root / args.run).resolve() if args.run else root / 'artifacts' / (root / 'artifacts/latest-e2e.txt').read_text(encoding='utf8').strip()
+if run.parent != root / 'artifacts':
+    raise SystemExit('Run must be a direct child of artifacts/')
+run_name = run.name
 results = json.loads((run / 'results.json').read_text(encoding='utf8'))
-if results.get('failures'):
+if not results.get('completed') or results.get('status') != 'PASS' or results.get('failures'):
     raise SystemExit('Refusing to document a run that still has failures')
 rows = list(csv.DictReader((run / 'captures.tsv').open(encoding='utf8'), delimiter='\t'))
+if not rows:
+    raise SystemExit('Run has no captures')
 passed = sum(c['status']=='PASS' for c in results['checks'])
 browser = json.loads((run / 'browser-results.json').read_text(encoding='utf8'))
 assert browser['status'] == 'PASS'
 browser_passed = sum(c['status']=='PASS' for c in browser['checks'])
 version = results['version'].removeprefix('kdash ')
-assert version == '4.23.1', version
+if not re.fullmatch(r'\d+\.\d+\.\d+', version):
+    raise SystemExit(f'Invalid release version: {version}')
+gallery_paths = {str(Path(row['png']).parent).replace('\\', '/') for row in rows}
+if len(gallery_paths) != 1:
+    raise SystemExit('Captures must share one terminal gallery directory')
+gallery_path = args.gallery or gallery_paths.pop()
+html_paths = {str(Path(row['file']).parent.parent).replace('\\', '/') for row in browser.get('screenshots', [])}
+if len(html_paths) > 1:
+    raise SystemExit('Browser screenshots must share one HTML gallery directory')
+html_path = args.html_gallery or (html_paths.pop() if html_paths else 'samples/html' + version.replace('.', ''))
+
+def gallery_directory(value):
+    directory = (root / value).resolve()
+    if directory.parent != root / 'samples':
+        raise SystemExit(f'Gallery must be a direct child of samples/: {value}')
+    directory.mkdir(exist_ok=True)
+    return directory
+
+gallery = gallery_directory(gallery_path)
+html = gallery_directory(html_path)
+
+def previous_galleries(pattern, current):
+    links = []
+    for readme in sorted((root / 'samples').glob(pattern)):
+        if readme.parent == current:
+            continue
+        heading = readme.read_text(encoding='utf8').splitlines()[0]
+        recorded = re.search(r'\b(\d+\.\d+\.\d+)\b', heading)
+        label = recorded.group(1) if recorded else readme.parent.name
+        links.append(f'[{label}](../{readme.parent.name}/README.md)')
+    return ', '.join(links)
+
 summary = f'Run `{run_name}` records **{passed} passed live checks**, **{browser_passed} passed browser checks** and **{len(rows)} native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash {version} in namespace `{results["namespace"]}`.'
 src = '../../artifacts/' + run_name
 
@@ -52,26 +94,33 @@ for row in rows:
     png = Path(row['png']).name
     native = 'native/' + png
     assert (root / row['png']).exists(), row['png']
+    if (root / row['png']).parent.resolve() != gallery:
+        shutil.copy2(root / row['png'], gallery / png)
+        (gallery / 'native').mkdir(exist_ok=True)
+        shutil.copy2((root / row['png']).parent / native, gallery / native)
     t += f'| [native]({native}) / [ANSI replay]({png}) | {row["title"].replace("|", "/")} | {row["columns"]} x {row["rows"]} | [capture]({src}/{row["file"]}) |\n'
-t += '''
+t += f'''
 Verify the image bytes with `sha256sum -c SHA256SUMS` in this directory.
-See the [generated HTML reports](../html423/README.md), [sample index](../README.md)
+See the [generated HTML reports](../{html.name}/README.md), [sample index](../README.md)
 and [operating guide](../../DEVOPS_USER_GUIDE.md) for workflows and coverage limits.
-Earlier captures retain their original version in [4.19.2](../cli_419/README.md),
-[4.14.0](../cli_414/README.md) and [4.13.1](../cli_413/README.md).
+Earlier captures retain their original version: {previous_galleries('cli_*/README.md', gallery)}.
 '''
-(root / 'samples/cli_423/README.md').write_text(t,encoding='utf8',newline='\n')
+(gallery / 'README.md').write_text(t,encoding='utf8',newline='\n')
 
-html = root / 'samples/html423'
-html.mkdir(exist_ok=True)
 shutil.copytree(run / 'reports', html, dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns('sessions', 'inspector', '*.lock'))
+for screenshot in browser.get('screenshots', []):
+    source = root / screenshot['file']
+    target = html / 'screenshots' / source.name
+    if source.resolve() != target.resolve():
+        target.parent.mkdir(exist_ok=True)
+        shutil.copy2(source, target)
 t = f'''# kdash {version} live WSL HTML reports
 
 The files in this directory come from the generated reports of
 [`{run_name}`]({src}), running the installed kdash {version} against local WSL
 Kubernetes. The [results]({src}/results.json) and [checks]({src}/checks.tsv)
-record export validation; the [terminal gallery](../cli_423/README.md) records
+record export validation; the [terminal gallery](../{gallery.name}/README.md) records
 the corresponding live interface.
 
 The namespace report includes Overview, six resource tabs and recorded History.
@@ -89,11 +138,11 @@ for p in sorted(html.rglob('*')):
         continue
     rel = p.relative_to(html).as_posix()
     t += f'| [{rel}]({rel}) | {p.stat().st_size} |\n'
-t+='''
+t+=f'''
 Verify the published bytes with `sha256sum -c SHA256SUMS` in this directory.
 Keep the relative filenames together when sharing. Review operational metadata
-before distributing reports. Historical [4.19.2 reports](../html419/README.md)
-and [4.12.0 reports](../html/) retain their original capture version.
+before distributing reports. Historical reports retain their original capture
+version: {previous_galleries('html*/README.md', html)}, [4.12.0](../html/).
 '''
 (html / 'README.md').write_text(t,encoding='utf8',newline='\n')
 
@@ -108,8 +157,12 @@ for name in ('README.md','DEVOPS_USER_GUIDE.md','samples/README.md','artifacts/R
     if name=='README.md':
         idx=t.index('## Screenshots\n')+len('## Screenshots\n')
     elif name=='DEVOPS_USER_GUIDE.md':
-        title='## Current 4.23.1 validation and visual changes\n'
-        idx=t.index(title)+len(title)
+        heading=re.search(r'^## Current [^\n]+ validation and visual changes\n', t, re.MULTILINE)
+        if not heading:
+            raise SystemExit('Operating guide is missing current-validation heading')
+        t=t[:heading.start()]+f'## Current {version} validation and visual changes\n'+t[heading.end():]
+        heading=re.search(r'^## Current [^\n]+ validation and visual changes\n', t, re.MULTILINE)
+        idx=heading.end()
     else:
         idx=t.index('\n')+1
     prefix={'README.md':'artifacts/','DEVOPS_USER_GUIDE.md':'artifacts/','samples/README.md':'../artifacts/','artifacts/README.md':''}[name]

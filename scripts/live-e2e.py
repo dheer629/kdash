@@ -428,8 +428,17 @@ spec:
                         break
                     time.sleep(0.1)
                 time.sleep(0.5)
-                subprocess.run(["import", "-window", "kdash-e2e-" + stem, str(native)], env=xenv,
-                               check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=15)
+                # A busy X server can make a single window grab slow; retry rather
+                # than losing the whole run to one screenshot.
+                for attempt in range(3):
+                    try:
+                        subprocess.run(["import", "-window", "kdash-e2e-" + stem, str(native)], env=xenv,
+                                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=30)
+                        break
+                    except subprocess.TimeoutExpired:
+                        if attempt == 2:
+                            raise
+                        time.sleep(1)
             finally:
                 terminal.terminate()
                 terminal.wait(timeout=10)
@@ -489,6 +498,25 @@ spec:
         self.capture(s, "16-container-picker", "Framed multi-container picker with resource/state columns", "SELECT CONTAINER|CONTAINER")
         self.key(s, "Enter", delay=3)
         self.capture(s, "17-inspector-summary", "Inspector summary of a real running pod", "SUMMARY|CONDITIONS")
+        self.key(s, "S")
+        self.capture(s, "75-detail-shell-blocked", "Read-only inspector refuses shell actions and explains X", "interactive actions are off")
+        self.key(s, "X")
+        self.capture(s, "76-detail-confirmation", "X opens confirmation directly from pod detail", "Turn on interactive mode")
+        self.text(s, "n")
+        self.capture(s, "77-detail-cancel", "Declining keeps pod detail read-only", "READ-ONLY")
+        self.key(s, "X")
+        self.text(s, "yes", delay=2)
+        self.capture(s, "78-detail-interactive-on", "Whole yes answer enables the inspector without leaking keys", "INTERACTIVE / audited")
+        self.key(s, "S", delay=2)
+        if "SELECT CONTAINER" in self.screen(s):
+            self.key(s, "Enter", delay=3)
+        self.text(s, "printf 'KDASH_DETAIL_MODE_OK\\n'; id", delay=1)
+        self.capture(s, "79-detail-shell", "Actual container shell opened after enabling X in detail", "KDASH_DETAIL_MODE_OK")
+        self.text(s, "exit", delay=3)
+        self.key(s, "X")
+        self.capture(s, "80-detail-interactive-off", "X disables interactive actions immediately in the inspector", "READ-ONLY")
+        self.key(s, "S")
+        self.capture(s, "81-detail-shell-blocked-again", "Shell is refused again after disabling X", "interactive actions are off")
         self.key(s, "l", delay=3)
         self.capture(s, "18-inspector-logs", "Bounded timestamped logs from the live app container", "INFO request")
         for key, stem, title in [
@@ -585,7 +613,7 @@ spec:
             self.key(s, "q")
         self.key(s, "X")
         self.capture(s, "24-interactive-confirmation", "Explicit interactive-mode confirmation", "Turn on interactive mode")
-        self.key(s, "y", delay=2)
+        self.key(s, "y", "Enter", delay=2)
         self.key(s, "S", delay=2)
         self.capture(s, "25-shell-picker", "Shell-mode pod picker and action panel", "SELECT POD")
         self.key(s, "/")
@@ -594,10 +622,12 @@ spec:
         self.text(s, "printf 'KDASH_E2E_SHELL_OK\\n'; id; pwd", delay=2)
         self.capture(s, "26-shell-inside", "Actual shell inside the live app container", "KDASH_E2E_SHELL_OK")
         self.text(s, "exit", delay=3)
-        self.key(s, "q", "U", delay=3)
-        self.key(s, "/")
-        self.text(s, self.pod)
-        self.key(s, "Enter", delay=3)
+        # A fresh session starts with an empty picker filter. Reusing the shell
+        # session keeps its filter, and the C-u that clears it is only handled while
+        # the filter is being edited, so the pod name could be appended to the old
+        # value and match nothing.
+        self.tm("kill-session", "-t", s)
+        s = self.transfer_browser("files-upload", "U")
         self.capture(s, "27-upload-browser", "Local framed file browser with enabled upload actions", "THIS HOST|SELECT LOCAL FILES")
         self.key(s, "/")
         self.text(s, "upload.txt")
@@ -696,6 +726,12 @@ spec:
         for columns, rows, suffix in ((100, 40, "100col"), (80, 30, "80col")):
             s = self.start_dashboard("narrow" + str(columns), columns=columns, rows=rows)
             self.capture(s, "51-pods-" + suffix, f"PODS at {columns} columns")
+            if columns == 80:
+                self.key(s, "X")
+                self.capture(s, "82-mode-confirmation-80col", "Confirmation remains usable in an 80-column terminal", "Enter confirms")
+                self.text(s, "Y")
+                self.capture(s, "83-mode-enabled-80col", "Uppercase Y plus Enter enables interactive mode at 80 columns", "INTERACTIVE")
+                self.key(s, "X")
             self.key(s, "Enter", delay=2)
             self.capture(s, "52-picker-" + suffix, f"Framed pod picker at {columns} columns", "SELECT POD")
             self.key(s, "q", "n", delay=2)
@@ -788,7 +824,7 @@ def main():
     parser.add_argument("--namespace", default="kdash-e2e")
     parser.add_argument("--context")
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--gallery", default="samples/cli_423")
+    parser.add_argument("--gallery", default="samples/cli_4232")
     parser.add_argument("--setup", action="store_true", help="create the isolated, intentionally healthy/unhealthy fixture resources")
     parser.add_argument("--phase", choices=("all", "cli", "ui"), default="all")
     parser.add_argument("--workers", type=int, default=3)

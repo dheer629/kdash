@@ -1,0 +1,50 @@
+[1;7m KDASH [0m  connecting   [1mapp-server-8fb4699bc-j6rk2[0m  [90mcontainer[39m [1mapp[0m  [90mcontext kdash-local[39m ...
+[1;7m KDASH | SHELL | context kdash-local | namespace kdash-e2e | audited    exit: back   exit 198: related pods   exit 197: leave kdash [0m
+ POD        [1mapp-server-8fb4699bc-j6rk2[0m | Running   ready 2/2   restarts 0   QoS Burstable
+ CONTAINER  [1mapp[0m  busybox:1.36 | state Running, ready, restarts 0
+ NODE       [1mdev   10.244.0.243[0m | cpu 3m / 250m   mem 1Mi / 96Mi (1%)   user root
+
+root@app$ printf 'KDASH_E2E_SHELL_OK\n'; id; pwd
+KDASH_E2E_SHELL_OK
+uid=0(root) gid=0(root) groups=0(root),10(wheel)
+/
+root@app$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

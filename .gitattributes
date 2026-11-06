@@ -15,6 +15,7 @@ kdash-bundle.sh  text eol=lf
 kdash-uninstall.sh text eol=lf
 *.sh             text eol=lf
 *.py             text eol=lf
+*.mjs            text eol=lf
 SHA256SUMS       text eol=lf
 *.sha256         text eol=lf
 

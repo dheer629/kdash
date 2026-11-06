@@ -12,10 +12,21 @@ for (const name of ['--run', '--module', '--browser']) {
 }
 const run = path.resolve(option('--run'));
 const root = path.dirname(path.dirname(run));
-const output = path.join(root, 'samples', 'html423', 'screenshots');
+const evidence = JSON.parse(await fs.readFile(path.join(run, 'results.json'), 'utf8'));
+const captures = (await fs.readFile(path.join(run, 'captures.tsv'), 'utf8')).trim().split(/\r?\n/);
+const pngColumn = captures[0].split('\t').indexOf('png');
+if (pngColumn < 0 || captures.length < 2) throw new Error('Capture manifest has no PNG paths');
+const terminalGalleries = new Set(captures.slice(1).map(row => path.dirname(row.split('\t')[pngColumn])));
+if (terminalGalleries.size !== 1) throw new Error('Capture manifest has multiple terminal galleries');
+const terminalGallery = path.basename([...terminalGalleries][0]);
+const galleryName = terminalGallery.startsWith('cli_')
+  ? `html${terminalGallery.slice(4)}` : `html${evidence.version.replace(/^kdash /, '').replaceAll('.', '')}`;
+const gallery = process.argv.includes('--gallery')
+  ? path.resolve(root, option('--gallery')) : path.join(root, 'samples', galleryName);
+if (path.dirname(gallery) !== path.join(root, 'samples')) throw new Error('--gallery must name a direct child of samples/');
+const output = path.join(gallery, 'screenshots');
 await fs.mkdir(output, { recursive: true });
 const { chromium } = await import(pathToFileURL(path.resolve(option('--module'))).href);
-const evidence = JSON.parse(await fs.readFile(path.join(run, 'results.json'), 'utf8'));
 const reports = (await fs.readdir(path.join(run, 'reports')))
   .filter(name => /^kdash_namespace_report.*\.html$/.test(name)).sort();
 if (!reports.length) throw new Error('No generated namespace report');

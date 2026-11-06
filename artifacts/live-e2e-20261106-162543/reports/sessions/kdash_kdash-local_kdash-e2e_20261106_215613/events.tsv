@@ -1,0 +1,8 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1793982374	info	SESSION	kdash-e2e	kdash 4.23.2 started on Dheeraj by root - filter .*
+1793982405	bad	STATUS	z-crash	CrashLoopBackOff -> NotReady on dev
+1793982405	warn	RESTART	z-crash	restarts +1 (now 49), last exit Error
+1793982435	bad	STATUS	z-crash	NotReady -> CrashLoopBackOff on dev
+1793982526	info	FILTER	kdash-e2e	pod filter changed to app-server
+1793982530	info	FILTER	kdash-e2e	pod filter changed to .*
+1793982573	info	SESSION	kdash-e2e	kdash stopped after 200s

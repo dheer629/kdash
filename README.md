@@ -1,4 +1,4 @@
-# kdash 4.23.1
+# kdash 4.23.2
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -46,9 +46,11 @@ resource tabs plus the history since kdash started**.
 
 ## Releases and downloads
 
-The current version is **4.23.1**. It adds framed namespace, pod, container and
-file pickers; a persistent default namespace per context; a clearer inspector with
-expandable logs; and transfer preflight checks, conflict choices and file verification.
+The current version is **4.23.2**. You can enable or disable interactive mode
+with `X` inside pod details and log panes, with the current mode and available
+actions shown on screen. Confirmation uses `y` or `yes` followed by Enter;
+`X` and `Q` also respond while an inspector read is waiting. It retains framed
+pickers, saved namespace defaults, expandable logs and verified file transfers.
 The main dashboard retains its nine views, Events, explanations, live charts,
 history, reports and audit trail.
 
@@ -60,7 +62,7 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                                    # kdash 4.23.1
+kdash --version                                    # kdash 4.23.2
 ```
 
 Versioned releases retain their own downloads, documentation and screenshots.
@@ -70,6 +72,7 @@ Older releases remain available alongside the current source.
 
 | Version | Released | Highlights | Download |
 |---|---|---|---|
+| **4.23.2** | 2026-11-06 | interactive mode from pod details/logs, responsive `X` / `Q` during inspector reads, reliable line confirmation | [kdash](https://github.com/dheer629/kdash/releases/download/v4.23.2/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.23.2/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.23.2/kdash-4.23.2.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.23.2/SHA256SUMS) |
 | **4.23.1** | 2026-11-06 | framed navigation and diagnostics, saved namespace defaults, expanded logs, verified transfers; real WSL validation and screenshots | [kdash](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash-4.23.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.23.1/SHA256SUMS) |
 | **4.14.0** | 2026-10-29 | opt-in shell in a container (`S`), file upload (`U`) and download (`D`), all audited as writes | [kdash](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.14.0/kdash-4.14.0.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.14.0/SHA256SUMS) |
 | **4.13.1** | 2026-10-29 | installer summary lists every view and key | [kdash](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.13.1/kdash-4.13.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.13.1/SHA256SUMS) |
@@ -90,14 +93,20 @@ kdash --version                                    # kdash 4.14.0
 ## Screenshots
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261106-v4231` records **155 passed live checks**, **17 passed browser checks** and **74 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.1 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-20261106-v4231/checks.tsv).
+Run `live-e2e-20261106-162543` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.23.2 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-20261106-162543/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
 
-The current gallery is [`samples/cli_423/`](samples/cli_423/README.md), captured
-from the installed **kdash 4.23.1** against the Kubernetes cluster running in local
+
+
+
+
+
+
+The current gallery is [`samples/cli_4232/`](samples/cli_4232/README.md), captured
+from the installed **kdash 4.23.2** against the Kubernetes cluster running in local
 Ubuntu WSL. The dedicated `kdash-e2e` namespace supplies real running workloads,
 services, storage and failure cases. The main images are actual xterm window
 screenshots captured while the installed CLI runs in WSL, on an isolated local
@@ -109,35 +118,36 @@ The [evidence index](artifacts/README.md) explains the run results and coverage.
 
 | View | Live screen | View | Live screen |
 |---|---|---|---|
-| 1 PODS | [pods](samples/cli_423/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_423/native/02-nodes.png) |
-| 3 WORKLOADS | [workloads](samples/cli_423/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_423/native/04-ip.png) |
-| 5 MEMORY | [memory](samples/cli_423/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_423/native/06-io.png) |
-| 7 ALERTS | [alerts](samples/cli_423/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_423/native/08-services.png) |
-| 9 STORAGE | [storage](samples/cli_423/native/09-storage.png) | E / ! | [Events](samples/cli_423/native/10-events.png) / [explanations](samples/cli_423/native/11-explain.png) |
+| 1 PODS | [pods](samples/cli_4232/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_4232/native/02-nodes.png) |
+| 3 WORKLOADS | [workloads](samples/cli_4232/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_4232/native/04-ip.png) |
+| 5 MEMORY | [memory](samples/cli_4232/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_4232/native/06-io.png) |
+| 7 ALERTS | [alerts](samples/cli_4232/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_4232/native/08-services.png) |
+| 9 STORAGE | [storage](samples/cli_4232/native/09-storage.png) | E / ! | [Events](samples/cli_4232/native/10-events.png) / [explanations](samples/cli_4232/native/11-explain.png) |
 
 | Framed namespace selection | Framed pod selection |
 |---|---|
-| <img src="samples/cli_423/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_423/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
+| <img src="samples/cli_4232/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_4232/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
 
 | Inspector summary | Log search |
 |---|---|
-| <img src="samples/cli_423/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary and wrapped key hints"> | <img src="samples/cli_423/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
+| <img src="samples/cli_4232/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary, current mode and wrapped key hints"> | <img src="samples/cli_4232/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
 
 | Container download browser | Local upload browser |
 |---|---|
-| <img src="samples/cli_423/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_423/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
+| <img src="samples/cli_4232/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_4232/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
 
-See the [complete gallery and manifest](samples/cli_423/README.md) for every
+See the [complete gallery and manifest](samples/cli_4232/README.md) for every
 captured control, theme, narrow layout, report and transfer step, and
-[`samples/html423/`](samples/html423/README.md) for the generated HTML reports.
+[`samples/html4232/`](samples/html4232/README.md) for the generated HTML reports.
 Missing metrics or denied data appear as unavailable; the captures preserve what
 the cluster actually returned.
 
 | Generated HTML overview | Recorded memory and CPU |
 |---|---|
-| <img src="samples/html423/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html423/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
+| <img src="samples/html4232/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html4232/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
 
 Earlier galleries remain labelled with their capture version:
+[4.23.1 terminal](samples/cli_423/README.md), [4.23.1 HTML](samples/html423/README.md),
 [4.19.2 terminal](samples/cli_419/README.md), [4.19.2 HTML](samples/html419/README.md),
 [4.14.0](samples/cli_414/README.md), [4.13.1](samples/cli_413/README.md), and
 [4.12.0](samples/cli/). They document those earlier runs.
@@ -334,7 +344,7 @@ matching workload scaled to zero remains visible.
 | `Z` | NODE POOLS auto zoom / true scale | `P` | pause / resume live refresh (data frozen) |
 | `+` `-` | poll interval 1, 2, 3, 5, 10, 15, 30, 60 s | | |
 | `S` `U` `D` | **opt-in:** shell in a container, upload a file, download a file | | |
-| `X` | interactive mode on (confirm `y`) / off | | |
+| `X` | interactive mode on (`y` / `yes`, then Enter) / off; also in pod details and logs | | |
 | `q` | quit dashboard / back from a picker | `Q` | quit kdash from dashboard, pod list, inspector or browser |
 
 Navigation, scrolling, sort and theme changes use the local model. Namespace changes,
@@ -711,7 +721,8 @@ TSV and empty in CSV. CPU is millicores, memory MiB.
 
 kdash reads the cluster by default. Interactive mode allows `kubectl exec` and `cp`
 with your permissions: `S` opens a shell, `U` uploads and `D` downloads files or
-directories. Enable it for the run, or press `X` and confirm `y`; `X` again turns
+directories. Enable it for the run, or press `X` in the dashboard, pod list,
+inspector summary or log pane and type `y` or `yes`, then press Enter; `X` again turns
 it off. The header shows the mode, and switches are audited as `INTERACTIVE_ON` /
 `INTERACTIVE_OFF`.
 
@@ -777,11 +788,11 @@ kdash offers the typed-path `kubectl cp` flow. Both routes need `tar` in the ima
 the browser also needs a usable `sh`. Names and paths are passed as arguments rather
 than evaluated as host shell commands.
 
-The current flow is captured in the [4.23.1 gallery](samples/cli_423/README.md):
-[shell pod list](samples/cli_423/native/25-shell-picker.png),
-[shell inside the container](samples/cli_423/native/26-shell-inside.png),
-[download browser](samples/cli_423/native/31-download-browser.png) and
-[upload browser](samples/cli_423/native/27-upload-browser.png). The gallery's manifest
+The current flow is captured in the [4.23.2 gallery](samples/cli_4232/README.md):
+[shell pod list](samples/cli_4232/native/25-shell-picker.png),
+[shell inside the container](samples/cli_4232/native/26-shell-inside.png),
+[download browser](samples/cli_4232/native/31-download-browser.png) and
+[upload browser](samples/cli_4232/native/27-upload-browser.png). The gallery's manifest
 pairs each image with its raw live screen. Earlier typed-path and browser flows
 remain in the [4.14.0](samples/cli_414/README.md) and
 [4.19.2](samples/cli_419/README.md) historical galleries.
@@ -912,6 +923,19 @@ journalctl -t kdash --since today # syslog copy
 | 5 | disclaimer not accepted |
 | 6 | `KDASH_AUDIT_REQUIRED=1` and no audit file writable |
 | 126 | (kubectl wrapper) a verb that could change the cluster was refused |
+
+## Changes in 4.23.2
+
+- `X` enables or disables interactive mode from inspector summary and log panes.
+  The header shows read-only or interactive mode, and the key panel shows the
+  actions available in that mode. Help includes the toggle and shell/file keys.
+- `X` and `Q` remain responsive while inspector data or logs are being fetched.
+- Enabling mode accepts a complete `y`, `Y`, `yes` or `YES` line followed by Enter.
+  Esc, `q`, Ctrl-C and Ctrl-D cancel. Confirmation consumes the whole line so its
+  Enter key cannot open a pod or shell after the prompt closes. The prompt fits
+  an 80-column terminal. Disabling mode remains immediate and audited.
+- Fresh 4.23.2 evidence uses separate terminal and HTML galleries; the 4.23.1
+  captures, raw evidence and versioned downloads remain available.
 
 ## Changes in 4.23.1
 

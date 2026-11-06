@@ -212,7 +212,7 @@ echo "=== 6. no environment, product, site or personal names"
 # Inspect only files that can be published. Ignored private captures, downloaded
 # developer tools and release staging directories are outside this check.
 publication_paths() { git ls-files -z --cached --others --exclude-standard | sort -zu; }
-historical_paths() { publication_paths | grep -zvE '^(artifacts/live-e2e-|samples/(cli_423|html423)/)'; }
+historical_paths() { publication_paths | grep -zvE '^(artifacts/live-e2e-|samples/(cli_4232?|html4232?)/)'; }
 hits=$(historical_paths | xargs -0 -r grep -lI --exclude='validate-all.sh' \
   -e kubernetes-super-admin -e devopssentinel -e learnalgorithm -e flux-system -e devopsonm \
   -e pny9 -e sjy9 -e ecev -e etdp -e ETDP -e sentinel -e Sentinel -e 'director host' \

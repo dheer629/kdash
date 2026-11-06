@@ -183,6 +183,24 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
     actual_ansi = {p.resolve() for p in (run / "raw").glob("*.ansi")}
     expected_ansi = {within(run, c["file"]) for c in captures}
     require(actual_ansi == expected_ansi, "raw ANSI files differ from the capture manifest")
+    if tuple(int(n) for n in version.split('.')) >= (4, 23, 2):
+        required = {
+            '75-detail-shell-blocked': 'interactive actions are off',
+            '76-detail-confirmation': 'Enter confirms',
+            '77-detail-cancel': 'READ-ONLY',
+            '78-detail-interactive-on': 'INTERACTIVE / audited',
+            '79-detail-shell': 'uid=',
+            '80-detail-interactive-off': 'READ-ONLY',
+            '81-detail-shell-blocked-again': 'interactive actions are off',
+            '82-mode-confirmation-80col': 'Enter confirms',
+            # The dashboard keeps the mode in its status line; the uppercase word
+            # only ever appeared in static help text, which proves nothing.
+            '83-mode-enabled-80col': 'interactive mode ON',
+        }
+        for name, text in required.items():
+            require(text in utf8(run / 'raw' / (name + '.txt')), f'mode-switch evidence missing: {name}')
+        require(bool(re.search(r'PASS: [0-9]+ mode-switch terminal checks', utf8(run / 'mode-regression.log'))),
+                'mode-switch corner-case regression was not recorded')
     browser = json.loads(utf8(run / "browser-results.json"))
     require(browser.get("status") == "PASS" and browser.get("source_sha256") == source_sha,
             "browser validation failed or tested another CLI")
