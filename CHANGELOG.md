@@ -22,6 +22,8 @@ the detailed per-release notes.
 - Added 27 isolated process-cleanup checks and 35 login-flow PTY checks; retained
   the 198 mode-switch checks. Live validation now explicitly covers certificate
   expiry, all five runbooks, numbered read commands and the C/R/K views.
+- The mode-switch terminal tests wait for the prompt's input mode before sending
+  confirmation keys, avoiding a race that could lose Ctrl-D in CI.
 
 ## [4.27.3] - 2026-11-06
 

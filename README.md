@@ -88,9 +88,9 @@ Versioned releases retain their own downloads, documentation and screenshots.
 Older releases remain available alongside the current source.
 [All releases](https://github.com/dheer629/kdash/releases) |
 [how they are built](RELEASES.md).
-The 4.27.4 links target its release publication; downloads become available when
-that release is published. Versions 4.23.2, 4.24.1 and 4.27.3 are retained as exact
-source commits and downloadable source archives.
+The latest release is **4.27.4**, with the CLI, installer, archive and checksums
+linked below. Versions 4.23.2, 4.24.1 and 4.27.3 are retained as exact source
+commits and downloadable source archives.
 
 | Version | Date | Highlights | Download |
 |---|---|---|---|

@@ -100,6 +100,16 @@ class Terminal:
     def send(self, value):
         os.write(self.fd, value)
 
+    def wait_key_read(self, timeout=3):
+        # A printed prompt can reach the master before Bash's read -n switches
+        # the slave out of canonical mode. In that gap Ctrl-D is terminal EOF,
+        # not the literal key the confirmation loop is meant to consume.
+        deadline = time.monotonic() + timeout
+        while termios.tcgetattr(self.fd)[3] & termios.ICANON:
+            if time.monotonic() >= deadline:
+                raise AssertionError("%s did not enter key-read mode" % self.path.name)
+            time.sleep(.005)
+
     def expect(self, needle, timeout=8):
         global checks
         needle = needle.encode()
@@ -182,6 +192,7 @@ printf 'NEXT_KEY=%q rc=%s\n' "$key" "$key_rc"
     try:
         t.expect("CONFIRM_READY")
         t.expect("[y/N]")
+        t.wait_key_read()
         if isinstance(reply, list):
             t.send(reply[0])
             time.sleep(.15)

@@ -29,9 +29,10 @@ Published versions have their own immutable GitHub Releases, so you can download
 an exact historical release at any time:
 <https://github.com/dheer629/kdash/releases>
 
-The 4.27.4 links target its release publication and become available once it is
-published. Versions 4.23.2, 4.24.1 and 4.27.3 have source snapshots, with no
-published release assets; use their exact commit or source archive below.
+The latest release is **4.27.4**. Its CLI, installer, archive, documentation,
+checksums and validation manifests are attached to the release below. Versions
+4.23.2, 4.24.1 and 4.27.3 have source snapshots; use their exact commit or source
+archive below.
 
 | Version | Tag / commit | What it adds | Download |
 |---|---|---|---|
@@ -82,10 +83,10 @@ does not require building or connecting to a cluster.
 ## Download and verify a specific version
 
 ```bash
-v=4.23.1
+v=4.27.4
 base=https://github.com/dheer629/kdash/releases/download/v$v
 curl -fsSLO "$base/kdash-$v.tar.gz" -O "$base/SHA256SUMS"
-sha256sum --ignore-missing -c SHA256SUMS      # must print: kdash-4.23.1.tar.gz: OK
+sha256sum --ignore-missing -c SHA256SUMS      # must print: kdash-4.27.4.tar.gz: OK
 tar -xzf "kdash-$v.tar.gz"
 bash kdash-bundle.sh                           # installs to ~/.local/bin
 kdash --version
