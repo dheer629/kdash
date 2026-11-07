@@ -1,9 +1,15 @@
 # kdash samples
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261106-183122` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.24.1 in namespace `kdash-e2e`.
-[Inspect the recorded checks](../artifacts/live-e2e-20261106-183122/checks.tsv).
+Run `live-e2e-20261107-054006` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.3 in namespace `kdash-e2e`.
+[Inspect the recorded checks](../artifacts/live-e2e-20261107-054006/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
+
+
+
+
+
+
 
 
 

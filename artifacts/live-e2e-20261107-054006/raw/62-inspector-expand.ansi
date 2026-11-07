@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ vcluster-docker_dev │ kdash-e2e                                                                                                                LOGS
+[0m[90m┌─[39m [1mLOGS[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90mREAD-ONLY / audited[39m [90m─┐[39m
+[90m│[39m [90mPOD      [39m  [1mapp-server-8fb4699bc-j6rk2[0m                                                                                                                                 [90m│[39m
+[90m│[39m [90mCONTAINER[39m  [1mapp[0m   [32m● Running[39m   [90mready[39m   [90mrestarts[39m 0   [90mbusybox:1.36[39m                                                                                                        [90m│[39m
+[90m└─[39m [1mrows 1-41 / 20000 · 20000 lines 2.1 MiB, newest only (+ more, A all)[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────┘[39m
+2026-11-07T00:08:47.390326444Z 2026-11-07T00:08:47+00:00 INFO request=20698 service=app-server healthy=true
+2026-11-07T00:08:47.391085945Z 2026-11-07T00:08:47+00:00 WARN request=20698 demonstration warning from live workload
+2026-11-07T00:08:49.392297654Z 2026-11-07T00:08:49+00:00 INFO request=20699 service=app-server healthy=true
+2026-11-07T00:08:49.392799348Z 2026-11-07T00:08:49+00:00 WARN request=20699 demonstration warning from live workload
+2026-11-07T00:08:51.393672643Z 2026-11-07T00:08:51+00:00 INFO request=20700 service=app-server healthy=true
+2026-11-07T00:08:51.394207032Z 2026-11-07T00:08:51+00:00 WARN request=20700 demonstration warning from live workload
+2026-11-07T00:08:53.395200382Z 2026-11-07T00:08:53+00:00 INFO request=20701 service=app-server healthy=true
+2026-11-07T00:08:53.395936029Z 2026-11-07T00:08:53+00:00 WARN request=20701 demonstration warning from live workload
+2026-11-07T00:08:55.397607388Z 2026-11-07T00:08:55+00:00 INFO request=20702 service=app-server healthy=true
+2026-11-07T00:08:55.398336287Z 2026-11-07T00:08:55+00:00 WARN request=20702 demonstration warning from live workload
+2026-11-07T00:08:57.399604815Z 2026-11-07T00:08:57+00:00 INFO request=20703 service=app-server healthy=true
+2026-11-07T00:08:57.400360863Z 2026-11-07T00:08:57+00:00 WARN request=20703 demonstration warning from live workload
+2026-11-07T00:08:59.402213417Z 2026-11-07T00:08:59+00:00 INFO request=20704 service=app-server healthy=true
+2026-11-07T00:08:59.403141514Z 2026-11-07T00:08:59+00:00 WARN request=20704 demonstration warning from live workload
+2026-11-07T00:09:01.403972336Z 2026-11-07T00:09:01+00:00 INFO request=20705 service=app-server healthy=true
+2026-11-07T00:09:01.404523932Z 2026-11-07T00:09:01+00:00 WARN request=20705 demonstration warning from live workload
+2026-11-07T00:09:03.405614300Z 2026-11-07T00:09:03+00:00 INFO request=20706 service=app-server healthy=true
+2026-11-07T00:09:03.406243573Z 2026-11-07T00:09:03+00:00 WARN request=20706 demonstration warning from live workload
+2026-11-07T00:09:05.407312499Z 2026-11-07T00:09:05+00:00 INFO request=20707 service=app-server healthy=true
+2026-11-07T00:09:05.407824920Z 2026-11-07T00:09:05+00:00 WARN request=20707 demonstration warning from live workload
+2026-11-07T00:09:07.409450929Z 2026-11-07T00:09:07+00:00 INFO request=20708 service=app-server healthy=true
+2026-11-07T00:09:07.410336825Z 2026-11-07T00:09:07+00:00 WARN request=20708 demonstration warning from live workload
+2026-11-07T00:09:09.411995938Z 2026-11-07T00:09:09+00:00 INFO request=20709 service=app-server healthy=true
+2026-11-07T00:09:09.412941670Z 2026-11-07T00:09:09+00:00 WARN request=20709 demonstration warning from live workload
+2026-11-07T00:09:11.413889837Z 2026-11-07T00:09:11+00:00 INFO request=20710 service=app-server healthy=true
+2026-11-07T00:09:11.414473133Z 2026-11-07T00:09:11+00:00 WARN request=20710 demonstration warning from live workload
+2026-11-07T00:09:13.415516132Z 2026-11-07T00:09:13+00:00 INFO request=20711 service=app-server healthy=true
+2026-11-07T00:09:13.416237782Z 2026-11-07T00:09:13+00:00 WARN request=20711 demonstration warning from live workload
+2026-11-07T00:09:15.417213215Z 2026-11-07T00:09:15+00:00 INFO request=20712 service=app-server healthy=true
+2026-11-07T00:09:15.417730339Z 2026-11-07T00:09:15+00:00 WARN request=20712 demonstration warning from live workload
+2026-11-07T00:09:17.418631614Z 2026-11-07T00:09:17+00:00 INFO request=20713 service=app-server healthy=true
+2026-11-07T00:09:17.419137574Z 2026-11-07T00:09:17+00:00 WARN request=20713 demonstration warning from live workload
+2026-11-07T00:09:19.420542919Z 2026-11-07T00:09:19+00:00 INFO request=20714 service=app-server healthy=true
+2026-11-07T00:09:19.421285244Z 2026-11-07T00:09:19+00:00 WARN request=20714 demonstration warning from live workload
+2026-11-07T00:09:21.422174377Z 2026-11-07T00:09:21+00:00 INFO request=20715 service=app-server healthy=true
+2026-11-07T00:09:21.422727265Z 2026-11-07T00:09:21+00:00 WARN request=20715 demonstration warning from live workload
+2026-11-07T00:09:23.423716872Z 2026-11-07T00:09:23+00:00 INFO request=20716 service=app-server healthy=true
+2026-11-07T00:09:23.424245697Z 2026-11-07T00:09:23+00:00 WARN request=20716 demonstration warning from live workload
+2026-11-07T00:09:25.425922078Z 2026-11-07T00:09:25+00:00 INFO request=20717 service=app-server healthy=true
+2026-11-07T00:09:25.426992548Z 2026-11-07T00:09:25+00:00 WARN request=20717 demonstration warning from live workload
+2026-11-07T00:09:27.427893199Z 2026-11-07T00:09:27+00:00 INFO request=20718 service=app-server healthy=true
+[90mPANES[39m  [1m<s>[0m summary  [1m<d>[0m describe  [1m<e>[0m events  [1m<!>[0m why  [1m<l>[0m logs  [1m<p>[0m prev logs  [1m<c>[0m container  [1m<S>[0m shell  [1m<U>[0m upload  [1m<D>[0m download  [1m<X>[0m interactive off
+[90mREAD [39m  [1m<W>[0m wrap on  [1m<J>[0m JSON off  [1m<+>[0m 4x lines  [1m<A>[0m all lines  [1m<left/right>[0m pan  [1m<f>[0m follow off  [1m<L>[0m level all  [1m<w>[0m export
+[90mMOVE [39m  [1m</>[0m find  [1m<&>[0m only matches  [1m<n/N>[0m next / prev  [1m<j/k>[0m scroll  [1m<g/G>[0m top / end  [1m<r>[0m reload  [1m<?>[0m keys  [1m<q>[0m back  [1m<Q>[0m quit
+[1m[33m reading the newest 20000 lines[0m

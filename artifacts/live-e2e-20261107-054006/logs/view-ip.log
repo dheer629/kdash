@@ -1,0 +1,31 @@
+ KDASH 4.27.3 │ context vcluster-docker_dev │ namespace kdash-e2e       audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   11:10:09 IST
+ match .*   sorted by IP address
+ ! pods 3/5 ready rst 202 oom 0 oomk 0 nolim 0 cpu 5m 1% lim mem 0Mi 0% lim wl 4
+ IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
+ pod IPs 4 in use   no IP 1   host-network 0   duplicate 0   subnets 1
+ services 2   ClusterIP 2   headless 0   NodePort 0   LoadBalancer 0   external addresses 0
+────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=1s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+► POD SUBNETS (observed, /24) ─────────────────────────────────────────────────
+  SUBNET                 PODS  NODES
+  10.244.0.0/24             4  dev
+
+► NODE IP BLOCKS (per worker node) ────────────────────────────────────────────
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254     4     0 ░░░░░░░░░░  10.244.0.192/26
+
+► SERVICES ────────────────────────────────────────────────────────────────────
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  app-server                           ClusterIP              10.111.83.216    -                        80/TCP
+  missing-backend                      ClusterIP              10.104.104.128   -                        80/TCP
+
+► POD IP ASSIGNMENTS ──────────────────────────────────────────────────────────
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.241     z-crash                                      dev                        172.18.0.2       z-crash                      CrashLoopBackOff
+  10.244.0.242     completed-check-m9swm                        dev                        172.18.0.2       completed-check              Succeeded
+  10.244.0.243     app-server-8fb4699bc-j6rk2                   dev                        172.18.0.2       app-server                   
+  10.244.0.244     app-server-8fb4699bc-z8kl7                   dev                        172.18.0.2       app-server                   
+  -                z-pending                                    (unscheduled)              -                z-pending                    NO_IP
+────────────────────────────────────────────────────────────────────────────────
+ legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the node IP.  DUPLICATE = same IP on 2+ pods.

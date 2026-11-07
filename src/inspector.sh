@@ -1265,6 +1265,7 @@ inspector_open() { # optional explicit ns/pod; otherwise the pod picker
       # no key for a second: keep the list live (the dashboard loop is paused here)
       if [ "${PAUSED:-0}" = 0 ] && [ "$PK_TYPING" = 0 ]; then
         fetch; [ "${FETCH_AT:-0}" = "${PK_LOADED_AT:-0}" ] || { picker_load "$d"; picker_auto "$d"; }
+        ! login_auto_maybe || { PK_RESIZED=1; continue; }
       fi
       [ -z "$PK_NUM" ] || [ $((SECONDS - PK_NUM_AT)) -lt 2 ] || PK_NUM=""
       continue
@@ -1392,7 +1393,7 @@ inspector_filter_prompt() {
 inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
-  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n services / storage / events / explain / doctor / certs\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
   IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
   case "$command" in *$'\e'*) return 0 ;; esac
   case "$command" in
@@ -1403,7 +1404,8 @@ inspector_palette() {
       PK_Q="${command#* }"; [ "$PK_Q" != "$command" ] || PK_Q=""; PK_AUTO=1; PK_SEL_KEY=""
       KDASH_ATTACH_ACTION=S; inspector_open; KDASH_ATTACH_ACTION="" ;;
     pods|nodes|workloads|ip|mem|io|alerts) VIEW="$command"; SCROLL=0; HSCROLL=0 ;;
-    services|storage|events|explain|doctor|certs) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    services|storage|events|explain|doctor|certs|runbook|check) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    runbook\ *) RB_TOPIC="${command#runbook }"; VIEW=runbook; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     help|'?') if declare -F show_help >/dev/null; then show_help; else printf '\n Use ? on the dashboard for help.\n'; fi ;;
     *) declare -F flash >/dev/null && flash "Unknown command: ${command:0:70}" 5; return 2 ;;
   esac

@@ -1,0 +1,6 @@
+POD	POD_IP	NODE	POOL	HOST_IP	KIND	WORKLOAD	STATUS	NOTE
+z-crash	10.244.0.241	dev	role:control-plane,master	172.18.0.2	Pod	z-crash	NotReady	-
+completed-check-m9swm	10.244.0.242	dev	role:control-plane,master	172.18.0.2	Job	completed-check	Succeeded	-
+app-server-8fb4699bc-j6rk2	10.244.0.243	dev	role:control-plane,master	172.18.0.2	Deployment	app-server	Running	-
+app-server-8fb4699bc-z8kl7	10.244.0.244	dev	role:control-plane,master	172.18.0.2	Deployment	app-server	Running	-
+z-pending	-	(unscheduled)	(none)	-	Pod	z-pending	Pending	NO_IP

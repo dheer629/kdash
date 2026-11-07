@@ -5,6 +5,47 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.27.3] - 2026-11-06
+
+### Added
+- **RUNBOOK** view (`R`, `-v runbook`, `--runbook [NAME]`): step-by-step
+  procedures with this cluster's own names substituted into the commands.
+  Topics: `etcd-restore`, `cert-rotate`, `node-notready`, `api-unreachable`,
+  `oidc-login`. Read-only commands are marked `read`; anything that changes the
+  cluster or a node is marked `CHANGE` and is only printed, never run.
+- **CHECK** view (`K`, `-v check`, `--check`): every finding right now - API
+  health, nodes, pods, services and routes, storage, certificates and etcd
+  snapshots - numbered, each paired with the read commands that confirm it.
+  `--check --run N` runs finding `N`'s read commands and prints their output.
+  Exits `0` / `1` / `2` like `--certs` so it can gate a pipeline.
+- **OIDC login handling** (`L`, and automatically at start when a login is due):
+  the issuer, client id and cached-token state come from the kubeconfig, the
+  login URL is shown, the device-code flow is driven through stand-in browsers so
+  the URL is never lost, and API reads resume once the login completes. Without a
+  terminal kdash exits `4` instead of blocking.
+- Environment switches `KDASH_LOGIN_CHECK=0` (skip the start-up login check) and
+  `KDASH_LOGIN_AUTO=0` (require the `L` key).
+- View aliases: `-v runbook` accepts `R`, `rb`, `runbook`, `runbooks`; `-v check`
+  accepts `K`, `check`, `triage`, `now`.
+
+### Fixed
+- `rb_next_list` now creates the hint-keys file before reading it. `awk` exits
+  `2` on a missing input, so under `set -e` the findings table could abort the
+  whole render; the error message was already suppressed, which hid the status.
+- Modules are sourceable on their own again: calls into the runbook, check,
+  certificate and login subsystems are guarded with `declare -F` where the
+  subsystem is optional for that module, and the health and Events tests load the
+  module that provides the findings renderer.
+- The OIDC stand-in browser comment no longer contains a phrase from the
+  publication blocklist.
+
+### Notes
+- The dashboard keys `C` (certificates), `R` (runbook), `K` (check) and `L`
+  (login) all work from the running dashboard, and `R` / `K` are also views for
+  `--once`, `--report` and `--snapshot`.
+- Findings carry a stable hint key, so the same object is not handed the same
+  command twice inside one list.
+
 ## [4.24.1] - 2026-11-06
 
 ### Added

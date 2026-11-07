@@ -1,4 +1,4 @@
-# kdash 4.24.1
+# kdash 4.27.3
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -47,15 +47,21 @@ resource tabs plus the history since kdash started**.
 
 ## Releases and downloads
 
-The current version is **4.24.1**. It adds certificate and login expiry
-(`C`, `-v certs`, `--certs`): the API endpoint, kubeconfig client certificate
-and CA, node kubelets, webhook and API-service CAs, cert-manager Certificates,
-ingress hosts, RKE2 files on this host, and your login (bearer token, OIDC /
-kubelogin). A background quick check puts a badge in the header when something
-is due, and `--certs` exits non-zero for scripting. It retains interactive mode
-from pod details and log panes (`X`), framed pickers, saved namespace defaults,
-expandable logs and verified file transfers. The main dashboard retains its nine
-views, Events, explanations, live charts, history, reports and audit trail.
+The current version is **4.27.3**. It adds **runbooks** (`R`, `-v runbook`,
+`--runbook [NAME]`): etcd-restore, cert-rotate, node-notready, api-unreachable and
+oidc-login steps printed with this cluster's own node, namespace and pod names
+already filled in. It adds the **instant check** (`K`, `-v check`, `--check`):
+every finding across the API, nodes, pods, services, storage, certificates and
+etcd snapshots on one page, each with the read commands that confirm it, and
+`--check --run N` runs one finding's read commands for you. It adds **OIDC login
+handling** (`L`): a login that is due is detected at start, its URL is shown, the
+device-code flow is driven through stand-in browsers, and the dashboard continues
+afterwards - without a terminal kdash exits `4` instead of hanging. It retains
+certificate and login expiry (`C`, `-v certs`, `--certs`) with the header badge
+and scriptable exit codes, interactive mode from pod details and log panes (`X`),
+framed pickers, saved namespace defaults, expandable logs and verified file
+transfers. The main dashboard retains its nine views, Events, explanations, live
+charts, history, reports and audit trail.
 
 Install the source checkout:
 
@@ -65,7 +71,7 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                                    # kdash 4.24.1
+kdash --version                                    # kdash 4.27.3
 ```
 
 Versioned releases retain their own downloads, documentation and screenshots.
@@ -75,6 +81,7 @@ Older releases remain available alongside the current source.
 
 | Version | Released | Highlights | Download |
 |---|---|---|---|
+| **4.27.3** | 2026-11-06 | runbooks (`R`, `--runbook`), instant check (`K`, `--check [--run N]`), OIDC login handling (`L`, exit 4), certificate and login expiry (`C`, `--certs`) | [kdash](https://github.com/dheer629/kdash/releases/download/v4.27.3/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.27.3/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.27.3/kdash-4.27.3.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.27.3/SHA256SUMS) |
 | **4.24.1** | 2026-11-06 | certificate and login expiry (`C`, `-v certs`, `--certs`), header badge, scriptable exit codes | [kdash](https://github.com/dheer629/kdash/releases/download/v4.24.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.24.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.24.1/kdash-4.24.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.24.1/SHA256SUMS) |
 | **4.23.2** | 2026-11-06 | interactive mode from pod details/logs, responsive `X` / `Q` during inspector reads, reliable line confirmation | [kdash](https://github.com/dheer629/kdash/releases/download/v4.23.2/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.23.2/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.23.2/kdash-4.23.2.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.23.2/SHA256SUMS) |
 | **4.23.1** | 2026-11-06 | framed navigation and diagnostics, saved namespace defaults, expanded logs, verified transfers; real WSL validation and screenshots | [kdash](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.23.1/kdash-4.23.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.23.1/SHA256SUMS) |
@@ -97,8 +104,8 @@ kdash --version                                    # kdash 4.14.0
 ## Screenshots
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261106-183122` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.24.1 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-20261106-183122/checks.tsv).
+Run `live-e2e-20261107-054006` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.3 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-20261107-054006/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
@@ -111,10 +118,18 @@ Run `live-e2e-20261106-183122` records **166 passed live checks**, **17 passed b
 
 
 
-The current gallery is [`samples/cli_4241/`](samples/cli_4241/README.md), captured
-from the installed **kdash 4.24.1** against the Kubernetes cluster running in local
-Ubuntu WSL. The dedicated `kdash-e2e` namespace supplies real running workloads,
-services, storage and failure cases. The main images are actual xterm window
+
+
+
+
+
+
+The current gallery is [`samples/cli_4273/`](samples/cli_4273/README.md), captured
+from the installed **kdash 4.27.3** against the Kubernetes cluster running in local
+Ubuntu WSL. It is the newest complete capture and the first to include the
+RUNBOOK, CHECK, CERTIFICATES and OIDC-login screens. The dedicated `kdash-e2e`
+namespace supplies real running workloads, services, storage and failure cases.
+The main images are actual xterm window
 screenshots captured while the installed CLI runs in WSL, on an isolated local
 Xvfb display. The gallery also includes cell-by-cell ANSI replays made with
 [`scripts/capture-terminal.py`](scripts/capture-terminal.py). Original ANSI/plain-text
@@ -124,35 +139,36 @@ The [evidence index](artifacts/README.md) explains the run results and coverage.
 
 | View | Live screen | View | Live screen |
 |---|---|---|---|
-| 1 PODS | [pods](samples/cli_4241/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_4241/native/02-nodes.png) |
-| 3 WORKLOADS | [workloads](samples/cli_4241/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_4241/native/04-ip.png) |
-| 5 MEMORY | [memory](samples/cli_4241/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_4241/native/06-io.png) |
-| 7 ALERTS | [alerts](samples/cli_4241/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_4241/native/08-services.png) |
-| 9 STORAGE | [storage](samples/cli_4241/native/09-storage.png) | E / ! | [Events](samples/cli_4241/native/10-events.png) / [explanations](samples/cli_4241/native/11-explain.png) |
+| 1 PODS | [pods](samples/cli_4273/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_4273/native/02-nodes.png) |
+| 3 WORKLOADS | [workloads](samples/cli_4273/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_4273/native/04-ip.png) |
+| 5 MEMORY | [memory](samples/cli_4273/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_4273/native/06-io.png) |
+| 7 ALERTS | [alerts](samples/cli_4273/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_4273/native/08-services.png) |
+| 9 STORAGE | [storage](samples/cli_4273/native/09-storage.png) | E / ! | [Events](samples/cli_4273/native/10-events.png) / [explanations](samples/cli_4273/native/11-explain.png) |
 
 | Framed namespace selection | Framed pod selection |
 |---|---|
-| <img src="samples/cli_4241/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_4241/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
+| <img src="samples/cli_4273/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_4273/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
 
 | Inspector summary | Log search |
 |---|---|
-| <img src="samples/cli_4241/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary, current mode and wrapped key hints"> | <img src="samples/cli_4241/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
+| <img src="samples/cli_4273/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary, current mode and wrapped key hints"> | <img src="samples/cli_4273/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
 
 | Container download browser | Local upload browser |
 |---|---|
-| <img src="samples/cli_4241/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_4241/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
+| <img src="samples/cli_4273/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_4273/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
 
-See the [complete gallery and manifest](samples/cli_4241/README.md) for every
+See the [complete gallery and manifest](samples/cli_4273/README.md) for every
 captured control, theme, narrow layout, report and transfer step, and
-[`samples/html4241/`](samples/html4241/README.md) for the generated HTML reports.
+[`samples/html4273/`](samples/html4273/README.md) for the generated HTML reports.
 Missing metrics or denied data appear as unavailable; the captures preserve what
 the cluster actually returned.
 
 | Generated HTML overview | Recorded memory and CPU |
 |---|---|
-| <img src="samples/html4241/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html4241/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
+| <img src="samples/html4273/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html4273/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
 
 Earlier galleries remain labelled with their capture version:
+[4.24.1 terminal](samples/cli_4241/README.md), [4.24.1 HTML](samples/html4241/README.md),
 [4.23.1 terminal](samples/cli_423/README.md), [4.23.1 HTML](samples/html423/README.md),
 [4.19.2 terminal](samples/cli_419/README.md), [4.19.2 HTML](samples/html419/README.md),
 [4.14.0](samples/cli_414/README.md), [4.13.1](samples/cli_413/README.md), and
@@ -313,6 +329,8 @@ kdash -s mem --reverse                  # smallest memory first
 | `--doctor` | read-only connection, TLS, RBAC, metrics and report diagnostics, then exit |
 | `--events` `--explain [POD]` | Kubernetes Events / evidence-backed explanations, then exit |
 | `--certs` | certificate and login expiry (API, nodes, kubelets, webhooks, cert-manager, ingress, RKE2, login), then exit; exit code 1 = warning, 2 = critical or expired |
+| `--check` `[--run N]` | every finding right now (API, nodes, pods, services, storage, certificates, etcd snapshots) with the read commands that confirm each one, then exit; `--run N` runs finding N's read commands and prints their output; exit 0 / 1 / 2 |
+| `--runbook [NAME]` | print a runbook with this cluster's own names filled in, then exit: `etcd-restore` (default), `cert-rotate`, `node-notready`, `api-unreachable`, `oidc-login` |
 | `--inspect POD` `--container NAME` `--logs current\|previous` | pod summary; logs only when asked, bounded |
 | `--selector` `--status` `--node` `--workload` `--unhealthy` | structured pod filters |
 | `-X, --allow-interactive` | enable container shell, upload and download for this run |
@@ -333,7 +351,7 @@ matching workload scaled to zero remains visible.
 
 | Key | Action | Key | Action |
 |---|---|---|---|
-| `1`-`9`, `E`, `!`, `C`, `Tab` | switch view | `x` | HTML report: all tabs + history since start |
+| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `Tab` | switch view | `x` | HTML report: all tabs + history since start |
 | `e` | HTML menu (all-tabs report, current view, views 1-6, all, bundle) | | |
 | `j` `k`, arrows | scroll | `/` | change pod regex live (empty = all) |
 | `h` `l`, arrows | pan left / right | `0` | back to column 1 |
@@ -343,7 +361,8 @@ matching workload scaled to zero remains visible.
 | `w` | PODS grouped by workload / flat | `?` | help for the view on screen |
 | `r` | re-read spec now | | |
 | `8` `9` | services / storage | `E` `!` | Kubernetes Events / explanations |
-| `C` | certificate and login expiry | | |
+| `C` | certificate and login expiry | `R` | runbook: etcd-restore, cert-rotate, node-notready, api-unreachable, oidc-login |
+| `K` | instant check: every finding with its next commands | `L` | OIDC login for this context (URL shown, dashboard continues) |
 | `Enter` `i` | inspect a pod: panes, find, containers, logs, export | `:` | command palette |
 | ↳ inspector | `s` `d` `e` `!` `l` `p` panes · `/` find · `&` only matches · `n` `N` next/prev · `L` level · `f` follow · `c` container · `w` export · `?` keys | | |
 | `F` | structured filters (label, status, node, workload, unhealthy) | | |
@@ -837,11 +856,11 @@ kdash offers the typed-path `kubectl cp` flow. Both routes need `tar` in the ima
 the browser also needs a usable `sh`. Names and paths are passed as arguments rather
 than evaluated as host shell commands.
 
-The current flow is captured in the [4.23.2 gallery](samples/cli_4241/README.md):
-[shell pod list](samples/cli_4241/native/25-shell-picker.png),
-[shell inside the container](samples/cli_4241/native/26-shell-inside.png),
-[download browser](samples/cli_4241/native/31-download-browser.png) and
-[upload browser](samples/cli_4241/native/27-upload-browser.png). The gallery's manifest
+The current flow is captured in the [4.27.3 gallery](samples/cli_4273/README.md):
+[shell pod list](samples/cli_4273/native/25-shell-picker.png),
+[shell inside the container](samples/cli_4273/native/26-shell-inside.png),
+[download browser](samples/cli_4273/native/31-download-browser.png) and
+[upload browser](samples/cli_4273/native/27-upload-browser.png). The gallery's manifest
 pairs each image with its raw live screen. Earlier typed-path and browser flows
 remain in the [4.14.0](samples/cli_414/README.md) and
 [4.19.2](samples/cli_419/README.md) historical galleries.
@@ -970,17 +989,46 @@ journalctl -t kdash --since today # syslog copy
 | Code | Meaning |
 |---|---|
 | 0 | success |
-| 1 | runtime error (no kubectl, unreadable kubeconfig, pod read failed) |
-| 2 | usage error (unknown option / view / format, invalid regex) |
+| 1 | runtime error (no kubectl, unreadable kubeconfig, a context that cannot be resolved, pod read failed, report or install directory not writable) |
+| 2 | usage error (unknown option / view / format / theme / window, invalid regex, option missing its value) |
 | 3 | no pods matched the filter |
+| 4 | an OIDC login was due and kdash ran without a terminal (`KDASH_LOGIN_CHECK=0` skips the check) |
 | 5 | disclaimer not accepted |
 | 6 | `KDASH_AUDIT_REQUIRED=1` and no audit file writable |
 | 126 | (kubectl wrapper) a verb that could change the cluster was refused |
 
-`--certs` reuses `1` and `2` for its own verdict, so a script can gate on it:
-`0` nothing inside the warning window, `1` a warning or a login that needs
-renewing, `2` something critical or expired. A usage error still exits `2`, so
-check stderr when the distinction matters.
+`--certs` and `--check` reuse `1` and `2` for their own verdict, so a script can
+gate on them: `0` nothing inside the warning window, `1` a warning or a login
+that needs renewing, `2` something critical or expired. A usage error still exits
+`2`, so check stderr when the distinction matters.
+
+## Changes in 4.27.3
+
+- New **RUNBOOK** view (`R`, `-v runbook`, `--runbook [NAME]`): step-by-step
+  procedures printed with this cluster's own names filled in - control-plane
+  nodes, namespace, pods, etcd snapshot files and the login issuer are read from
+  the cluster and substituted into the commands. Topics: `etcd-restore`,
+  `cert-rotate`, `node-notready`, `api-unreachable`, `oidc-login`.
+- New **CHECK** view (`K`, `-v check`, `--check`): one page with every finding
+  right now - API health, nodes, pods, services and routes, storage,
+  certificates, etcd snapshots - each numbered and paired with the read commands
+  that confirm it. `--check --run N` runs finding `N`'s read commands and prints
+  their output. Every command is printed with its scope, and step 1 always
+  captures current state before anything else.
+- New **OIDC login handling** (`L`, and automatically at start when a login is
+  due): the issuer, client id and cached-token state are read from the kubeconfig,
+  the login URL is shown, the device-code flow is driven with stand-in browsers
+  so the URL is never lost, and API reads resume when the login completes. Without
+  a terminal kdash exits `4` rather than blocking. `KDASH_LOGIN_CHECK=0` skips the
+  start-up check, `KDASH_LOGIN_AUTO=0` requires the `L` key.
+- `R` and `K` also appear as workbooks of readings inside `--check`, so a single
+  findings list can drive a repair without switching views.
+- `-v runbook` accepts `R`, `rb`, `runbook`, `runbooks`; `-v check` accepts `K`,
+  `check`, `triage`, `now`.
+- Every finding carries a stable hint key, so the same object is not given the
+  same command twice inside one list. Read-only commands are marked `read`,
+  anything that changes the cluster or a node is marked `CHANGE` and is only
+  printed, never run.
 
 ## Changes in 4.24.1
 

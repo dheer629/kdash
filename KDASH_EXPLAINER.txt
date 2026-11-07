@@ -1,4 +1,4 @@
-KDASH 4.23.2 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
+KDASH 4.27.3 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
 =========================================================================
 
 WHAT THIS FILE IS
@@ -8,12 +8,14 @@ exercise in this repository produced. It explains what every view answers, how t
 read the numbers without over-claiming, where the proof of each statement lives,
 and which limitations must be stated whenever this output is shared. It is
 deliberately plain text: it can be read in the same terminal as the dashboard.
-The source version is now 4.23.2. Current WSL validation is indexed by
+The source version is now 4.27.3. Current WSL validation is indexed by
 artifacts/latest-e2e.txt, with the live screen manifest, results and cluster
-inventory in that run. Current screens are in samples/cli_4241/ and report samples
-in samples/html4241/. The detailed historical exercise below used 4.12.0; the
-4.13.1, 4.14.0, 4.19.2 and 4.23.1 galleries retain their original versions.
-The 4.23.1 screenshots/reports remain in samples/cli_423/ and samples/html423/.
+inventory in that run. The newest complete screen set is in samples/cli_4273/ and
+report samples in samples/html4273/, captured from 4.27.3 and the first to include
+the RUNBOOK, CHECK, CERTIFICATES and OIDC-login screens. The detailed historical
+exercise below used 4.12.0; the 4.13.1, 4.14.0, 4.19.2, 4.23.1, 4.23.2 and 4.24.1
+galleries retain their original versions, with the 4.23.1 screenshots/reports in
+samples/cli_423/ and samples/html423/.
 
 CURRENT SOURCE: INSTALL AND NAVIGATE
 ------------------------------------
@@ -22,7 +24,7 @@ CURRENT SOURCE: INSTALL AND NAVIGATE
   sha256sum -c SHA256SUMS
   bash kdash-bundle.sh
   exec bash -l
-  kdash --version                         # kdash 4.23.2
+  kdash --version                         # kdash 4.27.3
 
 The bundle installs without a build or a cluster connection. Published historical
 releases and the separate release-publishing workflow are described in RELEASES.md;
@@ -33,6 +35,19 @@ The current CLI has nine resource views: 1 Pods, 2 Node Pools, 3 Workloads, 4 IP
 Events, ! gives evidence-backed hypotheses and --doctor checks connection and
 capabilities. Services and storage show object relationships and coverage gaps;
 they do not prove application reachability or measured disk usage without data.
+
+Three further screens answer "what is due" and "what do I do next". C lists
+certificate and login expiry (API endpoint, nodes, kubelets, webhooks,
+cert-manager, ingress, RKE2 files, your login) with --certs as the scriptable form.
+K is the instant check: every finding right now - API, nodes, pods, services,
+routes, storage, certificates, etcd snapshots - numbered, each with the read
+commands that confirm it; --check prints it for a pipeline and --check --run N runs
+one finding's read commands. R prints a runbook with this cluster's own names
+already filled in: etcd-restore, cert-rotate, node-notready, api-unreachable and
+oidc-login. Commands that only read are marked "read"; anything that changes the
+cluster or a node is marked "CHANGE" and is only ever printed, never run. L starts
+the OIDC login for the current context and shows its URL; a login that is due is
+detected at start, and without a terminal kdash exits 4 instead of hanging.
 
 Enter/i opens a live pod list and inspector. In the list, j/k or arrows move,
 digits jump to a row, / matches every word against pod/status/node, u limits it
@@ -161,8 +176,8 @@ for both the installed copy and the repository file.
 artifacts/   the run itself: step logs, per-namespace live terminal capture, the
              recorded session, the reports and the audit log, plus run-metadata.json,
              controller-actions.json and RUN_INVENTORY.md
-samples/     the shareable result: current 4.23.2 screens in samples/cli_4241/
-             and reports in samples/html4241/; historical 4.19.2 screens and the
+samples/     the shareable result: the newest screen set (4.27.3) in samples/cli_4273/
+             and reports in samples/html4273/; historical 4.19.2 screens and the
              views of the 4.12.0 run and the 4.13.1 views and inspector
              (samples/cli_413/), the 4.19.2 HTML reports (samples/html419/) and
              the older HTML reports with checksums (samples/html/)
@@ -284,7 +299,8 @@ capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
   * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
     screen at one moment, including colours and the pinned header/footer. It is
     viewport evidence: a long table continues below the visible 50 rows.
-  * The rendered PNG screenshots in samples/cli_4241/ (the current 4.23.2 interface),
+  * The rendered PNG screenshots in samples/cli_4273/ (4.27.3, including RUNBOOK,
+    CHECK, CERTIFICATES and OIDC-login),
     samples/cli/ (4.12.0 run) and samples/cli_413/ (4.13.1: services, storage, events,
     explanations, doctor, inspector) replay those captures cell by cell. They are a
     faithful render of the captured screen, and each image states its namespace, view
@@ -396,7 +412,9 @@ Two practical findings are baked into it:
     its own. Without that, captures come back with a status line and the wrong height.
 12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
 --------------------------------------------------
-Current behavior (4.23.2, including the diagnostic features added in 4.13.0):
+Current behavior (4.27.3, including the diagnostic features added in 4.13.0, the
+certificates and login view of 4.24.1 and the runbook, instant check and OIDC-login
+handling of 4.27.3):
   * the all-namespaces route (-A) is fixed: the flag now follows the resource
     (get pods --all-namespaces). Version 4.12.0 had an argument-order defect there;
     on that version use an explicit -n NAME. Never read a failed -A as "the

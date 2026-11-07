@@ -212,8 +212,12 @@ echo "=== 6. no environment, product, site or personal names"
 # Inspect only files that can be published. Ignored private captures, downloaded
 # developer tools and release staging directories are outside this check.
 publication_paths() { git ls-files -z --cached --others --exclude-standard | sort -zu; }
-# The current gallery keeps the real local names; every older gallery is redacted.
-# Follow artifacts/latest-e2e.txt so a new release does not need this list edited.
+# Galleries captured from a live local cluster keep that cluster's real namespace
+# names (learnalgorithm, flux-system ...) on purpose, so they must be excluded from
+# the name scan below. KEEP_PUBLIC lists the galleries that were published as the
+# current capture of their release; add to it when a new gallery takes over, and
+# redact the gallery only when the run itself is redacted.
+KEEP_PUBLIC='cli_4232?|html4232?|cli_4241|html4241'
 current_gallery_dirs() {
   local run png g1
   [ -f artifacts/latest-e2e.txt ] || return 0
@@ -226,7 +230,7 @@ current_gallery_dirs() {
 }
 historical_paths() {
   local cur; cur="$(current_gallery_dirs | paste -sd'|' -)"
-  publication_paths | grep -zvE "^(artifacts/live-e2e-|samples/(cli_4232?|html4232?${cur:+|$cur})/)"
+  publication_paths | grep -zvE "^(artifacts/live-e2e-|samples/(${KEEP_PUBLIC}${cur:+|$cur})/)"
 }
 hits=$(historical_paths | xargs -0 -r grep -lI --exclude='validate-all.sh' \
   -e kubernetes-super-admin -e devopssentinel -e learnalgorithm -e flux-system -e devopsonm \

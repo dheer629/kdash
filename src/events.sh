@@ -95,14 +95,17 @@ tk_title() { # view title + subtitle, then a blank line
   [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1;7m %s ~[0m  ~[90m%s~[0m\n' "$1" "$2"; else printf '%s  -  %s\n' "$1" "$2"; fi
 }
-toolkit_once() { # view [renderer arguments]; structured output keeps table schemas
+# One-shot toolkit renderers. TK_FORMAT must be exported before a renderer runs so
+# tk_table emits CSV/TSV instead of a boxed table (--once -o csv|tsv).
+toolkit_once() { # view [renderer arguments]
     local view="$1" TK_FORMAT="${OUTFMT:-text}"
     shift
     export TK_FORMAT
     case "$view" in
-        services) health_render_services "$@" ;; storage) health_render_storage "$@" ;;
+        services) if declare -F health_render_services >/dev/null; then health_render_services "$@"; fi ;;
+        storage) if declare -F health_render_storage >/dev/null; then health_render_storage "$@"; fi ;;
         events) events_render "$@" ;; explain) explain_render "$@" ;;
-        certs) certs_render "$@" ;;
+        certs) if declare -F certs_render >/dev/null; then certs_render "$@"; fi ;;
     esac
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
@@ -388,12 +391,7 @@ explain_render() {    # optional namespace, pod; hypotheses never assert causati
     tk_table "WARNING EVIDENCE" "one row per object and category, newest first, up to 20" \
         "no retained warning events - coverage gaps, expired events and failures without events remain possible" item items < "$d/evidence.tsv"
     [ "$(wc -l < "$d/explain.tsv")" -le 1 ] || tk_table "POSSIBLE EXPLANATIONS" "hypotheses to check, not conclusions" "" category categories < "$d/explain.tsv"
-    if [ "$(wc -l < "$d/checks.tsv")" -gt 1 ]; then
-        tk_table "NEXT READ-ONLY CHECKS" "copy and run - all of them only read" "" check checks < "$d/checks.tsv"
-    elif [ -n "$pod" ]; then
-        printf '#\tNEXT READ-ONLY CHECK\n-\t%s\n' \
-            "$(events_command "$namespace" describe pod "$pod")" | tk_table "NEXT READ-ONLY CHECKS" "" ""
-    fi
+    rb_why_next "$d" "$namespace" "$pod"
     printf '\n'
     tk_note "Compare current readiness, resource identities, logs and workload conditions before deciding on a change."
     rm -rf "$d"

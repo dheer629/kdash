@@ -1,0 +1,50 @@
+[1;7m KDASH 4.27.3 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [1;7m 3 WORKLOADS [0m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-07 11:10:50[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 2s  spec 14s/30s  session [39m11:10:36[90m up [39m14s   [1m[94msort cpu ▼ high first[0m
+[90m health [1m[31m! pods 3/5 ready[0m[90m  restarts [35m202[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [32m0[90m  │ cpu [39m4m [32m░░░░░░[39m [32m1%[90m lim  mem [39m0Mi [32m░░░░░░[39m [32m0%[90m lim  │ workloads [39m4[90m  │ events 15m [32m! 0[39m [32m^ 0[39m
+ [1m[35mWORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes[0m
+ [1mworkloads 4:[0m Deployment 1  Job 1  Pod 2   pods 5 (3 ready)   [32m0[39m degraded  [32m0[39m rolling out  [1m[31m1[0m HA risk  [32m0[39m skewed  [1m[31m1[0m unscheduled
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=14s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+[1m[94m►[0m [1mWORKLOADS[0m[90m   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec[39m
+  KIND        WORKLOAD                   READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Deployment  [1mapp-server              [0m [32m    2/2[39m    2     2     1     4m / 50m        0Mi /    24Mi / 192Mi   [90m   0[39m [1m[31mHA_RISK[0m
+      [90m├─ cpu [32m░░░░░░          [90m  mem [94m░░░░░░          [90m  last 6 samples, sum of its pods[39m
+      [90m├─ [39mapp-server-8fb4699bc-j6rk2     [90mRunning           [39m [32m  2/2[39m dev                          cpu     2m  mem     0Mi  rst [90m0[39m  [90m10.244.0.243[39m
+      [90m├─ [39mapp-server-8fb4699bc-z8kl7     [90mRunning           [39m [32m  2/2[39m dev                          cpu     2m  mem     0Mi  rst [90m0[39m  [90m10.244.0.244[39m
+      [90m└─ image busybox:1.36 busybox:1.36[39m
+  Job         [1mcompleted-check         [0m [32m    1/1[39m    -     1     1      - / 5m           - /     4Mi / 32Mi    [90m   0[39m [90mN/A[39m
+      [90m├─ cpu [32m                [90m  mem [94m                [90m  last 6 samples, sum of its pods[39m
+      [90m└─ [39mcompleted-check-m9swm          [90mSucceeded         [39m [32m  0/1[39m dev                          cpu      -  mem       -  rst [90m0[39m  [90m10.244.0.242[39m
+  Pod         [1mz-crash                 [0m [1m[31m    0/1[0m    -     1     1      - / 5m           - /     4Mi / 32Mi    [35m 202[39m [90mN/A[39m
+      [90m├─ cpu [32m                [90m  mem [94m                [90m  last 6 samples, sum of its pods[39m
+      [90m└─ [1m[31mz-crash                       [0m [1m[31mCrashLoopBackOff  [0m [1m[31m  0/1[0m dev                          cpu      -  mem       -  rst [35m202[39m  [90m10.244.0.241[39m
+  Pod         [1mz-pending               [0m [1m[31m    0/1[0m    -     1     0      - / 5m           - /     4Mi / 32Mi    [90m   0[39m [1m[31mN/A+UNSCHEDULED+NOT_READY[0m
+      [90m├─ cpu [32m                [90m  mem [94m                [90m  last 6 samples, sum of its pods[39m
+      [90m└─ [1m[31mz-pending                     [0m [35mPending           [39m [1m[31m  0/1[0m (unscheduled)                cpu      -  mem       -  rst [90m0[39m  [90m-[39m
+
+[1m[94m►[0m [1mSPREAD OVER WORKER NODES[0m[90m   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node[39m
+  KIND        WORKLOAD                   N1  N2  VERDICT
+  Deployment  app-server               [1m[31m   2[0m[90m   .[39m  [1m[31mHA_RISK[0m
+  Job         completed-check          [1m   1[0m[90m   .[39m  [90mN/A[39m
+  Pod         z-crash                  [1m   1[0m[90m   .[39m  [90mN/A[39m
+  Pod         z-pending                [90m   .[1m[39m   1[0m  [1m[31mN/A+UNSCHEDULED+NOT_READY[0m
+              pods on node             [1m[94m   4   1[0m
+  [1m[94mN1  [0m dev                                      [90mpool role:control-plane,master   pods 4[39m
+  [1m[94mN2  [0m (unscheduled)                            [90mpool (none)   pods 1[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hi[2m›
+[0;7m ● LIVE 11:10:50  next 2s  data 0s old  spec 14/30s  fetch 0.0s  poll 2s  AUDITED | workloads | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit [0m

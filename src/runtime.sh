@@ -2,7 +2,8 @@
 toolkit_clean() { LC_ALL=C tr -d '\000-\010\013\014\016-\037\177'; }
 
 doctor_classify() {
-    if grep -qiE 'forbidden|cannot (get|list)' "$1"; then printf 'RBAC denied'
+    if grep -qiE 'visit the following url|enter code|oidc-login|kubelogin|get-token|getting credentials|exec plugin' "$1"; then printf 'OIDC login needed (kdash: press L)'
+    elif grep -qiE 'forbidden|cannot (get|list)' "$1"; then printf 'RBAC denied'
     elif grep -qiE 'Unauthorized|must be logged in|credentials|expired' "$1"; then printf 'authentication failed or expired'
     elif grep -qiE 'x509|certificate|TLS' "$1"; then printf 'TLS certificate validation failed'
     elif grep -qiE 'refused|no route|no such host|dial tcp|Unable to connect' "$1"; then printf 'endpoint unreachable'
@@ -42,9 +43,13 @@ doctor_run() {
         printf 'metrics\t{y}INFO\t%s; requests / limits and object health remain available\tcheck metrics-server and your metrics.k8s.io permissions\n' "$(doctor_classify "$err")" >> "$rows"
     fi
     # certificates and login: the quick check (kubeconfig, API endpoint, CA bundles)
-    local cq="$TMPD/certd" cs cb
-    ( TOOLKIT_DIR="$cq"; rm -rf "$cq"; mkdir -p "$cq"; certs_collect quick ) > /dev/null 2>&1
-    cs="$(cat "$cq/certs.summary" 2>/dev/null)"; cb="$(certs_badge "$cs")"
+    # The certificates subsystem lives in a later module; a module is also sourced
+    # standalone by the tests, so run it only when it is present.
+    local cq="$TMPD/certd" cs="" cb=""
+    if declare -F certs_collect >/dev/null; then
+      ( TOOLKIT_DIR="$cq"; rm -rf "$cq"; mkdir -p "$cq"; certs_collect quick ) > /dev/null 2>&1
+      cs="$(cat "$cq/certs.summary" 2>/dev/null)"; cb="$(certs_badge "$cs")"
+    fi
     if [ -z "$cs" ]; then printf 'certificates\t{y}INFO\tcould not be checked\tkdash --certs\n' >> "$rows"
     elif [ -z "$cb" ]; then printf 'certificates\t{g}PASS\tnothing expires within %s days (API endpoint, kubeconfig, login, CA bundles)\tkdash --certs also probes nodes, kubelets and ingress hosts\n' "$CERT_WARN_DAYS" >> "$rows"
     else
@@ -186,12 +191,15 @@ fetch_adopt() {
     if [ "$SPEC_OK" = 1 ]; then FETCH_SUCCESS=$(cat "$job/finished"); FETCH_FAILURES=0
       [ -z "${SPEC_REASON:-}" ] || { SPEC_REASON=""; declare -F flash >/dev/null && flash "API reads work again" 5; }
     else FETCH_FAILURES=$(( FETCH_FAILURES + 1 ))
-      if [ -s "$job/spec.err" ]; then
+      if [ -s "$job/spec.err" ] && declare -F login_note_failure >/dev/null && login_note_failure "$job/spec.err"; then
+        SPEC_REASON="OIDC login needed - press L (the login URL is shown, kdash continues afterwards)"
+      elif [ -s "$job/spec.err" ]; then
         SPEC_REASON="$(doctor_classify "$job/spec.err") - $(head -n 1 "$job/spec.err" | LC_ALL=C tr -d '\000-\037' | cut -c1-110)"
         # say it once per outage; the frame keeps the last good data (marked STALE)
         if [ "$FETCH_FAILURES" = 1 ] && declare -F flash >/dev/null; then
-          if [ "${SPEC_AT:-0}" != 0 ]; then flash "API read failed - showing data from $(date -d "@$SPEC_AT" '+%H:%M:%S' 2>/dev/null) - $SPEC_REASON" 12
-          else flash "pod read failed: $SPEC_REASON" 12; fi
+          if [ "${SPEC_AT:-0}" != 0 ]; then flash "API read failed - showing data from $(date -d "@$SPEC_AT" '+%H:%M:%S' 2>/dev/null) - $SPEC_REASON - R: runbook" 12
+          else flash "pod read failed: $SPEC_REASON - R: runbook api-unreachable" 12; fi
+          RB_TOPIC=api-unreachable
         fi
       fi
     fi
@@ -209,8 +217,10 @@ fetch_adopt() {
 
 fetch() {
     if [ "${INTERACTIVE:-0}" != 1 ]; then fetch_sync; return; fi
+    declare -F login_watch_jobs >/dev/null && login_watch_jobs
     fetch_adopt
     [ -z "${FETCH_PID:-}" ] || return 0
+    [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0      # no reads until the login is done (key L)
     [ "$(date +%s)" -ge "${FETCH_NEXT:-0}" ] || return 0
     fetch_worker & FETCH_PID=$!
 }
@@ -224,6 +234,7 @@ toolkit_tick() {
         TOOLKIT_NEXT=$(( $(date +%s) + 30 ))
     fi
     [ "${TOOLKIT_REQUESTED:-0}" = 1 ] || return 0
+    [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0
     [ -z "${TOOLKIT_PID:-}" ] || return 0
     [ "$(date +%s)" -ge "${TOOLKIT_NEXT:-0}" ] || return 0
     (
@@ -231,9 +242,12 @@ toolkit_tick() {
         local next="$TMPD/toolkit-next"
         mkdir -p "$next"; cp -Rf "$TOOLKIT_DIR"/. "$next/" 2>/dev/null || true
         TOOLKIT_DIR="$next"
-        events_collect; health_collect
+        declare -F events_collect >/dev/null && events_collect
+        declare -F health_collect >/dev/null && health_collect
         # TLS handshakes are slower: only for the certificates view, at most every KDASH_CERT_TTL s
-        if [ "$VIEW" = certs ] && [ "$(certs_age)" -ge "${KDASH_CERT_TTL:-300}" ]; then certs_collect full; audit CERTS "$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"; fi
+        if [ "$VIEW" = certs ] && declare -F certs_collect >/dev/null && [ "$(certs_age)" -ge "${KDASH_CERT_TTL:-300}" ]; then certs_collect full; audit CERTS "$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"; fi
+        if [ "$VIEW" = runbook ] && declare -F rb_collect >/dev/null && [ "$(rb_age)" -ge 60 ]; then rb_collect; fi
+        if [ "$VIEW" = check ] && declare -F check_collect >/dev/null && [ "$(check_age)" -ge 25 ]; then check_collect; audit CHECK "view=check"; fi
         TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}" doctor_run > "$TOOLKIT_DIR/doctor.txt"
     ) & TOOLKIT_PID=$!
 }
@@ -260,26 +274,34 @@ toolkit_panel() {
     # tables fit the window and carry colour markers (made into escapes after cleaning)
     local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}"
     export TK_COLOR TK_COLS TK_GLYPH
+    # read commands shown in this view, by finding number: Enter runs them (check_run_prompt)
+    RB_CAPTURE="$TOOLKIT_DIR/run-$view.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="Enter runs the read commands of a finding now"
     case "$view" in
-        services) health_render_services ;; storage) health_render_storage ;;
-        events) events_render ;; explain) explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}" ;;
-        certs) certs_render ;;
+        services) if declare -F health_render_services >/dev/null; then health_render_services; fi ;;
+        storage) if declare -F health_render_storage >/dev/null; then health_render_storage; fi ;;
+        events) if declare -F events_render >/dev/null; then events_render; fi ;;
+        explain) if declare -F explain_render >/dev/null; then explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}"; fi ;;
+        certs) if declare -F certs_render >/dev/null; then certs_render; fi ;;
+        runbook) if declare -F rb_render >/dev/null; then rb_render "${RB_TOPIC:-etcd-restore}"; fi ;;
+        check) if declare -F check_render >/dev/null; then check_render; fi ;;
         doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
     esac | toolkit_clean | tk_colorize > "$BODYF"
+    RB_CAPTURE=""; RB_RUN_HINT=""
     export -n TK_COLOR TK_COLS TK_GLYPH
-    printf '8 services | 9 storage | E events | ! why | C certs | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF"
+    printf 'K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF"
 }
 
 render() {
-    case "$VIEW" in services|storage|events|explain|doctor|certs) toolkit_panel "$VIEW" ;;
+    case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check) toolkit_panel "$VIEW" ;;
         *) render_core ;;
     esac
     local age=never status=not-collected
     [ "${SPEC_AT:-0}" = 0 ] || age="$(( $(date +%s) - SPEC_AT ))s"
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
-    printf 'Data pods=%s age=%s metrics=%s | Enter/i inspect | 8 services 9 storage E events ! explain C certs%s : commands\n' \
+    printf 'Data pods=%s age=%s metrics=%s | K check now | i inspect | 8 services 9 storage E events ! explain C certs%s : commands\n' \
         "$status" "$age" "$([ "$TOP_OK" = 1 ] && echo available || echo unavailable)" "${CERT_BADGE:+ ($CERT_BADGE)}" >> "$HDRF"
+    [ "${LOGIN_NEEDED:-0}" != 1 ] || printf 'LOGIN NEEDED: the OIDC login for %s has expired - press L (kdash shows the login URL and continues afterwards)\n' "$CTX_NAME" >> "$HDRF"
     local source updated
     for source in nodes svc; do
         updated="$(cat "$TMPD/$source.updated" 2>/dev/null || printf 0)"
@@ -309,10 +331,14 @@ toolkit_export() {
     local dir="$1" item
     [ -d "$dir" ] || return 0
     for item in services storage events explain; do
-        case "$item" in services) health_render_services ;; storage) health_render_storage ;;
-            events) events_render ;; explain) explain_render ;; esac | toolkit_clean > "$dir/$item.txt"
+        case "$item" in
+            services) if declare -F health_render_services >/dev/null; then health_render_services; fi ;;
+            storage) if declare -F health_render_storage >/dev/null; then health_render_storage; fi ;;
+            events) if declare -F events_render >/dev/null; then events_render; fi ;;
+            explain) if declare -F explain_render >/dev/null; then explain_render; fi ;;
+        esac | toolkit_clean > "$dir/$item.txt"
     done
-    [ ! -d "$TOOLKIT_DIR/certs" ] || certs_render | toolkit_clean > "$dir/certs.txt"
+    [ ! -d "$TOOLKIT_DIR/certs" ] || { declare -F certs_render >/dev/null && certs_render | toolkit_clean > "$dir/certs.txt"; }
     mkdir -p "$dir/diagnostics"
     cp -f "$TOOLKIT_DIR"/*.tsv "$TOOLKIT_DIR"/*.status "$dir/diagnostics/" 2>/dev/null || true
 }

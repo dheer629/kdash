@@ -1,22 +1,28 @@
 # Releases and downloads
 
-The current version is **4.24.1**, which adds certificate and login expiry
-(`C`, `-v certs`, `--certs`): the API endpoint, kubeconfig client certificate and
-CA, node kubelets, webhook and API-service CAs, cert-manager Certificates,
-ingress hosts, RKE2 files on this host, and your login (bearer token, OIDC /
-kubelogin). A background quick check adds a header badge when something is due,
-and `--certs` exits non-zero for scripting. It retains interactive-mode
-switching from pod details and logs, framed pickers, saved namespace defaults,
-expandable bounded logs and checked file transfers. Its live WSL evidence is indexed by
+The current version is **4.27.3**, which adds runbooks (the `R` key,
+`-v runbook`, `--runbook [NAME]`: `etcd-restore`, `cert-rotate`, `node-notready`,
+`api-unreachable`, `oidc-login`, printed with this cluster's own node, namespace
+and pod names already filled in), the instant check (`K`, `-v check`,
+`--check [--run N]`: every finding right now with the read commands that confirm
+it, and `--run N` runs one finding's read commands), and OIDC login handling
+(`L`, plus a start-up check that exits `4` instead of blocking when there is no
+terminal). It retains certificate and login expiry (`C`, `-v certs`, `--certs`)
+with the header badge and scriptable exit codes, interactive-mode switching from
+pod details and logs, framed pickers, saved namespace defaults, expandable
+bounded logs and checked file transfers. Its live WSL evidence is indexed by
 [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt), with terminal and report
-galleries in [`samples/cli_4241/`](samples/cli_4241/README.md) and
-[`samples/html4241/`](samples/html4241/README.md).
+galleries in [`samples/cli_4273/`](samples/cli_4273/README.md) and
+[`samples/html4273/`](samples/html4273/README.md) - the newest complete capture,
+made from 4.27.3 and the first to include the runbook, check, certificates and
+OIDC-login screens.
 Published versions have their own immutable GitHub Releases, so you can download
 an exact historical release at any time:
 <https://github.com/dheer629/kdash/releases>
 
 | Version | Tag | What it adds | Download |
 |---|---|---|---|
+| 4.27.3 | `v4.27.3` | runbooks (`R`, `--runbook`), instant check (`K`, `--check [--run N]`), OIDC login handling (`L`, exit 4), certificate and login expiry (`C`, `--certs`) | [release](https://github.com/dheer629/kdash/releases/tag/v4.27.3) |
 | 4.24.1 | `v4.24.1` | certificate and login expiry (`C`, `-v certs`, `--certs`), header badge, scriptable exit codes | [release](https://github.com/dheer629/kdash/releases/tag/v4.24.1) |
 | 4.23.2 | `v4.23.2` | interactive mode from pod details and logs; responsive inspector toggle/quit and whole-line confirmation; separate current WSL evidence | [release](https://github.com/dheer629/kdash/releases/tag/v4.23.2) |
 | 4.23.1 | `v4.23.1` | framed pickers and diagnostic tables, saved defaults, expanded logs, verified transfers; native WSL screenshots and current e2e evidence | [release](https://github.com/dheer629/kdash/releases/tag/v4.23.1) |
@@ -91,7 +97,7 @@ configuration, reports and audit history.
 4. Commit and publish the change through the repository's configured branch rules.
    Run `bash scripts/validate-all.sh` again on the clean, published checkout.
 5. Only when publishing a release, tag that commit, for example
-   `git tag -a v4.24.1 -m "kdash 4.24.1" && git push origin v4.24.1`.
+   `git tag -a v4.27.3 -m "kdash 4.27.3" && git push origin v4.27.3`.
 
 Pushing the tag runs [.github/workflows/release.yml](.github/workflows/release.yml). It
 validates the tree, packages that commit with `scripts/package-release.sh`, and creates

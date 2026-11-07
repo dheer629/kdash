@@ -1,0 +1,8 @@
+# DATA SOURCES
+SOURCE	STATE	READ	SCOPE	DETAIL
+events	ok	1s ago	kdash-e2e	read succeeded
+# EVENTS
+LAST SEEN	TYPE	REASON	OBJECT	COUNT	FIRST SEEN	MESSAGE
+2m	Warning	ProvisioningFailed	PersistentVolumeClaim/z-unbound	4082	17h02m ago	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
+2m	Warning	BackOff	Pod/z-crash	4649	17h02m ago	Back-off restarting failed container crash in pod z-crash_kdash-e2e(6a92c6fd-0be6-46c1-8aca-3ba913153f9e)
+5m	Warning	FailedScheduling	Pod/z-pending	205	17h01m ago	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.

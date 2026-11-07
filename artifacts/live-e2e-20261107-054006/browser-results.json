@@ -1,0 +1,137 @@
+{
+  "version": "4.27.3",
+  "source_sha256": "4c572d0c9ecc583612b5fe8b6e2cbf85e5d90ac55213cc5fda0f9ee8150a68d2",
+  "report": "reports/kdash_namespace_report_vcluster-docker_dev_kdash-e2e_20261107_111343.html",
+  "report_sha256": "2b10e5c09f0100bb0df184679c8f3fef52ec636fcb6f7d6110eded5e9c758eb0",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "html-real-workloads",
+      "status": "PASS",
+      "detail": "actual fixture workload present"
+    },
+    {
+      "name": "html-tab-overview",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-pods",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-nodes",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-workloads",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-ip",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-mem",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-io",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-history",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-search",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-theme",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-timezone",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-sort",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-csv-download",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-json-download",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-history-charts",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-no-script-errors",
+      "status": "PASS",
+      "detail": ""
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "samples/html4273/screenshots/overview.png",
+      "sha256": "82514235070abcaea32ebe0507832ca7ad53b60d04dd47f19fb2ac833642850e",
+      "tab": "overview"
+    },
+    {
+      "file": "samples/html4273/screenshots/pods.png",
+      "sha256": "bdf37926c5d811a5b6c1eaea7ddd3d770d4ff04ff447f5937d038ede3e4233e7",
+      "tab": "pods"
+    },
+    {
+      "file": "samples/html4273/screenshots/nodes.png",
+      "sha256": "0f0ab89ef6d36b4025130a718e8066eff967c8f3f1c934c8e4bb9ae4183e7b1d",
+      "tab": "nodes"
+    },
+    {
+      "file": "samples/html4273/screenshots/workloads.png",
+      "sha256": "bbcb3887aa313c7c8bf15161403f6773a39acc78ccf2eb876c7cb51910cc1801",
+      "tab": "workloads"
+    },
+    {
+      "file": "samples/html4273/screenshots/ip.png",
+      "sha256": "de30192af75fb7f27194a2101e051496ed31b2e2c862415af7e11cba54cf3d9d",
+      "tab": "ip"
+    },
+    {
+      "file": "samples/html4273/screenshots/mem.png",
+      "sha256": "412aaa29f12ece48df12f39b8c7153b10492bd80928aa46a54583256664fd800",
+      "tab": "mem"
+    },
+    {
+      "file": "samples/html4273/screenshots/io.png",
+      "sha256": "2e47075852518dc3e9cfa95726a0f435248e9818302da23cf7c866dfaff36976",
+      "tab": "io"
+    },
+    {
+      "file": "samples/html4273/screenshots/history.png",
+      "sha256": "b6cf16503c130a36e0d9971dc3c6f690502603f2e07e6a1280bf0a0f03a18c81",
+      "tab": "history"
+    }
+  ],
+  "errors": []
+}

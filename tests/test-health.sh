@@ -5,6 +5,9 @@ set -euo pipefail
 REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$REPO/src/health.sh"
 . "$REPO/src/events.sh"
+# The findings table and its next-command hints come from the runbook helpers
+# that live with the interactive module, so load it as the inspector tests do.
+. "$REPO/src/interactive.sh"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/kdash-health-tests.XXXXXXXX")"
 cleanup() { case "$TEST_ROOT" in "${TMPDIR:-/tmp}"/kdash-health-tests.*) rm -rf -- "$TEST_ROOT" ;; esac; }
 trap cleanup EXIT

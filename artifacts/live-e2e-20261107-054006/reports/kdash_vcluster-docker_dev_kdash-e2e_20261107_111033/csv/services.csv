@@ -1,0 +1,3 @@
+NAMESPACE,SERVICE,TYPE,CLUSTER_IP,EXTERNAL_IPS,LB_INGRESS,PORTS
+kdash-e2e,app-server,ClusterIP,10.111.83.216,,,80/TCP
+kdash-e2e,missing-backend,ClusterIP,10.104.104.128,,,80/TCP

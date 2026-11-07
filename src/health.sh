@@ -174,7 +174,7 @@ health_render_services() {
     function nm(ns, n) { return (all=="1" || ns!=scope) ? ns "/" n : n }
     function eps(k) { if(es!="ok") return "unknown"; if(EC[k]==0) return "none"
       return (ER[k]+0) "/" (ER[k]+EB[k]+EU[k]) " ready" (EU[k]+0 ? " (" EU[k] " unknown)" : "") }
-    function find(sv, k, f, t) { printf "%s\t%s\t%s\n", sv, k, f >> ff; if (sv ~ /CRIT/) NCRIT++ }
+    function find(sv, k, f, h) { printf "%s\t%s\t%s\t%s\n", sv, k, f, h >> ff; if (sv ~ /CRIT/) NCRIT++ }
     FILENAME==sf && $1=="S" { k=$2 SUBSEP $3; if(!(k in SN)) SK[++NS]=k; SN[k]=nm($2,$3); ST[k]=clean($4); EXT[k]=clean($5); IP[k]=clean($6); SEL[k]=nocomma(clean($7)); next }
     FILENAME==sf && $1=="T" { k=$2 SUBSEP $3; n=++NT[k]; TN[k,n]=clean($4); TP[k,n]=clean($5); TT[k,n]=clean($6); PT[k,n]=proto(clean($7)); next }
     FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PK[++NP]=k; PN[k]=nm($2,$3); PNS[k]=$2; READY[k]=$5; LABELS[k]=$6; DEL[k]=clean($8); next }
@@ -199,7 +199,7 @@ health_render_services() {
       print "SERVICE\tSTATUS*\tTYPE\t>SELECTED\t>READY\tENDPOINTS\tCLUSTER-IP~\tPORTS (name:port"arw"target)" > of
       print "SERVICE\tREADY BACKEND PODS\tSELECTOR~" > bf
       for(si=1;si<=NS;si++) {
-        k=SK[si]; selected=(ps=="ok" && SEL[k]!="" && ST[k]!="ExternalName")
+        k=SK[si]; split(k,z,SUBSEP); selected=(ps=="ok" && SEL[k]!="" && ST[k]!="ExternalName")
         ports=""
         for(ti=1;ti<=NT[k];ti++) { t=TT[k,ti]; pp=(TN[k,ti]!="" ? TN[k,ti] ":" : "") TP[k,ti] (t!="" && t!=TP[k,ti] ? arw t : "") (PT[k,ti]!="TCP" ? "/" PT[k,ti] : "")
           ports=ports (ports=="" ? "" : ", ") pp }
@@ -207,13 +207,13 @@ health_render_services() {
         st="OK"
         if(ss!="ok") st="unknown"
         else if(ST[k]=="ExternalName") { st="EXTERNAL"; cip=arw " " EXT[k] }
-        else if(SEL[k]=="") { st=(es=="ok" && ER[k]+0>0) ? "OK" : "SELECTORLESS"; find("{d}INFO", SN[k], "no selector: backends are managed manually (EndpointSlices " eps(k) ")") }
+        else if(SEL[k]=="") { st=(es=="ok" && ER[k]+0>0) ? "OK" : "SELECTORLESS"; find("{d}INFO", SN[k], "no selector: backends are managed manually (EndpointSlices " eps(k) ")", "svc-manual|" z[1] "|" z[2]) }
         else if(ps!="ok") st="unknown"
-        else if(SELECTED[k]+0==0) { st="NO MATCH"; find("{r}CRITICAL", SN[k], "selector " SEL[k] " matches no pod in this scope") }
-        else if(PR[k]+0==0) { st="NOT READY"; find("{r}CRITICAL", SN[k], SELECTED[k] " selected pod(s), none Ready and serving") }
+        else if(SELECTED[k]+0==0) { st="NO MATCH"; find("{r}CRITICAL", SN[k], "selector " SEL[k] " matches no pod in this scope", "svc-nomatch|" z[1] "|" z[2]) }
+        else if(PR[k]+0==0) { st="NOT READY"; find("{r}CRITICAL", SN[k], SELECTED[k] " selected pod(s), none Ready and serving", "svc-notready|" z[1] "|" z[2] "|" SEL[k]) }
         for(ti=1;ti<=NT[k];ti++) if(selected && MISSING[k,ti]>0) { if(st=="OK") st="PORT MISSING"
-          find("{y}WARNING", SN[k], "named targetPort " TT[k,ti] "/" PT[k,ti] " is not declared on " MISSING[k,ti] " of " SELECTED[k] " selected pod(s)") }
-        if(es=="ok" && ST[k]!="ExternalName" && SEL[k]!="" && EC[k]==0) { if(st=="OK") st="NO ENDPOINTS"; find("{y}WARNING", SN[k], "no EndpointSlice exists for this Service") }
+          find("{y}WARNING", SN[k], "named targetPort " TT[k,ti] "/" PT[k,ti] " is not declared on " MISSING[k,ti] " of " SELECTED[k] " selected pod(s)", "svc-port|" z[1] "|" z[2] "|" SEL[k]) }
+        if(es=="ok" && ST[k]!="ExternalName" && SEL[k]!="" && EC[k]==0) { if(st=="OK") st="NO ENDPOINTS"; find("{y}WARNING", SN[k], "no EndpointSlice exists for this Service", "svc-noendpoints|" z[1] "|" z[2]) }
         printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", SN[k], st, type, (selected ? SELECTED[k]+0 : "-"), (selected ? PR[k]+0 : "-"), (ST[k]=="ExternalName" ? "-" : eps(k)), cip, (ports=="" ? "-" : ports) > of
         if(SEL[k]!="" && ST[k]!="ExternalName") printf "%s\t%s\t%s\n", SN[k], (ps!="ok" ? "unknown" : PR[k]+0==0 ? "{r}none ready" : PLIST[k] (PR[k]>3 ? "  (+" (PR[k]-3) " more)" : "")), SEL[k] > bf
       }
@@ -223,10 +223,10 @@ health_render_services() {
         split(IR[i],r,"|"); k=r[2] SUBSEP r[7]; host=clean(r[5]); if(host=="") host="*"
         st="OK"; rp="-"
         if(ss!="ok") st="unknown"
-        else if(!(k in SN)) { st="SERVICE MISSING"; find("{r}CRITICAL", nm(r[2],r[3]), "backend Service " r[7] " does not exist") }
+        else if(!(k in SN)) { st="SERVICE MISSING"; find("{r}CRITICAL", nm(r[2],r[3]), "backend Service " r[7] " does not exist", "ing-svcmissing|" r[2] "|" r[3]) }
         else {
           found=0; for(j=1;j<=NT[k];j++) if(r[8]==TN[k,j] || r[8]==TP[k,j]) found=1
-          if(!found) { st="PORT MISMATCH"; find("{r}CRITICAL", nm(r[2],r[3]), "backend port " r[8] " is not a port of Service " r[7]) }
+          if(!found) { st="PORT MISMATCH"; find("{r}CRITICAL", nm(r[2],r[3]), "backend port " r[8] " is not a port of Service " r[7], "ing-port|" r[2] "|" r[3] "|" r[7]) }
           if(ST[k]=="ExternalName") rp="external"
           else { rp=(ps=="ok" && SEL[k]!="" ? PR[k]+0 : "-"); if(st=="OK" && es=="ok" && ER[k]+0==0) st="NO READY ENDPOINTS" }
         }
@@ -237,8 +237,7 @@ health_render_services() {
   [ -s "$d/svc.tsv" ] || printf 'SERVICE\n' > "$d/svc.tsv"
   tk_table "SERVICES" "$([ "$(health__state services)" = ok ] || printf 'source %s' "$(health__state services)")" \
     "no Services in this scope$([ "$(health__state services)" = ok ] || printf ' (source %s)' "$(health__state services)")" service services < "$d/svc.tsv"
-  { printf 'SEVERITY*\tOBJECT\tFINDING\n'; tk_by_severity < "$d/findings.tsv"; } |
-    tk_table "FINDINGS" "critical first" "nothing wrong found in the collected Services and routes" finding findings
+  rb_findings "FINDINGS" "critical first - the next commands for each are listed below the table" "nothing wrong found in the collected Services and routes" < "$d/findings.tsv"
   [ ! -s "$d/backends.tsv" ] || tk_table "BACKENDS" "selector and the Ready pods it selects (first 3)" "no selector-based Services" service services < "$d/backends.tsv"
   if [ "$(health__state ingresses)" = ok ]; then
     tk_table "INGRESS ROUTES" "service-backed rules" "no service-backed Ingress routes in this scope" route routes < "$d/routes.tsv"
@@ -292,7 +291,8 @@ health_render_storage() {
       if(s=="?" || s=="") return "-"; n=s+0; split("B KiB MiB GiB TiB PiB",a," "); i=1
       while(n>=1024 && i<6) { n/=1024; i++ } return sprintf("%.1f%s",n,a[i])
     }
-    function find(sv, k, f) { printf "%s\t%s\t%s\n", sv, k, f >> ff }
+    function find(sv, k, f, h) { printf "%s\t%s\t%s\t%s\n", sv, k, f, h >> ff }
+    function grow(b,   g) { g = int(b * 1.5 / 1073741824) + 1; return g "Gi" }
     FILENAME==qf && $1=="Q" { k=$2 SUBSEP $3; QK[++NQ]=k; QN[k]=nm($2,$3); QPH[k]=clean($4); QPV[k]=clean($5); QC[k]=clean($6); QR[k]=clean($7); QCAP[k]=clean($8); QA[k]=nocomma(clean($9)); QM[k]=clean($10); next }
     FILENAME==qf && $1=="F" && $5=="True" { k=$2 SUBSEP $3; COND[k]=COND[k] (COND[k]=="" ? "" : ", ") $4 (clean($6)!="" ? " (" clean($6) ")" : ""); next }
     FILENAME==pf && $1=="P" { k=$2 SUBSEP $3; PP[k]=$4 ($5=="True" ? "" : $5=="False" ? ", not ready" : ""); next }
@@ -309,25 +309,27 @@ health_render_storage() {
       print "CLAIM\tPOD\tPOD STATUS*\tCONTAINER\tMOUNT PATH\tMODE" > mf
       if(qs=="ok") for(i=1;i<=NQ;i++) {
         k=QK[i]; v=QPV[k]; c=QC[k]; split(k,kk,SUBSEP)
-        pods=""; refs=0
-        if(ps=="ok") for(r in REF) { split(r,a,SUBSEP); if(a[1] SUBSEP a[2]!=k) continue; refs++; if(refs<=2) pods=pods (pods=="" ? "" : ", ") nm(a[3],a[4]) }
+        pods=""; refs=0; firstpod=""
+        if(ps=="ok") for(r in REF) { split(r,a,SUBSEP); if(a[1] SUBSEP a[2]!=k) continue; refs++; if(firstpod=="") firstpod=a[4]; if(refs<=2) pods=pods (pods=="" ? "" : ", ") nm(a[3],a[4]) }
+        hk=kk[1] "|" kk[2]
         if(refs>2) pods=pods " +" (refs-2)
         if(ps!="ok") pods="unknown"; else if(refs==0) pods="{d}none"
         used="-"; pct="-"
         if(us=="ok" && (k in USED)) { used=bytes(USED[k])
           skew=UT[k]-CT[k]; if(skew<0) skew=-skew
           if(USED[k]!="?" && CAP[k]!="?" && CAP[k]+0>0 && skew<=300) { p=100*USED[k]/CAP[k]; pct=(p>=90 ? "{r}" : p>=80 ? "{y}" : "") sprintf("%.0f%%",p)
-            if(p>=90) find("{r}CRITICAL", QN[k], sprintf("volume %.0f%% full (%s of %s)", p, bytes(USED[k]), bytes(CAP[k])))
-            else if(p>=80) find("{y}WARNING", QN[k], sprintf("volume %.0f%% full (%s of %s)", p, bytes(USED[k]), bytes(CAP[k]))) } }
+            if(p>=90) find("{r}CRITICAL", QN[k], sprintf("volume %.0f%% full (%s of %s)", p, bytes(USED[k]), bytes(CAP[k])), "pvc-full|" hk "|" c "|" grow(CAP[k]) "|" firstpod)
+            else if(p>=80) find("{y}WARNING", QN[k], sprintf("volume %.0f%% full (%s of %s)", p, bytes(USED[k]), bytes(CAP[k])), "pvc-full|" hk "|" c "|" grow(CAP[k]) "|" firstpod) } }
         st=known(QPH[k]); if(COND[k]!="") st=st " (" COND[k] ")"
         printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", QN[k], st, known(QR[k]), known(QCAP[k]), used, pct, acc(known(QA[k])) (QM[k]=="Block" ? " block" : ""), (c!="" ? c : "-"), pods, (v!="" ? v : "{y}unbound") > cf_out
-        if(COND[k]!="") find("{y}WARNING", QN[k], "condition " COND[k])
-        if(QPH[k]=="Pending") find((c in SC && BIND[c]=="WaitForFirstConsumer") ? "{y}WARNING" : "{r}CRITICAL", QN[k], "claim is Pending" ((c in SC && BIND[c]=="WaitForFirstConsumer") ? " - class " c " binds only when a consuming pod is scheduled" : " - not bound to a volume"))
-        if(QPH[k]=="Lost") find("{r}CRITICAL", QN[k], "claim is Lost - its volume no longer exists")
-        if(v!="" && vs=="ok" && !(v in PV)) find("{r}CRITICAL", QN[k], "bound volume " v " is missing from the volume list")
-        if(v!="" && vs=="ok" && (v in PV) && VCL[v]!="/" && VCL[v]!=kk[1] "/" kk[2]) find("{r}CRITICAL", QN[k], "volume " v " claimRef points to " VCL[v])
-        if(c!="" && cs=="ok" && !(c in SC)) find("{y}WARNING", QN[k], "storage class " c " does not exist")
-        if(ps=="ok" && refs==0) find("{d}INFO", QN[k], "no pod in this scope references the claim")
+        if(COND[k]!="") find("{y}WARNING", QN[k], "condition " COND[k], "pvc-condition|" hk "|" COND[k])
+        wffc=(c in SC && BIND[c]=="WaitForFirstConsumer")
+        if(QPH[k]=="Pending") find(wffc ? "{y}WARNING" : "{r}CRITICAL", QN[k], "claim is Pending" (wffc ? " - class " c " binds only when a consuming pod is scheduled" : " - not bound to a volume"), "pvc-pending|" hk "|" c "|" (wffc ? "wffc" : ""))
+        if(QPH[k]=="Lost") find("{r}CRITICAL", QN[k], "claim is Lost - its volume no longer exists", "pvc-lost|" hk)
+        if(v!="" && vs=="ok" && !(v in PV)) find("{r}CRITICAL", QN[k], "bound volume " v " is missing from the volume list", "pv-missing|" hk "|" v)
+        if(v!="" && vs=="ok" && (v in PV) && VCL[v]!="/" && VCL[v]!=kk[1] "/" kk[2]) find("{r}CRITICAL", QN[k], "volume " v " claimRef points to " VCL[v], "pv-claimref|" hk "|" v)
+        if(c!="" && cs=="ok" && !(c in SC)) find("{y}WARNING", QN[k], "storage class " c " does not exist", "sc-missing|" hk "|" c)
+        if(ps=="ok" && refs==0) find("{d}INFO", QN[k], "no pod in this scope references the claim", "pvc-unused|" hk)
         if(c!="") USEDC[c]=1; if(v!="") MINE[v]=1
       }
       if(ps=="ok") for(m=1;m<=NM;m++) if(MK[m] in VCLAIM) {
@@ -335,11 +337,11 @@ health_render_storage() {
         printf "%s\t%s\t%s\t%s\t%s\t%s\n", nm(kk[1],kk[2]), nm(a[1],a[2]), known(PP[a[1] SUBSEP a[2]]), MC[m], MP[m], (MRO[m]=="true" ? "read-only" : "read-write") > mf
       }
       if(ps=="ok" && qs=="ok") for(r in REF) { split(r,a,SUBSEP); k=a[1] SUBSEP a[2]
-        if(!(k in QN)) find("{r}CRITICAL", nm(a[3],a[4]), "pod refers to claim " a[2] ", which does not exist") }
+        if(!(k in QN)) find("{r}CRITICAL", nm(a[3],a[4]), "pod refers to claim " a[2] ", which does not exist", "pod-claimmissing|" a[3] "|" a[4] "|" a[2]) }
       print "VOLUME\tSTATUS*\t>CAPACITY\tRECLAIM\tCLASS\tCLAIM\tDRIVER~" > vf_out
       if(vs=="ok") for(i=1;i<=NV;i++) { v=VK[i]; if(!(v in MINE) && !(all=="1") && VCLNS[v]!=scope) continue
         printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", v, known(VPH[v]), known(VCAP[v]), known(VR[v]), known(VC[v]), (VCL[v]=="/" ? "-" : VCL[v]), known(DRIVER[v]) > vf_out
-        if(VPH[v]=="Released") find("{y}WARNING", v, "volume is Released: its claim was deleted and the data is retained") }
+        if(VPH[v]=="Released") find("{y}WARNING", v, "volume is Released: its claim was deleted and the data is retained", "pv-released||" v) }
       print "CLASS\tPROVISIONER\tBINDING\tEXPANSION\tRECLAIM\tUSED HERE" > kf
       if(cs=="ok") for(i=1;i<=NSC;i++) { c=SCK[i]
         printf "%s\t%s\t%s\t%s\t%s\t%s\n", c, known(PROV[c]), known(BIND[c]), (EXPAND[c]=="true" ? "allowed" : "{d}no"), known(RECLAIM[c]), (c in USEDC ? "{g}yes" : "{d}no") > kf }
@@ -348,8 +350,7 @@ health_render_storage() {
   local q; q="$(health__state pvcs)"
   tk_table "PERSISTENT VOLUME CLAIMS" "$([ "$(health__state volume-metrics)" = ok ] || printf 'USED / USE%% need kubelet volume samples (Prometheus) - none here')" \
     "$([ "$q" = ok ] && printf 'no claims in this scope' || printf 'unknown - pvcs source %s' "$q")" claim claims < "$d/claims.tsv"
-  { printf 'SEVERITY*\tOBJECT\tFINDING\n'; tk_by_severity < "$d/findings.tsv"; } |
-    tk_table "FINDINGS" "critical first" "nothing wrong found in the collected claims and volumes" finding findings
+  rb_findings "FINDINGS" "critical first - the next commands for each are listed below the table" "nothing wrong found in the collected claims and volumes" < "$d/findings.tsv"
   tk_table "MOUNTS" "declared in pod specs - a declaration does not prove the mount succeeded" \
     "$([ "$(health__state pods)" = ok ] && printf 'no pod mounts a claim in this scope' || printf 'unknown - pods source %s' "$(health__state pods)")" mount mounts < "$d/mounts.tsv"
   tk_table "PERSISTENT VOLUMES" "bound to the claims above" \

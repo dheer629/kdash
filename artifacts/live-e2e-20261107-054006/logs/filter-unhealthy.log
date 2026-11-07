@@ -1,0 +1,22 @@
+ KDASH 4.27.3 │ context vcluster-docker_dev │ namespace kdash-e2e       audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   11:10:25 IST
+ match .* unhealthy   sort cpu ▼ high first
+ ! pods 0/2 ready rst 202 oom 0 oomk 0 nolim 0 cpu 0m 0% lim mem 0Mi 0% lim wl 2
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=0s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+► Pod z-crash  (1 pod)         0/1 202 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-crash                      0/1 202 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.241   qos Burstable   status CrashLoopBackOff   last-exit Error
+    └─ crash                   N   202 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+        waiting CrashLoopBackOff   last-exit Error
+................................................................................
+► Pod z-pending  (1 pod)       0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-pending                    0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    └─ pending                 -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+────────────────────────────────────────────────────────────────────────────────
+TOTAL (2 pods, 2 workloads)        202 │      - ·       - · │     10    100       8      64 │     -     -     -     -
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.

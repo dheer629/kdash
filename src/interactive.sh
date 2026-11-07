@@ -469,6 +469,7 @@ bx_top() { # width title right [joint positions...]
   bx_repv "$BX_H" "$fill"; mid="$BX_REP"
   if [ $# -gt 0 ]; then   # put ┬ where the columns start (offsets from the left border)
     local off=$((tv ? tv + 3 : 0)) p
+    # A joint replaces one glyph, not one byte: BX_H is 3 bytes in a UTF-8 locale.
     for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && {
       i=$((i * ${#BX_H})); mid="${mid:0:i}${BX_TT}${mid:i+${#BX_H}}"; }; done
   fi
@@ -2031,34 +2032,42 @@ certs_render() {
     awk -F'\t' '$3 != "-"' "$all" | cut -f1-7
   } | tk_table "EXPIRY" "soonest first - warning under $CERT_WARN_DAYS days, critical under $CERT_CRIT_DAYS days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)" \
       "$(awk -F'\t' '$3 == "-" { f = 1 } END { exit !f }' "$all" && printf 'no expiry dates could be read - see NOT CHECKED below' || printf 'nothing to check: no TLS endpoint, client certificate, token or CA bundle was found')" item items
-  { awk -F'\t' '{ s = $1; sub(/^\{.\}/, "", s) }
-      s == "EXPIRED"  { printf "{r}CRITICAL\t%s\t%s expired %s - TLS to it fails now\n", $5, $4, $2 }
-      s == "CRITICAL" { printf "{r}CRITICAL\t%s\t%s expires in %s (%s UTC)\n", $5, $4, $2, $3 }
-      s == "WARNING"  { printf "{y}WARNING\t%s\t%s expires in %s (%s UTC)\n", $5, $4, $2, $3 }
-      s == "LOGIN NEEDED" { printf "{y}WARNING\t%s\t%s expired %s - the next kubectl call asks you to log in\n", $5, $4, $2 }
-      s == "NOT ISSUED" { printf "{r}CRITICAL\t%s\t%s has no issued certificate (%s)\n", $5, $4, $7 }
-      $7 ~ /renewal overdue/ && s != "EXPIRED" && s != "CRITICAL" { printf "{y}WARNING\t%s\t%s: %s\n", $5, $4, substr($7, index($7, "renewal overdue")) }' "$all"
+  { awk -F'\t' -v host="$(hostname -s 2>/dev/null || hostname)" '
+      function hint(   o, a) {
+        if ($9 ~ /^node-/) return "cert-node||" $5 "|" (($5 in SRV) ? "server" : "agent")
+        if ($9 == "rke2") return "cert-rke2file||" host "|server"
+        if ($9 == "ca") return "cert-ca||" host
+        if ($9 == "api" || $9 == "url") return "cert-endpoint|||" $6
+        if ($8 == "KUBECONFIG") return "cert-kubeconfig-ca"
+        if ($8 == "WEBHOOKS") return "cert-webhook||" $5 "|" $6 "|" ($4 ~ /mutating/ ? "mutatingwebhookconfiguration" : "validatingwebhookconfiguration")
+        if ($8 == "AGGREGATED APIS") return "cert-apiservice||" $5 "|" $6
+        o = $5; split(o, a, "/")
+        if ($8 == "CERT-MANAGER") return "cert-manager|" a[1] "|" a[2]
+        if ($8 == "INGRESS") return "cert-ingress|" a[1] "|" a[2]
+        if ($8 == "LOGIN") return "login"
+        return "" }
+      NR == FNR { if ($9 == "node-api" || $9 == "node-rke2") SRV[$5] = 1; next }
+      { s = $1; sub(/^\{.\}/, "", s) }
+      s == "EXPIRED"  { printf "{r}CRITICAL\t%s\t%s expired %s - TLS to it fails now\t%s\n", $5, $4, $2, hint() }
+      s == "CRITICAL" { printf "{r}CRITICAL\t%s\t%s expires in %s (%s UTC)\t%s\n", $5, $4, $2, $3, hint() }
+      s == "WARNING"  { printf "{y}WARNING\t%s\t%s expires in %s (%s UTC)\t%s\n", $5, $4, $2, $3, hint() }
+      s == "LOGIN NEEDED" { printf "{y}WARNING\t%s\t%s expired %s - the next kubectl call asks you to log in\t%s\n", $5, $4, $2, hint() }
+      s == "NOT ISSUED" { printf "{r}CRITICAL\t%s\t%s has no issued certificate (%s)\t%s\n", $5, $4, $7, hint() }
+      $7 ~ /renewal overdue/ && s != "EXPIRED" && s != "CRITICAL" { printf "{y}WARNING\t%s\t%s: %s\t%s\n", $5, $4, substr($7, index($7, "renewal overdue")), hint() }' "$all" "$all"
     if [ -s "$TOOLKIT_DIR/events.tsv" ]; then
       awk -F'\t' 'tolower($10) ~ /x509: certificate has expired|certificate has expired or is not yet valid|x509: certificate signed by unknown authority/ {
-        k = $2 "/" $3; if (k in S) next; S[k] = 1; m = $10; if (length(m) > 110) m = substr(m, 1, 107) "..."
-        printf "{r}CRITICAL\t%s\tevent %s: %s\n", ($1 != "" ? $1 "/" : "") $3, $6, m }' "$TOOLKIT_DIR/events.tsv"
+        k = $2 "/" $3; if (k in S) next; S[k] = 1; m = $10; gsub(/\t/, " ", m); if (length(m) > 110) m = substr(m, 1, 107) "..."
+        printf "{r}CRITICAL\t%s\tevent %s: %s\tevent-x509|%s|%s|%s\n", ($1 != "" ? $1 "/" : "") $3, $6, m, $1, $3, tolower($2) }' "$TOOLKIT_DIR/events.tsv"
     fi
-  } | tk_by_severity | { printf 'SEVERITY*\tOBJECT\tFINDING\n'; cat; } |
-      tk_table "FINDINGS" "critical first; includes x509 errors in Kubernetes events" "nothing expires within $CERT_WARN_DAYS days" finding findings
+  } | rb_findings "FINDINGS" "critical first; includes x509 errors in Kubernetes events - next commands below" "nothing expires within $CERT_WARN_DAYS days"
   if awk -F'\t' '$3 == "-" { f = 1 } END { exit !f }' "$all"; then
     { printf 'STATE*\tWHAT\tOBJECT\tWHERE\tWHY~\n'
       awk -F'\t' 'BEGIN { OFS = "\t" } $3 == "-" { print $1, $4, $5, $6, $7 }' "$all"
     } | tk_table "NOT CHECKED" "no expiry date could be read for these from this host" "" item items
   fi
-  { [ "$rke2" = 1 ] || [ -d "$CERT_RKE2_DIR" ] || grep -q 'kubelogin\|oidc\|^CERT-MANAGER' "$d/rows.tsv" 2>/dev/null || [ "$cut" = 1 ] || [ "$mode" != full ]; } &&
-    printf '\nNEXT STEPS  (printed only - kdash never changes certificates)\n'
-  if [ "$rke2" = 1 ] || [ -d "$CERT_RKE2_DIR" ]; then
-    tk_note "RKE2 server nodes, one at a time:  sudo rke2 certificate check --output table"
-    tk_note "renew:  sudo systemctl stop rke2-server && sudo rke2 certificate rotate && sudo systemctl start rke2-server   (agents: rke2-agent)"
-    tk_note "RKE2 renews certificates with under 120 days left whenever the service starts; a node that never restarts can expire silently. The CA is not rotated by this."
-  fi
-  grep -q 'kubelogin\|oidc' "$d/rows.tsv" 2>/dev/null && tk_note "OIDC login:  $(events_kubectl_prefix) get ns   (opens a new login when the refresh token has expired)"
-  grep -q '^CERT-MANAGER' "$d/rows.tsv" 2>/dev/null && tk_note "cert-manager:  $(events_kubectl_prefix) describe certificate -n NAMESPACE NAME   (cmctl renew -n NAMESPACE NAME forces a renewal)"
+  printf '\n'
+  { [ "$rke2" = 1 ] || [ -d "$CERT_RKE2_DIR" ]; } &&
+    tk_note "RKE2 renews certificates with under 120 days left whenever the service starts; a node that never restarts can expire silently. Full procedure: R (runbook cert-rotate)."
   [ "$cut" != 1 ] || tk_note "only the first ${KDASH_CERT_MAX_NODES:-60} nodes were probed (KDASH_CERT_MAX_NODES)"
   [ "$mode" = full ] || tk_note "quick check: nodes, ingress hosts and this host were not probed (open key C or run --certs for all)"
   return 0
@@ -2095,20 +2104,1012 @@ certs_quick_poll() {
   local now; now=$(date +%s)
   if [ -n "${CERTQ_PID:-}" ] && ! kill -0 "$CERTQ_PID" 2>/dev/null; then
     wait "$CERTQ_PID" 2>/dev/null || true; CERTQ_PID=""; CERTQ_NEXT=$((now + 3600))
-    local sum first; sum="$(cat "$TMPD/certq/certs.summary" 2>/dev/null)"
-    CERT_BADGE="$(certs_badge "$sum")"
-    if [ -n "$CERT_BADGE" ] && [ "${CERTQ_FLASHED:-0}" = 0 ]; then CERTQ_FLASHED=1
-      first="${sum##*first=}"; first="${first%%|*}"
-      declare -F flash >/dev/null && flash "certificates: $CERT_BADGE${first:+ - soonest: $first} - press C for details" 12
-      audit CERTS_WARNING "$sum"
-    fi
+    CERT_BADGE="$(certs_badge "$(cat "$TMPD/certq/certs.summary" 2>/dev/null)")"
+  fi
+  # once per session, and never over another message (it waits until that one ends)
+  if [ -n "${CERT_BADGE:-}" ] && [ "${CERTQ_FLASHED:-0}" = 0 ] && [ -s "$TMPD/certq/certs.summary" ] && [ "$now" -ge "${FLASH_UNTIL:-0}" ]; then
+    local sum first; sum="$(cat "$TMPD/certq/certs.summary")"; CERTQ_FLASHED=1
+    first="${sum##*first=}"; first="${first%%|*}"
+    declare -F flash >/dev/null && flash "certificates: $CERT_BADGE${first:+ - soonest: $first} - press C for details" 12
+    audit CERTS_WARNING "$sum"
   fi
   # a full check (key C) is newer and more complete: it decides the badge
   if [ -s "${TOOLKIT_DIR:-}/certs.summary" ]; then CERT_BADGE="$(certs_badge "$(cat "$TOOLKIT_DIR/certs.summary")")"; fi
-  if [ -z "${CERTQ_PID:-}" ] && [ "$now" -ge "${CERTQ_NEXT:-0}" ]; then
+  if [ -z "${CERTQ_PID:-}" ] && [ "$now" -ge "${CERTQ_NEXT:-0}" ] && [ "${LOGIN_NEEDED:-0}" != 1 ]; then
     ( trap - EXIT INT TERM HUP; TOOLKIT_DIR="$TMPD/certq"; rm -rf "$TOOLKIT_DIR"; mkdir -p "$TOOLKIT_DIR"
       certs_collect quick ) > /dev/null 2>&1 &
     CERTQ_PID=$!; CERTQ_NEXT=$((now + 300))
+  fi
+  return 0
+}
+
+# ---- runbook hints (next commands per finding) and runbooks (key R, --runbook) ---
+# kdash never runs any of these commands: it prints them, with the context, namespace
+# and object names filled in. "read" lines only read; "CHANGE" lines modify the cluster
+# or a node and are for the operator to decide on.
+RB_TOPICS="etcd-restore cert-rotate node-notready api-unreachable oidc-login"
+RB_DATA="${KDASH_RKE2_DATA_DIR:-/var/lib/rancher/rke2}"
+
+rb_q() { # shell-quote one word only when it needs it
+  case "$1" in ''|*[!A-Za-z0-9._/:=@%+,-]*) printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")" ;; *) printf '%s' "$1" ;; esac
+}
+rb_k() { # kubectl prefix [-n ns] words...
+  local ns="$1"; shift
+  printf '%s' "${RB_K:-kubectl}"
+  [ -z "$ns" ] || printf ' -n %s' "$(rb_q "$ns")"
+  local w; for w in "$@"; do printf ' %s' "$w"; done
+}
+rb_line() { # kind (read|CHANGE|note) command [comment] [where]
+  local kind="$1" cmd="$2" why="${3:-}" where="${4:-}" tag
+  # instant checks: remember the read commands of the current finding (run with Enter / --run N)
+  [ -z "${RB_CAPTURE:-}" ] || [ "$kind" != read ] || [ -n "$where" ] || printf '%s\t%s\n' "${RB_CUR_N:--}" "$cmd" >> "$RB_CAPTURE"
+  [ -z "$RB_SEEN_FILE" ] || { if [ "$kind" != note ] && grep -qxF -- "$where$cmd" "$RB_SEEN_FILE" 2>/dev/null; then return 0; fi; printf '%s\n' "$where$cmd" >> "$RB_SEEN_FILE"; }
+  if [ "${TK_COLOR:-0}" = 1 ]; then
+    case "$kind" in read) tag='~[32mread  ~[0m' ;; CHANGE) tag='~[1;33mCHANGE~[0m' ;; *) tag='~[90mnote  ~[0m' ;; esac
+    [ -z "$where" ] || where="~[36m[on $where]~[0m "
+    if [ "$kind" = note ]; then printf '      %s ~[90m%s~[0m\n' "$tag" "$cmd"
+    else printf '      %s %s%s%s\n' "$tag" "$where" "$cmd" "${why:+  ~[90m# $why~[0m}"; fi
+  else
+    case "$kind" in read) tag='read  ' ;; CHANGE) tag='CHANGE' ;; *) tag='note  ' ;; esac
+    [ -z "$where" ] || where="[on $where] "
+    printf '      %s %s%s%s\n' "$tag" "$where" "$cmd" "${why:+  # $why}"
+  fi
+}
+rb_head() { # " #n  severity  object - text"
+  local num="#$1"; [ -n "$1" ] || num="> "
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '\n  ~[1m%s~[0m  %s  ~[1m%s~[0m  ~[90m%s~[0m\n' "$num" "$2" "$3" "$4"
+  else printf '\n  %s  %s  %s  %s\n' "$num" "$2" "$3" "$4"; fi
+}
+
+# The catalogue: key ns name [extra...] -> read / CHANGE / note lines
+rb_hints() {
+  local key="$1" ns="${2:-}" name="${3:-}" x1="${4:-}" x2="${5:-}" x3="${6:-}" n; n="$(rb_q "$name")"
+  case "$key" in
+    svc-nomatch)
+      rb_line read "$(rb_k "$ns" get service "$n" -o "jsonpath='{.spec.selector}{\"\\n\"}'")" "what the Service selects"
+      rb_line read "$(rb_k "$ns" get pods --show-labels)" "labels the pods really have"
+      rb_line CHANGE "$(rb_k "$ns" edit service "$n")" "make spec.selector match the pod labels (or fix the labels on the workload)" ;;
+    svc-notready)
+      rb_line read "$(rb_k "$ns" get pods -l "$(rb_q "$x1")" -o wide)" "the selected pods and their nodes"
+      rb_line read "$(rb_k "$ns" describe pods -l "$(rb_q "$x1")")" "readiness probe failures and events"
+      rb_line read "$(rb_k "$ns" logs -l "$(rb_q "$x1")" --all-containers --tail=50 --prefix)" "why the application is not ready"
+      rb_line note "kdash: i, pick a backend pod, then l (logs) or ! (why) for the same evidence" ;;
+    svc-port)
+      rb_line read "$(rb_k "$ns" get service "$n" -o "jsonpath='{range .spec.ports[*]}{.name} {.port} -> {.targetPort}{\"\\n\"}{end}'")" "the Service ports"
+      rb_line read "$(rb_k "$ns" get pods -l "$(rb_q "$x1")" -o "jsonpath='{range .items[0].spec.containers[*].ports[*]}{.name} {.containerPort}{\"\\n\"}{end}'")" "the port names the pods declare"
+      rb_line CHANGE "$(rb_k "$ns" edit service "$n")" "set targetPort to a declared container port name or number" ;;
+    svc-noendpoints)
+      rb_line read "$(rb_k "$ns" get endpointslices -l "kubernetes.io/service-name=$n" -o wide)" "EndpointSlices of the Service"
+      rb_line read "$(rb_k kube-system get pods -o wide) | grep controller-manager" "EndpointSlices are written by kube-controller-manager" ;;
+    svc-manual)
+      rb_line read "$(rb_k "$ns" get endpointslices -l "kubernetes.io/service-name=$n" -o wide)" "manually managed backends" ;;
+    ing-svcmissing)
+      rb_line read "$(rb_k "$ns" get ingress "$n" -o "jsonpath='{range .spec.rules[*].http.paths[*]}{.path} -> {.backend.service.name}:{.backend.service.port.number}{.backend.service.port.name}{\"\\n\"}{end}'")" "the routes and their backends"
+      rb_line read "$(rb_k "$ns" get services)" "Services that exist"
+      rb_line CHANGE "$(rb_k "$ns" edit ingress "$n")" "point the backend at an existing Service (or deploy the missing one)" ;;
+    ing-port)
+      rb_line read "$(rb_k "$ns" get service "$(rb_q "$x1")" -o "jsonpath='{range .spec.ports[*]}{.name} {.port}{\"\\n\"}{end}'")" "ports Service $x1 offers"
+      rb_line CHANGE "$(rb_k "$ns" edit ingress "$n")" "use one of those port names or numbers in the backend" ;;
+    pvc-full)
+      rb_line read "$(rb_k "" get storageclass "$(rb_q "$x1")" -o "jsonpath='{.allowVolumeExpansion}{\"\\n\"}'")" "true = the claim can be expanded online"
+      [ -z "$x3" ] || rb_line read "$(rb_k "$ns" exec "$(rb_q "$x3")" -- df -h)" "what is using the space (needs exec rights)"
+      rb_line CHANGE "$(rb_k "$ns" patch pvc "$n" -p "'{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"${x2:-<NEW-SIZE>}\"}}}}'")" "grow the volume (only when the class allows expansion; it cannot shrink)" ;;
+    pvc-pending)
+      rb_line read "$(rb_k "$ns" describe pvc "$n")" "the provisioner's reason is in the events"
+      [ -z "$x1" ] || rb_line read "$(rb_k "" get storageclass "$(rb_q "$x1")" -o wide)" "provisioner and binding mode"
+      [ "$x2" != wffc ] || rb_line note "WaitForFirstConsumer: the claim binds when a pod that uses it is scheduled - check that pod (i in kdash)" ;;
+    pvc-lost)
+      rb_line read "$(rb_k "$ns" describe pvc "$n")" "which volume it pointed to"
+      rb_line read "$(rb_k "$ns" get volumesnapshots) 2>/dev/null" "snapshots you could restore from (if VolumeSnapshots are used)"
+      rb_line note "the data is gone from the cluster: restore it from your backup (VolumeSnapshot, Velero or the application's own backup) into a new claim" ;;
+    pv-missing|pv-claimref)
+      rb_line read "$(rb_k "$ns" get pvc "$n" -o "jsonpath='{.spec.volumeName}{\"\\n\"}'")" "the volume the claim expects"
+      [ -z "$x1" ] || rb_line read "$(rb_k "" get pv "$(rb_q "$x1")" -o yaml)" "its claimRef and phase (cluster-scoped read)" ;;
+    sc-missing)
+      rb_line read "$(rb_k "" get storageclass)" "classes that exist"
+      rb_line note "storageClassName cannot be changed on an existing claim: create the class $x1, or recreate the claim with an existing class" ;;
+    pvc-unused)
+      rb_line read "$(rb_k "$ns" get pvc "$n" -o wide)" "kept on purpose? the data stays while the claim exists" ;;
+    pvc-condition)
+      rb_line read "$(rb_k "$ns" describe pvc "$n")" "the condition's message"
+      case "$x1" in *FileSystemResizePending*) rb_line note "FileSystemResizePending finishes when a pod mounting the claim (re)starts - restart that pod's workload at a quiet time" ;; esac ;;
+    pod-claimmissing)
+      rb_line read "$(rb_k "$ns" get pod "$n" -o "jsonpath='{range .spec.volumes[*]}{.name} {.persistentVolumeClaim.claimName}{\"\\n\"}{end}'")" "claims the pod expects"
+      rb_line CHANGE "create the claim $x1 in $ns (from the workload's chart or manifest)" "the pod stays Pending until it exists" ;;
+    pv-released)
+      rb_line read "$(rb_k "" get pv "$n" -o yaml)" "the retained data and its old claimRef"
+      rb_line CHANGE "$(rb_k "" patch pv "$n" --type json -p "'[{\"op\":\"remove\",\"path\":\"/spec/claimRef\"}]'")" "only to reuse the data: makes the volume Available to a new claim" ;;
+    cert-node|cert-rke2file)
+      rb_line read "sudo rke2 certificate check --output table" "every certificate on that node with its expiry" "$name"
+      if [ "$x1" = server ]; then
+        rb_line CHANGE "sudo systemctl stop rke2-server && sudo rke2 certificate rotate && sudo systemctl start rke2-server" "one server at a time; wait for Ready before the next" "$name"
+      else
+        rb_line CHANGE "sudo systemctl restart rke2-agent" "an agent renews its certificates (under 120 days left) when it starts" "$name"
+      fi
+      rb_line note "full procedure: kdash --runbook cert-rotate  (or R in kdash)" ;;
+    cert-endpoint)
+      rb_line read "openssl s_client -connect $(rb_q "$x1") </dev/null 2>/dev/null | openssl x509 -noout -subject -enddate" "what this endpoint presents now"
+      rb_line note "the API endpoint is served by the RKE2 servers (or a load balancer in front of them): renew there - kdash --runbook cert-rotate" ;;
+    cert-ca)
+      rb_line read "sudo rke2 certificate check --output table | grep -i ' ca'" "the CA certificates on a server" "$name"
+      rb_line note "a CA is not renewed by rke2 certificate rotate - plan a CA rotation (rke2 certificate rotate-ca) from the RKE2 documentation; never improvise it" ;;
+    cert-kubeconfig-ca)
+      rb_line read "$(rb_k "" config view --minify --raw -o "jsonpath='{.clusters[0].cluster.certificate-authority-data}'") | base64 -d | openssl x509 -noout -subject -enddate" "the CA your kubeconfig trusts"
+      rb_line note "after a CA rotation, refresh the kubeconfig from your access portal / cluster admin" ;;
+    cert-webhook)
+      rb_line read "$(rb_k "" get "$x2" "$n" -o "jsonpath='{range .webhooks[*]}{.name} {.clientConfig.service.namespace}/{.clientConfig.service.name}{\"\\n\"}{end}'")" "which service serves the webhook"
+      rb_line read "$(rb_k "" get certificates.cert-manager.io -A) 2>/dev/null | grep -i ${x1%%/*}" "is the webhook certificate cert-manager managed?"
+      rb_line note "renew the webhook's serving certificate with its owner (operator, Helm chart or cert-manager cainjector) - the caBundle must be updated with it; until then calls fail with x509 errors" ;;
+    cert-apiservice)
+      rb_line read "$(rb_k "" get apiservice "$n" -o wide)" "Available condition"
+      rb_line read "$(rb_k "${x1%%/*}" get pods -o wide)" "the pods behind ${x1}"
+      rb_line note "redeploy or renew the serving certificate of $x1 (its chart usually regenerates it)" ;;
+    cert-manager)
+      rb_line read "$(rb_k "$ns" describe certificate "$n")" "status, conditions and the last failure"
+      rb_line read "$(rb_k "$ns" get certificaterequests,orders.acme.cert-manager.io,challenges.acme.cert-manager.io) 2>/dev/null" "where issuance is stuck"
+      rb_line read "$(rb_k "" get clusterissuers,issuers -A -o wide)" "is the issuer Ready?"
+      rb_line CHANGE "cmctl renew -n $(rb_q "$ns") $n" "trigger a renewal once the issuer works (or: kubectl cert-manager renew)" ;;
+    cert-ingress)
+      rb_line read "$(rb_k "$ns" get ingress "$n" -o "jsonpath='{range .spec.tls[*]}{.secretName}: {.hosts}{\"\\n\"}{end}'")" "which secret holds the certificate"
+      rb_line read "$(rb_k "$ns" get certificates.cert-manager.io) 2>/dev/null" "cert-manager managed?"
+      rb_line note "renew the TLS secret (cert-manager, or replace it: kubectl create secret tls NAME --cert=... --key=... --dry-run=client -o yaml | kubectl apply -f -); the ingress controller reloads it" ;;
+    login)
+      rb_line read "$(rb_k "" auth whoami)" "any API call opens a new OIDC login when the refresh token has expired"
+      rb_line CHANGE "kubectl oidc-login clean" "clears cached tokens if a login keeps failing (you log in again)"
+      rb_line note "full procedure: kdash --runbook oidc-login" ;;
+    event-x509)
+      rb_line read "$(rb_k "$ns" describe "$(rb_q "$x1")" "$n")" "the object behind the x509 error"
+      rb_line note "an expired webhook, aggregated API or registry certificate is the usual cause - see the CERTIFICATES rows above" ;;
+    *) check_hints "$@"; return $? ;;
+  esac
+  return 0
+}
+
+# FINDINGS (numbered) followed by NEXT COMMANDS for every finding that has hints.
+# stdin rows: SEVERITY OBJECT FINDING HINTKEY (HINTKEY = key|ns|name|extra|extra|extra)
+rb_findings() { # title subtitle empty-text
+  local title="$1" sub="$2" empty="$3" tmp n sev obj text hk key ns name x1 x2 x3 shown=0 max="${KDASH_HINT_MAX:-15}"
+  tmp="$(mktemp "${TOOLKIT_DIR:-${TMPDIR:-/tmp}}/rbf.XXXXXX")" || return 1
+  tk_by_severity | awk -F'\t' 'BEGIN { OFS = "\t" } { print NR, $0 }' > "$tmp"
+  # the instant check (key K) gathers every view's findings through here
+  [ -z "${RB_COLLECT_FINDINGS:-}" ] || awk -F'\t' -v a="${RB_AREA:-}" 'BEGIN { OFS = "\t" } { $1 = a; print }' "$tmp" >> "$RB_COLLECT_FINDINGS"
+  [ -z "${RB_COLLECT_FINDINGS:-}" ] || { rm -f "$tmp"; return 0; }
+  { printf '#\tSEVERITY*\tOBJECT\tFINDING\n'; cut -f1-4 "$tmp"; } | tk_table "$title" "$sub" "$empty" finding findings
+  rb_next_list "$tmp"
+  rm -f "$tmp"
+  return 0
+}
+rb_next_list() { # numbered rows: N SEVERITY OBJECT FINDING HINTKEY
+  local tmp="$1" n sev obj text hk key ns name x1 x2 x3 shown=0 max="${KDASH_HINT_MAX:-15}"
+  awk -F'\t' '$5 != "" && $2 !~ /INFO/ { f = 1 } END { exit !f }' "$tmp" || return 0
+  RB_K="$(events_kubectl_prefix)"; RB_SEEN_FILE="$tmp.seen"; : > "$RB_SEEN_FILE"; : > "$tmp.keys"
+  printf '\n'
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1mNEXT COMMANDS~[0m  ~[90mread = only reads, CHANGE = modifies the cluster or a node (printed only)%s~[0m\n' "${RB_RUN_HINT:+  -  $RB_RUN_HINT}"
+  else printf 'NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)%s\n' "${RB_RUN_HINT:+  -  $RB_RUN_HINT}"; fi
+  while IFS=$'\t' read -r n sev obj text hk; do
+    [ -n "$hk" ] || continue
+    case "$sev" in *INFO*) continue ;; esac
+    [ "$shown" -lt "$max" ] || { tk_note "... hints for the remaining findings are left out (KDASH_HINT_MAX=$max)"; break; }
+    IFS='|' read -r key ns name x1 x2 x3 <<< "$hk"
+    RB_CUR_N="$n"
+    rb_head "$n" "${sev#\{?\}}" "$obj" "$(printf '%s' "$text" | cut -c1-90)"
+    local first; first="$(awk -F'\t' -v k="$key|$ns|$name" '$1 == k { print $2; exit }' "$tmp.keys" 2>/dev/null)"
+    if [ -n "$first" ]; then rb_line note "same object as #$first - the commands listed there apply"
+      [ -z "${RB_CAPTURE:-}" ] || printf '@%s\t%s\n' "$n" "$first" >> "$RB_CAPTURE"
+    else printf '%s\t%s\n' "$key|$ns|$name" "$n" >> "$tmp.keys"
+      rb_hints "$key" "$ns" "$name" "$x1" "$x2" "$x3" || rb_line note "no specific hint - describe the object and read its events"; fi
+    shown=$((shown + 1))
+  done < "$tmp"
+  printf '\n'
+  rm -f "$tmp.seen" "$tmp.keys"; RB_SEEN_FILE=""; RB_CUR_N=""
+  return 0
+}
+
+# ---- runbooks -----------------------------------------------------------------
+rb_collect() { # API reads the runbooks fill their commands from (all optional)
+  health__read rb-snapshots etcdsnapshotfiles.k3s.cattle.io no \
+    '{{range .items}}E|{{.metadata.name}}|{{.spec.snapshotName}}|{{.spec.nodeName}}|{{.spec.location}}|{{.status.size}}|{{.status.creationTime}}|{{.status.readyToUse}}|{{with .spec.s3}}{{.bucket}}|{{.endpoint}}|{{.region}}|{{.prefix}}{{else}}|||{{end}}|{{with .status.error}}{{.message}}{{end}}{{"\n"}}{{end}}'
+  health__read rb-nodes nodes no \
+    '{{range .items}}N|{{.metadata.name}}|{{range .status.addresses}}{{if eq .type "InternalIP"}}{{.address}} {{end}}{{end}}|{{if index .metadata.labels "node-role.kubernetes.io/control-plane"}}server{{else if index .metadata.labels "node-role.kubernetes.io/master"}}server{{else}}agent{{end}}|{{.status.nodeInfo.kubeletVersion}}|{{range .status.conditions}}{{if eq .type "Ready"}}{{.status}}|{{.reason}}|{{.lastTransitionTime}}{{end}}{{end}}|{{if .spec.unschedulable}}cordoned{{end}}{{"\n"}}{{end}}'
+  printf '%s\n' "$(certs__kcfg '{.clusters[0].cluster.server}' 2>/dev/null)" > "$TOOLKIT_DIR/rb-server.txt"
+  date +%s > "$TOOLKIT_DIR/rb.at"
+}
+rb_age() { local at; at="$(cat "${TOOLKIT_DIR:-/nonexistent}/rb.at" 2>/dev/null)"; case "$at" in [0-9]*) printf '%s' "$(( $(date +%s) - at ))" ;; *) printf 999999 ;; esac; }
+
+rb_step() { # number title
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '\n  ~[1mSTEP %s~[0m  %s\n' "$1" "$2"; else printf '\n  STEP %s  %s\n' "$1" "$2"; fi
+}
+rb_section() { # title text
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '\n~[1;4m%s~[0m  ~[90m%s~[0m\n' "$1" "$2"; else printf '\n%s  -  %s\n' "$1" "$2"; fi
+}
+rb_warn() {
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '  ~[1;31m!~[0m ~[1m%s~[0m\n' "$*"; else printf '  ! %s\n' "$*"; fi
+}
+
+rb_render() { # [topic]
+  local topic="${1:-${RB_TOPIC:-etcd-restore}}" t i=0 bar=""
+  case " $RB_TOPICS " in *" $topic "*) ;; *) topic=etcd-restore ;; esac
+  RB_K="$(events_kubectl_prefix)"; RB_SEEN_FILE=""
+  tk_title "RUNBOOK - $topic" "printed procedures with your cluster's names filled in - kdash never runs them"
+  for t in $RB_TOPICS; do i=$((i + 1))
+    if [ "$t" = "$topic" ]; then bar="$bar  [$i $t]"; else bar="$bar   $i $t "; fi; done
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[90mrunbooks:~[0m%s   ~[90m[ ] previous / next   (kdash --runbook NAME)~[0m\n' "$bar"
+  else printf 'runbooks:%s   [ ] previous / next   (kdash --runbook NAME)\n' "$bar"; fi
+  [ -f "$TOOLKIT_DIR/rb.at" ] || { printf '\nReading snapshots and nodes in the background...\n'; return 0; }
+  case "$topic" in
+    etcd-restore) rb_etcd_restore ;; cert-rotate) rb_cert_rotate ;; node-notready) rb_node_notready ;;
+    api-unreachable) rb_api_unreachable ;; oidc-login) rb_oidc_login ;;
+  esac
+  return 0
+}
+
+rb__servers() { # -> "name<TAB>ip" lines of the control-plane nodes, sorted
+  awk -F'|' '$1 == "N" && $4 == "server" { ip = $3; sub(/ .*/, "", ip); print $2 "\t" ip }' "$TOOLKIT_DIR/health-rb-nodes.raw" 2>/dev/null | LC_ALL=C sort
+}
+
+rb_etcd_restore() {
+  local snaps="$TOOLKIT_DIR/rb-snaps.tsv" ss sn path="" node="" name="" s3b="" s3e="" s3r="" s3p="" created="" s1="" others="" all="" n cnt
+  ss="$(health__state rb-snapshots)"; sn="$(health__state rb-nodes)"
+  # snapshots, newest first: NAME NODE WHERE SIZE CREATED AGE READY
+  LC_ALL=C awk -F'|' -v now="$(date +%s)" "$TK_TIME_AWK"'
+    BEGIN { NOW = now; OFS = "\t" }
+    $1 == "E" { loc = $5; where = (loc ~ /^s3:/ || $9 != "") ? "S3 " $9 : "local"
+      r = ($8 == "true") ? "{g}yes" : ($13 != "" ? "{r}no: " $13 : "{y}" ($8 == "" ? "unknown" : $8))
+      print $7, $3, $4, where, size($6), $7, ago($7), r, loc, $9, $10, $11, $12 }
+    function size(s,   n, u, i) { if (s == "") return "-"; if (s !~ /^[0-9]+$/) return s
+      n = s + 0; split("B KiB MiB GiB TiB", u, " "); i = 1; while (n >= 1024 && i < 5) { n /= 1024; i++ }
+      return sprintf("%.1f %s", n, u[i]) }
+  ' "$TOOLKIT_DIR/health-rb-snapshots.raw" 2>/dev/null | LC_ALL=C sort -r | cut -f2- > "$snaps"
+  cnt="$(wc -l < "$snaps" | tr -d ' ')"
+  rb_section "WHEN TO USE" "etcd data is lost or corrupted, or the cluster must go back to a known state"
+  rb_warn "A restore rolls the WHOLE cluster back to the snapshot time: everything created or changed after it is lost."
+  rb_warn "Restoring onto NEW hosts needs the ORIGINAL server token (it decrypts the bootstrap data in the snapshot)."
+  rb_warn "Snapshots contain the cluster CA keys and all Secrets: copy and store them like secrets."
+  # the snapshot to use: KDASH_RB_SNAPSHOT, else the newest that is ready
+  if [ "$cnt" -gt 0 ]; then
+    IFS='|' read -r name node created path s3b s3e s3r s3p < <(awk -F'\t' -v want="${KDASH_RB_SNAPSHOT:-}" '(want == "" && $7 ~ /yes/) || (want != "" && $1 == want) { print $1 "|" $2 "|" $5 "|" $8 "|" $9 "|" $10 "|" $11 "|" $12; exit }' "$snaps")
+    { printf '#\tSNAPSHOT\tNODE\tSTORED\t>SIZE\tCREATED UTC\t>AGE\tREADY*\n'
+      awk -F'\t' 'BEGIN { OFS = "\t" } NR <= 10 { c = $5; sub(/T/, " ", c); sub(/Z$/, "", c); print NR, $1, $2, $3, $4, c, $6, $7 }' "$snaps"
+    } | tk_table "SNAPSHOTS" "ETCDSnapshotFile objects, newest first (up to 10 of $cnt) - the newest ready one is used below" "" snapshot snapshots
+  else
+    printf 'SNAPSHOTS\n' | tk_table "SNAPSHOTS" "" "$(case "$ss" in ok) printf 'no ETCDSnapshotFile objects - list them on a server: sudo rke2 etcd-snapshot ls' ;; forbidden) printf 'not readable with your access (cluster-scoped) - list them on a server: sudo rke2 etcd-snapshot ls' ;; *) printf 'unknown (%s) - list them on a server: sudo rke2 etcd-snapshot ls' "$ss" ;; esac)"
+  fi
+  case "$path" in file://*) path="${path#file://}" ;; s3://*|'') path="" ;; esac
+  if [ "$cnt" -gt 0 ]; then
+    local newest age_h=""
+    newest="$(head -n 1 "$snaps")"
+    case "$(printf '%s' "$newest" | cut -f7)" in *yes*) ;; *) rb_warn "The NEWEST snapshot $(printf '%s' "$newest" | cut -f1) ($(printf '%s' "$newest" | cut -f6) ago) is NOT usable ($(printf '%s' "$newest" | cut -f7 | sed 's/^{.}//; s/^no: //')) - fix the snapshot job / S3 access before you need it." ;; esac
+    [ -n "$name" ] || rb_warn "No usable snapshot found$([ -n "${KDASH_RB_SNAPSHOT:-}" ] && printf ' named %s' "$KDASH_RB_SNAPSHOT") - the commands below use placeholders."
+    if [ -n "$created" ]; then
+      age_h=$(( ( $(date +%s) - $(date -u -d "$created" +%s 2>/dev/null || date +%s) ) / 3600 ))
+      [ "$age_h" -lt "${KDASH_RPO_HOURS:-24}" ] || rb_warn "The snapshot used is ${age_h}h old - more than KDASH_RPO_HOURS (${KDASH_RPO_HOURS:-24}h): check the etcd-snapshot-schedule-cron."
+      rb_warn "Restoring $name loses everything after $(printf '%s' "$created" | sed 's/T/ /; s/Z$//') UTC (data loss window = its age)."
+    fi
+    tk_note "another snapshot: KDASH_RB_SNAPSHOT=<SNAPSHOT> kdash --runbook etcd-restore"
+  fi
+  # servers: S1 = the node that holds a local snapshot, else the first server
+  while IFS=$'\t' read -r n ip; do [ -n "$n" ] && all="$all${all:+, }$n"; done < <(rb__servers)
+  if [ -n "$path" ] && [ -n "$node" ]; then s1="$node"; else s1="$(rb__servers | head -n 1 | cut -f1)"; fi
+  while IFS=$'\t' read -r n ip; do [ -n "$n" ] && [ "$n" != "$s1" ] && others="$others${others:+, }$n"; done < <(rb__servers)
+  [ -n "$all" ] || all="every server node"; [ -n "$s1" ] || s1="S1 (the server that holds the snapshot)"
+  [ -n "$others" ] || others="$([ "$sn" = ok ] && printf 'the other servers (none found)' || printf 'every other server')"
+  local rp="${path:-$RB_DATA/server/db/snapshots/<SNAPSHOT-NAME>}" s3args=""
+  if [ -n "$s3b" ]; then rp="${name:-<SNAPSHOT-NAME>}"
+    s3args=" --etcd-s3 --etcd-s3-bucket=$(rb_q "$s3b")${s3e:+ --etcd-s3-endpoint=$(rb_q "$s3e")}${s3r:+ --etcd-s3-region=$(rb_q "$s3r")}${s3p:+ --etcd-s3-folder=$(rb_q "$s3p")} --etcd-s3-access-key=<ACCESS-KEY> --etcd-s3-secret-key=<SECRET-KEY>"; fi
+  rb_section "A. RESTORE ONTO THE EXISTING SERVERS" "servers: $all"
+  rb_step 0 "prepare (nothing changes yet)"
+  rb_line read "sudo rke2 etcd-snapshot ls" "confirm the snapshot is on this node$([ -n "$s3b" ] && printf ' (S3: add the --s3 flags)')" "$s1"
+  rb_line read "sudo cat $RB_DATA/server/token" "save the server token in your secret store first - needed for any restore onto new hosts" "$s1"
+  rb_line read "kdash --report" "evidence of the current state before you change it"
+  rb_step 1 "stop rke2-server on every server"
+  rb_line CHANGE "sudo systemctl stop rke2-server" "all servers must be down before the reset" "$all"
+  rb_step 2 "reset the cluster from the snapshot (on $s1 only)"
+  rb_line CHANGE "sudo rke2 server --cluster-reset$s3args --cluster-reset-restore-path=$rp" "wait for: Managed etcd cluster membership has been reset, restart without --cluster-reset flag now" "$s1"
+  [ -z "$s3b" ] || rb_line note "S3: the restore path is the snapshot NAME only; the S3 config Secret is not used for restores - pass the flags (or use the etcd-s3 settings in config.yaml)"
+  [ -n "$s3b" ] || rb_line note "if config.yaml has etcd-s3 settings and you restore this LOCAL file, add --etcd-s3=false"
+  rb_step 3 "start rke2-server on $s1"
+  rb_line CHANGE "sudo systemctl start rke2-server" "the reset flag file is removed on this normal start" "$s1"
+  rb_line read "$(rb_k "" get nodes -o wide)" "wait until $s1 is Ready"
+  rb_step 4 "on every OTHER server: back up and delete the old etcd data"
+  rb_line CHANGE "sudo mv $RB_DATA/server/db $RB_DATA/server/db.bak-\$(date +%Y%m%d%H%M%S)" "RKE2 asks to back up and delete server/db on each peer (the docs show: sudo rm -rf $RB_DATA/server/db/)" "$others"
+  rb_step 5 "start rke2-server on the other servers, one at a time"
+  rb_line CHANGE "sudo systemctl start rke2-server" "they rejoin the restored cluster; wait for Ready before the next" "$others"
+  rb_step 6 "verify"
+  rb_line read "$(rb_k "" get nodes -o wide)" "all servers and agents Ready"
+  rb_line read "$(rb_k "" get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded)" "what has not come back yet"
+  rb_line read "kdash --doctor && kdash --certs" "API, access and certificates"
+  rb_line note "nodes are restored from the snapshot too: delete nodes that no longer exist ($(rb_k "" delete node NAME)) and re-run workloads changed after the snapshot from Git / Flux"
+  rb_section "B. RESTORE ONTO NEW HOSTS" "the old servers are gone"
+  rb_warn "You need the ORIGINAL server token: $RB_DATA/server/token from an old server, or your secret store. Without it the restore fails; a different token in config.yaml stops RKE2 from starting."
+  rb_step 1 "copy the snapshot to the new first server"
+  rb_line CHANGE "sudo mkdir -p $RB_DATA/server/db/snapshots && sudo cp <SNAPSHOT-FILE> $RB_DATA/server/db/snapshots/" "for S3 snapshots skip this and pass the S3 flags" "NEW-S1"
+  rb_step 2 "reset from the snapshot with the original token"
+  rb_line CHANGE "sudo rke2 server --cluster-reset$s3args --cluster-reset-restore-path=$rp --token=<ORIGINAL-SERVER-TOKEN>" "the token can also be set in /etc/rancher/rke2/config.yaml" "NEW-S1"
+  rb_step 3 "start it, then join the other new servers with the same token"
+  rb_line CHANGE "sudo systemctl start rke2-server" "" "NEW-S1"
+  rb_line note "other servers: config.yaml with  server: https://NEW-S1:9345  and  token: <ORIGINAL-SERVER-TOKEN>, then systemctl start rke2-server"
+  rb_line CHANGE "$(rb_k "" delete node OLD-NODE-NAME)" "old nodes come back from the snapshot as NotReady: delete those that no longer exist"
+  rb_section "NOTES" "from the RKE2 documentation"
+  tk_note "--cluster-reset WITHOUT --cluster-reset-restore-path only resets etcd membership to one member; no data is restored."
+  tk_note "A reset writes $RB_DATA/server/db/reset-flag (blocks a second reset) and moves the old data to $RB_DATA/server/db/etcd-old-<timestamp>."
+  tk_note "A newer RKE2 minor version can restore an older snapshot. Snapshots cover embedded etcd only."
+  tk_note "Default snapshot directory: $RB_DATA/server/db/snapshots"
+}
+
+rb_cert_rotate() {
+  local all="" agents="" n ip
+  while IFS=$'\t' read -r n ip; do [ -n "$n" ] && all="$all${all:+, }$n"; done < <(rb__servers)
+  agents="$(awk -F'|' '$1 == "N" && $4 == "agent" { printf "%s%s", (c++ ? ", " : ""), $2 }' "$TOOLKIT_DIR/health-rb-nodes.raw" 2>/dev/null)"
+  rb_section "WHEN TO USE" "RKE2 certificates (API server, kubelet, supervisor, etcd) are close to expiry - see key C / kdash --certs"
+  rb_warn "RKE2 renews certificates with under 120 days left only when the service starts; a node that never restarts expires silently."
+  rb_warn "This renews leaf certificates. It does not rotate the CA (that is rke2 certificate rotate-ca - a separate, planned procedure)."
+  rb_step 1 "check, on each server"
+  rb_line read "sudo rke2 certificate check --output table" "" "${all:-each server}"
+  rb_step 2 "rotate on ONE server at a time"
+  rb_line CHANGE "sudo systemctl stop rke2-server" "" "${all:-server N}"
+  rb_line CHANGE "sudo rke2 certificate rotate" "add --service NAME to rotate only some (e.g. --service api-server)" "${all:-server N}"
+  rb_line CHANGE "sudo systemctl start rke2-server" "" "${all:-server N}"
+  rb_line read "$(rb_k "" get nodes)" "the server is Ready again before you continue"
+  rb_step 3 "agents"
+  rb_line CHANGE "sudo systemctl restart rke2-agent" "renews the agent's certificates (under 120 days left)" "${agents:-each agent}"
+  rb_step 4 "verify"
+  rb_line read "kdash --certs" "nothing left in WARNING / CRITICAL"
+  rb_line note "kubeconfig files that embed a client certificate (e.g. rke2.yaml) may need to be copied again after a rotation"
+}
+
+rb_node_notready() {
+  local bad
+  bad="$(awk -F'|' '$1 == "N" && $6 != "True" { printf "%s%s", (c++ ? ", " : ""), $2 }' "$TOOLKIT_DIR/health-rb-nodes.raw" 2>/dev/null)"
+  rb_section "WHEN TO USE" "a node is NotReady or Unknown${bad:+ - now: $bad}"
+  { printf 'NODE\tROLE\tREADY*\tREASON\tSINCE\tSCHEDULING\n'
+    LC_ALL=C awk -F'|' -v now="$(date +%s)" "$TK_TIME_AWK"'BEGIN { NOW = now; OFS = "\t" }
+      $1 == "N" { r = ($6 == "True") ? "{g}Ready" : "{r}" ($6 == "" ? "Unknown" : "NotReady"); print $2, $4, r, ($7 == "" ? "-" : $7), ago($8), ($9 == "" ? "-" : "{y}" $9) }' "$TOOLKIT_DIR/health-rb-nodes.raw" 2>/dev/null
+  } | tk_table "NODES" "" "nodes not readable ($(health__state rb-nodes))" node nodes
+  local n="${bad%%,*}"; n="${n:-NODE}"
+  rb_step 1 "what the API knows"
+  rb_line read "$(rb_k "" describe node "$(rb_q "$n")")" "conditions (MemoryPressure, DiskPressure, PIDPressure) and recent events"
+  rb_line read "$(rb_k "" get pods -A -o wide --field-selector spec.nodeName=$(rb_q "$n"))" "what runs there"
+  rb_step 2 "on the node"
+  rb_line read "sudo systemctl status rke2-agent rke2-server --no-pager" "which one is installed and running" "$n"
+  rb_line read "sudo journalctl -u rke2-agent -u rke2-server --since -30min --no-pager | tail -n 100" "kubelet / containerd errors" "$n"
+  rb_line read "df -h / /var/lib/rancher; free -m" "disk or memory exhausted?" "$n"
+  rb_line read "sudo $RB_DATA/bin/crictl --runtime-endpoint unix:///run/k3s/containerd/containerd.sock ps" "are the containers up?" "$n"
+  rb_step 3 "recover"
+  rb_line CHANGE "sudo systemctl restart rke2-agent" "(rke2-server on a server node)" "$n"
+  rb_line CHANGE "$(rb_k "" cordon "$(rb_q "$n")")" "stop new pods landing there while you work on it"
+  rb_line CHANGE "$(rb_k "" drain "$(rb_q "$n")" --ignore-daemonsets --delete-emptydir-data --timeout=10m)" "move workloads away (emptyDir data is lost)"
+  rb_line CHANGE "$(rb_k "" uncordon "$(rb_q "$n")")" "when it is healthy again"
+}
+
+rb_api_unreachable() {
+  local server hp all="" n ip
+  server="$(cat "$TOOLKIT_DIR/rb-server.txt" 2>/dev/null)"; hp="$(certs__hostport "${server:-https://<API-HOST>:6443}" | tr ' ' ':')"
+  while IFS=$'\t' read -r n ip; do [ -n "$n" ] && all="$all${all:+, }$n"; done < <(rb__servers)
+  rb_section "WHEN TO USE" "kubectl / kdash cannot reach the API server ${server:+($server)}"
+  rb_step 1 "from this host"
+  rb_line read "$(rb_k "" cluster-info)" "the exact error: refused, timeout, x509, Unauthorized"
+  rb_line read "curl -sk https://$hp/readyz; echo" "any answer (even Unauthorized) means the network path and TLS work"
+  rb_line read "timeout 4 openssl s_client -connect $hp </dev/null 2>/dev/null | openssl x509 -noout -enddate" "certificate expired? (then: kdash --runbook cert-rotate)"
+  rb_line note "Unauthorized / login prompt that fails: kdash --runbook oidc-login"
+  rb_step 2 "on a server"
+  rb_line read "sudo systemctl status rke2-server --no-pager" "" "${all:-each server}"
+  rb_line read "sudo journalctl -u rke2-server --since -30min --no-pager | tail -n 100" "etcd quorum, certificate or disk errors" "${all:-each server}"
+  rb_line read "sudo $RB_DATA/bin/crictl --runtime-endpoint unix:///run/k3s/containerd/containerd.sock ps | grep -E 'kube-apiserver|etcd'" "are the API server and etcd containers running?" "${all:-each server}"
+  rb_line read "sudo $RB_DATA/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get --raw '/readyz?verbose'" "which API check fails, bypassing the load balancer and OIDC" "${all:-each server}"
+  rb_step 3 "recover"
+  local ns_=0; ns_="$(rb__servers | grep -c .)"
+  rb_line CHANGE "sudo systemctl restart rke2-server" "one server at a time; etcd needs a majority up ($([ "$ns_" -gt 0 ] && printf '%s of %s' $(( ns_ / 2 + 1 )) "$ns_" || printf '2 of 3'))" "${all:-the failed server}"
+  rb_line note "if etcd lost quorum or its data is corrupt: kdash --runbook etcd-restore"
+}
+
+rb_oidc_login() {
+  local args cache="~/.kube/cache/oidc-login"
+  args="$(certs__kcfg '{.users[0].user.exec.args[*]}' 2>/dev/null)"
+  case "$args" in *--token-cache-dir=*) cache="${args##*--token-cache-dir=}"; cache="${cache%% *}" ;; esac
+  rb_section "WHEN TO USE" "kubectl asks for a login, the login fails, or kdash shows LOGIN NEEDED"
+  rb_step 1 "check"
+  rb_line read "$(rb_k "" auth whoami)" "triggers a new login when the refresh token has expired"
+  rb_line read "$(rb_k "" config view --minify -o "jsonpath='{.users[0].user.exec.args}{\"\\n\"}'")" "issuer URL and client id this context uses"
+  rb_step 2 "log in again"
+  rb_line CHANGE "kubectl oidc-login clean$([ "$cache" = "~/.kube/cache/oidc-login" ] || printf ' --token-cache-dir=%s' "$(rb_q "$cache")")" "forgets cached tokens; the next kubectl call opens a fresh login"
+  rb_line read "$(rb_k "" auth whoami)" "should show your user and groups"
+  rb_line note "still failing: check the identity provider (issuer URL reachable from this host, clock skew, your group membership)"
+}
+
+# WHY view: the read-only checks per evidence row, then what to change per category
+rb_why_next() { # dir namespace pod
+  local d="$1" namespace="$2" pod="$3" n cmd last="" cat
+  RB_K="$(events_kubectl_prefix)"; RB_SEEN_FILE=""
+  if [ "$(wc -l < "$d/checks.tsv")" -le 1 ] && [ -z "$pod" ]; then return 0; fi
+  printf '\n'
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1mNEXT COMMANDS~[0m  ~[90mprinted only - kdash never runs them; read = only reads, CHANGE = modifies the cluster~[0m\n'
+  else printf 'NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster\n'; fi
+  if [ "$(wc -l < "$d/checks.tsv")" -gt 1 ]; then
+    while IFS=$'\t' read -r n cmd; do
+      [ "$n" != "#" ] || continue
+      [ "$n" = "$last" ] || { rb_head "$n" "" "evidence #$n" "(WARNING EVIDENCE above)"; last="$n"; RB_CUR_N="$n"; }
+      rb_line read "$cmd"
+    done < "$d/checks.tsv"
+  else
+    rb_head "-" "pod" "$pod" ""
+    rb_line read "$(events_command "$namespace" describe pod "$pod")"
+  fi
+  [ -s "$d/explain.tsv" ] || return 0
+  local ns="${namespace:-NAMESPACE}"; RB_CUR_N="-"
+  while IFS=$'\t' read -r cat _ _; do
+    cat="${cat#\{?\}}"
+    case "$cat" in
+      memory) rb_head "" "memory" "OOM kills" "what usually fixes it"
+        rb_line read "$(rb_k "$ns" top pods --containers) 2>/dev/null" "live usage per container (also key 5 MEMORY)"
+        rb_line CHANGE "$(rb_k "$ns" set resources deployment/DEPLOYMENT -c CONTAINER --limits=memory=SIZE --requests=memory=SIZE)" "raise the limit (or statefulset/NAME), or fix the leak" ;;
+      image) rb_head "" "image" "pull failures" "what usually fixes it"
+        rb_line read "$(rb_k "$ns" get pods -o "jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[*].image} pullSecrets={.spec.imagePullSecrets[*].name}{\"\\n\"}{end}'")" "the image references and pull secrets"
+        rb_line note "check the tag exists in the registry and the pull secret is valid; the registry must be reachable from the nodes" ;;
+      scheduling) rb_head "" "scheduling" "pods not placed" "what usually fixes it"
+        rb_line read "$(rb_k "" describe nodes) | grep -A 8 'Allocated resources'" "free capacity per node"
+        rb_line note "reduce requests, add capacity, or fix the nodeSelector / affinity / taint tolerations the scheduler message names" ;;
+      probe) rb_head "" "probe" "probe failures" "what usually fixes it"
+        rb_line note "if the app is slow to start, a startupProbe (or a longer initialDelaySeconds) usually fixes it; if it really fails, the logs above say why" ;;
+      restart) rb_head "" "restart" "crash loop" "what usually fixes it"
+        rb_line note "the previous logs (above) show the exit reason; a config or Secret change is the usual cause - compare with the last rollout:"
+        rb_line read "$(rb_k "$ns" rollout history deployment/DEPLOYMENT)" "what changed and when" ;;
+      storage) rb_head "" "storage" "volume problems" "see key 9 STORAGE: its findings carry their own next commands" ;;
+    esac
+  done < <(tail -n +2 "$d/explain.tsv")
+  return 0
+}
+
+# ---- instant check (key K, --check) and running the read commands of a finding -
+# One screen with everything that is wrong now, from every area kdash reads (API,
+# nodes, pods, services, storage, certificates and logins, etcd snapshots), most
+# severe first, each with its next commands. Enter (or --check --run N) runs the
+# READ commands of a finding at once and shows their output; CHANGE commands never run.
+CHECK_AREAS="api nodes pods services storage certificates etcd"
+
+check_collect() { # API reads the instant check needs beyond the dashboard data
+  # certificates: reuse a recent full check, else a quick one (kubeconfig, API endpoint, CA bundles)
+  if [ "$(certs_age)" -ge "${KDASH_CERT_TTL:-300}" ]; then
+    local cq="$TOOLKIT_DIR/check-certs"
+    ( TOOLKIT_DIR="$cq"; rm -rf "$cq"; mkdir -p "$cq"; cp -f "${TOOLKIT_DIR%/check-certs}/events.tsv" "$cq/" 2>/dev/null; certs_collect quick ) > /dev/null 2>&1
+  else rm -rf "$TOOLKIT_DIR/check-certs"; fi
+  [ "$(rb_age)" -lt 60 ] || rb_collect
+  date +%s > "$TOOLKIT_DIR/check.at"
+}
+check_age() { local at; at="$(cat "${TOOLKIT_DIR:-/nonexistent}/check.at" 2>/dev/null)"; case "$at" in [0-9]*) printf '%s' "$(( $(date +%s) - at ))" ;; *) printf 999999 ;; esac; }
+
+# extra catalogue entries used only here (pods, nodes, API, etcd snapshots)
+check_hints() { # key ns name x1 x2
+  local key="$1" ns="$2" name="$3" x1="${4:-}" x2="${5:-}" n; n="$(rb_q "$name")"
+  case "$key" in
+    pod-crash)
+      rb_line read "$(rb_k "$ns" logs "$n" --all-containers --previous --tail=100)" "why the last run ended"
+      rb_line read "$(rb_k "$ns" describe pod "$n")" "exit codes, reasons and events"
+      [ -z "$x1" ] || [ "$x1" = "-" ] || rb_line read "$(rb_k "$ns" rollout history "$(rb_q "$x1")")" "a recent rollout is the usual cause" ;;
+    pod-image)
+      rb_line read "$(rb_k "$ns" describe pod "$n")" "the pull error is in the events"
+      rb_line read "$(rb_k "$ns" get pod "$n" -o "jsonpath='{range .spec.containers[*]}{.name}: {.image}{\"\\n\"}{end}pullSecrets: {.spec.imagePullSecrets[*].name}{\"\\n\"}'")" "image references and pull secrets"
+      rb_line note "check the tag exists in the registry and the pull secret is valid; the registry must be reachable from the node" ;;
+    pod-pending)
+      rb_line read "$(rb_k "$ns" describe pod "$n")" "the scheduler's message is in the events"
+      rb_line read "$(rb_k "$ns" get pvc)" "an unbound claim also keeps a pod Pending" ;;
+    pod-notready)
+      rb_line read "$(rb_k "$ns" describe pod "$n")" "which probe fails and why"
+      rb_line read "$(rb_k "$ns" logs "$n" --all-containers --tail=100 --since=10m)" "what the application says" ;;
+    pod-oom)
+      rb_line read "$(rb_k "$ns" describe pod "$n")" "OOMKilled container and its limit"
+      rb_line read "$(rb_k "$ns" top pod "$n" --containers)" "usage now (also key 5 MEMORY)"
+      [ -z "$x1" ] || [ "$x1" = "-" ] || rb_line CHANGE "$(rb_k "$ns" set resources "$(rb_q "$x1")" -c CONTAINER --limits=memory=SIZE)" "raise the limit, or fix the leak" ;;
+    node)
+      rb_line read "$(rb_k "" describe node "$n")" "conditions and recent events"
+      rb_line read "$(rb_k "" get pods -A -o wide --field-selector "spec.nodeName=$n")" "what runs on it"
+      rb_line note "on the node and how to recover: kdash --runbook node-notready (R in kdash)" ;;
+    api)
+      [ "${LOGIN_NEEDED:-0}" != 1 ] || rb_line note "OIDC login: press L - kdash shows the login URL and continues afterwards"
+      rb_line read "$(rb_k "" cluster-info)" "the exact error"
+      rb_line note "full procedure: kdash --runbook api-unreachable (R in kdash)" ;;
+    etcd-snap)
+      rb_line read "$(rb_k "" get etcdsnapshotfiles.k3s.cattle.io -o wide)" "all snapshots with status"
+      [ -z "$name" ] || rb_line read "$(rb_k "" describe etcdsnapshotfiles.k3s.cattle.io "$n")" "the error of this snapshot"
+      rb_line read "sudo journalctl -u rke2-server --since -24h --no-pager | grep -i snapshot | tail -n 20" "snapshot job errors" "${x1:-a server}"
+      rb_line note "restore procedure (and which snapshot it would use): kdash --runbook etcd-restore" ;;
+    *) return 1 ;;
+  esac
+  return 0
+}
+
+# rows: AREA SEVERITY OBJECT FINDING HINTKEY -> $TOOLKIT_DIR/check-findings.tsv
+check_findings() {
+  local out="$TOOLKIT_DIR/check-findings.tsv"
+  : > "$out"
+  # API
+  if [ "${SPEC_OK:-1}" != 1 ] && [ -n "${SPEC_REASON:-}" ]; then
+    printf 'api\t{r}CRITICAL\t%s\tcannot read pods: %s\tapi\n' "${CTX_NAME:-context}" "$SPEC_REASON" >> "$out"
+  fi
+  # pods (the dashboard model)
+  if [ -n "${MODEL:-}" ] && [ -s "$MODEL/pods.tsv" ]; then
+    LC_ALL=C awk -F'\t' -v all="${ALL_NS:-0}" '
+      NR == 1 { next }
+      { ns = $2; p = $3; st = $4; split($5, r, "/"); rs = $6 + 0; kind = tolower($12); wl = $13; lt = $22
+        obj = (all == "1" ? ns "/" : "") p; owner = (kind != "" && wl != "" && wl != "-") ? kind "/" wl : "-"
+        if (kind !~ /^(deployment|statefulset|daemonset)$/) owner = "-"
+        if (st ~ /CrashLoopBackOff|^Error$|CreateContainerConfigError|CreateContainerError|RunContainerError|Init:CrashLoopBackOff|Init:Error/)
+          printf "pods\t{r}CRITICAL\t%s\t%s, %d restarts%s\tpod-crash|%s|%s|%s\n", obj, st, rs, (lt != "" && lt != "-" ? " (last: " lt ")" : ""), ns, p, owner
+        else if (st ~ /ImagePullBackOff|ErrImagePull|InvalidImageName/)
+          printf "pods\t{r}CRITICAL\t%s\t%s - the image cannot be pulled\tpod-image|%s|%s\n", obj, st, ns, p
+        else if (st ~ /OOMKilled/ || lt ~ /OOMKilled/)
+          printf "pods\t{y}WARNING\t%s\t%s - %d restarts, last ended OOMKilled\tpod-oom|%s|%s|%s\n", obj, st, rs, ns, p, owner
+        else if (st == "Pending" || st ~ /ContainerCreating|PodInitializing|^Init:/)
+          printf "pods\t{y}WARNING\t%s\t%s\tpod-pending|%s|%s\n", obj, st, ns, p
+        else if (st == "Running" && r[1] != r[2])
+          printf "pods\t{y}WARNING\t%s\tRunning but %s ready%s\tpod-notready|%s|%s\n", obj, $5, (rs > 0 ? ", " rs " restarts" : ""), ns, p
+        else if (st ~ /Unknown|NodeLost|Evicted/)
+          printf "pods\t{y}WARNING\t%s\t%s\tpod-notready|%s|%s\n", obj, st, ns, p }
+    ' "$MODEL/pods.tsv" >> "$out"
+  fi
+  # nodes
+  awk -F'|' '$1 == "N" && $6 != "True" { printf "nodes\t{r}CRITICAL\t%s\t%s %s (%s)\tnode||%s\n", $2, $4, ($6 == "" ? "Unknown" : "NotReady"), ($7 == "" ? "no reason" : $7), $2 }
+             $1 == "N" && $6 == "True" && $9 != "" { printf "nodes\t{d}INFO\t%s\tcordoned (no new pods)\tnode||%s\n", $2, $2 }' \
+    "$TOOLKIT_DIR/health-rb-nodes.raw" 2>/dev/null >> "$out"
+  # etcd snapshots (when readable)
+  if [ "$(health__state rb-snapshots)" = ok ]; then
+    LC_ALL=C awk -F'|' -v now="$(date +%s)" -v rpo="${KDASH_RPO_HOURS:-24}" "$TK_TIME_AWK"'
+      BEGIN { NOW = now }
+      $1 == "E" { n++; if ($7 > newest) { newest = $7; nn = $3; nok = ($8 == "true"); nerr = $13; nnode = $4; nid = $2 }
+                  if ($8 == "true" && $7 > good) { good = $7; gn = $3 } }
+      END {
+        if (n == 0) { printf "etcd\t{y}WARNING\tsnapshots\tno etcd snapshots exist\tetcd-snap\n"; exit }
+        if (!nok) printf "etcd\t{y}WARNING\t%s\tnewest snapshot (%s ago) is not usable%s\tetcd-snap||%s|%s\n", nn, ago(newest), (nerr != "" ? ": " nerr : ""), nid, nnode
+        if (good == "") printf "etcd\t{r}CRITICAL\tsnapshots\tno usable etcd snapshot - a restore is impossible\tetcd-snap\n"
+        else if (NOW - epoch(good) > rpo * 3600) printf "etcd\t{y}WARNING\t%s\tnewest usable snapshot is %s old (more than %sh)\tetcd-snap\n", gn, ago(good), rpo }
+    ' "$TOOLKIT_DIR/health-rb-snapshots.raw" >> "$out"
+  fi
+  # services, storage, certificates: the views' own findings, gathered without drawing them
+  RB_COLLECT_FINDINGS="$out" RB_AREA=services health_render_services > /dev/null 2>&1
+  RB_COLLECT_FINDINGS="$out" RB_AREA=storage health_render_storage > /dev/null 2>&1
+  if [ -d "$TOOLKIT_DIR/check-certs/certs" ]; then
+    ( TOOLKIT_DIR="$TOOLKIT_DIR/check-certs"; RB_COLLECT_FINDINGS="$out" RB_AREA=certificates certs_render ) > /dev/null 2>&1
+  elif [ -d "$TOOLKIT_DIR/certs" ]; then RB_COLLECT_FINDINGS="$out" RB_AREA=certificates certs_render > /dev/null 2>&1; fi
+  return 0
+}
+
+check_render() {
+  local f="$TOOLKIT_DIR/check-findings.tsv" num="$TOOLKIT_DIR/check-numbered.tsv" crit warn a st det cnt
+  tk_title "CHECK NOW" "everything kdash can see that is wrong right now - most severe first, with the commands to check and fix it"
+  if [ ! -f "$TOOLKIT_DIR/check.at" ]; then printf '\nChecking API, nodes, pods, services, storage, certificates and etcd snapshots...\n'; return 0; fi
+  check_findings
+  # the verdict line
+  crit="$(grep -c $'\t{r}CRITICAL' "$f")"; warn="$(grep -c $'\t{y}WARNING' "$f")"
+  if [ "${TK_COLOR:-0}" = 1 ]; then
+    if [ "$crit" -gt 0 ]; then printf '\n ~[1;41;97m %s CRITICAL ~[0m' "$crit"; fi
+    if [ "$warn" -gt 0 ]; then printf '%s~[1;43;30m %s WARNING ~[0m' "$([ "$crit" -gt 0 ] && printf ' ' || printf '\n ')" "$warn"; fi
+    if [ "$crit$warn" = 00 ]; then printf '\n ~[1;42;30m ALL CLEAR ~[0m'; fi
+    printf '  ~[90mchecked %ss ago - r re-checks now~[0m\n' "$(check_age)"
+  else
+    printf '\n %s CRITICAL  %s WARNING  (checked %ss ago - r re-checks now)\n' "$crit" "$warn" "$(check_age)"
+  fi
+  # area summary
+  { printf 'AREA\tSTATUS*\t>FINDINGS\tDETAIL\n'
+    for a in $CHECK_AREAS; do
+      cnt="$(awk -F'\t' -v a="$a" '$1 == a && $2 !~ /INFO/' "$f" | wc -l | tr -d ' ')"
+      st="{g}OK"
+      awk -F'\t' -v a="$a" '$1 == a && $2 ~ /WARN/ { f = 1 } END { exit !f }' "$f" && st="{y}WARNING"
+      awk -F'\t' -v a="$a" '$1 == a && $2 ~ /CRIT/ { f = 1 } END { exit !f }' "$f" && st="{r}CRITICAL"
+      case "$a" in
+        api) det="$([ "${SPEC_OK:-1}" = 1 ] && printf 'pods read %ss ago' "$(( $(date +%s) - ${SPEC_AT:-0} ))" || printf '%s' "${SPEC_REASON:-not read yet}")" ;;
+        nodes) case "$(health__state rb-nodes)" in ok) det="$(awk -F'|' '$1 == "N" { n++; if ($6 == "True") r++ } END { printf "%d of %d Ready", r, n }' "$TOOLKIT_DIR/health-rb-nodes.raw")" ;; *) [ "$cnt" != 0 ] || st="{d}not visible"; det="nodes: $(health__state rb-nodes)" ;; esac ;;
+        pods) det="$(awk -F'\t' 'NR > 1 { n++ } END { printf "%d pods in the dashboard scope", n }' "$MODEL/pods.tsv" 2>/dev/null)" ;;
+        services) det="services $(health__state services), endpoints $(health__state endpoints), ingresses $(health__state ingresses)" ;;
+        storage) det="claims $(health__state pvcs), volumes $(health__state pvs)" ;;
+        certificates) det="$(if [ -d "$TOOLKIT_DIR/check-certs/certs" ]; then printf 'quick check (C for nodes, kubelets, ingress)'; elif [ -d "$TOOLKIT_DIR/certs" ]; then printf 'full check %ss ago' "$(certs_age)"; else printf 'not checked'; fi)" ;;
+        etcd) case "$(health__state rb-snapshots)" in ok) det="$(awk -F'|' '$1 == "E" { n++; if ($8 == "true") r++ } END { printf "%d snapshots, %d usable", n, r }' "$TOOLKIT_DIR/health-rb-snapshots.raw")" ;;
+                *) st="{d}not visible"; det="snapshots: $(health__state rb-snapshots) - on a server: sudo rke2 etcd-snapshot ls" ;; esac ;;
+      esac
+      printf '%s\t%s\t%s\t%s\n' "$a" "$st" "$cnt" "$det"
+    done
+  } | tk_table "AREAS" "" "" area areas
+  # findings, numbered across all areas (INFO last), then their commands
+  awk -F'\t' 'BEGIN { OFS = "\t" } { r = ($2 ~ /CRIT/) ? 1 : ($2 ~ /WARN/) ? 2 : 3; print r, $0 }' "$f" | LC_ALL=C sort -t $'\t' -s -k1,1n | cut -f2- |
+    awk -F'\t' 'BEGIN { OFS = "\t" } { print NR, $0 }' > "$num"
+  { printf '#\tSEVERITY*\tAREA\tOBJECT\tFINDING\n'; awk -F'\t' 'BEGIN { OFS = "\t" } { print $1, $3, $2, $4, $5 }' "$num"; } |
+    tk_table "FINDINGS" "critical first - Enter runs the read commands of one now (CHANGE commands are never run)" "nothing wrong found - the areas above say what was checked" finding findings
+  awk -F'\t' 'BEGIN { OFS = "\t" } { print $1, $3, $4, $5, $6 }' "$num" > "$num.list"
+  KDASH_HINT_MAX="${KDASH_CHECK_HINT_MAX:-60}" rb_next_list "$num.list"
+  rm -f "$num.list"
+  return 0
+}
+
+# Run the read commands captured for finding N; output to a file (the caller shows it)
+check_run() { # finding-number capture-file output-file
+  local n="$1" cap="$2" out="$3" alias cmd verb w i ran=0 skipped=0 rc t0
+  local -a argv rest
+  [ -s "$cap" ] || { printf 'no commands recorded - open the view first\n' > "$out"; return 1; }
+  alias="$(awk -F'\t' -v k="@$n" '$1 == k { print $2; exit }' "$cap")"; [ -z "$alias" ] || n="$alias"
+  : > "$out"
+  printf 'kdash instant check - finding #%s - context %s - %s\nread-only commands, run now through the audited kubectl guard\n' "$n" "$CTX_NAME" "$(date '+%Y-%m-%d %H:%M:%S %Z')" >> "$out"
+  while IFS=$'\t' read -r i cmd; do
+    [ "$i" = "$n" ] || continue
+    cmd="${cmd% 2>/dev/null}"
+    printf '\n$ %s\n' "$cmd" >> "$out"
+    # only plain kubectl reads: no pipes, redirections, substitutions or variables
+    case "$cmd" in kubectl\ *) ;; *) printf '(not run: not a kubectl command - run it yourself where it says)\n' >> "$out"; skipped=$((skipped + 1)); continue ;; esac
+    case "$cmd" in *'|'*|*';'*|*'&'*|*'`'*|*'$'*|*'>'*|*'<'*) printf '(not run: pipes and redirections are left to you)\n' >> "$out"; skipped=$((skipped + 1)); continue ;; esac
+    argv=()
+    set -f; if ! eval "argv=( $cmd )" 2>/dev/null; then set +f; printf '(not run: could not parse)\n' >> "$out"; skipped=$((skipped + 1)); continue; fi; set +f
+    rest=(); w=1
+    while [ "$w" -lt "${#argv[@]}" ]; do
+      case "${argv[w]}" in
+        --context|--kubeconfig) w=$((w + 2)); continue ;;
+        --context=*|--kubeconfig=*) w=$((w + 1)); continue ;;
+      esac
+      rest+=("${argv[w]}"); w=$((w + 1))
+    done
+    verb=""; w=0
+    while [ "$w" -lt "${#rest[@]}" ]; do
+      case "${rest[w]}" in -n|--namespace|-l|-o|-c|--selector|--field-selector) w=$((w + 2)) ;; -*) w=$((w + 1)) ;; *) verb="${rest[w]}"; break ;; esac
+    done
+    case "$verb" in
+      get|describe|logs|top|explain|events|version|cluster-info|api-resources) ;;
+      auth) case " ${rest[*]} " in *" whoami "*|*" can-i "*) ;; *) verb="" ;; esac ;;
+      rollout) case " ${rest[*]} " in *" history "*|*" status "*) ;; *) verb="" ;; esac ;;
+      *) verb="" ;;
+    esac
+    case " ${rest[*]} " in *" --raw "*|*" -w "*|*" --watch "*|*" -f "*|*" --follow "*) verb="" ;; esac
+    if [ -z "$verb" ]; then printf '(not run: only get, describe, logs, top, rollout history/status and auth whoami/can-i run from here)\n' >> "$out"; skipped=$((skipped + 1)); continue; fi
+    t0=$(date +%s)
+    timeout "${KDASH_CHECK_TIMEOUT:-30}" "${KC[@]}" "${rest[@]}" < /dev/null 2>&1 | head -c "${KDASH_CHECK_BYTES:-262144}" | inspector_clean >> "$out"
+    rc="${PIPESTATUS[0]}"
+    [ "$rc" = 0 ] || printf '(exit %s%s)\n' "$rc" "$([ "$rc" = 124 ] && printf ' - timed out after %ss' "${KDASH_CHECK_TIMEOUT:-30}")" >> "$out"
+    printf '(%ss)\n' "$(( $(date +%s) - t0 ))" >> "$out"
+    ran=$((ran + 1))
+  done < "$cap"
+  [ $((ran + skipped)) -gt 0 ] || printf '\nno read commands for finding #%s (it may only have notes or CHANGE commands)\n' "$n" >> "$out"
+  audit CHECK_RUN "finding=$n ran=$ran skipped=$skipped view=${VIEW:-check}"
+  CHECK_RAN="$ran"; CHECK_SKIPPED="$skipped"
+  [ "$ran" -gt 0 ]
+}
+
+# Enter in a view with findings: ask for the number, run, show in the pager
+check_run_prompt() {
+  local cap="$TOOLKIT_DIR/run-$VIEW.tsv" n out="$TMPD/check-run.out" pager first
+  [ -s "$cap" ] || paint 2>/dev/null
+  first="$(awk -F'\t' '$1 ~ /^[0-9]+$/ { print $1; exit }' "$cap" 2>/dev/null)"
+  [ -n "$first" ] || { flash "no read commands to run in this view" 4; return 0; }
+  printf '\033[%s;1H\033[K\033[?25h run the read commands of finding # (Enter = %s, Esc cancels): ' "$(tput lines 2>/dev/null || echo 24)" "$first"
+  IFS= read -r n </dev/tty || n=""; printf '\033[?25l'
+  case "$n" in *$'\e'*|q|Q) return 0 ;; '') n="$first" ;; esac
+  case "$n" in \#*) n="${n#\#}" ;; esac
+  case "$n" in *[!0-9]*) flash "not a finding number: $n" 4; return 0 ;; esac
+  flash "running the read commands of #$n ..." 30; paint 2>/dev/null
+  check_run "$n" "$cap" "$out"
+  pager="$(command -v less || command -v more || echo cat)"
+  printf '\033[2J\033[H\033[?25h'
+  { printf '(q returns to kdash)\n\n'; cat "$out"; } | LESS='-R -K -S' "$pager"
+  [ "${pager##*/}" != cat ] || { printf '\n any key returns'; IFS= read -rsn1 _ </dev/tty; }
+  printf '\033[?25l\033[2J'
+  flash "#$n: ran ${CHECK_RAN:-0}, left to you ${CHECK_SKIPPED:-0} - output kept in $out" 8
+}
+
+# ---- OIDC / exec-plugin login (startup check, key L) ----------------------------
+# kubectl's login helper (kubelogin / oidc-login) prints a URL and waits for the
+# browser (or for a code typed in). kdash runs its API reads in the background with
+# no terminal, so that URL used to vanish into an error file and every read failed.
+# Now: a login that is due is found before the dashboard starts (and when a read
+# fails later), the helper runs in the foreground with the URL shown prominently,
+# and the dashboard picks up again as soon as the login succeeds.
+LOGIN_ERR_RE='visit the following url|open the following url|please visit|in your browser|enter code|device code|user code|oidc-login|kubelogin|get-token|getting credentials|exec plugin|executable .* failed|you must be logged in|unauthorized|invalid_grant|refresh token|token is expired|token has expired|authentication required|interactive login'
+LOGIN_NEEDED=0; LOGIN_URL=""; LOGIN_USER=""
+
+# The login URL(s) a helper printed: a URL on a line that asks to visit / open / sign in
+# (or on the next lines, when the helper prints the URL on its own line). URLs inside
+# API connection errors ('Get "https://...": dial tcp ...') and the API server itself
+# are never login URLs. Up to 3 distinct URLs, in order.
+login_urls_of() { # file
+  [ -s "$1" ] || return 0
+  LC_ALL=C awk -v api="${LOGIN_API_URL:-}" '
+    function grab(s,   u) {
+      while (match(s, /https?:\/\/[^] \t"<>'"'"'()]+/)) {
+        u = substr(s, RSTART, RLENGTH); s = substr(s, RSTART + RLENGTH)
+        sub(/[.,;:]+$/, "", u)
+        if (api != "" && index(u, api) == 1) continue
+        if (!(u in seen) && n < 3) { seen[u] = 1; n++; print u }
+      } }
+    { gsub(/\r/, ""); l = tolower($0) }
+    l ~ /dial tcp|get "https?:|post "https?:|unable to connect to the server|connection refused|i\/o timeout|no such host|tls handshake/ { want = 0; next }
+    l ~ /visit|open |opening|browser|log ?in|sign ?in|authenticat|device|verif|go to|navigate|following url|authori[sz]e/ { want = 3; grab($0); next }
+    want > 0 { grab($0); want-- }
+  ' "$1"
+}
+login_url_of() { login_urls_of "$1" | head -n 1; }
+# a helper waits for the user: a login URL, or a prompt for a code
+login_prompted() { [ -n "$(login_urls_of "$1")" ] || grep -qiE 'enter (the )?code|user code|device code|verification code' "$1" 2>/dev/null; }
+# does this context log in through a helper at all (exec plugin / oidc auth-provider)?
+login_has_plugin() {
+  if [ -z "${LOGIN_HAS_PLUGIN:-}" ]; then
+    if [ -n "$(certs__kcfg '{.users[0].user.exec.command}')" ] || [ -n "$(certs__kcfg '{.users[0].user.auth-provider.name}')" ]; then LOGIN_HAS_PLUGIN=1; else LOGIN_HAS_PLUGIN=0; fi
+    LOGIN_API_URL="$(certs__kcfg '{.clusters[0].cluster.server}')"
+  fi
+  [ "$LOGIN_HAS_PLUGIN" = 1 ]
+}
+login_err_check() { [ -s "$1" ] || return 1; login_has_plugin || return 1; login_prompted "$1" || grep -qiE "$LOGIN_ERR_RE" "$1"; }
+
+login__argv() { # -> LOGIN_KUBECTL (real kubectl) + LOGIN_ARGS (context / kubeconfig only)
+  local a skip=0 i=1
+  LOGIN_KUBECTL="${KDASH_REAL_KUBECTL:-}"; LOGIN_ARGS=()
+  if [ "${KC[0]}" = bash ] && [ "${KC[1]:-}" = "$TMPD/kubectl" ]; then i=2; else LOGIN_KUBECTL="${LOGIN_KUBECTL:-${KC[0]}}"; fi
+  [ -n "$LOGIN_KUBECTL" ] || LOGIN_KUBECTL="$(command -v kubectl)"
+  for a in "${KC[@]:$i}"; do
+    if [ "$skip" = 1 ]; then skip=0; continue; fi
+    case "$a" in --request-timeout) skip=1 ;; --request-timeout=*) ;; *) LOGIN_ARGS+=("$a") ;; esac
+  done
+}
+
+# what the kubelogin token cache says, without any network call:
+# noplugin | valid | none | expired | unknown
+login__cache_state() {
+  local cmd ap args cache issuer="" a prev="" f newest="" idt rt line e now
+  cmd="$(certs__kcfg '{.users[0].user.exec.command}')"
+  ap="$(certs__kcfg '{.users[0].user.auth-provider.name}')"
+  if [ -z "$cmd" ]; then [ "$ap" = oidc ] && { printf unknown; return 0; }; printf noplugin; return 0; fi
+  args="$(certs__kcfg '{.users[0].user.exec.args[*]}')"
+  case "$cmd $args" in *oidc-login*|*oidc_login*|*kubelogin*) ;; *) printf unknown; return 0 ;; esac
+  case "$args" in *--oidc-issuer-url*) ;; *) printf unknown; return 0 ;; esac   # e.g. Azure kubelogin: another cache
+  case "$args" in *keyring*) printf unknown; return 0 ;; esac
+  cache="$HOME/.kube/cache/oidc-login"
+  for a in $args; do
+    case "$a" in --token-cache-dir=*) cache="${a#*=}" ;; --oidc-issuer-url=*) issuer="${a#*=}" ;; esac
+    case "$prev" in --token-cache-dir) cache="$a" ;; --oidc-issuer-url) issuer="$a" ;; esac
+    prev="$a"
+  done
+  cache="${cache/#\~/$HOME}"
+  for f in "$cache"/*; do
+    [ -f "$f" ] && [ -r "$f" ] || continue
+    case "$f" in *.lock) continue ;; esac
+    idt="$(LC_ALL=C grep -o '"id_token" *: *"[^"]*"' "$f" 2>/dev/null | head -n 1 | sed 's/.*: *"//; s/"$//')"
+    [ -n "$idt" ] || continue
+    if [ -n "$issuer" ]; then line="$(certs__jwt "$idt")" || continue
+      case "${line#*$'\t'}" in "${issuer%/}"|"${issuer%/}/") ;; *) continue ;; esac; fi
+    if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then newest="$f"; fi
+  done
+  [ -n "$newest" ] || { printf none; return 0; }
+  now=$(date +%s)
+  idt="$(LC_ALL=C grep -o '"id_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
+  rt="$(LC_ALL=C grep -o '"refresh_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
+  e="$(certs__jwt "$idt" 2>/dev/null | cut -f1)"
+  if [ -n "$e" ] && [ "$e" -gt $((now + 60)) ]; then printf valid; return 0; fi
+  [ -n "$rt" ] || { printf expired; return 0; }
+  e="$(certs__jwt "$rt" 2>/dev/null | cut -f1)"
+  if [ -z "$e" ]; then printf unknown; elif [ "$e" -gt $((now + 60)) ]; then printf valid; else printf expired; fi
+  return 0
+}
+
+# Stand-in browsers: a helper that "opens" the login page in a browser (xdg-open, BROWSER,
+# ...) - on a headless host (usually nothing), or a remote X11 window - records the
+# URL here instead, and kdash shows it. KDASH_LOGIN_BROWSER=system lets it open a browser.
+login__browser_dir() { # dir -> creates the stand-ins, empties the URL record
+  local d="$1" b
+  mkdir -p "$d" 2>/dev/null || return 1
+  for b in xdg-open x-www-browser www-browser sensible-browser gnome-open kde-open wslview open firefox google-chrome chromium chromium-browser; do
+    [ -x "$d/$b" ] && continue
+    printf '#!/bin/sh\n# kdash: records the URL a login helper wanted to open (nothing is opened)\n[ -n "$1" ] && printf "%%s\\n" "$1" >> "%s/url"\nexit 0\n' "$d" > "$d/$b"
+    chmod 700 "$d/$b"
+  done
+  rm -f "$d/url"
+}
+login__env() { # run a command with the stand-in browsers (unless KDASH_LOGIN_BROWSER=system)
+  local d="$1"; shift
+  if [ "${KDASH_LOGIN_BROWSER:-capture}" = capture ] && login__browser_dir "$d"; then PATH="$d:$PATH" BROWSER="$d/xdg-open" "$@"
+  else "$@"; fi
+}
+login__kill_tree() { # pid: it and all its descendants
+  local p kids=""
+  if command -v pgrep >/dev/null 2>&1; then for p in $(pgrep -P "$1" 2>/dev/null); do login__kill_tree "$p"; done; fi
+  kill "$1" 2>/dev/null || true
+}
+# while the login screen waits: did the login complete (here or in another terminal)?
+login__poll_ok() {
+  [ "$(login__cache_state 2>/dev/null)" != valid ] || return 0
+  KDASH_LOGIN_PROBE="${KDASH_LOGIN_POLL_PROBE:-4}" LOGIN_PROBE_DIR="$TMPD/login-poll" login_probe >/dev/null 2>&1
+}
+login__issuer() { # the issuer URL and client id the context logs in with (from the kubeconfig)
+  local args a prev="" iss="" cid=""
+  args="$(certs__kcfg '{.users[0].user.exec.args[*]}')"
+  for a in $args; do
+    case "$a" in --oidc-issuer-url=*) iss="${a#*=}" ;; --oidc-client-id=*) cid="${a#*=}" ;; esac
+    case "$prev" in --oidc-issuer-url) iss="$a" ;; --oidc-client-id) cid="$a" ;; esac
+    prev="$a"
+  done
+  [ -n "$iss" ] || iss="$(certs__kcfg '{.users[0].user.auth-provider.config.idp-issuer-url}')"
+  [ -n "$cid" ] || cid="$(certs__kcfg '{.users[0].user.auth-provider.config.client-id}')"
+  printf '%s\t%s' "$iss" "$cid"
+}
+
+# kill login helpers left behind by background reads (they hold the callback port 8000)
+login__kill_stale() {
+  local pat='oidc[-_]login get-token|kubelogin get-token'
+  if command -v pkill >/dev/null 2>&1; then pkill -s 0 -f "$pat" 2>/dev/null || true
+  else ps -o pid=,args= -s "$(ps -o sid= $$ 2>/dev/null | tr -d ' ')" 2>/dev/null | grep -E "$pat" | grep -v grep | awk '{print $1}' | xargs -r kill 2>/dev/null || true; fi
+}
+
+# A short look with no terminal: 0 = the API answers, 1 = a login is needed, 2 = another error.
+# The helper is stopped as soon as it prints a URL (it would wait for the browser).
+login_probe() {
+  local err="$TMPD/login-probe.err" pid i=0 max=$(( ${KDASH_LOGIN_PROBE:-10} * 5 )) rc
+  login__argv
+  : > "$err"
+  local pd="${LOGIN_PROBE_DIR:-$TMPD/login-probe}"
+  if command -v setsid >/dev/null 2>&1; then login__env "$pd" setsid "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" version --request-timeout=8s < /dev/null > /dev/null 2> "$err" & pid=$!
+  else login__env "$pd" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" version --request-timeout=8s < /dev/null > /dev/null 2> "$err" & pid=$!; fi
+  while kill -0 "$pid" 2>/dev/null; do
+    if login_prompted "$err" || [ -s "$pd/url" ]; then
+      kill -- "-$pid" 2>/dev/null || login__kill_tree "$pid"; wait "$pid" 2>/dev/null; LOGIN_URL="$(login_url_of "$err")"; return 1
+    fi
+    i=$((i + 1)); [ "$i" -lt "$max" ] || { kill -- "-$pid" 2>/dev/null || login__kill_tree "$pid"; break; }
+    sleep 0.2
+  done
+  wait "$pid" 2>/dev/null; rc=$?
+  [ "$rc" != 0 ] || return 0
+  if login_err_check "$err"; then LOGIN_URL="$(login_url_of "$err")"; return 1; fi
+  return 2
+}
+
+# before the dashboard (and before one-shot commands): log in first when it is due
+login_preflight() {
+  [ "${KDASH_LOGIN_CHECK:-1}" = 1 ] || return 0
+  local st; st="$(login__cache_state 2>/dev/null)"
+  case "$st" in noplugin|valid) return 0 ;; esac
+  login_probe; case $? in 0|2) return 0 ;; esac
+  audit LOGIN_NEEDED "context=$CTX_NAME when=start cache=$st"
+  if [ -t 0 ] && [ -t 1 ] && [ -r /dev/tty ]; then
+    login_interactive start; return 0
+  fi
+  printf 'kdash: the OIDC login for context %s has expired - run kdash (or: kubectl --context %s auth whoami) in a terminal to log in\n' "$CTX_NAME" "$CTX_NAME" >&2
+  return 4
+}
+
+login__box() { # url [more urls] -> prominent box + help for a callback on this host
+  local url="$1" host port user code more
+  host="$(hostname -f 2>/dev/null || hostname)"; user="${SUDO_USER:-${USER:-$(id -un)}}"
+  code="$(grep -oiE '(user |verification |device )?code[^A-Za-z0-9]{1,4}[A-Z0-9]{3,5}-?[A-Z0-9]{3,5}' "$TMPD/login.err" 2>/dev/null | grep -oE '[A-Z0-9]{3,5}-?[A-Z0-9]{3,5}$' | head -n 1)"
+  {
+    printf '\n\033[1;7m  OPEN THIS URL IN YOUR BROWSER  \033[0m   (Ctrl+click or copy it; the whole line is the URL)\n'
+    # the URL alone on its own line, no box characters, so terminals detect and copy it whole
+    printf '\n\033[1m%s\033[0m\n\n' "$url"
+    shift; for more in "$@"; do printf '  also printed: %s\n' "$more"; done
+    [ -z "$code" ] || printf '\033[1;7m  CODE TO ENTER ON THAT PAGE: %s  \033[0m\n\n' "$code"
+    case "$url" in
+      http://localhost:*|http://127.0.0.1:*|http://localhost/*|http://127.0.0.1/*)
+        port="${url#http://*:}"; port="${port%%/*}"; case "$port" in ''|*[!0-9]*) port=8000 ;; esac
+        printf '  This address is on THIS host (%s): after you sign in, the browser is sent back to port %s here.\n' "$host" "$port"
+        printf '  From a browser on your PC, forward the port first (in a new local terminal), then open the URL:\n'
+        printf '\033[1m      ssh -L %s:localhost:%s %s@%s\033[0m\n' "$port" "$port" "$user" "$host"
+        printf '  MobaXterm: Tunneling > New SSH tunnel > Local port forwarding: %s -> localhost:%s through %s.\n' "$port" "$port" "$host"
+        printf '  No tunnel possible? Ask for --grant-type=authcode-keyboard (or device-code) in the kubeconfig:\n'
+        printf '  the helper then prints the identity provider URL and asks for a code instead.\n' ;;
+      *) printf '  Sign in there. If the page shows a code, type it at the prompt here and press Enter.\n' ;;
+    esac
+    printf '\n  Waiting for the login to finish ... (Ctrl-C cancels)\n\n'
+  } > /dev/tty
+}
+
+# Run the login helper in the foreground; returns 0 when kubectl works again.
+login_interactive() { # start | session [auto]
+  local when="${1:-session}" auto="${2:-}" f="$TMPD/login.err" out="$TMPD/login.out" w rc key ok=0 t0=$SECONDS
+  local bdir="$TMPD/login-browser" hp n elsewhere iss cid
+  IFS=$'\t' read -r iss cid <<< "$(login__issuer 2>/dev/null)"
+  login__argv
+  [ "$when" = start ] || toolkit_cancel 2>/dev/null
+  login__kill_stale
+  printf '\033[2J\033[H\033[?25h' > /dev/tty
+  [ "$when" = start ] || { [ "${ALTSCR:-1}" = 1 ] && printf '\033[?1049l' > /dev/tty; }
+  while IFS= read -rsn1 -t 0.01 _flush </dev/tty; do :; done
+  stty sane </dev/tty 2>/dev/null || true
+  while :; do
+    : > "$f"; : > "$out"
+    printf '\033[1;7m KDASH | OIDC LOGIN | context %s \033[0m\n\n' "$CTX_NAME" > /dev/tty
+    printf '  Your login for context %s %s%s. The login helper starts now and shows a URL:\n' "$CTX_NAME" "$([ -n "$auto" ] && printf 'has expired - kdash opened the login for you' || printf 'is needed')" "$([ "$when" = start ] && printf ' before kdash can read anything' || printf ' - the dashboard keeps its last data meanwhile')" > /dev/tty
+    printf '  open it, sign in, and kdash continues by itself.\n' > /dev/tty
+    [ -z "$iss" ] || printf '\n  \033[2missuer   %s%s\033[0m\n' "$iss" "${cid:+   client $cid}" > /dev/tty
+    audit LOGIN_START "context=$CTX_NAME when=$when${auto:+ auto=1}"
+    login__browser_dir "$bdir" 2>/dev/null
+    ( i=0; hinted=0; while [ "$i" -lt 3000 ]; do
+        u="$(login_urls_of "$f")"; if [ -n "$u" ]; then sleep 0.3; login__box $(login_urls_of "$f"); exit 0; fi
+        # a helper that opened a "browser" instead of printing the URL: the stand-in recorded it
+        if [ -s "$bdir/url" ]; then sleep 0.3; [ -n "$(login_urls_of "$f")" ] && { login__box $(login_urls_of "$f"); exit 0; }
+          printf '\n  \033[2m(the login helper tried to open a browser on this host - its URL was caught instead)\033[0m\n' > /dev/tty
+          login__box $(awk '!s[$0]++' "$bdir/url" | head -n 3); exit 0; fi
+        if [ "$hinted" = 0 ] && [ "$i" -ge $(( ${KDASH_LOGIN_NOURL_HINT:-8} * 5 )) ]; then hinted=1
+          { printf '\n  The login helper has not printed a URL yet. It may have opened a browser on this host\n'
+            printf '  (DISPLAY=%s), be waiting for a code, or be stuck. Ctrl-C stops it; then r tries again.\n\n' "${DISPLAY:-unset}"; } > /dev/tty
+        fi
+        sleep 0.2; i=$((i + 1)); done ) & w=$!
+    trap ':' INT
+    elsewhere=0; n=0
+    login__env "$bdir" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami < /dev/tty > "$out" 2> >(tee -a "$f" > /dev/tty) & hp=$!
+    # meanwhile, every KDASH_LOGIN_POLL s once the URL is out: a login completed in another
+    # terminal (or a helper that never returns) must not keep kdash waiting
+    while kill -0 "$hp" 2>/dev/null; do
+      sleep 1; n=$((n + 1))
+      [ $((n % ${KDASH_LOGIN_POLL:-5})) -eq 0 ] || continue
+      [ -n "$(login_urls_of "$f")" ] || [ -s "$bdir/url" ] || [ "$n" -ge 20 ] || continue
+      if login__poll_ok; then elsewhere=1; login__kill_tree "$hp"; break; fi
+    done
+    wait "$hp" 2>/dev/null; rc=$?
+    [ "$elsewhere" = 0 ] || rc=0
+    trap 'AUDIT_SIG=INT; cleanup; exit 0' INT
+    kill "$w" 2>/dev/null; wait "$w" 2>/dev/null
+    if [ "$elsewhere" = 1 ]; then
+      printf '\n  \033[1mThe API answers now - the login was completed%s.\033[0m\n' "$([ -s "$out" ] && printf '' || printf ' (here or in another terminal)')" > /dev/tty
+      [ -s "$out" ] || "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami --request-timeout=10s < /dev/null > "$out" 2>/dev/null || true
+    fi
+    sleep 0.2
+    # an old cluster without "auth whoami": the token is there if any read works now
+    if [ "$rc" != 0 ] && ! login_err_check "$f" && grep -qiE "unknown command|could not find the requested resource|doesn.t have a resource|not found" "$f"; then
+      "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" version --request-timeout=10s < /dev/null > /dev/null 2>> "$f" && rc=0
+    fi
+    if [ "$rc" = 0 ]; then
+      LOGIN_USER="$(awk '/^Username/ { $1 = ""; sub(/^ +/, ""); print; exit }' "$out")"
+      printf '\n\033[1;32m  Logged in%s.\033[0m kdash continues ...\n' "${LOGIN_USER:+ as $LOGIN_USER}" > /dev/tty
+      audit LOGIN_OK "context=$CTX_NAME user=${LOGIN_USER:-?} seconds=$((SECONDS - t0))$([ "$elsewhere" = 1 ] && printf ' via=poll')$([ -s "$bdir/url" ] && printf ' url=captured')"
+      ok=1; sleep 1; break
+    fi
+    audit LOGIN_FAILED "context=$CTX_NAME rc=$rc"
+    printf '\n\033[1;31m  The login did not complete (rc=%s).\033[0m Last messages:\n' "$rc" > /dev/tty
+    tail -n 4 "$f" | sed 's/^/    /' > /dev/tty
+    printf '\n  r try again   c continue without login (reads will fail)   q quit kdash  > ' > /dev/tty
+    IFS= read -rsn1 key </dev/tty || key=q
+    printf '\n' > /dev/tty
+    case "$key" in r|R) printf '\033[2J\033[H' > /dev/tty; continue ;; c|C) break ;; *) cleanup 2>/dev/null; exit 4 ;; esac
+  done
+  if [ "$ok" = 1 ]; then
+    rm -rf "$TMPD/fetch-job" "$TMPD/toolkit-next" "$TMPD/certq"
+    LOGIN_NEEDED=0; LOGIN_URL=""; SPEC_REASON=""; LOGIN_AUTO_DONE=0
+    FETCH_NEXT=0; FETCH_FAILURES=0; SPEC_AT=0; LAST=0; TOOLKIT_NEXT=0
+    CERTQ_NEXT=0; CERT_BADGE=""
+  fi
+  if [ "$when" != start ]; then
+    printf '\033[?25l' > /dev/tty
+    [ "${ALTSCR:-1}" = 1 ] && printf '\033[?1049h' > /dev/tty
+    printf '\033[2J' > /dev/tty
+    if [ "$ok" = 1 ]; then flash "logged in${LOGIN_USER:+ as $LOGIN_USER} - reading data again" 6; else flash "still not logged in - press L to log in (the URL is shown again)" 600; fi
+  fi
+  [ "$ok" = 1 ]
+}
+
+# Background reads that hit an expired login do not fail at once: the helper prints its
+# URL and waits for a browser until the guard stops it (12 s per call, many calls).
+# Their error files are watched while they run, so the login is noticed in a second.
+login_watch_jobs() {
+  [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0
+  local f
+  for f in "$TMPD"/fetch-job/*.err "$TMPD"/toolkit-next/*.err "$TMPD"/certq/*.err; do
+    [ -s "$f" ] || continue
+    { login_prompted "$f" || grep -qiE 'oidc-login|kubelogin|get-token|getting credentials' "$f" 2>/dev/null; } || continue
+    login_note_failure "$f" || continue
+    toolkit_cancel; rm -rf "$TMPD/certq"
+    SPEC_REASON="OIDC login needed - press L (the login URL is shown, kdash continues afterwards)"
+    return 0
+  done
+  return 0
+}
+
+# Not logged in any more: open the login (and its URL) by itself, once per expiry.
+# After "c continue without login" it waits for L; KDASH_LOGIN_AUTO=0 always waits for L.
+login_auto_maybe() {
+  [ "${LOGIN_NEEDED:-0}" = 1 ] && [ "${KDASH_LOGIN_AUTO:-1}" = 1 ] && [ "${LOGIN_AUTO_DONE:-0}" = 0 ] || return 1
+  LOGIN_AUTO_DONE=1
+  login_interactive session auto
+  return 0
+}
+
+# a background read failed: is it the login? (called with that read's error file)
+login_note_failure() { # errfile
+  [ "${KDASH_LOGIN_CHECK:-1}" = 1 ] || return 1
+  login_err_check "$1" || return 1
+  if [ "$LOGIN_NEEDED" != 1 ]; then
+    LOGIN_NEEDED=1; LOGIN_URL="$(login_url_of "$1")"   # shown by the login screen, which runs the helper again
+    audit LOGIN_NEEDED "context=$CTX_NAME when=session"
+    declare -F flash >/dev/null && flash "OIDC LOGIN NEEDED for $CTX_NAME - $([ "${KDASH_LOGIN_AUTO:-1}" = 1 ] && [ "${LOGIN_AUTO_DONE:-0}" = 0 ] && printf 'opening the login' || printf 'press L'): kdash shows the login URL and continues afterwards" 600
+    login__kill_stale
   fi
   return 0
 }

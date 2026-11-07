@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ vcluster-docker_dev │ kdash-e2e                                                                                                             SUMMARY
+[0m[90m┌─[39m [1mSUMMARY[0m [90m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90mREAD-ONLY / audited[39m [90m─┐[39m
+[90m│[39m [90mPOD      [39m  [1mapp-server-8fb4699bc-j6rk2[0m                                                                                                                                 [90m│[39m
+[90m│[39m [90mCONTAINER[39m  [1mapp[0m   [32m● Running[39m   [90mready[39m   [90mrestarts[39m 0   [90mbusybox:1.36[39m                                                                                                        [90m│[39m
+[90m└─[39m [1mrows 1-38 / 38 · 38 lines[0m [90m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘[39m
+Name: app-server-8fb4699bc-j6rk2
+Namespace: kdash-e2e
+UID: 6460b617-6de3-411e-8fab-cf1916733480
+Created: 2026-11-06T12:38:07Z
+Phase: Running
+Reason:
+Message:
+Node: dev
+Pod IP: 10.244.0.243
+Service account: default
+Owner: ReplicaSet/app-server-8fb4699bc
+
+CONDITIONS
+PodReadyToStartContainers       True
+Initialized     True
+Ready   True
+ContainersReady True
+PodScheduled    True
+
+CONTAINERS (requests / limits)
+app     busybox:1.36
+  CPU: 20m / 200m       Memory: 8Mi / 64Mi
+sidecar busybox:1.36
+  CPU: 5m / 50m Memory: 4Mi / 32Mi
+
+CONTAINER STATUS
+app     ready=true      restarts=0
+  Waiting:
+  Running since: 2026-11-06T12:38:19Z
+  Terminated:  exit=
+  Previous:  exit=
+sidecar ready=true      restarts=0
+  Waiting:
+  Running since: 2026-11-06T12:38:19Z
+  Terminated:  exit=
+  Previous:  exit=
+
+INIT CONTAINER STATUS
+
+
+
+[90mPANES[39m  [1m<s>[0m summary  [1m<d>[0m describe  [1m<e>[0m events  [1m<!>[0m why  [1m<l>[0m logs  [1m<p>[0m prev logs  [1m<c>[0m container  [1m<S>[0m shell  [1m<U>[0m upload  [1m<D>[0m download  [1m<X>[0m interactive off
+[90mREAD [39m  [1m<W>[0m wrap on  [1m<J>[0m JSON off  [1m<+>[0m 4x lines  [1m<A>[0m all lines  [1m<left/right>[0m pan  [1m<f>[0m follow off  [1m<L>[0m level all  [1m<w>[0m export
+[90mMOVE [39m  [1m</>[0m find  [1m<&>[0m only matches  [1m<n/N>[0m next / prev  [1m<j/k>[0m scroll  [1m<g/G>[0m top / end  [1m<r>[0m reload  [1m<?>[0m keys  [1m<q>[0m back  [1m<Q>[0m quit
+

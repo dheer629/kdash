@@ -9,6 +9,9 @@ events_test_cleanup() {
 }
 trap events_test_cleanup EXIT
 source "$REPO/src/events.sh"
+# The findings/next-command renderers that health shares live with the runbook
+# helpers, so the tests load that module too (as inspector tests already do).
+source "$REPO/src/interactive.sh"
 
 TOOLKIT_DIR="$TEST_ROOT/toolkit"
 MODEL="$TEST_ROOT/model"

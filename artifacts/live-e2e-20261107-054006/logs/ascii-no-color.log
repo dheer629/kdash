@@ -1,0 +1,37 @@
+ KDASH 4.27.3 | context vcluster-docker_dev | namespace kdash-e2e       audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   11:10:27 IST
+ match .*   sort cpu v high first
+ ! pods 3/5 ready rst 202 oom 0 oomk 0 nolim 0 cpu 6m 1% lim mem 0Mi 0% lim wl 4
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                       |   ACTUAL (live)    |    ASSIGNED (req / limit)     | UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER     RDY RST |   CPUm T  MEM Mi T | CPUreq CPUlim  MEMreq  MEMlim | c%REQ c%LIM  m%REQ m%LIM
+--------------------------------------------------------------------------------
+Data pods=fresh age=1s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+> Deployment app-server  (2 p~ 2/2   0 |      6 -       0 - |     50    500      24     192 |  12.0   1.2   0.0   0.0
+  app-server-8fb4699bc-j6rk2   2/2   0 |      3 -       0 - |     25    250      12      96 |  12.0   1.2   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.243   qos Burstable   status Running
+    |- app                     Y     0 |      2 -       0 - |     20    200       8      64 |  10.0   1.0   0.0   0.0
+    `- sidecar                 Y     0 |      1 -       0 - |      5     50       4      32 |  20.0   2.0   0.0   0.0
+  app-server-8fb4699bc-z8kl7   2/2   0 |      3 -       0 - |     25    250      12      96 |  12.0   1.2   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.244   qos Burstable   status Running
+    |- app                     Y     0 |      2 -       0 - |     20    200       8      64 |  10.0   1.0   0.0   0.0
+    `- sidecar                 Y     0 |      1 -       0 - |      5     50       4      32 |  20.0   2.0   0.0   0.0
+................................................................................
+> Job completed-check  (1 pod) 0/1   0 |      - -       - - |      5     50       4      32 |     -     -     -     -
+  completed-check-m9swm        0/1   0 |      - -       - - |      5     50       4      32 |     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.242   qos Burstable   status Succeeded
+    `- check                   N     0 |      - -       - - |      5     50       4      32 |     -     -     -     -
+................................................................................
+> Pod z-crash  (1 pod)         0/1 202 |      - -       - - |      5     50       4      32 |     -     -     -     -
+  z-crash                      0/1 202 |      - -       - - |      5     50       4      32 |     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.241   qos Burstable   status CrashLoopBackOff   last-exit Error
+    `- crash                   N   202 |      - -       - - |      5     50       4      32 |     -     -     -     -
+        waiting CrashLoopBackOff   last-exit Error
+................................................................................
+> Pod z-pending  (1 pod)       0/1   0 |      - -       - - |      5     50       4      32 |     -     -     -     -
+  z-pending                    0/1   0 |      - -       - - |      5     50       4      32 |     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    `- pending                 -     0 |      - -       - - |      5     50       4      32 |     -     -     -     -
+--------------------------------------------------------------------------------
+TOTAL (5 pods, 4 workloads)        202 |      6 -       - - |     65    650      36     288 |   9.2   0.9     -     -
+ legend cpu millicores, mem MiB.  T: ^ up  v down  - flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
