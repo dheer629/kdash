@@ -1,8 +1,8 @@
 # kdash validation artifacts
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261107-054006` records **166 passed live checks**, **17 passed browser checks** and **83 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.3 in namespace `kdash-e2e`.
-[Inspect the recorded checks](live-e2e-20261107-054006/checks.tsv).
+Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed browser checks** and **87 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.4 in namespace `kdash-e2e`.
+[Inspect the recorded checks](live-e2e-20261107-083145/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
@@ -21,7 +21,13 @@ Run `live-e2e-20261107-054006` records **166 passed live checks**, **17 passed b
 
 
 
-The current **4.23.2** live validation is named by
+
+
+
+
+
+
+The current **4.27.4** live validation is named by
 [`latest-e2e.txt`](latest-e2e.txt), pointing to `live-e2e-<timestamp>/`.
 That run records the installed utility against the local WSL Kubernetes cluster,
 using the dedicated `kdash-e2e` namespace. Its files include:
@@ -36,14 +42,18 @@ using the dedicated `kdash-e2e` namespace. Its files include:
 | `reports/` | generated reports, tables, audit output and session history |
 
 The current screenshots and companion renders are in
-[`../samples/cli_4241/`](../samples/cli_4241/README.md) and report samples in
-[`../samples/html4241/`](../samples/html4241/README.md). Terminal images replay
+[`../samples/cli_4274/`](../samples/cli_4274/README.md) and report samples in
+[`../samples/html4274/`](../samples/html4274/README.md). Terminal images replay
 actual captures. `native/` contains real xterm window screenshots captured in WSL;
 the other PNGs are labelled ANSI replays. Their SHA-256 hashes and the installed
 CLI hash are recorded in `results.json`. The current run keeps actual local
 namespace names and metrics, with no substitutions or audit-chain rewriting.
 Missing metrics or denied reads remain visible as unavailable.
 
+The earlier [4.27.3 run](live-e2e-20261107-054006/results.json),
+[terminal gallery](../samples/cli_4273/README.md) and
+[HTML gallery](../samples/html4273/README.md) remain intact, as does the
+[4.24.1](../samples/cli_4241/README.md) gallery.
 The earlier [4.23.1 run](live-e2e-20261106-v4231/results.json),
 [terminal gallery](../samples/cli_423/README.md) and
 [HTML gallery](../samples/html423/README.md) remain intact.

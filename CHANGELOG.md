@@ -5,6 +5,24 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.27.4] - 2026-11-07
+
+### Fixed
+- Each run tags its login helpers. Cleanup checks the exact helper command, UID,
+  tag and process birth time before signalling helpers left behind by probes,
+  background reads and completed attempts. A separate attempt tag protects the
+  active login, including detached helpers, during completion checks.
+- Cleanup is best effort on Linux procfs, with no broad process-name fallback.
+  Helpers that discard inherited environment tags can remain running.
+- Choosing `c` to continue without login pauses background reads and automatic
+  retries until `L`. Issuer discovery failures show a DNS, TLS or network hint.
+- kdash reads helper metadata and cache expiry without exporting cached tokens
+  or private keys. Login-helper stderr remains visible, including sign-in URLs
+  and device codes; kdash does not sanitize arbitrary plugin output.
+- Added 27 isolated process-cleanup checks and 35 login-flow PTY checks; retained
+  the 198 mode-switch checks. Live validation now explicitly covers certificate
+  expiry, all five runbooks, numbered read commands and the C/R/K views.
+
 ## [4.27.3] - 2026-11-06
 
 ### Added

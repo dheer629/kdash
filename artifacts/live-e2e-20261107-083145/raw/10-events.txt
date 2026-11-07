@@ -1,0 +1,50 @@
+ KDASH 4.27.4 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-07 14:03:08 IST
+ match .*   poll 2s  spec 10s/30s  session 14:02:28 up 40s   sort cpu ▼ high first
+ health ! pods 3/5 ready  restarts 236  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 5m ░░░░░░ 1% lim  mem 1Mi ░░░░░░ 0% lim  │ workloads 4  │ events 15m ! 0 ^ 1
+Data pods=fresh age=10s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+ KUBERNETES EVENTS   API events, newest first - local session changes are recorded separately
+
+DATA SOURCES   context vcluster-docker_dev
+┌────────┬───────┬─────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │    READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼─────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 11s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴─────────┴───────────┴────────────────┘
+
+EVENTS  3 events   3 warning, 0 normal
+┌───────────┬───────────┬────────────────────┬─────────────────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────────────────┐
+│ LAST SEEN │ TYPE      │ REASON             │ OBJECT                          │ COUNT │ FIRST SEEN │ MESSAGE                                                            │
+├───────────┼───────────┼────────────────────┼─────────────────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────────────────┤
+│ 4m        │ ● Warning │ ProvisioningFailed │ PersistentVolumeClaim/z-unbound │  4763 │ 19h55m ago │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not~ │
+│ 5m        │ ● Warning │ BackOff            │ Pod/z-crash                     │  5426 │ 19h54m ago │ Back-off restarting failed container crash in pod z-crash_kdash-e~ │
+│ 27m       │ ● Warning │ FailedScheduling   │ Pod/z-pending                   │   235 │ 19h54m ago │ 0/1 nodes are available: pod has unbound immediate PersistentVolu~ │
+└───────────┴───────────┴────────────────────┴─────────────────────────────────┴───────┴────────────┴────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | j/k scroll | h/l pan | i inspect | : commands | q quit
+ ● LIVE 14:03:08  next 2s  data 2s old  spec 10/30s  fetch 0.0s  poll 2s  AUDITED | events | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

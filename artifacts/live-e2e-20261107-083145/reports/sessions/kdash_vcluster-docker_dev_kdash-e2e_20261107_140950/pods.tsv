@@ -1,0 +1,6 @@
+EPOCH	POD	NODE	STATUS	READY	RESTARTS	CPU_m	MEM_Mi	MEM_LIM_Mi	WORKLOAD
+1794040793	app-server-8fb4699bc-j6rk2	dev	Running	2/2	0	3	0	96	Deployment/app-server
+1794040793	app-server-8fb4699bc-z8kl7	dev	Running	2/2	0	3	0	96	Deployment/app-server
+1794040793	completed-check-m9swm	dev	Succeeded	0/1	0	-	-	32	Job/completed-check
+1794040793	z-crash	dev	CrashLoopBackOff	0/1	237	-	-	32	Pod/z-crash
+1794040793	z-pending	(unscheduled)	Pending	0/1	0	-	-	32	Pod/z-pending

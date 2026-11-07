@@ -1,0 +1,50 @@
+ KDASH 4.27.4 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-07 14:10:10 IST
+ match .*   poll 2s  spec 12s/30s  session 14:09:58 up 12s   sort cpu ▼ high first
+ health ! pods 3/5 ready  restarts 237  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 5m ░░░░░░ 1% lim  mem 0Mi ░░░░░░ 0% lim  │ workloads 4  │ events 15m ! 0 ^ 0
+Data pods=fresh age=12s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+ RUNBOOK - etcd-restore   printed procedures with your cluster's names filled in - kdash never runs them
+runbooks:  [1 etcd-restore]   2 cert-rotate    3 node-notready    4 api-unreachable    5 oidc-login    [ ] previous / next   (kdash --runbook NAME)
+
+WHEN TO USE  etcd data is lost or corrupted, or the cluster must go back to a known state
+  ! A restore rolls the WHOLE cluster back to the snapshot time: everything created or changed after it is lost.
+  ! Restoring onto NEW hosts needs the ORIGINAL server token (it decrypts the bootstrap data in the snapshot).
+  ! Snapshots contain the cluster CA keys and all Secrets: copy and store them like secrets.
+
+SNAPSHOTS
+  unknown (unavailable) - list them on a server: sudo rke2 etcd-snapshot ls
+
+A. RESTORE ONTO THE EXISTING SERVERS  servers: dev
+
+  STEP 0  prepare (nothing changes yet)
+      read   [on dev] sudo rke2 etcd-snapshot ls  # confirm the snapshot is on this node
+      read   [on dev] sudo cat /var/lib/rancher/rke2/server/token  # save the server token in your secret store first - needed for any restore onto new hosts
+      read   kdash --report  # evidence of the current state before you change it
+
+  STEP 1  stop rke2-server on every server
+      CHANGE [on dev] sudo systemctl stop rke2-server  # all servers must be down before the reset
+
+  STEP 2  reset the cluster from the snapshot (on dev only)
+      CHANGE [on dev] sudo rke2 server --cluster-reset --cluster-reset-restore-path=/var/lib/rancher/rke2/server/db/snapshots/<SNAPSHOT-NAME>  # wait for: Managed etcd c›
+      note   if config.yaml has etcd-s3 settings and you restore this LOCAL file, add --etcd-s3=false
+
+  STEP 3  start rke2-server on dev
+      CHANGE [on dev] sudo systemctl start rke2-server  # the reset flag file is removed on this normal start
+      read   kubectl --context vcluster-docker_dev get nodes -o wide  # wait until dev is Ready
+
+  STEP 4  on every OTHER server: back up and delete the old etcd data
+      CHANGE [on the other servers (none found)] sudo mv /var/lib/rancher/rke2/server/db /var/lib/rancher/rke2/server/db.bak-$(date +%Y%m%d%H%M%S)  # RKE2 asks to back u›
+
+  STEP 5  start rke2-server on the other servers, one at a time
+      CHANGE [on the other servers (none found)] sudo systemctl start rke2-server  # they rejoin the restored cluster; wait for Ready before the next
+
+  STEP 6  verify
+      read   kubectl --context vcluster-docker_dev get nodes -o wide  # all servers and agents Ready
+      read   kubectl --context vcluster-docker_dev get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded  # what has not come back yet
+      read   kdash --doctor && kdash --certs  # API, access and certificates
+      note   nodes are restored from the snapshot too: delete nodes that no longer exist (kubectl --context vcluster-docker_dev delete node NAME) and re-run workloads ch›
+
+B. RESTORE ONTO NEW HOSTS  the old servers are gone
+  ! You need the ORIGINAL server token: /var/lib/rancher/rke2/server/token from an old server, or your secret store. Without it the restore fails; a different token in c›
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | j/k scroll | h/l pan | i inspect | : commands | q quit
+ ● LIVE 14:10:10  next 2s  data 2s old  spec 12/30s  fetch 0.0s  poll 2s  AUDITED | runbook | rows 1-43/60 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause

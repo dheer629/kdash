@@ -1,0 +1,50 @@
+[1;7m KDASH 4.27.4 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [1;7m 8 SVCS [0m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-07 14:03:00[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 2s  spec 2s/30s  session [39m14:02:28[90m up [39m32s   [1m[94msort cpu ▼ high first[0m
+[90m health [1m[31m! pods 3/5 ready[0m[90m  restarts [35m236[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [32m0[90m  │ cpu [39m5m [32m░░░░░░[39m [32m1%[90m lim  mem [39m1Mi [32m░░░░░░[39m [32m0%[90m lim  │ workloads [39m4[90m  │ events 15m [32m! 0[39m [35m^ 1[39m
+Data pods=fresh age=2s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+[1;7m SERVICES AND BACKENDS [0m  [90mobserved configuration and readiness - reachability is not tested[39m
+
+[1mDATA SOURCES[0m
+[90m┌───────────┬───────┬────────┬────────────────┐[39m
+[90m│[39m [1mSOURCE   [0m [90m│[39m [1mSTATE[0m [90m│[39m [1m  READ[0m [90m│[39m [1mDETAIL        [0m [90m│[39m
+[90m├───────────┼───────┼────────┼────────────────┤[39m
+[90m│[39m services  [90m│[39m [32m● ok [39m [90m│[39m 3s ago [90m│[39m [90mread succeeded[39m [90m│[39m
+[90m│[39m pods      [90m│[39m [32m● ok [39m [90m│[39m 3s ago [90m│[39m [90mread succeeded[39m [90m│[39m
+[90m│[39m endpoints [90m│[39m [32m● ok [39m [90m│[39m 3s ago [90m│[39m [90mread succeeded[39m [90m│[39m
+[90m│[39m ingresses [90m│[39m [32m● ok [39m [90m│[39m 2s ago [90m│[39m [90mread succeeded[39m [90m│[39m
+[90m└───────────┴───────┴────────┴────────────────┘[39m
+
+[1mSERVICES[0m  [90m2 services[39m
+[90m┌─────────────────┬────────────┬───────────┬──────────┬───────┬───────────┬────────────────┬──────────────────────────┐[39m
+[90m│[39m [1mSERVICE        [0m [90m│[39m [1mSTATUS    [0m [90m│[39m [1mTYPE     [0m [90m│[39m [1mSELECTED[0m [90m│[39m [1mREADY[0m [90m│[39m [1mENDPOINTS[0m [90m│[39m [1mCLUSTER-IP    [0m [90m│[39m [1mPORTS (name:port→target)[0m [90m│[39m
+[90m├─────────────────┼────────────┼───────────┼──────────┼───────┼───────────┼────────────────┼──────────────────────────┤[39m
+[90m│[39m app-server      [90m│[39m [32m● OK      [39m [90m│[39m ClusterIP [90m│[39m        2 [90m│[39m     2 [90m│[39m 2/2 ready [90m│[39m [90m10.111.83.216 [39m [90m│[39m 80→8080                  [90m│[39m
+[90m│[39m missing-backend [90m│[39m [1m[31m● NO MATCH[0m [90m│[39m ClusterIP [90m│[39m        0 [90m│[39m     0 [90m│[39m 0/0 ready [90m│[39m [90m10.104.104.128[39m [90m│[39m 80→8080                  [90m│[39m
+[90m└─────────────────┴────────────┴───────────┴──────────┴───────┴───────────┴────────────────┴──────────────────────────┘[39m
+
+[1mFINDINGS[0m  [90m1 finding   critical first - the next commands for each are listed below the table[39m
+[90m┌───┬────────────┬─────────────────┬──────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1m#[0m [90m│[39m [1mSEVERITY  [0m [90m│[39m [1mOBJECT         [0m [90m│[39m [1mFINDING                                                 [0m [90m│[39m
+[90m├───┼────────────┼─────────────────┼──────────────────────────────────────────────────────────┤[39m
+[90m│[39m 1 [90m│[39m [1m[31m● CRITICAL[0m [90m│[39m missing-backend [90m│[39m selector app=does-not-exist matches no pod in this scope [90m│[39m
+[90m└───┴────────────┴─────────────────┴──────────────────────────────────────────────────────────┘[39m
+
+[1mNEXT COMMANDS[0m  [90mread = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now[39m
+
+  [1m#1[0m  CRITICAL  [1mmissing-backend[0m  [90mselector app=does-not-exist matches no pod in this scope[39m
+      [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  [90m# what the Service selects[39m
+      [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e get pods --show-labels  [90m# labels the pods really have[39m
+      [1m[33mCHANGE[0m kubectl --context vcluster-docker_dev -n kdash-e2e edit service missing-backend  [90m# make spec.selector match the pod labels (or fix the labels on the workloa[2m[39m›
+
+
+[0;1mBACKENDS[0m  [90m2 services   selector and the Ready pods it selects (first 3)[39m
+[90m┌─────────────────┬────────────────────────────────────────────────────────┬───────────────────────────┐[39m
+[90m│[39m [1mSERVICE        [0m [90m│[39m [1mREADY BACKEND PODS                                    [0m [90m│[39m [1mSELECTOR                 [0m [90m│[39m
+[90m├─────────────────┼────────────────────────────────────────────────────────┼───────────────────────────┤[39m
+[90m│[39m app-server      [90m│[39m app-server-8fb4699bc-j6rk2, app-server-8fb4699bc-z8kl7 [90m│[39m [90mapp=kdash-e2e,role=server[39m [90m│[39m
+[90m│[39m missing-backend [90m│[39m [1m[31mnone ready                                            [0m [90m│[39m [90mapp=does-not-exist       [39m [90m│[39m
+[90m└─────────────────┴────────────────────────────────────────────────────────┴───────────────────────────┘[39m
+
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | j/k scroll | h/l pan | i inspect | : commands | q quit
+[7m ● LIVE 14:03:00  next 2s  data 1s old  spec 2/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-43/51 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause     [0m

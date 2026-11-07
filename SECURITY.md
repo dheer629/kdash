@@ -5,9 +5,9 @@
 kdash is **read-only by default**. Interactive mode is an explicit exception for
 container shells and file transfers:
 
-* every `kubectl` call goes through a wrapper that allows only `get`, `top`,
-  `describe`, `logs`, `version`, `api-resources`, `auth can-i` and the read-only
-  `config` subcommands. `exec` and `cp` are allowed only with interactive mode
+* the kubectl read guard allows only `get`, `top`, `describe`, `logs`, `version`,
+  `api-resources`, `auth can-i`, `auth whoami` and the read-only `config`
+  subcommands. `exec` and `cp` are allowed only with interactive mode
   enabled (`-X`, `--allow-interactive`, `--shell-picker`, `KDASH_ALLOW_INTERACTIVE=1`,
   or confirmation of the `X` key). Other mutating verbs (`delete`, `apply`,
   `patch`, `config set-context`, ...) are refused with exit code 126 and recorded;
@@ -19,6 +19,33 @@ container shells and file transfers:
   what you can see;
 * every run is audited locally (`~/kdash_reports/audit`), centrally when
   `/var/log/kdash` exists, and through syslog, with a hash chain over the log.
+
+Runbooks (`R`, `--runbook`) print both investigation steps and separately marked
+`CHANGE` commands. kdash does not execute those change commands. Instant check
+(`K`, `--check`) collects findings; `--check --run N` executes only that finding's
+read commands through fixed handlers.
+
+## Login helpers and local credentials
+
+kdash uses the selected kubeconfig's credential helper for authentication and
+reads helper metadata and cache expiry without exporting cached tokens or
+private keys. During login it displays the helper's stderr, including sign-in
+URLs and device codes. Third-party helpers control that output; kdash does not
+sanitize arbitrary plugin messages.
+
+On Linux, best-effort cleanup checks the exact helper command, UID, run tag and
+process birth time through procfs before signalling stale helpers owned by this
+run. A separate attempt tag protects active login helpers, including detached
+ones, during completion checks. There is no broad process-name fallback when
+procfs is unavailable. Helpers that discard inherited tags can remain running.
+Choosing `c` to continue without login pauses background reads and automatic
+retries until `L`.
+
+The repository ignores kubeconfigs, credential stores, private-key files,
+PKCS#12 containers (`*.p12`, `*.pfx`), `.ssh/` and common SSH private-key names
+(`id_rsa`, `id_dsa`, `id_ecdsa`, `id_ed25519`). Ignore rules do not inspect file
+contents or make reports safe to publish; review the actual files before adding
+them to Git.
 
 ## Interactive mode and file transfers
 
@@ -33,8 +60,8 @@ The file browser lists and previews remote files through `kubectl exec`. Transfe
 stream tar through `exec`, with `kubectl cp` as a typed-path fallback. Uploads can
 overwrite container files after confirmation. Downloads write to the launch
 directory by default; the summary lets you choose another destination or format.
-Cancellation does not roll back files already written. Archive formats depend on
-available host tools; the default falls back to tar.gz when zip support is absent.
+Cancellation does not roll back files already written. Plain-file downloads are
+the default; optional ZIP and tar.gz archives depend on available host tools.
 
 Read calls are bounded by the request and command timeouts. Interactive `exec` and
 `cp` streams omit these caps so a shell or transfer can finish normally. The guard
@@ -69,8 +96,10 @@ maintainer a reasonable window to publish a fix before writing about it.
   run with that account's cluster permissions and the container user's rights;
 * the contents of the reports and screenshots you publish - they contain cluster
   metadata (context, namespace, pod, workload and image names, addresses, node
-  names, operator and timestamps). Review before publishing; the repository's own
-  evidence is redacted by `scripts/redact-run.sh`;
+  names, operator and timestamps). Review before publishing. Historical evidence
+  identifies the substitutions made with `scripts/redact-run.sh`; versioned live
+  runs preserve real local cluster metadata and measurements. See each run's
+  provenance and [artifacts/README.md](artifacts/README.md);
 * a redacted audit log no longer verifying its hash chain - redaction changes the
   bytes a chain covers. That is documented in
   [artifacts/README.md](artifacts/README.md);

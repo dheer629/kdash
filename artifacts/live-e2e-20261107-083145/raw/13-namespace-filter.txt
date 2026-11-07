@@ -1,0 +1,50 @@
+ KDASH │ SELECT NAMESPACE │ context vcluster-docker_dev                                                                                          1 of 12 │ now: kdash-e2e
+ namespaces from the API   ● 12 you can open   ● 0 no access
+ / kdash-e2e▏  type part of a name   Enter keep   Esc clear
+┌─────┬──────────────────────┬─────────────┬───────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   # │ NAMESPACE            │ ACCESS      │  PODS │ NOTE                                                                                                               │
+├─────┼──────────────────────┼─────────────┼───────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│   1 │ kdash-e2e            │ open        │     4 │ current, recent                                                                                                    │
+└─────┴──────────────────────┴─────────────┴───────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── choose a namespace ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 1 / 1 · audited ──
+┌─ MOVE ──────────────────┬─ FIND ──────────────────────┬─ LEAVE ────────────────────────────┬─ CHOOSE ─────────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ /  "kdash-e2e" - Esc clears │ q / Esc  cancel, stay on kdash-e2e │ Enter  open kdash-e2e                                                    │
+│ PgUp/PgDn  page         │ t  type a name not listed   │ Q        quit kdash                │ A      all namespaces at once                                            │
+│ g / G      first / last │ r  re-check access          │          n reopens this list       │ d      open kdash-e2e + always use it for vcluster-docker_dev            │
+│ 12         go to row 12 │    12 namespaces            │          from the dashboard        │ x      forget the default (none saved)                                   │
+└─────────────────────────┴─────────────────────────────┴────────────────────────────────────┴──────────────────────────────────────────────────────────────────────────┘
+

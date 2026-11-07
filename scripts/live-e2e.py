@@ -355,6 +355,63 @@ spec:
             body = (self.out / "logs" / ("view-" + view + ".log")).read_text()
             expected = {"pods": "app-server", "services": "missing-backend", "storage": "z-unbound"}[view]
             self.record("real-data-" + view, expected in body, f"observed {expected} in installed CLI output")
+        self.toolkit_cli_checks()
+
+    def toolkit_cli_checks(self):
+        """Validate certificate evidence, printed runbooks and guarded check reads."""
+        self.finish_cli(self.cli("certs", ["--certs"],
+            ("CERTIFICATES AND LOGINS", "EXPIRY", r"cluster CA|client certificate", r"20\d\d-\d\d-\d\d"),
+            codes=(0, 1, 2), timeout=180))
+        self.finish_cli(self.cli("check-summary", ["--check"],
+            ("CHECK NOW", "AREAS", "FINDINGS", "z-crash", "z-pending"), codes=(1, 2), timeout=180))
+        summary = (self.out / "logs" / "check-summary.log").read_text()
+        finding = re.search(r"(?m)^\s*#(\d+)\s+[^\n]*\bz-(?:crash|pending)\b", summary)
+        if self.record("check-real-finding-selected", bool(finding),
+                       "selected a numbered unhealthy fixture finding from actual --check output"):
+            number = finding.group(1)
+            result = self.cli("check-run-finding", ["--check", "--run", number],
+                (r"instant check - finding #" + number, "read-only commands", r"\$ kubectl",
+                 r"(?m)^Name:\s+z-(?:crash|pending)\b", r"(?m)^Namespace:\s+" + re.escape(self.args.namespace)),
+                timeout=180)
+            self.finish_cli(result)
+            body = (self.out / "logs" / "check-run-finding.log").read_text()
+            commands = re.findall(r"(?m)^\$ (.+)$", body)
+            allowed = r"\b(?:get|describe|logs|top|explain|events|version|cluster-info|api-resources|whoami|can-i|history|status)\b"
+            self.record("check-run-read-commands-only", bool(commands) and all(
+                command.startswith("kubectl ") and re.search(allowed, command) and not re.search(
+                    r"\b(?:apply|delete|patch|replace|create|cordon|uncordon|drain|scale|restart|exec|cp)\b", command)
+                for command in commands), "captured finding executed only guarded kubectl reads")
+        for topic in ("etcd-restore", "cert-rotate", "node-notready", "api-unreachable", "oidc-login"):
+            self.finish_cli(self.cli("runbook-" + topic, ["--runbook", topic],
+                ("RUNBOOK - " + re.escape(topic), "WHEN TO USE", "CHANGE", "never runs them"), timeout=120))
+        body = (self.out / "logs" / "runbook-node-notready.log").read_text()
+        nodes = self.call(self.kc + ["get", "nodes", "-o", "jsonpath={.items[*].metadata.name}"], timeout=30)
+        names = nodes.stdout.split() if nodes.returncode == 0 else []
+        self.record("runbook-real-node-inventory", bool(names) and all(
+            re.search(r"(?m)(?:^|[│|])\s*" + re.escape(name) + r"\s+(?:[│|]|server|agent)", body) for name in names),
+                    "node runbook includes the actual cluster node inventory")
+
+    def toolkit_ui_checks(self):
+        """Capture existing C/R/K tools from the live cluster in a private session."""
+        s = self.start_dashboard("toolkit")
+        self.key(s, "C", delay=3)
+        self.wait(s, "EXPIRES UTC", timeout=150)
+        self.capture(s, "84-certs", "CERTIFICATES AND LOGINS real TLS and kubeconfig expiry evidence", "EXPIRES UTC")
+        self.key(s, "R", delay=3)
+        self.wait(s, "WHEN TO USE", timeout=90)
+        self.capture(s, "85-runbook", "RUNBOOK printed etcd recovery procedure with live cluster inventory", "RUNBOOK - etcd-restore")
+        self.key(s, "]", delay=2)
+        self.capture(s, "87-runbook-topic", "RUNBOOK next topic displays certificate rotation instructions", "RUNBOOK - cert-rotate")
+        self.key(s, "[", delay=2)
+        self.record("runbook-topic-cycle", "RUNBOOK - etcd-restore" in self.screen(s),
+                    "right bracket selects the next procedure and left bracket returns")
+        self.key(s, "K", delay=3)
+        self.wait(s, "FINDINGS", timeout=120)
+        self.capture(s, "86-check", "CHECK NOW actual unhealthy workloads and numbered read-only next commands", "CHECK NOW")
+        body = self.screen(s)
+        self.record("check-ui-real-findings", "z-crash" in body and "z-pending" in body,
+                    "instant-check view shows the real crashing and pending fixture pods")
+        self.key(s, "Q", delay=1)
 
     def tm(self, *argv, check=True):
         p = subprocess.run(["tmux", "-L", self.socket, *argv], stdout=subprocess.PIPE,
@@ -543,6 +600,7 @@ spec:
         self.controls(s)
         self.file_checks()
         self.narrow_checks()
+        self.toolkit_ui_checks()
 
     def namespace_checks(self, s):
         self.key(s, "n", delay=2)
@@ -766,9 +824,10 @@ spec:
         self.record("html-real-data", any("app-server" in p.read_text() and "z-crash" in p.read_text() for p in combined),
                     "combined HTML contains the actual healthy and crashing fixture pod names")
 
-    def render(self):
+    def render(self, captures=None, check_name="screenshots-rendered"):
+        selected = self.captures if captures is None else captures
         images = []
-        for c in self.captures:
+        for c in selected:
             target = self.repo / c["png"]
             p = subprocess.run([sys.executable, str(self.repo / "scripts" / "capture-terminal.py"),
                                 str(self.out / c["file"]), str(target), "--columns", str(c["columns"]),
@@ -779,9 +838,12 @@ spec:
             else:
                 images.append(target)
         if images:
+            # An extension can render new captures without replacing checksums
+            # for the already verified screenshots in the same gallery.
+            gallery_images = sorted((self.repo / self.args.gallery).glob("*.png"))
             (self.repo / self.args.gallery / "SHA256SUMS").write_text("".join(
-                hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n" for p in images))
-        self.record("screenshots-rendered", len(images) == len(self.captures),
+                hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name + "\n" for p in gallery_images))
+        self.record(check_name, len(images) == len(selected),
                     f"{len(images)} PNGs faithfully rendered from live tmux ANSI captures")
 
     def run(self):

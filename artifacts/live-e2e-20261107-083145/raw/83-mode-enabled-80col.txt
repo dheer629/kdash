@@ -1,0 +1,30 @@
+ KDASH 4.27.4 │ context vcluster-docker_dev │ namespace kdash-e2e       audited
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   14:09:41 IST
+ match .*   sort cpu ▼ high first
+ ! pods 3/5 ready rst 237 oom 0 oomk 0 nolim 0 cpu 7m 1% lim mem 0Mi 0% lim wl 4
+     ev15m ! 0 ^ 0
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo›
+                                       │   ACTUAL (live)    │    ASSIGNED (req ›
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  ME›
+────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=7s metrics=available | K check now | i inspect | 8 services›
+► TIMELINE  14:09:34 -> 14:09:41 IST  (all since kdash started, z window, c hid›
+  CPU used - namespace
+         one sample so far - the chart starts with the 2nd (run kdash live)
+  MEMORY used - namespace
+         one sample so far - the chart starts with the 2nd (run kdash live)
+
+► PODS ────────────────────────────────────────────────────────────────────────
+► Deployment app-server  (2 p~ 2/2   0 │      7 ·       0 · │     50    500    ›
+  app-server-8fb4699bc-j6rk2   2/2   0 │      5 ▲       0 · │     25    250    ›
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool rol›
+    ├─ app                     Y     0 │      4 ▲       0 · │     20    200    ›
+    └─ sidecar                 Y     0 │      1 ·       0 · │      5     50    ›
+  app-server-8fb4699bc-z8kl7   2/2   0 │      2 ▼       0 · │     25    250    ›
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool rol›
+    ├─ app                     Y     0 │      1 ▼       0 · │     20    200    ›
+    └─ sidecar                 Y     0 │      1 ·       0 · │      5     50    ›
+────────────────────────────────────────────────────────────────────────────────
+TOTAL (5 pods, 4 workloads)        237 │      7 ·       - · │     65    650    ›
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9›
+ interactive mode ON - S shell, U upload, D download (X turns it off) | ○ LIVE >

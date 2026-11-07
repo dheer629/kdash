@@ -1,0 +1,50 @@
+ Turn on interactive mode?
+
+S shell / U upload / D download run in YOUR name and are audited writes.
+This enables interactive actions for this kdash session only.
+
+ [y/N] Enter confirms; Esc, q or Ctrl-C cancels.
+ >
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

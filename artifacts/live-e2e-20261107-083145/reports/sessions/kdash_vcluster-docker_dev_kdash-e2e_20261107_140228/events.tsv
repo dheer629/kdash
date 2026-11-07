@@ -1,0 +1,6 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1794040348	info	SESSION	kdash-e2e	kdash 4.27.4 started on Dheeraj by root - filter .*
+1794040379	warn	RESTART	z-crash	restarts +1 (now 236), last exit Error
+1794040498	info	FILTER	kdash-e2e	pod filter changed to app-server
+1794040503	info	FILTER	kdash-e2e	pod filter changed to .*
+1794040545	info	SESSION	kdash-e2e	kdash stopped after 197s

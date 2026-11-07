@@ -1,0 +1,51 @@
+WHY - INCIDENT EVIDENCE  -  warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context vcluster-docker_dev
+┌────────┬───────┬────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │   READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 1s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴────────┴───────────┴────────────────┘
+
+WARNING EVIDENCE  3 items   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────────────────────────┬────────────────────┬───────┬────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT                          │ REASON             │ COUNT │ CATEGORY   │ MESSAGE                                                                                                                                                     │
+├───┼───────────┼─────────────────────────────────┼────────────────────┼───────┼────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 3m        │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │  4763 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                     │
+│ 2 │ 3m        │ Pod/z-crash                     │ BackOff            │  5426 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(6a92c6fd-0be6-46c1-8aca-3ba913153f9e)                                                   │
+│ 3 │ 26m       │ Pod/z-pending                   │ FailedScheduling   │   235 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
+└───┴───────────┴─────────────────────────────────┴────────────────────┴───────┴────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+POSSIBLE EXPLANATIONS  3 categories   hypotheses to check, not conclusions
+┌────────────┬──────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY   │ EVIDENCE │ POSSIBLE EXPLANATION                                                                                   │
+├────────────┼──────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ storage    │ #1       │ volume binding, provisioning, attachment or mounting may block startup - not evidence of a full volume │
+│ restart    │ #2       │ a container may be exiting repeatedly - the event alone does not say why                               │
+│ scheduling │ #3       │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
+└────────────┴──────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
+
+  #1    evidence #1  (WARNING EVIDENCE above)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe persistentvolumeclaim z-unbound
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get pvc
+
+  #2    evidence #2  (WARNING EVIDENCE above)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-crash
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100
+
+  #3    evidence #3  (WARNING EVIDENCE above)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-pending
+
+  >   storage  volume problems  see key 9 STORAGE: its findings carry their own next commands
+
+  >   restart  crash loop  what usually fixes it
+      note   the previous logs (above) show the exit reason; a config or Secret change is the usual cause - compare with the last rollout:
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e rollout history deployment/DEPLOYMENT  # what changed and when
+
+  >   scheduling  pods not placed  what usually fixes it
+      read   kubectl --context vcluster-docker_dev describe nodes | grep -A 8 'Allocated resources'  # free capacity per node
+      note   reduce requests, add capacity, or fix the nodeSelector / affinity / taint tolerations the scheduler message names
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.

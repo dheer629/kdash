@@ -24,7 +24,7 @@
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.27.3"
+KDASH_VERSION="4.27.4"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"
@@ -71,6 +71,8 @@ AUDIT_ARGV="$*"
 AUDIT_T0="$(date +%s)"
 KDASH_LAUNCH_DIR="${KDASH_LAUNCH_DIR:-$PWD}"      # downloads land here, uploads start here
 AUDIT_SID="$(date +%Y%m%d-%H%M%S)-$$"
+# Auth helpers inherit this per-run identity, including helpers detached by kubectl.
+export KDASH_LOGIN_TAG="kdash-$AUDIT_SID"
 AUDIT_USER="$(id -un 2>/dev/null || printf '%s' "${USER:-unknown}")"
 AUDIT_REAL="${SUDO_USER:-$(logname 2>/dev/null || printf '%s' "$AUDIT_USER")}"
 AUDIT_UID="$(id -u 2>/dev/null || printf '?')"
@@ -882,6 +884,10 @@ ERRLOG="$TMPD/stderr"
 cleanup() {
   local rc=$?
   declare -F toolkit_cancel >/dev/null && toolkit_cancel
+  if declare -F login__kill_stale >/dev/null; then
+    login__kill_stale
+    [ -z "${LOGIN_ACTIVE_TAG:-}" ] || KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__kill_stale
+  fi
   [ "${AUDIT_STARTED:-0}" = 1 ] && audit_end "$rc"
   if [ "$LOOPED" = 1 ]; then
     LOOPED=0
@@ -11109,11 +11115,83 @@ login__issuer() { # the issuer URL and client id the context logs in with (from 
   printf '%s\t%s' "$iss" "$cid"
 }
 
-# kill login helpers left behind by background reads (they hold the callback port 8000)
-login__kill_stale() {
-  local pat='oidc[-_]login get-token|kubelogin get-token'
-  if command -v pkill >/dev/null 2>&1; then pkill -s 0 -f "$pat" 2>/dev/null || true
-  else ps -o pid=,args= -s "$(ps -o sid= $$ 2>/dev/null | tr -d ' ')" 2>/dev/null | grep -E "$pat" | grep -v grep | awk '{print $1}' | xargs -r kill 2>/dev/null || true; fi
+# Detached auth helpers can outlive kubectl and hold its callback port. Only stop
+# this run's tagged helpers, never a browser or another terminal's login attempt.
+login__process_start() { # pid -> Linux process birth identity (not just a reusable PID)
+  local stat rest
+  case "$1" in ''|*[!0-9]*) return 1 ;; esac
+  stat="$(cat "/proc/$1/stat" 2>/dev/null)" || return 1
+  rest="${stat##*) }"; [ "$rest" != "$stat" ] || return 1
+  # Field 22, after the parenthesized comm which itself may contain spaces or ')'.
+  set -- $rest
+  [ "$#" -ge 20 ] || return 1
+  case "${20}" in ''|*[!0-9]*) return 1 ;; esac
+  printf '%s' "${20}"
+}
+login__is_descendant() { # pid ancestor; status avoids splitting a process name
+  local p="$1" ancestor="$2" seen=" " label parent value rest
+  case "$p:$ancestor" in *[!0-9:]*|:*|*:) return 1 ;; esac
+  while [ "$p" -gt 0 ]; do
+    [ "$p" != "$ancestor" ] || return 0
+    case "$seen" in *" $p "*) return 1 ;; esac
+    seen="$seen$p "; parent=""
+    while read -r label value rest; do
+      [ "$label" != PPid: ] || { parent="$value"; break; }
+    done 2>/dev/null < "/proc/$p/status"
+    case "$parent" in ''|*[!0-9]*) return 1 ;; esac
+    p="$parent"
+  done
+  return 1
+}
+login__is_helper() { # exact command identity; do not search arbitrary arguments/URLs
+  local arg cmd="" first="" interpreter=0
+  while IFS= read -r -d '' arg; do
+    if [ -z "$first" ]; then
+      first="${arg##*/}"
+      case "$first" in sh|bash|dash|python|python[0-9]*|perl|ruby|node) interpreter=1; continue ;; esac
+      cmd="$first"; break
+    fi
+    [ "$interpreter" = 1 ] || break
+    case "$arg" in -c|-m|--) return 1 ;; -*) continue ;; esac
+    cmd="${arg##*/}"; break
+  done 2>/dev/null < "/proc/$1/cmdline"
+  case "$cmd" in kubelogin|oidc-login|oidc_login|kubectl-oidc_login|kubectl-oidc-login) return 0 ;; esac
+  [ -n "${LOGIN_HELPER_COMMAND:-}" ] && [ "$cmd" = "${LOGIN_HELPER_COMMAND##*/}" ]
+}
+login__tagged() { # pid: exact environment entry and effective UID ownership
+  local entry
+  [ -n "${KDASH_LOGIN_TAG:-}" ] && [ -O "/proc/$1" ] || return 1
+  while IFS= read -r -d '' entry; do
+    [ "$entry" != "KDASH_LOGIN_TAG=$KDASH_LOGIN_TAG" ] || return 0
+  done 2>/dev/null < "/proc/$1/environ"
+  return 1
+}
+login__same_helper() { # pid birth: recheck immediately before each signal
+  [ "$(login__process_start "$1")" = "$2" ] && login__tagged "$1" && login__is_helper "$1"
+}
+login__kill_stale() { # [keep-pid]: preserve that active tree, even within this run
+  local p birth keep="${1:-}" targets=() identities=() i
+  [ -n "${KDASH_LOGIN_TAG:-}" ] && [ -d /proc/self ] || return 0
+  # Resolve only the exec command name; never read the token or credential fields.
+  if [ -z "${LOGIN_HELPER_COMMAND:-}" ] && declare -F certs__kcfg >/dev/null; then
+    LOGIN_HELPER_COMMAND="$(certs__kcfg '{.users[0].user.exec.command}' 2>/dev/null)"
+  fi
+  for p in /proc/[0-9]*; do
+    p="${p#/proc/}"; [ "$p" != "${BASHPID:-$$}" ] && [ "$p" != "$$" ] || continue
+    [ -O "/proc/$p" ] && login__is_helper "$p" && login__tagged "$p" || continue
+    [ -z "$keep" ] || ! login__is_descendant "$p" "$keep" || continue
+    birth="$(login__process_start "$p")"; [ -n "$birth" ] || continue
+    login__same_helper "$p" "$birth" || continue
+    targets+=("$p"); identities+=("$birth")
+    kill -TERM "$p" 2>/dev/null || true
+  done
+  [ "${#targets[@]}" -gt 0 ] || return 0
+  sleep 0.3
+  for ((i=0; i<${#targets[@]}; i++)); do
+    p="${targets[$i]}"
+    login__same_helper "$p" "${identities[$i]}" && kill -KILL "$p" 2>/dev/null || true
+  done
+  return 0
 }
 
 # A short look with no terminal: 0 = the API answers, 1 = a login is needed, 2 = another error.
@@ -11127,12 +11205,14 @@ login_probe() {
   else login__env "$pd" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" version --request-timeout=8s < /dev/null > /dev/null 2> "$err" & pid=$!; fi
   while kill -0 "$pid" 2>/dev/null; do
     if login_prompted "$err" || [ -s "$pd/url" ]; then
-      kill -- "-$pid" 2>/dev/null || login__kill_tree "$pid"; wait "$pid" 2>/dev/null; LOGIN_URL="$(login_url_of "$err")"; return 1
+      kill -- "-$pid" 2>/dev/null || login__kill_tree "$pid"; wait "$pid" 2>/dev/null; LOGIN_URL="$(login_url_of "$err")"
+      login__kill_stale "${LOGIN_HP:-}"; return 1
     fi
     i=$((i + 1)); [ "$i" -lt "$max" ] || { kill -- "-$pid" 2>/dev/null || login__kill_tree "$pid"; break; }
     sleep 0.2
   done
   wait "$pid" 2>/dev/null; rc=$?
+  login__kill_stale "${LOGIN_HP:-}"
   [ "$rc" != 0 ] || return 0
   if login_err_check "$err"; then LOGIN_URL="$(login_url_of "$err")"; return 1; fi
   return 2
@@ -11210,7 +11290,10 @@ login_interactive() { # start | session [auto]
         sleep 0.2; i=$((i + 1)); done ) & w=$!
     trap ':' INT
     elsewhere=0; n=0
-    login__env "$bdir" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami < /dev/tty > "$out" 2> >(tee -a "$f" > /dev/tty) & hp=$!
+    # A separate attempt tag also protects helpers that detach from the active tree.
+    LOGIN_ACTIVE_TAG="${KDASH_LOGIN_TAG:-kdash-$$}-login-${BASHPID:-$$}-$RANDOM"
+    KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__env "$bdir" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami < /dev/tty > "$out" 2> >(tee -a "$f" > /dev/tty) & hp=$!
+    LOGIN_HP="$hp"
     # meanwhile, every KDASH_LOGIN_POLL s once the URL is out: a login completed in another
     # terminal (or a helper that never returns) must not keep kdash waiting
     while kill -0 "$hp" 2>/dev/null; do
@@ -11220,6 +11303,10 @@ login_interactive() { # start | session [auto]
       if login__poll_ok; then elsewhere=1; login__kill_tree "$hp"; break; fi
     done
     wait "$hp" 2>/dev/null; rc=$?
+    LOGIN_HP=""
+    KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__kill_stale
+    LOGIN_ACTIVE_TAG=""
+    login__kill_stale
     [ "$elsewhere" = 0 ] || rc=0
     trap 'AUDIT_SIG=INT; cleanup; exit 0' INT
     kill "$w" 2>/dev/null; wait "$w" 2>/dev/null
@@ -11241,10 +11328,13 @@ login_interactive() { # start | session [auto]
     audit LOGIN_FAILED "context=$CTX_NAME rc=$rc"
     printf '\n\033[1;31m  The login did not complete (rc=%s).\033[0m Last messages:\n' "$rc" > /dev/tty
     tail -n 4 "$f" | sed 's/^/    /' > /dev/tty
-    printf '\n  r try again   c continue without login (reads will fail)   q quit kdash  > ' > /dev/tty
+    if grep -qiE 'discovery error|openid-configuration' "$f" && grep -qiE 'dial tcp|no such host|timeout|refused|x509|certificate' "$f"; then
+      printf '\n  \033[1mThe identity provider%s cannot be reached from this host\033[0m (network, proxy, DNS or its certificate).\n  Check: curl -sS %q\n' "${iss:+ $iss}" "${iss:-ISSUER}/.well-known/openid-configuration" > /dev/tty
+    fi
+    printf '\n  r try again   c continue with reads paused (L retries)   q quit kdash  > ' > /dev/tty
     IFS= read -rsn1 key </dev/tty || key=q
     printf '\n' > /dev/tty
-    case "$key" in r|R) printf '\033[2J\033[H' > /dev/tty; continue ;; c|C) break ;; *) cleanup 2>/dev/null; exit 4 ;; esac
+    case "$key" in r|R) printf '\033[2J\033[H' > /dev/tty; continue ;; c|C) LOGIN_NEEDED=1; LOGIN_AUTO_DONE=1; break ;; *) cleanup 2>/dev/null; exit 4 ;; esac
   done
   if [ "$ok" = 1 ]; then
     rm -rf "$TMPD/fetch-job" "$TMPD/toolkit-next" "$TMPD/certq"
@@ -11271,7 +11361,7 @@ login_watch_jobs() {
     [ -s "$f" ] || continue
     { login_prompted "$f" || grep -qiE 'oidc-login|kubelogin|get-token|getting credentials' "$f" 2>/dev/null; } || continue
     login_note_failure "$f" || continue
-    toolkit_cancel; rm -rf "$TMPD/certq"
+    toolkit_cancel; rm -rf "$TMPD/certq"; login__kill_stale
     SPEC_REASON="OIDC login needed - press L (the login URL is shown, kdash continues afterwards)"
     return 0
   done

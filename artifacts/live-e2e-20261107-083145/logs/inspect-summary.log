@@ -1,0 +1,40 @@
+Context: vcluster-docker_dev | Namespace: kdash-e2e | Pod: app-server-8fb4699bc-j6rk2
+
+Name: app-server-8fb4699bc-j6rk2
+Namespace: kdash-e2e
+UID: 6460b617-6de3-411e-8fab-cf1916733480
+Created: 2026-11-06T12:38:07Z
+Phase: Running
+Reason: 
+Message: 
+Node: dev
+Pod IP: 10.244.0.243
+Service account: default
+Owner: ReplicaSet/app-server-8fb4699bc
+
+CONDITIONS
+PodReadyToStartContainers	True		
+Initialized	True		
+Ready	True		
+ContainersReady	True		
+PodScheduled	True		
+
+CONTAINERS (requests / limits)
+app	busybox:1.36
+  CPU: 20m / 200m	Memory: 8Mi / 64Mi
+sidecar	busybox:1.36
+  CPU: 5m / 50m	Memory: 4Mi / 32Mi
+
+CONTAINER STATUS
+app	ready=true	restarts=0
+  Waiting:  
+  Running since: 2026-11-06T12:38:19Z
+  Terminated:  exit=
+  Previous:  exit=
+sidecar	ready=true	restarts=0
+  Waiting:  
+  Running since: 2026-11-06T12:38:19Z
+  Terminated:  exit=
+  Previous:  exit=
+
+INIT CONTAINER STATUS

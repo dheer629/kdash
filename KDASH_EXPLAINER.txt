@@ -1,4 +1,4 @@
-KDASH 4.27.3 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
+KDASH 4.27.4 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
 =========================================================================
 
 WHAT THIS FILE IS
@@ -8,11 +8,12 @@ exercise in this repository produced. It explains what every view answers, how t
 read the numbers without over-claiming, where the proof of each statement lives,
 and which limitations must be stated whenever this output is shared. It is
 deliberately plain text: it can be read in the same terminal as the dashboard.
-The source version is now 4.27.3. Current WSL validation is indexed by
+The source version is now 4.27.4. Recorded WSL validation is indexed by
 artifacts/latest-e2e.txt, with the live screen manifest, results and cluster
-inventory in that run. The newest complete screen set is in samples/cli_4273/ and
-report samples in samples/html4273/, captured from 4.27.3 and the first to include
-the RUNBOOK, CHECK, CERTIFICATES and OIDC-login screens. The detailed historical
+inventory in that run. The newest complete screen set is in samples/cli_4274/ and
+report samples in samples/html4274/, captured from 4.27.4 and including RUNBOOK,
+CHECK and CERTIFICATES screens. The earlier 4.27.3 samples
+remain in samples/cli_4273/ and samples/html4273/. The detailed historical
 exercise below used 4.12.0; the 4.13.1, 4.14.0, 4.19.2, 4.23.1, 4.23.2 and 4.24.1
 galleries retain their original versions, with the 4.23.1 screenshots/reports in
 samples/cli_423/ and samples/html423/.
@@ -24,7 +25,7 @@ CURRENT SOURCE: INSTALL AND NAVIGATE
   sha256sum -c SHA256SUMS
   bash kdash-bundle.sh
   exec bash -l
-  kdash --version                         # kdash 4.27.3
+  kdash --version                         # kdash 4.27.4
 
 The bundle installs without a build or a cluster connection. Published historical
 releases and the separate release-publishing workflow are described in RELEASES.md;
@@ -48,6 +49,20 @@ oidc-login. Commands that only read are marked "read"; anything that changes the
 cluster or a node is marked "CHANGE" and is only ever printed, never run. L starts
 the OIDC login for the current context and shows its URL; a login that is due is
 detected at start, and without a terminal kdash exits 4 instead of hanging.
+
+In 4.27.4 cleanup checks the exact helper command, UID, run tag and process birth
+time before signalling owned helpers left behind by reads and completed attempts.
+A separate attempt tag protects the active login, including detached helpers,
+during completion checks. Cleanup is best effort on Linux procfs; helpers that
+discard the inherited tag can remain running. Choosing c to continue without
+login pauses background reads and automatic retries until L. Issuer discovery
+failures add a DNS, TLS or network hint.
+
+kdash reads helper metadata and cache expiry without exporting cached tokens or
+private keys. The credential helper controls its own stderr, which is displayed
+during login, including sign-in URLs and device codes; kdash does not sanitize
+arbitrary plugin output. The recorded local cluster uses certificate auth; OIDC
+flow tests use controlled helpers, not a real provider login.
 
 Enter/i opens a live pod list and inspector. In the list, j/k or arrows move,
 digits jump to a row, / matches every word against pod/status/node, u limits it
@@ -176,8 +191,8 @@ for both the installed copy and the repository file.
 artifacts/   the run itself: step logs, per-namespace live terminal capture, the
              recorded session, the reports and the audit log, plus run-metadata.json,
              controller-actions.json and RUN_INVENTORY.md
-samples/     the shareable result: the newest screen set (4.27.3) in samples/cli_4273/
-             and reports in samples/html4273/; historical 4.19.2 screens and the
+samples/     the shareable result: the newest screen set (4.27.4) in samples/cli_4274/
+             and reports in samples/html4274/; historical 4.19.2 screens and the
              views of the 4.12.0 run and the 4.13.1 views and inspector
              (samples/cli_413/), the 4.19.2 HTML reports (samples/html419/) and
              the older HTML reports with checksums (samples/html/)
@@ -299,8 +314,8 @@ capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
   * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
     screen at one moment, including colours and the pinned header/footer. It is
     viewport evidence: a long table continues below the visible 50 rows.
-  * The rendered PNG screenshots in samples/cli_4273/ (4.27.3, including RUNBOOK,
-    CHECK, CERTIFICATES and OIDC-login),
+  * The rendered PNG screenshots in samples/cli_4274/ (4.27.4, including RUNBOOK,
+    CHECK and CERTIFICATES),
     samples/cli/ (4.12.0 run) and samples/cli_413/ (4.13.1: services, storage, events,
     explanations, doctor, inspector) replay those captures cell by cell. They are a
     faithful render of the captured screen, and each image states its namespace, view
@@ -412,7 +427,7 @@ Two practical findings are baked into it:
     its own. Without that, captures come back with a status line and the wrong height.
 12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
 --------------------------------------------------
-Current behavior (4.27.3, including the diagnostic features added in 4.13.0, the
+Current behavior (4.27.4, including the diagnostic features added in 4.13.0, the
 certificates and login view of 4.24.1 and the runbook, instant check and OIDC-login
 handling of 4.27.3):
   * the all-namespaces route (-A) is fixed: the flag now follows the resource

@@ -1,0 +1,50 @@
+[1;7m KDASH 4.27.4 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [1;7m 5 MEMORY [0m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-07 14:05:31[0m[90m IST[39m
+ [90mmatch[39m .*   [90mpoll 3s  spec 24s/30s  session [39m14:02:28[90m up [39m3m03s   [1m[94msort mem ▲ low first[0m
+[90m health [1m[31m! pods 3/5 ready[0m[90m  restarts [35m236[90m  OOM risk [32m0[90m  OOMKilled [32m0[90m  no-limit [32m0[90m  │ cpu [39m5m [32m░░░░░░[39m [32m1%[90m lim  mem [39m0Mi [32m░░░░░░[39m [32m0%[90m lim  │ workloads [39m4[90m  │ events 15m [32m! 0[39m [35m^ 1[39m
+ [1m[35mMEMORY   live namespace memory dashboard[0m
+ [1mMEMORY[0m used [1m[94m     0Mi[0m  req     36Mi  lim    288Mi   used/req [32m   0.0[39m%  used/lim [32m   0.0[39m%  [32m░░░░░░░░░░░░░░░░░░░░░░░░[39m
+ [90mwindow[39m [1m14:02:28[0m [90m->[39m [1m14:05:31[0m [90mIST (UTC+05:30)[39m   3m03s[90m, last 15m (have 3m03s)[39m   [90msamples [39m41[90m every 2s[39m   [90mz: 15m 1h 6h 24h all[39m
+ [1mCPU   [0m used [1m[94m      5m[0m  req      65m  lim     650m   used/req [32m   7.7[39m%  used/lim [32m   0.8[39m%  [94m___█████____[39m
+ [90mrisk  >=90% of limit[39m [32m0[39m   [90mno limit[39m [32m0[39m   [90mover request[39m 0   [90mOOMKilled before[39m [32m0[39m   [90mrestarts[39m 236
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39mData pods=fresh age=24s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+[1m[94m►[0m [1mTIMELINE  14:02:28 -> 14:05:31 IST  (last 15m (have 3m03s), host clock)[0m [90m───────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1mMEMORY used - namespace                                   [0m[90m                        [39m    [1mCPU used - namespace                                      [0m[90m
+[39m  [90m   1Mi┤[39m                 [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m    7m┤[39m                 [90m·[39m                   [90m·[39m                 [90m·[39m
+  [90m      │[39m         [32m███████[39m [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m      │[39m                 [90m·[39m                   [90m·[39m                 [90m·[39m         [32m██████[39m
+  [90m      │[39m         [32m███████[39m [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m      │[39m    [32m████████████[39m [90m·[39m           [32m████████[90m·[39m                 [90m·[39m   [32m████████████████
+[39m  [90m      │[39m         [32m███████[39m [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m      │[39m  [32m▄▄████████████▄▄▄▄▄▄▄▄▄▄▄▄▄████████[90m·[39m                 [90m·[39m [32m▄▄████████████████
+[39m  [90m   1Mi┤[39m         [32m███████[39m [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m    3m┤[39m  [32m███████████████████████████████████[90m·[39m                 [90m·[39m [32m██████████████████
+[39m  [90m      │[39m         [32m███████[39m [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m      │[39m  [32m███████████████████████████████████[90m·[39m                 [90m·[39m [32m██████████████████
+[39m  [90m      │[39m         [32m███████[39m [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m      │[39m  [32m███████████████████████████████████[90m·[39m                 [90m·[39m [32m██████████████████
+[39m  [90m      │[39m         [32m███████[39m [90m·[39m                   [90m·[39m                 [90m·[39m                       [90m      │[39m  [32m███████████████████████████████████[90m·[39m                 [90m·[39m [32m██████████████████
+[39m  [90m   0Mi└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴[39m    [90m    0m└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+[39m  [90m       14:02:28                         14:03:59                          14:05:31[39m    [90m       14:02:28                         14:03:59                          14:05:31
+[39m  [90mevents [39m            [35m^[39m                                                                  [90mevents [39m            [35m^[39m
+  [90mnow [1m[94m0Mi[0m[90m  min [39m0Mi[90m  avg [39m0Mi[90m  max [1m[39m1Mi[0m[90m @ 14:03:06[39m                                         [90mnow [1m[94m5m[0m[90m  min [39m4m[90m  avg [39m5m[90m  max [1m[39m6m[0m[90m @ 14:05:19[39m
+  [90mrequest [39m36Mi[90m (above)[39m  [90mlimit [39m288Mi[90m (above)[39m  [32m0%[90m of limit[39m                                [90mrequest [39m65m[90m (above)[39m  [90mlimit [39m650m[90m (above)[39m  [32m1%[90m of limit[39m
+  [1mEVENTS[0m [90m4 in window[39m   [32m! 0[39m [90mcritical[39m   [35m^ 1[39m [90mwarning[39m
+  [90m14:05:03      [39m [90m-[39m [90mFILTER          [39m kdash-e2e                                [90mpod filter changed to .*[39m
+  [90m14:04:58      [39m [90m-[39m [90mFILTER          [39m kdash-e2e                                [90mpod filter changed to app-server[39m
+  [90m14:02:59      [39m [35m^[39m [35mRESTART         [39m z-crash                                  [90mrestarts +1 (now 236), last exit Error[39m
+  [90m14:02:28      [39m [90m-[39m [90mSESSION         [39m kdash-e2e                                [90mkdash 4.27.4 started on Dheeraj by root - filter .*[39m
+
+[1m[94m►[0m [1mPOD MEMORY HEATMAP  % of each pod memory limit over time (14:02:28 -> 14:05:31 IST)[0m [90m───────────────────────────────────────────────────────────────────────────────────[39m
+  app-server-8fb4699bc-j6rk2 [90m│[39m   [32m░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m     [32m░░░░░░░░░░░░░░[39m                                       [32m░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [90m│[39m [32m  0.0[90m now[39m
+  app-server-8fb4699bc-z8kl7 [90m│[39m   [32m░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m     [32m░░░░░░░░░░░░░░[39m                                       [32m░░░░░░░░░░░░░░░░░░░░░░░░░░░░[39m [90m│[39m [32m  0.0[90m now[39m
+  completed-check-m9swm      [90m│[39m                                                                                                                     [90m│[39m [32m  0.0[90m now[39m
+  z-crash                    [90m│[39m                    [1m[31m![0m                                                                                                [90m│[39m [32m  0.0[90m now[1m[31m   1[0m[90m rst[39m
+  z-pending                  [90m│[39m                                                                                                                     [90m│[39m [32m  0.0[90m now[39m
+                              [90m14:02:28                                             14:03:59                                               14:05:31[39m
+                              [32m░[39m [90m< 50%[39m  [94m▒[39m [90m< 75%[39m  [35m▓[39m [90m< 90%[39m  [1m[31m█[0m [90m>= 90% of limit[39m  [1m[31m![0m [90mrestart[39m
+
+[1m[94m►[0m [1mMEMORY BY WORKER NODE[0m [90m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory                           ns trend
+  dev                          role:contro~      0Mi   7524Mi [32m  0.0[39m [32m 28.3[39m  [94m▓▓▓▓▓▓▓▓▓▓[90m░░░░░░░░░░░░░░░░░░░░░░░░░░[39m  [94m░░░░░░░░░░░░[39m
+
+[1m[94m►[0m [1mPODS BY MEMORY USED[0m [90m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  POD                        NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+[90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [90mlegend[39m node bar: [32m█[39m this namespace  [94m▓[39m other ns used  [35m▒[39m other ns requested  [90m░[39m free allocatable.  trend: last 12 polls.  metrics refresh about every 15 s.
+[7m chart window: last 15m | ○ LIVE 14:05:31  next 3s  data 0s old  spec 24/30s  fetch 0.0s  poll 3s  AUDITED | mem | rows 1-36/60 | ? help  1-9 view  n ns  s sort(mem rev)

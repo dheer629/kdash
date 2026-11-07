@@ -1,0 +1,50 @@
+ KDASH 4.27.4 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-07 14:02:53 IST
+ match .*   poll 2s  spec 25s/30s  session 14:02:28 up 25s   sort cpu ▼ high first
+ health ! pods 3/5 ready  restarts 235  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 5m ░░░░░░ 1% lim  mem 1Mi ░░░░░░ 0% lim  │ workloads 4  │ events 15m ! 0 ^ 0
+ NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod
+ source kubelet cAdvisor of the worker nodes (API node proxy)   sampled every 15s, last 4s ago, rates between the last two samples
+ namespace  in 339B/s  out 433B/s   disk read 0B/s  write 0B/s   IOPS read 0  write 0   ░░░
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=25s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+► TIMELINE  14:02:28 -> 14:02:53 IST  (all since kdash started, host clock, z cycles) ───────────────────────────────────────────────────────────────────────────────────
+  NETWORK in (ingress) - namespace                                                      NETWORK out (egress) - namespace
+    390B┤                 ·                   ·                 ·                         498B┤                 ·                   ·                 ·
+        │                 ·                   ·                 ·          ███████            │                 ·                   ·                 ·          ███████
+        │                 ·                   ·                 ·          ███████            │                 ·                   ·                 ·          ███████
+    195B┤                 ·                   ·                 ·          ███████        249B┤                 ·                   ·                 ·          ███████
+        │                 ·                   ·                 ·          ███████            │                 ·                   ·                 ·          ███████
+        │                 ·                   ·                 ·          ███████            │                 ·                   ·                 ·          ███████
+      0B└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴        0B└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         14:02:28                         14:02:40                          14:02:53           14:02:28                         14:02:40                          14:02:53
+  events                                                                                events
+  now 339B/s  min 339B/s  avg 339B/s  max 339B/s @ 14:02:52                             now 433B/s  min 433B/s  avg 433B/s  max 433B/s @ 14:02:52
+  2 samples in the window, per second rates                                             2 samples in the window, per second rates
+  DISK read - namespace                                                                 DISK write - namespace
+      1B┤                 ·                   ·                 ·                           1B┤                 ·                   ·                 ·
+        │                 ·                   ·                 ·                             │                 ·                   ·                 ·
+      1B┤                 ·                   ·                 ·                           1B┤                 ·                   ·                 ·
+        │                 ·                   ·                 ·                             │                 ·                   ·                 ·
+      0B└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴        0B└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         14:02:28                         14:02:40                          14:02:53           14:02:28                         14:02:40                          14:02:53
+  events                                                                                events
+  now 0B/s  min 0B/s  avg 0B/s  max 0B/s @ 14:02:52                                     now 0B/s  min 0B/s  avg 0B/s  max 0B/s @ 14:02:52
+  2 samples in the window, per second rates                                             2 samples in the window, per second rates
+
+► WORKER NODES   whole node (all namespaces) and this namespace on it, bytes per second
+  NODE                     POOL           PODS │  node in node out  disk rd  disk wr r-IOPS w-IOPS │    ns in   ns out    ns% │ ns share of node traffic
+  dev                      role:control-~    4 │     4.7K    53.8K    80.2K   544.5K      6     65 │     339B     433B    1.3 │ █▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  (unscheduled)            (none)            1 │        -        -        -        -      -      - │        -        -      - │ n/a
+
+► PODS   bytes per second   (sort cpu ▼ high first - s cycles: cpu = network, mem = disk, cpupct = in, mempct = out, restarts = IOPS)
+  POD                            NODE                             in      out  disk rd  disk wr r-IOPS w-IOPS │ share of namespace traffic
+  app-server-8fb4699bc-j6rk2     dev                            186B     239B       0B       0B      0      0 │ █████████████░░░░░░░░░░░
+  app-server-8fb4699bc-z8kl7     dev                            152B     195B       0B       0B      0      0 │ ███████████░░░░░░░░░░░░░
+  z-crash                        dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  completed-check-m9swm          dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  z-pending                      (unscheduled)                     -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend in = received (ingress), out = sent (egress), per second.  disk = container filesystem reads / writes.  IOPS = operations per second.  ns% = this namespace share›
+ ○ LIVE 14:02:53  next 1s  data 1s old  spec 25/30s  fetch 0.0s  poll 2s  AUDITED | io | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

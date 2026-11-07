@@ -201,6 +201,18 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
             require(text in utf8(run / 'raw' / (name + '.txt')), f'mode-switch evidence missing: {name}')
         require(bool(re.search(r'PASS: [0-9]+ mode-switch terminal checks', utf8(run / 'mode-regression.log'))),
                 'mode-switch corner-case regression was not recorded')
+    if tuple(int(n) for n in version.split('.')) >= (4, 27, 4):
+        toolkit = {'certs', 'check-summary', 'check-run-finding', 'check-run-read-commands-only',
+                   'runbook-real-node-inventory', 'runbook-topic-cycle', 'check-ui-real-findings'}
+        toolkit.update('runbook-' + topic for topic in
+                       ('etcd-restore', 'cert-rotate', 'node-notready', 'api-unreachable', 'oidc-login'))
+        require(toolkit.issubset(names), 'live certificate/runbook/check coverage is incomplete')
+        for name, text in {'84-certs': 'EXPIRES UTC', '85-runbook': 'RUNBOOK - etcd-restore',
+                           '86-check': 'CHECK NOW', '87-runbook-topic': 'RUNBOOK - cert-rotate'}.items():
+            require(text in utf8(run / 'raw' / (name + '.txt')), f'toolkit evidence missing: {name}')
+        for file, pattern in [('login-cleanup-regression.log', r'PASS: [0-9]+ login-cleanup checks'),
+                              ('login-flow-regression.log', r'PASS: [0-9]+ login-flow PTY checks')]:
+            require(bool(re.search(pattern, utf8(run / file))), f'login regression was not recorded: {file}')
     browser = json.loads(utf8(run / "browser-results.json"))
     require(browser.get("status") == "PASS" and browser.get("source_sha256") == source_sha,
             "browser validation failed or tested another CLI")
