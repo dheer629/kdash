@@ -1,7 +1,14 @@
 # Releases and downloads
 
-The current source version is **4.27.4**. OIDC helper cleanup checks the exact
-command, UID, run tag and process birth time, and a separate attempt tag protects
+The current source version is **4.28.1**. It adds an FMEA worksheet (`M`,
+`--fmea`) with severity, occurrence and detection scores, HIGH / MEDIUM / LOW
+project Action Priority heuristics, access coverage, site overrides, saved-run trends and
+CSV/TSV/JSON/HTML exports. `--access` (or `: access`) maps the current user's
+read permissions to the checks and prints missing read-only RBAC for review.
+`--fmea --run N` runs a row's confirming reads; `--fail-on` supplies a pipeline
+gate. These are catalogue-based assessments, not proof of application health.
+OIDC helper cleanup checks the exact command, UID, run tag and process birth time,
+and a separate attempt tag protects
 the active login. Cleanup is best effort on Linux procfs; helpers that discard
 the tag can remain running. `c` continues without login and pauses background
 reads and automatic retries until `L`. Issuer discovery failures add a DNS, TLS
@@ -19,9 +26,12 @@ with the header badge and scriptable exit codes, interactive-mode switching from
 pod details and logs, framed pickers, saved namespace defaults, expandable
 bounded logs and checked file transfers. Its live WSL evidence is indexed by
 [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt), with terminal and report
-galleries in [`samples/cli_4274/`](samples/cli_4274/README.md) and
-[`samples/html4274/`](samples/html4274/README.md). These captures use 4.27.4;
-the [4.27.3 terminal](samples/cli_4273/README.md) and
+galleries in [`samples/cli_4281/`](samples/cli_4281/README.md) and
+[`samples/html4281/`](samples/html4281/README.md). The release-time 4.27.4
+[terminal gallery](samples/cli_4274/README.md),
+[HTML reports](samples/html4274/README.md) and
+[original run](artifacts/live-e2e-20261107-083145/results.json) remain unchanged.
+The [4.27.3 terminal](samples/cli_4273/README.md) and
 [HTML](samples/html4273/README.md) galleries remain available under their recorded
 version. OIDC flow tests use controlled helpers; the local cluster uses
 certificate authentication.
@@ -29,13 +39,14 @@ Published versions have their own immutable GitHub Releases, so you can download
 an exact historical release at any time:
 <https://github.com/dheer629/kdash/releases>
 
-The latest release is **4.27.4**. Its CLI, installer, archive, documentation,
-checksums and validation manifests are attached to the release below. Versions
-4.23.2, 4.24.1 and 4.27.3 have source snapshots; use their exact commit or source
-archive below.
+Version **4.28.1** is prepared for publication; its links become available when
+that release is published. The published **4.27.4** release and its assets remain
+available. Versions 4.23.2, 4.24.1 and 4.27.3 have source snapshots; use their exact
+commit or source archive below.
 
 | Version | Tag / commit | What it adds | Download |
 |---|---|---|---|
+| 4.28.1 | `v4.28.1` | FMEA worksheet, RBAC access review, S/O/D Action Priority, trends, site overrides and structured exports | [release (pending publication)](https://github.com/dheer629/kdash/releases/tag/v4.28.1) |
 | 4.27.4 | `v4.27.4` | scoped OIDC helper cleanup, protected active login, persistent continue-without-login pause, issuer discovery hints | [release](https://github.com/dheer629/kdash/releases/tag/v4.27.4) |
 | 4.27.3 | [`2834ee7`](https://github.com/dheer629/kdash/tree/2834ee72eb431f3cebaf6d10f2196e86c234c3a3) | runbooks (`R`, `--runbook`), instant check (`K`, `--check [--run N]`), OIDC login handling (`L`, exit 4), certificate and login expiry (`C`, `--certs`) | [source archive](https://github.com/dheer629/kdash/archive/2834ee72eb431f3cebaf6d10f2196e86c234c3a3.tar.gz) |
 | 4.24.1 | [`04767fa`](https://github.com/dheer629/kdash/tree/04767faef0946e3b06ddec3574162bb2f6cfda4c) | certificate and login expiry (`C`, `-v certs`, `--certs`), header badge, scriptable exit codes | [source archive](https://github.com/dheer629/kdash/archive/04767faef0946e3b06ddec3574162bb2f6cfda4c.tar.gz) |
@@ -59,7 +70,7 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                              # kdash 4.27.4
+kdash --version                              # kdash 4.28.1
 ```
 
 For an existing checkout, update it without discarding local changes, then verify
@@ -83,10 +94,10 @@ does not require building or connecting to a cluster.
 ## Download and verify a specific version
 
 ```bash
-v=4.27.4
+v=4.28.1
 base=https://github.com/dheer629/kdash/releases/download/v$v
 curl -fsSLO "$base/kdash-$v.tar.gz" -O "$base/SHA256SUMS"
-sha256sum --ignore-missing -c SHA256SUMS      # must print: kdash-4.27.4.tar.gz: OK
+sha256sum --ignore-missing -c SHA256SUMS      # must print: kdash-4.28.1.tar.gz: OK
 tar -xzf "kdash-$v.tar.gz"
 bash kdash-bundle.sh                           # installs to ~/.local/bin
 kdash --version
@@ -115,7 +126,7 @@ configuration, reports and audit history.
 4. Commit and publish the change through the repository's configured branch rules.
    Run `bash scripts/validate-all.sh` again on the clean, published checkout.
 5. Only when publishing a release, tag that commit, for example
-   `git tag -a v4.27.4 -m "kdash 4.27.4" && git push origin v4.27.4`.
+   `git tag -a v4.28.1 -m "kdash 4.28.1" && git push origin v4.28.1`.
 
 Pushing the tag runs [.github/workflows/release.yml](.github/workflows/release.yml). It
 validates the tree, packages that commit with `scripts/package-release.sh`, and creates

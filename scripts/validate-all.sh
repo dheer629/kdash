@@ -217,7 +217,7 @@ publication_paths() { git ls-files -z --cached --others --exclude-standard | sor
 # the name scan below. KEEP_PUBLIC lists the galleries that were published as the
 # current capture of their release; add to it when a new gallery takes over, and
 # redact the gallery only when the run itself is redacted.
-KEEP_PUBLIC='cli_4232?|html4232?|cli_4241|html4241|cli_4273|html4273'
+KEEP_PUBLIC='cli_4232?|html4232?|cli_4241|html4241|cli_4273|html4273|cli_4274|html4274'
 current_gallery_dirs() {
   local run png g1
   [ -f artifacts/latest-e2e.txt ] || return 0

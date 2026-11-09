@@ -1,4 +1,4 @@
-KDASH 4.27.4 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
+KDASH 4.28.1 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
 =========================================================================
 
 WHAT THIS FILE IS
@@ -8,11 +8,13 @@ exercise in this repository produced. It explains what every view answers, how t
 read the numbers without over-claiming, where the proof of each statement lives,
 and which limitations must be stated whenever this output is shared. It is
 deliberately plain text: it can be read in the same terminal as the dashboard.
-The source version is now 4.27.4. Recorded WSL validation is indexed by
+The source version is now 4.28.1. Recorded WSL validation is indexed by
 artifacts/latest-e2e.txt, with the live screen manifest, results and cluster
-inventory in that run. The newest complete screen set is in samples/cli_4274/ and
-report samples in samples/html4274/, captured from 4.27.4 and including RUNBOOK,
-CHECK and CERTIFICATES screens. The earlier 4.27.3 samples
+inventory in that run. The newest complete screen set is in samples/cli_4281/ and
+report samples in samples/html4281/, captured from 4.28.1 and including RUNBOOK,
+CHECK and CERTIFICATES screens. The release-time 4.27.4 captures remain in
+samples/cli_4274/ and samples/html4274/, with their original results in
+artifacts/live-e2e-20261107-083145/results.json. The earlier 4.27.3 samples
 remain in samples/cli_4273/ and samples/html4273/. The detailed historical
 exercise below used 4.12.0; the 4.13.1, 4.14.0, 4.19.2, 4.23.1, 4.23.2 and 4.24.1
 galleries retain their original versions, with the 4.23.1 screenshots/reports in
@@ -25,7 +27,7 @@ CURRENT SOURCE: INSTALL AND NAVIGATE
   sha256sum -c SHA256SUMS
   bash kdash-bundle.sh
   exec bash -l
-  kdash --version                         # kdash 4.27.4
+  kdash --version                         # kdash 4.28.1
 
 The bundle installs without a build or a cluster connection. Published historical
 releases and the separate release-publishing workflow are described in RELEASES.md;
@@ -49,6 +51,34 @@ oidc-login. Commands that only read are marked "read"; anything that changes the
 cluster or a node is marked "CHANGE" and is only ever printed, never run. L starts
 the OIDC login for the current context and shows its URL; a login that is due is
 detected at start, and without a terminal kdash exits 4 instead of hanging.
+
+4.28.1 adds M / --fmea: a catalogue-based failure-mode worksheet across readable
+Kubernetes objects and available signals. It shows severity (S), occurrence (O),
+detection difficulty (D), HIGH/MEDIUM/LOW Action Priority, RPN and current evidence.
+These scores and priorities are project heuristics for operational triage.
+The default ordering uses Action Priority; s cycles AP/RPN/S and t cycles kinds.
+Missing permissions and unavailable signals remain visible, never proof of health.
+Use --access (or : access) to see the signed-in user's permissions and which checks
+they enable. Suggested read-only Role/ClusterRole YAML is printed, never applied.
+
+  kdash -n TEAM --fmea
+  kdash -n TEAM --access
+  kdash -n TEAM --fmea --run 3              # row 3's confirming read commands
+  kdash -n TEAM --fmea -o csv > fmea.csv    # also tsv or json
+  kdash -n TEAM --fmea -o html              # writes a worksheet, prints its path
+  kdash -n TEAM --fmea --fail-on medium     # 2 HIGH, 1 MEDIUM, otherwise 0
+  kdash -n TEAM --fmea --since 30d          # local saved-run daily summaries
+
+History is stored locally under $KDASH_REPORT_DIR/fmea/runs/, by context/namespace.
+Occurrence is marked estimated when fewer than seven days of saved runs exist.
+Defaults: 30-day occurrence lookback, 90-day retention, at most one interactive
+save every 600 seconds. KDASH_FMEA_SAVE=0 disables saving. Site TSV files at
+/etc/kdash-fmea.tsv and ${XDG_CONFIG_HOME:-$HOME/.config}/kdash-fmea.tsv override
+catalogue fields or add manual rows. The kdash.io/criticality label and site
+criticality entries adjust severity. Scores guide review; they do not establish
+reliability or replace confirmation of the finding and its application impact.
+CPU near a limit signals throttling risk, not measured throttling events. Missing
+volume metrics leave usage unknown. Coverage describes actually readable signals.
 
 In 4.27.4 cleanup checks the exact helper command, UID, run tag and process birth
 time before signalling owned helpers left behind by reads and completed attempts.
@@ -191,8 +221,8 @@ for both the installed copy and the repository file.
 artifacts/   the run itself: step logs, per-namespace live terminal capture, the
              recorded session, the reports and the audit log, plus run-metadata.json,
              controller-actions.json and RUN_INVENTORY.md
-samples/     the shareable result: the newest screen set (4.27.4) in samples/cli_4274/
-             and reports in samples/html4274/; historical 4.19.2 screens and the
+samples/     the shareable result: the newest screen set (4.28.1) in samples/cli_4281/
+             and reports in samples/html4281/; historical 4.19.2 screens and the
              views of the 4.12.0 run and the 4.13.1 views and inspector
              (samples/cli_413/), the 4.19.2 HTML reports (samples/html419/) and
              the older HTML reports with checksums (samples/html/)
@@ -314,7 +344,7 @@ capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
   * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
     screen at one moment, including colours and the pinned header/footer. It is
     viewport evidence: a long table continues below the visible 50 rows.
-  * The rendered PNG screenshots in samples/cli_4274/ (4.27.4, including RUNBOOK,
+  * The rendered PNG screenshots in samples/cli_4281/ (4.28.1, including RUNBOOK,
     CHECK and CERTIFICATES),
     samples/cli/ (4.12.0 run) and samples/cli_413/ (4.13.1: services, storage, events,
     explanations, doctor, inspector) replay those captures cell by cell. They are a
@@ -427,7 +457,7 @@ Two practical findings are baked into it:
     its own. Without that, captures come back with a status line and the wrong height.
 12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
 --------------------------------------------------
-Current behavior (4.27.4, including the diagnostic features added in 4.13.0, the
+Current behavior (4.28.1, including FMEA and access review, the diagnostic features added in 4.13.0, the
 certificates and login view of 4.24.1 and the runbook, instant check and OIDC-login
 handling of 4.27.3):
   * the all-namespaces route (-A) is fixed: the flag now follows the resource

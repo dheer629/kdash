@@ -1,0 +1,51 @@
+CHECK NOW  -  everything kdash can see that is wrong right now - most severe first, with the commands to check and fix it
+
+ 3 CRITICAL  2 WARNING  (checked 0s ago - r re-checks now)
+
+AREAS  7 areas
+┌──────────────┬───────────────┬──────────┬──────────────────────────────────────────────────────────────────┐
+│ AREA         │ STATUS        │ FINDINGS │ DETAIL                                                           │
+├──────────────┼───────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
+│ api          │ ● OK          │        0 │ pods read 3s ago                                                 │
+│ nodes        │ ● OK          │        0 │ 1 of 1 Ready                                                     │
+│ pods         │ ● CRITICAL    │        2 │ 5 pods in the dashboard scope                                    │
+│ services     │ ● CRITICAL    │        1 │ services ok, endpoints ok, ingresses ok                          │
+│ storage      │ ● CRITICAL    │        2 │ claims ok, volumes ok                                            │
+│ certificates │ ● OK          │        0 │ quick check (C for nodes, kubelets, ingress)                     │
+│ etcd         │ ● not visible │        0 │ snapshots: unavailable - on a server: sudo rke2 etcd-snapshot ls │
+└──────────────┴───────────────┴──────────┴──────────────────────────────────────────────────────────────────┘
+
+FINDINGS  5 findings   critical first - Enter runs the read commands of one now (CHANGE commands are never run)
+┌───┬────────────┬──────────┬─────────────────┬──────────────────────────────────────────────────────────────┐
+│ # │ SEVERITY   │ AREA     │ OBJECT          │ FINDING                                                      │
+├───┼────────────┼──────────┼─────────────────┼──────────────────────────────────────────────────────────────┤
+│ 1 │ ● CRITICAL │ pods     │ z-crash         │ CrashLoopBackOff, 21 restarts (last: Error)                  │
+│ 2 │ ● CRITICAL │ services │ missing-backend │ selector app=does-not-exist matches no pod in this scope     │
+│ 3 │ ● CRITICAL │ storage  │ z-unbound       │ claim is Pending - not bound to a volume                     │
+│ 4 │ ● WARNING  │ pods     │ z-pending       │ Pending                                                      │
+│ 5 │ ● WARNING  │ storage  │ z-unbound       │ storage class kdash-e2e-intentionally-missing does not exist │
+└───┴────────────┴──────────┴─────────────────┴──────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  kdash --check --run N runs the read commands of finding N
+
+  #1  CRITICAL  z-crash  CrashLoopBackOff, 21 restarts (last: Error)
+      read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
+
+  #2  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
+      read   kubectl --context kdash-local -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      read   kubectl --context kdash-local -n kdash-e2e get pods --show-labels  # labels the pods really have
+      CHANGE kubectl --context kdash-local -n kdash-e2e edit service missing-backend  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+  #3  CRITICAL  z-unbound  claim is Pending - not bound to a volume
+      read   kubectl --context kdash-local -n kdash-e2e describe pvc z-unbound  # the provisioner's reason is in the events
+      read   kubectl --context kdash-local get storageclass kdash-e2e-intentionally-missing -o wide  # provisioner and binding mode
+
+  #4  WARNING  z-pending  Pending
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-pending  # the scheduler's message is in the events
+      read   kubectl --context kdash-local -n kdash-e2e get pvc  # an unbound claim also keeps a pod Pending
+
+  #5  WARNING  z-unbound  storage class kdash-e2e-intentionally-missing does not exist
+      read   kubectl --context kdash-local get storageclass  # classes that exist
+      note   storageClassName cannot be changed on an existing claim: create the class kdash-e2e-intentionally-missing, or recreate the claim with an existing class
+

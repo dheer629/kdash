@@ -1,0 +1,13 @@
+RUNBOOK - oidc-login  -  printed procedures with your cluster's names filled in - kdash never runs them
+runbooks:   1 etcd-restore    2 cert-rotate    3 node-notready    4 api-unreachable   [5 oidc-login]   [ ] previous / next   (kdash --runbook NAME)
+
+WHEN TO USE  -  kubectl asks for a login, the login fails, or kdash shows LOGIN NEEDED
+
+  STEP 1  check
+      read   kubectl --context kdash-local auth whoami  # triggers a new login when the refresh token has expired
+      read   kubectl --context kdash-local config view --minify -o jsonpath='{.users[0].user.exec.args}{"\n"}'  # issuer URL and client id this context uses
+
+  STEP 2  log in again
+      CHANGE kubectl oidc-login clean  # forgets cached tokens; the next kubectl call opens a fresh login
+      read   kubectl --context kdash-local auth whoami  # should show your user and groups
+      note   still failing: check the identity provider (issuer URL reachable from this host, clock skew, your group membership)

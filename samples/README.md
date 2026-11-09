@@ -27,13 +27,22 @@ Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed b
 
 
 
-The current **4.27.4** terminal gallery is [`cli_4274/`](cli_4274/README.md),
+The current **4.28.1** terminal gallery is [`cli_4281/`](cli_4281/README.md),
 captured from the installed utility against real Kubernetes workloads in local WSL.
 Its raw ANSI/plain-text screens and verification results are indexed by
 [`../artifacts/latest-e2e.txt`](../artifacts/latest-e2e.txt). The corresponding
-report files are in [`html4274/`](html4274/README.md). The `native/` gallery contains
+report files are in [`html4281/`](html4281/README.md). The `native/` gallery contains
 actual live WSL xterm screenshots; companion PNGs replay saved ANSI captures.
 Current values and local namespace names are preserved unchanged.
+
+Version 4.28.1 adds FMEA and ACCESS views plus separate FMEA worksheet exports.
+Use the recorded checks to assess which signals and actions were exercised;
+priority scores are project heuristics and coverage gaps remain visible.
+
+The release-time **4.27.4** [terminal gallery](cli_4274/README.md),
+[HTML reports](html4274/README.md) and
+[original run](../artifacts/live-e2e-20261107-083145/results.json) remain intact,
+separate from the refreshed galleries above.
 
 Earlier captures remain available under their original versions:
 **4.27.3** in [`cli_4273/`](cli_4273/README.md) and [`html4273/`](html4273/README.md),

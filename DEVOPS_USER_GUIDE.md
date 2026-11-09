@@ -1,6 +1,6 @@
 # kdash DevOps user guide
 
-This guide describes the kdash 4.27.4 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
+This guide describes the kdash 4.28.1 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
 
 The current source can be installed with `git clone https://github.com/dheer629/kdash.git`,
 `cd kdash`, `sha256sum -c SHA256SUMS`, then `bash kdash-bundle.sh`.
@@ -12,7 +12,7 @@ does not itself publish new release assets.
 
 The captured validation run below used 4.12.0; the later feature galleries used
 4.13.1 and 4.14.0. They remain evidence of those versions and do not validate the
-4.27.4 terminal layout or interactive browser against a live cluster.
+4.28.1 terminal layout or interactive browser against a live cluster.
 
 The following evidence table describes the exercise on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
 
@@ -27,9 +27,9 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4274/` follows this source and includes the runbook, check and certificates screens; the 4.24.1, 4.23.2 and older galleries support historical observations.
+`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4281/` follows this source and includes the runbook, check and certificates screens; the 4.24.1, 4.23.2 and older galleries support historical observations.
 
-## Current 4.27.4 validation and visual changes
+## Current 4.28.1 validation and visual changes
 
 <!-- CURRENT_LIVE_RESULT -->
 Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed browser checks** and **87 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.4 in namespace `kdash-e2e`.
@@ -77,8 +77,12 @@ that a real identity provider completed authentication.
 The current live run is named by [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt).
 Its `results.json`, `checks.tsv`, `inventory.json` and `captures.tsv` record the
 installed version, real WSL Kubernetes inventory, checks and every screen.
-[`samples/cli_4274/`](samples/cli_4274/README.md) contains the corresponding terminal
-renders and [`samples/html4274/`](samples/html4274/README.md) contains report output.
+[`samples/cli_4281/`](samples/cli_4281/README.md) contains the corresponding terminal
+renders and [`samples/html4281/`](samples/html4281/README.md) contains report output.
+The release-time [4.27.4 terminal gallery](samples/cli_4274/README.md),
+[HTML reports](samples/html4274/README.md) and
+[original run](artifacts/live-e2e-20261107-083145/results.json) remain available
+with their original captures and checksums.
 The [4.27.3 terminal](samples/cli_4273/README.md),
 [4.27.3 HTML](samples/html4273/README.md),
 [4.24.1 terminal](samples/cli_4241/README.md),
@@ -278,6 +282,7 @@ Repeat with `ns='ml-service-prod'` and `ns='gitops-core'`, or run them in separa
 | `8` / `services` | Ingress, Service, EndpointSlice and pod relationships | Selectors and readiness are configuration evidence; they do not prove DNS or end-to-end connectivity. Denied reads give unknown coverage. |
 | `9` / `storage` | PVC, PV, StorageClass, mounts and storage Events | Declared capacity is allocation. Measured usage is available only when the metrics source supplies it. |
 | `E` / `events`, `!` / `explain` | Kubernetes Events and possible explanations with next checks | Events can expire or be incomplete; a hypothesis is not a proven cause. |
+| `M` / `fmea`, `: access` | Catalogue failure modes, project S/O/D priority heuristics and the user's read coverage | Confirm findings against their evidence. Missing permissions or signals remain unknown; CPU near a limit is a risk signal rather than measured throttling. |
 
 Use `kdash --doctor` for read-only connection and capability checks. Services,
 storage, Events, explanations and doctor use tables fitted to the terminal width.
@@ -306,7 +311,8 @@ CPU values such as `250m` mean 250 millicores, or 0.25 of a CPU core. Memory use
 
 | Key | Action |
 |---|---|
-| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `Tab` | Choose or cycle the CLI view (certificates, runbook, instant check) |
+| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `M`, `Tab` | Choose or cycle the CLI view (certificates, runbook, instant check, FMEA) |
+| `: access` | Show the current user's read permissions and the FMEA checks they enable |
 | `L` | OIDC login for the current context: shows the URL and continues afterwards |
 | `?` | Explain the current view |
 | `j` / `k`, arrows; `space` / `b`; `g` / `G` | Scroll, page down/up, jump to top/bottom |
@@ -457,6 +463,81 @@ and the login issuer from the cluster, then substitutes them into the steps, so 
 printed commands can be pasted without editing names. Use `check` (or `--check`)
 before a change and again after it: the finding numbers are stable within a run, so
 the same list can be compared before and after.
+
+### Review failure modes and access
+
+`M` or `--fmea` applies a built-in failure-mode catalogue to the readable objects
+and available signals in the selected context and namespace. It combines
+pod/workload health, services and storage, jobs and schedules, configuration,
+networking, HPA/PDB/quota state, nodes, control-plane checks, certificates,
+webhooks and access. Rows distinguish current failures, risks, missing access,
+unavailable signals and checks without a current finding.
+
+Severity (`S`), occurrence (`O`) and detection difficulty (`D`) use 1–10 scores.
+The scores and priority categories are project heuristics for operational triage.
+The default order uses HIGH / MEDIUM / LOW Action Priority, then severity and
+RPN (`S × O × D`). Higher `D` means the signal is harder to detect. A denied check
+has `D=10`; partial coverage raises the catalogue detection score. Scores depend
+on the catalogue, current signals, local history and site overrides, so review
+the evidence and applicability before treating a row as an operational risk.
+
+```bash
+kdash -c CONTEXT -n NAMESPACE --fmea
+kdash -c CONTEXT -n NAMESPACE --access
+kdash -c CONTEXT -n NAMESPACE --fmea --run 3
+kdash -c CONTEXT -n NAMESPACE --fmea -o json > fmea.json
+kdash -c CONTEXT -n NAMESPACE --fmea -o csv > fmea.csv
+kdash -c CONTEXT -n NAMESPACE --fmea -o html
+kdash -c CONTEXT -n NAMESPACE --fmea --fail-on medium
+kdash -c CONTEXT -n NAMESPACE --fmea --since 30d
+```
+
+CSV, TSV and JSON go to stdout. HTML writes a self-contained worksheet under
+`$KDASH_REPORT_DIR/fmea/` and prints its path. `--run N` runs that row's confirming
+read commands and returns their result. In the FMEA view, `s` changes AP / RPN /
+severity order, `t` cycles resource kinds, `r` requests a new assessment and
+`: access` opens the access screen.
+
+`--access` checks the current identity and permissions with `auth whoami` and
+`auth can-i`. It maps missing permissions to catalogue checks and prints suggested
+read-only Role / ClusterRole YAML. kdash does not apply that YAML, grant access or
+impersonate another user. Missing access and unavailable sources are coverage
+gaps; they must not be interpreted as healthy resources.
+
+The default `--fmea` command exits `0` without imposing a priority gate. With a
+gate, these are the current return rules:
+
+| Option | Exit status |
+|---|---|
+| `--fail-on high` | `2` when any HIGH row exists, otherwise `0` |
+| `--fail-on medium` | `2` for HIGH, otherwise `1` for MEDIUM, otherwise `0` |
+| `--fail-on low` | `1` when any row has a status other than `ok`, otherwise `0` |
+
+A zero gate result does not prove complete access or application health. Usage
+errors also exit `2`; retain stderr and the worksheet with a pipeline result.
+
+Every assessment can save local history in
+`$KDASH_REPORT_DIR/fmea/runs/<context>_<namespace>/`. `--since 30d` reads that saved
+history and shows the last assessment of each day; it does not reconstruct
+observations from before kdash ran. Occurrence is marked estimated with fewer
+than seven days of saved runs. Defaults are a 30-day occurrence lookback, 90-day
+retention and at most one saved interactive assessment every 600 seconds.
+`KDASH_FMEA_SAVE=0` disables saving; `KDASH_FMEA_O_DAYS`, `KDASH_FMEA_KEEP_DAYS`
+and `KDASH_FMEA_SAVE_EVERY` adjust these periods.
+
+Site configuration is tab-separated data in `/etc/kdash-fmea.tsv` and
+`${XDG_CONFIG_HOME:-$HOME/.config}/kdash-fmea.tsv`. Its catalogue fields are
+`id kind mode effect cause signal requires S D owner status [O]`. A known ID
+overrides its non-empty fields; a new ID adds a manual site row. A separate
+`criticality<TAB>NAMESPACE[/KIND/NAME]<TAB>low|normal|critical` row, or the object's
+`kdash.io/criticality` label, adjusts severity. Keep manual rows distinct from
+findings supported by collected signals. Review local history and exported
+object/user metadata before sharing worksheets.
+
+CPU near its limit is a throttling-risk signal, not a measured throttling counter.
+Absent volume-usage metrics leave usage unknown. A coverage percentage describes
+the signals actually readable by this user; it does not prove that every mode
+was observable or that an application was healthy.
 
 ## 8. Audit evidence
 

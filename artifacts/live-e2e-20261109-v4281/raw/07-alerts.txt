@@ -1,0 +1,50 @@
+ KDASH 4.28.1 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-09 21:02:59 IST
+ match .*   poll 2s  spec 30s/30s  session 21:02:29 up 30s   sort cpu ▼ high first
+ health ! pods 3/5 ready  restarts 37  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 6m ░░░░░░ 1% lim  mem 3Mi ░░░░░░ 1% lim  │ workloads 4  │ events 15m ! 0 ^ 0
+ ALERTS   live critical summary of every section, with the action for each signal
+   CRITICAL    2 critical   3 warning   0 new   0 cleared in 5 min   rules run every refresh (2s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Data pods=fresh age=30s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+► SECTIONS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ● PODS       3/5 ready  rst 37  1 crit 1 warn                                      ● MEMORY     3Mi / 288Mi lim  1.0%  0 >=90%  0 no-limit  ░░░░░░░░░░░░
+  ● NODES      1 hosting  0 NotReady  max node mem 27.2% dev                         ● WORKLOADS  4  0 degraded  1 HA risk  0 rolling
+  ● IP         3 pod IPs  2 no IP  0 duplicate  2 svc                                ● TRAFFIC    in 372B/s out 476B/s  disk r 0B/s w 0B/s  ░░░░░
+
+► ACTIVE ALERTS  5 (2 critical, 3 warning)   critical first, NEW first, action under each ───────────────────────────────────────────────────────────────────────────────
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE                           TREND
+  ! NEW    PODS      z-crash                        CrashLoopBackOff   restarts 21, ready 0/1
+                   ↳ kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100
+  ! NEW    WORKLOADS Pod/z-pending                  UNSCHEDULED        1 pod(s) not placed
+                   ↳ kubectl -n kdash-e2e get events --field-selector reason=FailedScheduling
+  ^ NEW    PODS      z-pending                      Pending            node (unscheduled)
+                   ↳ kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending
+  ^ NEW    WORKLOADS Deployment/app-server          HA_RISK            2 replicas on 1 node
+                   ↳ kubectl -n kdash-e2e get pods -o wide | grep app-server   (topologySpreadConstraints)
+  ^ NEW    IP        z-pending                      NO_IP              status Pending
+                   ↳ kubectl -n kdash-e2e describe pod z-pending
+
+► LIVE TOP CONSUMERS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  memory % of limit                                       CPU % of limit                                          traffic in+out (ns 848B/s)
+    3.1 app-server-8fb4699bc-t7zxj                          1.2 app-server-8fb4699bc-cx5vz                           456B/s ████░░░░ app-server-8fb4699bc-cx5vz
+    0.0 app-server-8fb4699bc-cx5vz                          1.2 app-server-8fb4699bc-t7zxj                           392B/s ████░░░░ app-server-8fb4699bc-t7zxj
+                                                                                                                       0B/s ░░░░░░░░ z-crash
+
+
+
+► EVENTS  last hour ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  EVENTS 1 in window   ! 0 critical   ^ 0 warning
+  21:02:29       - SESSION          kdash-e2e                                kdash 4.28.1 started on Dheeraj by dheer - filter .*
+
+
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS›
+ ○ LIVE 21:02:59  next 2s  data 2s old  spec 30/30s  fetch 0.0s  poll 2s  AUDITED | alerts | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

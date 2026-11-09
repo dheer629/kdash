@@ -231,6 +231,7 @@ toolkit_tick() {
         if [ -d "$TMPD/toolkit-next" ]; then
             rm -rf "$TOOLKIT_DIR"; mv "$TMPD/toolkit-next" "$TOOLKIT_DIR"
         fi
+        if declare -F fmea_badge >/dev/null; then FMEA_BADGE="$(fmea_badge)"; fi
         TOOLKIT_NEXT=$(( $(date +%s) + 30 ))
     fi
     [ "${TOOLKIT_REQUESTED:-0}" = 1 ] || return 0
@@ -248,6 +249,10 @@ toolkit_tick() {
         if [ "$VIEW" = certs ] && declare -F certs_collect >/dev/null && [ "$(certs_age)" -ge "${KDASH_CERT_TTL:-300}" ]; then certs_collect full; audit CERTS "$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"; fi
         if [ "$VIEW" = runbook ] && declare -F rb_collect >/dev/null && [ "$(rb_age)" -ge 60 ]; then rb_collect; fi
         if [ "$VIEW" = check ] && declare -F check_collect >/dev/null && [ "$(check_age)" -ge 25 ]; then check_collect; audit CHECK "view=check"; fi
+        if { [ "$VIEW" = fmea ] || [ "$VIEW" = access ]; } && declare -F fmea_collect >/dev/null && [ "$(fmea_age)" -ge "${KDASH_FMEA_TTL:-60}" ]; then
+            if declare -F check_collect >/dev/null && [ "$(check_age)" -ge 25 ]; then check_collect; fi
+            fmea_collect view; audit FMEA "view=$VIEW $(awk -F'\t' '{ printf "high=%s medium=%s low=%s visible=%s/%s", $1, $2, $3, $4, $5 }' "$TOOLKIT_DIR/fmea.summary" 2>/dev/null)"
+        fi
         TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}" doctor_run > "$TOOLKIT_DIR/doctor.txt"
     ) & TOOLKIT_PID=$!
 }
@@ -284,15 +289,20 @@ toolkit_panel() {
         certs) if declare -F certs_render >/dev/null; then certs_render; fi ;;
         runbook) if declare -F rb_render >/dev/null; then rb_render "${RB_TOPIC:-etcd-restore}"; fi ;;
         check) if declare -F check_render >/dev/null; then check_render; fi ;;
+        fmea) if declare -F fmea_render >/dev/null; then fmea_render; fi ;;
+        access) if declare -F fmea_access_render >/dev/null; then fmea_access_render; fi ;;
         doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
     esac | toolkit_clean | tk_colorize > "$BODYF"
     RB_CAPTURE=""; RB_RUN_HINT=""
     export -n TK_COLOR TK_COLS TK_GLYPH
-    printf 'K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF"
+    case "$view" in
+      fmea|access) printf 'M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
+      *) printf 'K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF" ;;
+    esac
 }
 
 render() {
-    case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check) toolkit_panel "$VIEW" ;;
+    case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access) toolkit_panel "$VIEW" ;;
         *) render_core ;;
     esac
     local age=never status=not-collected
@@ -300,7 +310,7 @@ render() {
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
     printf 'Data pods=%s age=%s metrics=%s | K check now | i inspect | 8 services 9 storage E events ! explain C certs%s : commands\n' \
-        "$status" "$age" "$([ "$TOP_OK" = 1 ] && echo available || echo unavailable)" "${CERT_BADGE:+ ($CERT_BADGE)}" >> "$HDRF"
+        "$status" "$age" "$([ "$TOP_OK" = 1 ] && echo available || echo unavailable)" "${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+ M fmea ($FMEA_BADGE)}" >> "$HDRF"
     [ "${LOGIN_NEEDED:-0}" != 1 ] || printf 'LOGIN NEEDED: the OIDC login for %s has expired - press L (kdash shows the login URL and continues afterwards)\n' "$CTX_NAME" >> "$HDRF"
     local source updated
     for source in nodes svc; do

@@ -1393,7 +1393,7 @@ inspector_filter_prompt() {
 inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
-  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
   IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
   case "$command" in *$'\e'*) return 0 ;; esac
   case "$command" in
@@ -1405,6 +1405,7 @@ inspector_palette() {
       KDASH_ATTACH_ACTION=S; inspector_open; KDASH_ATTACH_ACTION="" ;;
     pods|nodes|workloads|ip|mem|io|alerts) VIEW="$command"; SCROLL=0; HSCROLL=0 ;;
     services|storage|events|explain|doctor|certs|runbook|check) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    fmea|M|access|rbac) VIEW="$(norm_view "$command")"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(fmea_age)" -lt 60 ] || TOOLKIT_NEXT=0; audit FMEA_VIEW "view=$VIEW from=palette" ;;
     runbook\ *) RB_TOPIC="${command#runbook }"; VIEW=runbook; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     help|'?') if declare -F show_help >/dev/null; then show_help; else printf '\n Use ? on the dashboard for help.\n'; fi ;;
     *) declare -F flash >/dev/null && flash "Unknown command: ${command:0:70}" 5; return 2 ;;

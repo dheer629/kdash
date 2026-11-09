@@ -109,6 +109,13 @@ Earlier captures retain their original version: {previous_galleries('cli_*/READM
 
 shutil.copytree(run / 'reports', html, dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns('sessions', 'inspector', '*.lock'))
+fmea_note = ''
+if (run / 'logs/fmea-json.log').is_file():
+    (html / 'fmea').mkdir(exist_ok=True)
+    for source, target in [('csv-fmea.log', 'worksheet.csv'), ('tsv-fmea.log', 'worksheet.tsv'),
+                           ('fmea-json.log', 'worksheet.json')]:
+        shutil.copy2(run / 'logs' / source, html / 'fmea' / target)
+    fmea_note = '\nFMEA has a separate static HTML worksheet and CSV, TSV and JSON exports in\n`fmea/`; it is separate from the namespace report tabs. The browser checks\ninclude its real worksheet rows and screenshot.\n'
 for screenshot in browser.get('screenshots', []):
     source = root / screenshot['file']
     target = html / 'screenshots' / source.name
@@ -127,6 +134,7 @@ The namespace report includes Overview, six resource tabs and recorded History.
 CLI Alerts appear in the Overview; Services, Storage, Events and explanations are
 preserved in the evidence bundle's diagnostic text/tables rather than extra
 namespace HTML tabs. Missing metrics remain unavailable instead of becoming zero.
+{fmea_note}
 Reports are self-contained for local viewing and include table search/sort,
 CSV/JSON export, themes, timezone selection and chart controls where data exists.
 
@@ -134,7 +142,7 @@ CSV/JSON export, themes, timezone selection and chart controls where data exists
 |---|---:|
 '''
 for p in sorted(html.rglob('*')):
-    if not p.is_file() or p.suffix.lower() not in ('.html','.csv','.png'):
+    if not p.is_file() or p.suffix.lower() not in ('.html','.csv','.tsv','.json','.png'):
         continue
     rel = p.relative_to(html).as_posix()
     t += f'| [{rel}]({rel}) | {p.stat().st_size} |\n'

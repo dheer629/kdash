@@ -13,6 +13,9 @@ for (const name of ['--run', '--module', '--browser']) {
 const run = path.resolve(option('--run'));
 const root = path.dirname(path.dirname(run));
 const evidence = JSON.parse(await fs.readFile(path.join(run, 'results.json'), 'utf8'));
+const releaseVersion = evidence.version.replace(/^kdash /, '');
+const [major, minor, patch] = releaseVersion.split('.').map(Number);
+const hasFmea = major > 4 || (major === 4 && (minor > 28 || (minor === 28 && patch >= 1)));
 const captures = (await fs.readFile(path.join(run, 'captures.tsv'), 'utf8')).trim().split(/\r?\n/);
 const pngColumn = captures[0].split('\t').indexOf('png');
 if (pngColumn < 0 || captures.length < 2) throw new Error('Capture manifest has no PNG paths');
@@ -37,6 +40,7 @@ const source = path.join(run, 'reports', candidates.sort((a, b) => b.size - a.si
 const checks = [];
 const screenshots = [];
 const errors = [];
+const additionalReports = [];
 const check = (name, passed, detail = '') => {
   checks.push({ name, status: passed ? 'PASS' : 'FAIL', detail });
   console.log(`${passed ? 'PASS' : 'FAIL'} ${name} ${detail}`);
@@ -90,6 +94,25 @@ try {
   await page.locator('.tab[data-tab="history"]').click();
   check('html-history-charts', await page.locator('.view[data-view="history"] svg').count() > 0);
   check('html-no-script-errors', errors.length === 0, errors.join('; '));
+  if (hasFmea) {
+    const fmeaDir = path.join(run, 'reports', 'fmea');
+    const worksheets = (await fs.readdir(fmeaDir)).filter(name => name.endsWith('.html')).sort();
+    if (!worksheets.length) throw new Error('No generated FMEA HTML worksheet');
+    const worksheet = path.join(fmeaDir, worksheets.at(-1));
+    const fmeaPage = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
+    fmeaPage.on('pageerror', error => errors.push(error.message));
+    await fmeaPage.goto(pathToFileURL(worksheet).href, { waitUntil: 'load' });
+    const text = await fmeaPage.locator('body').textContent();
+    check('html-fmea-real-rows', (await fmeaPage.locator('table tr').count()) >= 40 && text.includes('z-pending') && text.includes(releaseVersion));
+    check('html-fmea-no-script-errors', errors.length === 0, errors.join('; '));
+    const png = path.join(output, 'fmea.png');
+    await fmeaPage.screenshot({ path: png, animations: 'disabled' });
+    screenshots.push({ file: path.relative(root, png).replaceAll('\\', '/'),
+      sha256: crypto.createHash('sha256').update(await fs.readFile(png)).digest('hex'), tab: 'fmea' });
+    additionalReports.push({ report: path.relative(run, worksheet).replaceAll('\\', '/'),
+      sha256: crypto.createHash('sha256').update(await fs.readFile(worksheet)).digest('hex') });
+    await fmeaPage.close();
+  }
 } catch (error) {
   if (!checks.some(c => c.status === 'FAIL')) checks.push({ name: 'browser-exception', status: 'FAIL', detail: error.message });
   process.exitCode = 1;
@@ -100,5 +123,6 @@ try {
     report: path.relative(run, source).replaceAll('\\', '/'),
     report_sha256: crypto.createHash('sha256').update(await fs.readFile(source)).digest('hex'),
     status: checks.some(c => c.status === 'FAIL') ? 'FAIL' : 'PASS', checks, screenshots, errors,
+    additional_reports: additionalReports,
   }, null, 2) + '\n');
 }

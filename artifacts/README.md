@@ -27,7 +27,7 @@ Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed b
 
 
 
-The current **4.27.4** live validation is named by
+The current **4.28.1** live validation is named by
 [`latest-e2e.txt`](latest-e2e.txt), pointing to `live-e2e-<timestamp>/`.
 That run records the installed utility against the local WSL Kubernetes cluster,
 using the dedicated `kdash-e2e` namespace. Its files include:
@@ -42,13 +42,22 @@ using the dedicated `kdash-e2e` namespace. Its files include:
 | `reports/` | generated reports, tables, audit output and session history |
 
 The current screenshots and companion renders are in
-[`../samples/cli_4274/`](../samples/cli_4274/README.md) and report samples in
-[`../samples/html4274/`](../samples/html4274/README.md). Terminal images replay
+[`../samples/cli_4281/`](../samples/cli_4281/README.md) and report samples in
+[`../samples/html4281/`](../samples/html4281/README.md). Terminal images replay
 actual captures. `native/` contains real xterm window screenshots captured in WSL;
 the other PNGs are labelled ANSI replays. Their SHA-256 hashes and the installed
 CLI hash are recorded in `results.json`. The current run keeps actual local
 namespace names and metrics, with no substitutions or audit-chain rewriting.
 Missing metrics or denied reads remain visible as unavailable.
+
+Version 4.28.1 adds the FMEA worksheet and ACCESS review. Its priority scores are
+project heuristics; inspect the recorded checks and command output for the
+signals actually exercised. A missing permission or metric is a coverage gap.
+
+The release-time [4.27.4 run](live-e2e-20261107-083145/results.json),
+[terminal gallery](../samples/cli_4274/README.md) and
+[HTML reports](../samples/html4274/README.md) retain their original captures and
+checksums, separate from the refreshed current run.
 
 The earlier [4.27.3 run](live-e2e-20261107-054006/results.json),
 [terminal gallery](../samples/cli_4273/README.md) and

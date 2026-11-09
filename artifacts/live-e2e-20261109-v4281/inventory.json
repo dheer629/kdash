@@ -1,0 +1,466 @@
+[
+  {
+    "kind": "Pod",
+    "name": "app-server-8fb4699bc-cx5vz",
+    "status": {
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:33Z",
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T13:50:06Z",
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:33Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:33Z",
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T13:50:06Z",
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "containerID": "containerd://e7f5c4a5393aaa46a47e1f5eb90b6e82b252985d146cad87a31606705e377334",
+          "image": "docker.io/library/busybox:1.36",
+          "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+          "lastState": {
+            "terminated": {
+              "containerID": "containerd://95d840cde7b6df920b9f26bd113e23ca504161fe7a93cf1e215138a410062461",
+              "exitCode": 255,
+              "finishedAt": "2026-11-07T15:04:11Z",
+              "reason": "Unknown",
+              "startedAt": "2026-11-07T15:03:07Z"
+            }
+          },
+          "name": "app",
+          "ready": true,
+          "restartCount": 4,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-11-07T15:04:32Z"
+            }
+          }
+        },
+        {
+          "containerID": "containerd://1969e0bbfaf36d8283c0009e5cc20d19cd3c546e53290fb363caf77e3e6fe023",
+          "image": "docker.io/library/busybox:1.36",
+          "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+          "lastState": {
+            "terminated": {
+              "containerID": "containerd://ea85e387e978e089c6495e24236288910f49ff4e0a8225214bd95490aaea9d1f",
+              "exitCode": 255,
+              "finishedAt": "2026-11-07T15:04:11Z",
+              "reason": "Unknown",
+              "startedAt": "2026-11-07T15:03:07Z"
+            }
+          },
+          "name": "sidecar",
+          "ready": true,
+          "restartCount": 4,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-11-07T15:04:32Z"
+            }
+          }
+        }
+      ],
+      "hostIP": "172.18.0.2",
+      "hostIPs": [
+        {
+          "ip": "172.18.0.2"
+        }
+      ],
+      "phase": "Running",
+      "podIP": "10.244.0.135",
+      "podIPs": [
+        {
+          "ip": "10.244.0.135"
+        }
+      ],
+      "qosClass": "Burstable",
+      "startTime": "2026-11-07T13:50:06Z"
+    }
+  },
+  {
+    "kind": "Pod",
+    "name": "app-server-8fb4699bc-t7zxj",
+    "status": {
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:30Z",
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T13:50:06Z",
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:30Z",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:30Z",
+          "status": "True",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T13:50:06Z",
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "containerID": "containerd://891aebacffbe80d8940b1b7ca3e9d03753a46f2ecc1939d48b9edcecfa58bd3b",
+          "image": "docker.io/library/busybox:1.36",
+          "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+          "lastState": {
+            "terminated": {
+              "containerID": "containerd://0da7014a46f25d920c9b41501660811b51496fdba76e3e1e2193bb373dfa1df5",
+              "exitCode": 255,
+              "finishedAt": "2026-11-07T15:04:11Z",
+              "reason": "Unknown",
+              "startedAt": "2026-11-07T15:03:06Z"
+            }
+          },
+          "name": "app",
+          "ready": true,
+          "restartCount": 4,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-11-07T15:04:29Z"
+            }
+          }
+        },
+        {
+          "containerID": "containerd://818aba7408aec832d000a5d2accbc910bb4ed50301b010faeb8c07e5ea07aa58",
+          "image": "docker.io/library/busybox:1.36",
+          "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+          "lastState": {
+            "terminated": {
+              "containerID": "containerd://6c8aea531095fb4fabd51fa8678141da9db0748c7dbcc2dfceca727e0da26929",
+              "exitCode": 255,
+              "finishedAt": "2026-11-07T15:04:11Z",
+              "reason": "Unknown",
+              "startedAt": "2026-11-07T15:03:06Z"
+            }
+          },
+          "name": "sidecar",
+          "ready": true,
+          "restartCount": 4,
+          "started": true,
+          "state": {
+            "running": {
+              "startedAt": "2026-11-07T15:04:29Z"
+            }
+          }
+        }
+      ],
+      "hostIP": "172.18.0.2",
+      "hostIPs": [
+        {
+          "ip": "172.18.0.2"
+        }
+      ],
+      "phase": "Running",
+      "podIP": "10.244.0.128",
+      "podIPs": [
+        {
+          "ip": "10.244.0.128"
+        }
+      ],
+      "qosClass": "Burstable",
+      "startTime": "2026-11-07T13:50:06Z"
+    }
+  },
+  {
+    "kind": "Pod",
+    "name": "completed-check-m9swm",
+    "status": {
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-06T12:38:10Z",
+          "status": "False",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-06T12:38:07Z",
+          "reason": "PodCompleted",
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-06T12:38:07Z",
+          "reason": "PodCompleted",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-06T12:38:07Z",
+          "reason": "PodCompleted",
+          "status": "False",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-06T12:38:07Z",
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "containerID": "containerd://b8dab6e10e6b935e87b4ab09fa425b7a44242516dd597c0fd970bb77fc4c6aab",
+          "image": "docker.io/library/busybox:1.36",
+          "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+          "lastState": {},
+          "name": "check",
+          "ready": false,
+          "restartCount": 0,
+          "started": false,
+          "state": {
+            "terminated": {
+              "containerID": "containerd://b8dab6e10e6b935e87b4ab09fa425b7a44242516dd597c0fd970bb77fc4c6aab",
+              "exitCode": 0,
+              "finishedAt": "2026-11-06T12:38:09Z",
+              "reason": "Completed",
+              "startedAt": "2026-11-06T12:38:09Z"
+            }
+          }
+        }
+      ],
+      "hostIP": "172.18.0.2",
+      "hostIPs": [
+        {
+          "ip": "172.18.0.2"
+        }
+      ],
+      "phase": "Succeeded",
+      "qosClass": "Burstable",
+      "startTime": "2026-11-06T12:38:07Z"
+    }
+  },
+  {
+    "kind": "Pod",
+    "name": "z-crash",
+    "status": {
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:54Z",
+          "status": "True",
+          "type": "PodReadyToStartContainers"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:52Z",
+          "status": "True",
+          "type": "Initialized"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-09T15:25:35Z",
+          "message": "containers with unready status: [crash]",
+          "reason": "ContainersNotReady",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-09T15:25:35Z",
+          "message": "containers with unready status: [crash]",
+          "reason": "ContainersNotReady",
+          "status": "False",
+          "type": "ContainersReady"
+        },
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-07T15:04:52Z",
+          "status": "True",
+          "type": "PodScheduled"
+        }
+      ],
+      "containerStatuses": [
+        {
+          "containerID": "containerd://a82cfef86202a0311a1a943be40378217604b0e4895c7bc14bda6703c085d10f",
+          "image": "docker.io/library/busybox:1.36",
+          "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+          "lastState": {
+            "terminated": {
+              "containerID": "containerd://a82cfef86202a0311a1a943be40378217604b0e4895c7bc14bda6703c085d10f",
+              "exitCode": 42,
+              "finishedAt": "2026-11-09T15:25:35Z",
+              "reason": "Error",
+              "startedAt": "2026-11-09T15:25:32Z"
+            }
+          },
+          "name": "crash",
+          "ready": false,
+          "restartCount": 20,
+          "started": false,
+          "state": {
+            "waiting": {
+              "message": "back-off 5m0s restarting failed container=crash pod=z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)",
+              "reason": "CrashLoopBackOff"
+            }
+          }
+        }
+      ],
+      "hostIP": "172.18.0.2",
+      "hostIPs": [
+        {
+          "ip": "172.18.0.2"
+        }
+      ],
+      "phase": "Running",
+      "podIP": "10.244.0.137",
+      "podIPs": [
+        {
+          "ip": "10.244.0.137"
+        }
+      ],
+      "qosClass": "Burstable",
+      "startTime": "2026-11-07T15:04:52Z"
+    }
+  },
+  {
+    "kind": "Pod",
+    "name": "z-pending",
+    "status": {
+      "conditions": [
+        {
+          "lastProbeTime": null,
+          "lastTransitionTime": "2026-11-06T12:38:07Z",
+          "message": "0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.",
+          "reason": "Unschedulable",
+          "status": "False",
+          "type": "PodScheduled"
+        }
+      ],
+      "phase": "Pending",
+      "qosClass": "Burstable"
+    }
+  },
+  {
+    "kind": "Service",
+    "name": "app-server",
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  {
+    "kind": "Service",
+    "name": "missing-backend",
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  {
+    "kind": "PersistentVolumeClaim",
+    "name": "app-data",
+    "status": {
+      "accessModes": [
+        "ReadWriteMany"
+      ],
+      "capacity": {
+        "storage": "64Mi"
+      },
+      "phase": "Bound"
+    }
+  },
+  {
+    "kind": "PersistentVolumeClaim",
+    "name": "z-unbound",
+    "status": {
+      "phase": "Pending"
+    }
+  },
+  {
+    "kind": "Ingress",
+    "name": "app-server",
+    "status": {
+      "loadBalancer": {}
+    }
+  },
+  {
+    "kind": "Deployment",
+    "name": "app-server",
+    "status": {
+      "availableReplicas": 2,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-06T12:38:07Z",
+          "lastUpdateTime": "2026-11-06T12:38:19Z",
+          "message": "ReplicaSet \"app-server-8fb4699bc\" has successfully progressed.",
+          "reason": "NewReplicaSetAvailable",
+          "status": "True",
+          "type": "Progressing"
+        },
+        {
+          "lastTransitionTime": "2026-11-07T13:50:08Z",
+          "lastUpdateTime": "2026-11-07T13:50:08Z",
+          "message": "Deployment has minimum availability.",
+          "reason": "MinimumReplicasAvailable",
+          "status": "True",
+          "type": "Available"
+        }
+      ],
+      "observedGeneration": 1,
+      "readyReplicas": 2,
+      "replicas": 2,
+      "updatedReplicas": 2
+    }
+  },
+  {
+    "kind": "Job",
+    "name": "completed-check",
+    "status": {
+      "completionTime": "2026-11-06T12:38:11Z",
+      "conditions": [
+        {
+          "lastProbeTime": "2026-11-06T12:38:11Z",
+          "lastTransitionTime": "2026-11-06T12:38:11Z",
+          "status": "True",
+          "type": "Complete"
+        }
+      ],
+      "ready": 0,
+      "startTime": "2026-11-06T12:38:07Z",
+      "succeeded": 1,
+      "terminating": 0,
+      "uncountedTerminatedPods": {}
+    }
+  }
+]

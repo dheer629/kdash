@@ -362,8 +362,26 @@ spec:
         self.finish_cli(self.cli("certs", ["--certs"],
             ("CERTIFICATES AND LOGINS", "EXPIRY", r"cluster CA|client certificate", r"20\d\d-\d\d-\d\d"),
             codes=(0, 1, 2), timeout=180))
-        self.finish_cli(self.cli("check-summary", ["--check"],
-            ("CHECK NOW", "AREAS", "FINDINGS", "z-crash", "z-pending"), codes=(1, 2), timeout=180))
+        check_patterns = ("CHECK NOW", "AREAS", "FINDINGS", "z-crash", "z-pending")
+        result = self.cli("check-summary", ["--check"], check_patterns, codes=(1, 2), timeout=180)
+        # The crashing fixture briefly becomes Running/ready between restarts.
+        # Retain that snapshot and retry the identical assertion once in backoff.
+        first_body = (self.out / result["log"]).read_text()
+        if not result["passed"] and result["exit_code"] in (1, 2) and "z-pending" in first_body and "z-crash" not in first_body:
+            first = dict(result)
+            first["log"] = "logs/check-summary-attempt1.log"
+            (self.out / first["log"]).write_text(first_body)
+            deadline = time.monotonic() + 45
+            while time.monotonic() < deadline:
+                state = self.call(self.kc + ["-n", self.args.namespace, "get", "pod", "z-crash", "--request-timeout=10s",
+                    "-o", "jsonpath={.status.containerStatuses[0].state.waiting.reason}"], timeout=15)
+                if state.returncode == 0 and state.stdout == "CrashLoopBackOff":
+                    result = self.cli("check-summary", ["--check"], check_patterns, codes=(1, 2), timeout=180)
+                    result["attempts"] = [first, dict(result)]
+                    result["retry_reason"] = "initial snapshot saw the intentional crash fixture between restarts"
+                    break
+                time.sleep(1)
+        self.finish_cli(result)
         summary = (self.out / "logs" / "check-summary.log").read_text()
         finding = re.search(r"(?m)^\s*#(\d+)\s+[^\n]*\bz-(?:crash|pending)\b", summary)
         if self.record("check-real-finding-selected", bool(finding),
@@ -390,6 +408,36 @@ spec:
         self.record("runbook-real-node-inventory", bool(names) and all(
             re.search(r"(?m)(?:^|[│|])\s*" + re.escape(name) + r"\s+(?:[│|]|server|agent)", body) for name in names),
                     "node runbook includes the actual cluster node inventory")
+        if tuple(int(n) for n in self.version.split('.')) >= (4, 28, 1):
+            self.fmea_cli_checks()
+
+    def fmea_cli_checks(self):
+        self.finish_cli(self.cli("fmea-summary", ["--fmea"], ("WORKSHEET", "Action Priority", "visible", "z-pending"), timeout=180))
+        for fmt in ("csv", "tsv"):
+            self.finish_cli(self.cli(fmt + "-fmea", ["--fmea", "-o", fmt], ("RPN", "FAILURE_MODE", "z-pending"), timeout=180))
+        result = self.cli("fmea-json", ["--fmea", "-o", "json"], timeout=180)
+        self.finish_cli(result)
+        try:
+            data = json.loads((self.out / "logs/fmea-json.log").read_text())
+            valid = data["namespace"] == self.args.namespace and len(data["rows"]) >= 40 and all(
+                row["ap"] in ("H", "M", "L") and 1 <= row["s"] <= 10 and row["rpn"] == row["s"] * row["o"] * row["d"]
+                for row in data["rows"])
+        except (ValueError, KeyError, TypeError):
+            valid = False
+        self.record("fmea-json-real-rows", valid, "real worksheet rows retain numeric scores, AP, access and namespace")
+        self.finish_cli(self.cli("fmea-html", ["--fmea", "-o", "html"], (r"fmea_.*\.html",), timeout=180))
+        self.finish_cli(self.cli("fmea-access", ["--access"], ("ACCESS", "PERMISSIONS", "COVERAGE", "read-only"), timeout=180))
+        self.finish_cli(self.cli("fmea-fail-on-high", ["--fmea", "--fail-on", "high"], ("HIGH",), codes=(2,), timeout=180))
+        self.finish_cli(self.cli("fmea-trend", ["--fmea", "--since", "30d"], ("FMEA TREND", "PER DAY"), timeout=180))
+        summary = (self.out / "logs/fmea-summary.log").read_text()
+        finding = re.search(r"(?m)^\s*#(\d+)\s+[^\n]*\bz-(?:crash|pending)\b", summary)
+        if self.record("fmea-real-finding-selected", bool(finding), "selected a real failing pod row's numbered read commands"):
+            self.finish_cli(self.cli("fmea-run-finding", ["--fmea", "--run", finding.group(1)],
+                ("read-only commands", r"\$ kubectl", r"(?m)^Name:\s+z-(?:crash|pending)\b"), timeout=180))
+            commands = re.findall(r"(?m)^\$ (.+)$", (self.out / "logs/fmea-run-finding.log").read_text())
+            self.record("fmea-run-read-commands-only", bool(commands) and all(
+                command.startswith("kubectl ") and not re.search(r"\b(?:apply|delete|patch|replace|create|drain|scale|exec|cp)\b", command)
+                for command in commands), "FMEA row execution ran only the captured guarded reads")
 
     def toolkit_ui_checks(self):
         """Capture existing C/R/K tools from the live cluster in a private session."""
@@ -411,6 +459,18 @@ spec:
         body = self.screen(s)
         self.record("check-ui-real-findings", "z-crash" in body and "z-pending" in body,
                     "instant-check view shows the real crashing and pending fixture pods")
+        if tuple(int(n) for n in self.version.split('.')) >= (4, 28, 1):
+            self.key(s, "M", delay=3)
+            self.wait(s, "WORKSHEET", timeout=150)
+            self.capture(s, "88-fmea", "FMEA real failure modes, priority scores and read visibility", "WORKSHEET")
+            self.key(s, ":", delay=2)
+            self.wait(s, "PERMISSIONS", timeout=120)
+            self.capture(s, "89-access", "ACCESS real kubectl auth identity and permission checks", "PERMISSIONS")
+            self.key(s, "M", delay=2)
+            self.key(s, "t", delay=1)
+            self.capture(s, "90-fmea-kind", "FMEA kind filter on actual worksheet rows", "showing kind")
+            self.key(s, "s", delay=1)
+            self.capture(s, "91-fmea-sort", "FMEA worksheet sorted by risk priority number", "WORKSHEET")
         self.key(s, "Q", delay=1)
 
     def tm(self, *argv, check=True):

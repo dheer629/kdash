@@ -1,0 +1,29 @@
+file	columns	rows	title	png
+raw/01-pods.ansi	170	50	kdash 4.28.1 | PODS live requests, limits and measured usage	samples/cli_4281/01-pods.png
+raw/02-nodes.ansi	170	50	kdash 4.28.1 | NODE POOLS real allocatable capacity and namespace share	samples/cli_4281/02-nodes.png
+raw/03-workloads.ansi	170	50	kdash 4.28.1 | WORKLOADS live replicas and placement	samples/cli_4281/03-workloads.png
+raw/04-ip.ansi	170	50	kdash 4.28.1 | IP POOL real pod, node and service addresses	samples/cli_4281/04-ip.png
+raw/05-mem.ansi	170	50	kdash 4.28.1 | MEMORY live history and pod usage	samples/cli_4281/05-mem.png
+raw/06-io.ansi	170	50	kdash 4.28.1 | NETWORK AND DISK IO capability and live samples	samples/cli_4281/06-io.png
+raw/07-alerts.ansi	170	50	kdash 4.28.1 | ALERTS real unhealthy fixture workloads	samples/cli_4281/07-alerts.png
+raw/08-services.ansi	170	50	kdash 4.28.1 | SERVICES ingress, ready endpoints and missing backend	samples/cli_4281/08-services.png
+raw/09-storage.ansi	170	50	kdash 4.28.1 | STORAGE bound volume and pending claim	samples/cli_4281/09-storage.png
+raw/10-events.ansi	170	50	kdash 4.28.1 | EVENTS real Kubernetes scheduler and kubelet events	samples/cli_4281/10-events.png
+raw/11-explain.ansi	170	50	kdash 4.28.1 | INCIDENT EVIDENCE from actual failing workloads	samples/cli_4281/11-explain.png
+raw/12-namespace-picker.ansi	170	50	kdash 4.28.1 | Framed namespace picker with access and persistent default controls	samples/cli_4281/12-namespace-picker.png
+raw/13-namespace-filter.ansi	170	50	kdash 4.28.1 | Live namespace search and context-sensitive action panel	samples/cli_4281/13-namespace-filter.png
+raw/67-namespace-saved-default.ansi	170	50	kdash 4.28.1 | A subsequent launch opens the namespace saved with d	samples/cli_4281/67-namespace-saved-default.png
+raw/68-namespace-typed.ansi	170	50	kdash 4.28.1 | t opens an explicitly typed namespace	samples/cli_4281/68-namespace-typed.png
+raw/14-pod-picker.ansi	170	50	kdash 4.28.1 | Framed live pod picker with CPU, memory, restarts and attention state	samples/cli_4281/14-pod-picker.png
+raw/15-pod-picker-help.ansi	170	50	kdash 4.28.1 | Pod picker navigation, filters and action keys	samples/cli_4281/15-pod-picker-help.png
+raw/16-container-picker.ansi	170	50	kdash 4.28.1 | Framed multi-container picker with resource/state columns	samples/cli_4281/16-container-picker.png
+raw/17-inspector-summary.ansi	170	50	kdash 4.28.1 | Inspector summary of a real running pod	samples/cli_4281/17-inspector-summary.png
+raw/75-detail-shell-blocked.ansi	170	50	kdash 4.28.1 | Read-only inspector refuses shell actions and explains X	samples/cli_4281/75-detail-shell-blocked.png
+raw/76-detail-confirmation.ansi	170	50	kdash 4.28.1 | X opens confirmation directly from pod detail	samples/cli_4281/76-detail-confirmation.png
+raw/77-detail-cancel.ansi	170	50	kdash 4.28.1 | Declining keeps pod detail read-only	samples/cli_4281/77-detail-cancel.png
+raw/78-detail-interactive-on.ansi	170	50	kdash 4.28.1 | Whole yes answer enables the inspector without leaking keys	samples/cli_4281/78-detail-interactive-on.png
+raw/79-detail-shell.ansi	170	50	kdash 4.28.1 | Actual container shell opened after enabling X in detail	samples/cli_4281/79-detail-shell.png
+raw/80-detail-interactive-off.ansi	170	50	kdash 4.28.1 | X disables interactive actions immediately in the inspector	samples/cli_4281/80-detail-interactive-off.png
+raw/81-detail-shell-blocked-again.ansi	170	50	kdash 4.28.1 | Shell is refused again after disabling X	samples/cli_4281/81-detail-shell-blocked-again.png
+raw/18-inspector-logs.ansi	170	50	kdash 4.28.1 | Bounded timestamped logs from the live app container	samples/cli_4281/18-inspector-logs.png
+raw/62-inspector-expand.ansi	170	50	kdash 4.28.1 | Expanded bounded log read from the live container	samples/cli_4281/62-inspector-expand.png

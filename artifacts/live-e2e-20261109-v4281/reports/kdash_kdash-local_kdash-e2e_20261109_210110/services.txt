@@ -1,0 +1,51 @@
+SERVICES AND BACKENDS  -  observed configuration and readiness - reachability is not tested
+
+DATA SOURCES
+┌───────────┬───────┬────────┬────────────────┐
+│ SOURCE    │ STATE │   READ │ DETAIL         │
+├───────────┼───────┼────────┼────────────────┤
+│ services  │ ● ok  │ 1s ago │ read succeeded │
+│ pods      │ ● ok  │ 1s ago │ read succeeded │
+│ endpoints │ ● ok  │ 0s ago │ read succeeded │
+│ ingresses │ ● ok  │ 0s ago │ read succeeded │
+└───────────┴───────┴────────┴────────────────┘
+
+SERVICES  2 services
+┌─────────────────┬────────────┬───────────┬──────────┬───────┬───────────┬────────────────┬──────────────────────────┐
+│ SERVICE         │ STATUS     │ TYPE      │ SELECTED │ READY │ ENDPOINTS │ CLUSTER-IP     │ PORTS (name:port→target) │
+├─────────────────┼────────────┼───────────┼──────────┼───────┼───────────┼────────────────┼──────────────────────────┤
+│ app-server      │ ● OK       │ ClusterIP │        2 │     2 │ 2/2 ready │ 10.111.83.216  │ 80→8080                  │
+│ missing-backend │ ● NO MATCH │ ClusterIP │        0 │     0 │ 0/0 ready │ 10.104.104.128 │ 80→8080                  │
+└─────────────────┴────────────┴───────────┴──────────┴───────┴───────────┴────────────────┴──────────────────────────┘
+
+FINDINGS  1 finding   critical first - the next commands for each are listed below the table
+┌───┬────────────┬─────────────────┬──────────────────────────────────────────────────────────┐
+│ # │ SEVERITY   │ OBJECT          │ FINDING                                                  │
+├───┼────────────┼─────────────────┼──────────────────────────────────────────────────────────┤
+│ 1 │ ● CRITICAL │ missing-backend │ selector app=does-not-exist matches no pod in this scope │
+└───┴────────────┴─────────────────┴──────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)
+
+  #1  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
+      read   kubectl --context kdash-local -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      read   kubectl --context kdash-local -n kdash-e2e get pods --show-labels  # labels the pods really have
+      CHANGE kubectl --context kdash-local -n kdash-e2e edit service missing-backend  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+
+BACKENDS  2 services   selector and the Ready pods it selects (first 3)
+┌─────────────────┬────────────────────────────────────────────────────────┬───────────────────────────┐
+│ SERVICE         │ READY BACKEND PODS                                     │ SELECTOR                  │
+├─────────────────┼────────────────────────────────────────────────────────┼───────────────────────────┤
+│ app-server      │ app-server-8fb4699bc-cx5vz, app-server-8fb4699bc-t7zxj │ app=kdash-e2e,role=server │
+│ missing-backend │ none ready                                             │ app=does-not-exist        │
+└─────────────────┴────────────────────────────────────────────────────────┴───────────────────────────┘
+
+INGRESS ROUTES  1 route   service-backed rules
+┌────────────┬────────┬────────────┬───────┬─────────────┬─────────────────┐
+│ INGRESS    │ STATUS │ READY PODS │ CLASS │ HOST / PATH │ BACKEND SERVICE │
+├────────────┼────────┼────────────┼───────┼─────────────┼─────────────────┤
+│ app-server │ ● OK   │          2 │ -     │ kdash.test/ │ app-server:80   │
+└────────────┴────────┴────────────┴───────┴─────────────┴─────────────────┘
+
+  Readiness is what the API reports. DNS, ingress controllers, NetworkPolicy, routing, TLS and application responses are not tested.

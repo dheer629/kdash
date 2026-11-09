@@ -1,0 +1,28 @@
+Loaded results: version=4.28.1, status=FAIL, checks=119
+  FAIL: inspect-previous → exit 0; 175 bytes
+  FAIL: fmea-access → exit 0; 5209 bytes
+  FAIL: harness-exception → Command '['import', '-window', 'kdash-e2e-63-inspector-all', '/workspace/kdash/samples/cli_4281/native/63-inspector-all.png']' timed out after 30 seconds
+Missing native PNG: /mnt/c/Users/dheer/OneDrive/Desktop/AI Projects/kdash/samples/cli_4281/native/63-inspector-all.png → exists: False
+
+── Browser state ──
+browser-results.json exists: False
+SHA256SUMS exists: False
+html4281 gallery exists: False
+
+63-inspector-all.ansi exists: False
+
+Browser screenshots in raw/: 0
+
+After regeneration, png exists: False
+
+── Browser validation attempt ──
+live-e2e.py exists, checking for --browser-only mode...
+  No --browser-only flag found in live-e2e.py
+
+═══ STATUS SUMMARY ═══
+  results.json:        EXISTS (/mnt/c/Users/dheer/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-20261109-v4281/results.json)
+  browser-results.json: NO (needed)
+  SHA256SUMS:           NO (needed)
+  html4281 gallery:     NO (needed)
+  cli_4281 gallery:     YES
+  63-inspector-all.png: NO (1 capture failure)

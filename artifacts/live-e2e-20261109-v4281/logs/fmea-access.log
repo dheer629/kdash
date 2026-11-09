@@ -1,0 +1,43 @@
+ACCESS  -  what you may read, checked with kubectl auth whoami / can-i - every FMEA check runs only where this allows
+
+ user kubernetes-super-admin   groups system:masters system:authenticated   context kdash-local   scope kdash-e2e   checked 3s ago
+
+PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) and never asks for more
+┌──────────────────────────────────────────┬─────────────┬─────────┬──────────────────────────┐
+│ PERMISSION                               │ SCOPE       │ ALLOWED │ NEEDED BY                │
+├──────────────────────────────────────────┼─────────────┼─────────┼──────────────────────────┤
+│ get /readyz                              │ cluster     │ ● yes   │ CP-01 CP-02              │
+│ get pods.metrics.k8s.io                  │ kdash-e2e   │ ● yes   │ POD-08                   │
+│ list certificates.cert-manager.io        │ kdash-e2e   │ ● yes   │ CFG-02                   │
+│ list cronjobs.batch                      │ kdash-e2e   │ ● yes   │ JOB-02                   │
+│ list daemonsets.apps                     │ kdash-e2e   │ ● yes   │ WRK-05                   │
+│ list deployments.apps                    │ kdash-e2e   │ ● yes   │ WRK-01 WRK-02 WRK-03 PD~ │
+│ list endpointslices.discovery.k8s.io     │ kdash-e2e   │ ● yes   │ SVC-01                   │
+│ list etcdsnapshotfiles.k3s.cattle.io     │ cluster     │ ● yes   │ CP-03                    │
+│ list events                              │ kdash-e2e   │ ● yes   │ POD-03 POD-06 PVC-03 CF~ │
+│ list horizontalpodautoscalers.autoscali~ │ kdash-e2e   │ ● yes   │ HPA-01 HPA-02            │
+│ list ingresses.networking.k8s.io         │ kdash-e2e   │ ● yes   │ ING-01 ING-02            │
+│ list jobs.batch                          │ kdash-e2e   │ ● yes   │ JOB-01                   │
+│ list mutatingwebhookconfigurations.admi~ │ cluster     │ ● yes   │ ADM-01                   │
+│ list namespaces                          │ cluster     │ ● yes   │ NS-01                    │
+│ list networkpolicies.networking.k8s.io   │ kdash-e2e   │ ● yes   │ NET-01                   │
+│ list nodes                               │ cluster     │ ● yes   │ NOD-01 NOD-02 NOD-03 NO~ │
+│ list persistentvolumeclaims              │ kdash-e2e   │ ● yes   │ PVC-01 PVC-02 PVC-03     │
+│ list persistentvolumes                   │ cluster     │ ● yes   │ PVC-04                   │
+│ list poddisruptionbudgets.policy         │ kdash-e2e   │ ● yes   │ PDB-01 PDB-02            │
+│ list pods                                │ kdash-e2e   │ ● yes   │ POD-01 POD-02 POD-03 PO~ │
+│ list pods                                │ kube-system │ ● yes   │ DNS-01                   │
+│ list resourcequotas                      │ kdash-e2e   │ ● yes   │ QTA-01                   │
+│ list services                            │ kdash-e2e   │ ● yes   │ SVC-01 SVC-02 SVC-03 IN~ │
+│ list statefulsets.apps                   │ kdash-e2e   │ ● yes   │ WRK-03 WRK-04            │
+│ list storageclasses.storage.k8s.io       │ cluster     │ ● yes   │ PVC-05                   │
+│ list validatingwebhookconfigurations.ad~ │ cluster     │ ● yes   │ ADM-01                   │
+└──────────────────────────────────────────┴─────────────┴─────────┴──────────────────────────┘
+
+COVERAGE  1 level   full = every check runs; partial = a fallback signal, D + 2; none = no access, D 10 and never counted as OK
+┌────────┬───────┬─────────────────────────────────────────────────────────────┐
+│ ACCESS │ MODES │ IDS                                                         │
+├────────┼───────┼─────────────────────────────────────────────────────────────┤
+│ ● full │    50 │ CP-03 PVC-01 SVC-01 POD-01 POD-03 CP-02 PVC-02 PVC-03 PVC-~ │
+└────────┴───────┴─────────────────────────────────────────────────────────────┘
+  every permission the FMEA checks need is granted

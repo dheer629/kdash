@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                     SUMMARY
+┌─ SUMMARY ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
+│ CONTAINER  app   ● Running   ready   restarts 4   last exit Unknown exit=255   busybox:1.36                                                                           │
+└─ rows 1-38 / 38 · 38 lines ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+Name: app-server-8fb4699bc-cx5vz
+Namespace: kdash-e2e
+UID: 8ba4b795-9a96-4841-8a09-fc662595c9d0
+Created: 2026-11-07T13:50:06Z
+Phase: Running
+Reason:
+Message:
+Node: dev
+Pod IP: 10.244.0.135
+Service account: default
+Owner: ReplicaSet/app-server-8fb4699bc
+
+CONDITIONS
+PodReadyToStartContainers       True
+Initialized     True
+Ready   True
+ContainersReady True
+PodScheduled    True
+
+CONTAINERS (requests / limits)
+app     busybox:1.36
+  CPU: 20m / 200m       Memory: 8Mi / 64Mi
+sidecar busybox:1.36
+  CPU: 5m / 50m Memory: 4Mi / 32Mi
+
+CONTAINER STATUS
+app     ready=true      restarts=4
+  Waiting:
+  Running since: 2026-11-07T15:04:32Z
+  Terminated:  exit=
+  Previous: Unknown exit=255
+sidecar ready=true      restarts=4
+  Waiting:
+  Running since: 2026-11-07T15:04:32Z
+  Terminated:  exit=
+  Previous: Unknown exit=255
+
+INIT CONTAINER STATUS
+
+
+
+PANES  <s> summary  <d> describe  <e> events  <!> why  <l> logs  <p> prev logs  <c> container  <S> shell  <U> upload  <D> download  <X> interactive off
+READ   <W> wrap on  <J> JSON off  <+> 4x lines  <A> all lines  <left/right> pan  <f> follow off  <L> level all  <w> export
+MOVE   </> find  <&> only matches  <n/N> next / prev  <j/k> scroll  <g/G> top / end  <r> reload  <?> keys  <q> back  <Q> quit
+

@@ -1,4 +1,4 @@
-# kdash 4.27.4
+# kdash 4.28.1
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -20,8 +20,9 @@
 
 Live Kubernetes namespace operations dashboard for the terminal, built for DevOps teams
 running platform namespaces on management hosts. One Bash file, no build step, no jq,
-no mandatory Python. It reads `kubectl`, joins everything locally, and gives you seven views plus
-services, storage, events, certificate and login expiry, and an inspector.
+no mandatory Python. It reads `kubectl`, joins everything locally, and gives you
+resource views, services, storage, Events, certificate and login expiry, runbooks,
+instant checks, FMEA/access review and an inspector.
 Press `?` in any view for an explanation of what is on screen.
 
 | Key | View | What it answers |
@@ -39,6 +40,8 @@ Press `?` in any view for an explanation of what is on screen.
 | `C` | **CERTIFICATES** | What expires next and when: the API endpoint, kubeconfig client certificate and CA, node kubelets, webhook and API-service CAs, cert-manager Certificates, ingress hosts, RKE2 files on this host, and your login (bearer token, OIDC / kubelogin). Warning under 30 days, critical under 7. |
 | `R` | **RUNBOOKS** | Which investigation and recovery steps apply to this cluster? Five procedures print real names; commands marked CHANGE remain instructions for the operator. |
 | `K` | **CHECK NOW** | What needs attention now? Numbered findings include confirming read commands; Enter or `--check --run N` runs those guarded reads. |
+| `M` | **FMEA** | Which catalogue failure modes need attention across the objects you can read? Severity, occurrence and detection scores produce HIGH / MEDIUM / LOW Action Priority, with access gaps and confirming read commands. |
+| `: access` | **ACCESS** | Which permissions do the FMEA checks need, and which can this user exercise? Missing access remains visible; suggested read-only RBAC is printed for an administrator to review. |
 | `L` | **LOGIN** | Has this context's login expired? Show its helper's sign-in URL, then resume reads after successful authentication. |
 
 The dashboard is live, with pinned header/footer and a scrolling body. Views 1-6
@@ -47,10 +50,17 @@ diagnostics export text, CSV and TSV with `--once -o`, and raw diagnostic tables
 with `--report`. A live run
 records its model history, and `x` writes **one HTML file with the six detailed
 resource tabs plus the history since kdash started**.
+FMEA also exports CSV, TSV and JSON to stdout; `--fmea -o html` writes a separate
+self-contained worksheet and prints its path.
 
 ## Releases and downloads
 
-The current source version is **4.27.4**. OIDC login cleanup targets owned helpers
+The current source version is **4.28.1**. It adds an **FMEA worksheet** (`M`,
+`--fmea`) and **access review** (`: access`, `--access`). The worksheet assesses
+built-in Kubernetes failure modes, shows S/O/D scores and Action Priority, and
+keeps unavailable signals and missing permissions visible. It supports local
+history, site overrides, pipeline gates and CSV/TSV/JSON/HTML exports.
+OIDC login cleanup targets owned helpers
 tagged for this run and preserves the active attempt while checking completion.
 Choosing `c` to continue without login pauses background reads and automatic
 retries until `L`; issuer discovery failures show a DNS, TLS or network hint.
@@ -81,19 +91,20 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                                    # kdash 4.27.4
+kdash --version                                    # kdash 4.28.1
 ```
 
 Versioned releases retain their own downloads, documentation and screenshots.
 Older releases remain available alongside the current source.
 [All releases](https://github.com/dheer629/kdash/releases) |
 [how they are built](RELEASES.md).
-The latest release is **4.27.4**, with the CLI, installer, archive and checksums
-linked below. Versions 4.23.2, 4.24.1 and 4.27.3 are retained as exact source
-commits and downloadable source archives.
+The **4.28.1** download links below target its pending release publication.
+The published **4.27.4** release remains available. Versions 4.23.2, 4.24.1 and
+4.27.3 are retained as exact source commits and downloadable source archives.
 
 | Version | Date | Highlights | Download |
 |---|---|---|---|
+| **4.28.1** | 2026-11-09 | FMEA worksheet, RBAC access review, S/O/D Action Priority, history, site overrides and structured exports | [kdash](https://github.com/dheer629/kdash/releases/download/v4.28.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.28.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.28.1/kdash-4.28.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.28.1/SHA256SUMS) |
 | **4.27.4** | 2026-11-07 | scoped OIDC helper cleanup, protected active login, persistent continue-without-login pause, issuer discovery hints | [kdash](https://github.com/dheer629/kdash/releases/download/v4.27.4/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.27.4/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.27.4/kdash-4.27.4.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.27.4/SHA256SUMS) |
 | **4.27.3** | 2026-11-07 | source snapshot: runbooks (`R`, `--runbook`), instant check (`K`, `--check [--run N]`), OIDC login handling (`L`, exit 4), certificate and login expiry (`C`, `--certs`) | [commit](https://github.com/dheer629/kdash/tree/2834ee72eb431f3cebaf6d10f2196e86c234c3a3) · [source tar.gz](https://github.com/dheer629/kdash/archive/2834ee72eb431f3cebaf6d10f2196e86c234c3a3.tar.gz) |
 | **4.24.1** | 2026-11-06 | source snapshot: certificate and login expiry (`C`, `-v certs`, `--certs`), header badge, scriptable exit codes | [commit](https://github.com/dheer629/kdash/tree/04767faef0946e3b06ddec3574162bb2f6cfda4c) · [source tar.gz](https://github.com/dheer629/kdash/archive/04767faef0946e3b06ddec3574162bb2f6cfda4c.tar.gz) |
@@ -144,8 +155,8 @@ Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed b
 
 
 
-The current gallery is [`samples/cli_4274/`](samples/cli_4274/README.md), captured
-from the installed **kdash 4.27.4** against the Kubernetes cluster running in local
+The current gallery is [`samples/cli_4281/`](samples/cli_4281/README.md), captured
+from the installed **kdash 4.28.1** against the Kubernetes cluster running in local
 Ubuntu WSL. It includes RUNBOOK, CHECK and CERTIFICATES screens. The cluster uses
 certificate authentication; OIDC flow tests use controlled helpers rather than
 a real provider login. The dedicated `kdash-e2e`
@@ -160,33 +171,38 @@ The [evidence index](artifacts/README.md) explains the run results and coverage.
 
 | View | Live screen | View | Live screen |
 |---|---|---|---|
-| 1 PODS | [pods](samples/cli_4274/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_4274/native/02-nodes.png) |
-| 3 WORKLOADS | [workloads](samples/cli_4274/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_4274/native/04-ip.png) |
-| 5 MEMORY | [memory](samples/cli_4274/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_4274/native/06-io.png) |
-| 7 ALERTS | [alerts](samples/cli_4274/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_4274/native/08-services.png) |
-| 9 STORAGE | [storage](samples/cli_4274/native/09-storage.png) | E / ! | [Events](samples/cli_4274/native/10-events.png) / [explanations](samples/cli_4274/native/11-explain.png) |
+| 1 PODS | [pods](samples/cli_4281/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_4281/native/02-nodes.png) |
+| 3 WORKLOADS | [workloads](samples/cli_4281/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_4281/native/04-ip.png) |
+| 5 MEMORY | [memory](samples/cli_4281/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_4281/native/06-io.png) |
+| 7 ALERTS | [alerts](samples/cli_4281/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_4281/native/08-services.png) |
+| 9 STORAGE | [storage](samples/cli_4281/native/09-storage.png) | E / ! | [Events](samples/cli_4281/native/10-events.png) / [explanations](samples/cli_4281/native/11-explain.png) |
 
 | Framed namespace selection | Framed pod selection |
 |---|---|
-| <img src="samples/cli_4274/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_4274/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
+| <img src="samples/cli_4281/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_4281/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
 
 | Inspector summary | Log search |
 |---|---|
-| <img src="samples/cli_4274/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary, current mode and wrapped key hints"> | <img src="samples/cli_4274/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
+| <img src="samples/cli_4281/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary, current mode and wrapped key hints"> | <img src="samples/cli_4281/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
 
 | Container download browser | Local upload browser |
 |---|---|
-| <img src="samples/cli_4274/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_4274/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
+| <img src="samples/cli_4281/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_4281/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
 
-See the [complete gallery and manifest](samples/cli_4274/README.md) for every
+See the [complete gallery and manifest](samples/cli_4281/README.md) for every
 captured control, theme, narrow layout, report and transfer step, and
-[`samples/html4274/`](samples/html4274/README.md) for the generated HTML reports.
+[`samples/html4281/`](samples/html4281/README.md) for the generated HTML reports.
 Missing metrics or denied data appear as unavailable; the captures preserve what
 the cluster actually returned.
 
 | Generated HTML overview | Recorded memory and CPU |
 |---|---|
-| <img src="samples/html4274/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html4274/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
+| <img src="samples/html4281/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html4281/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
+
+The release-time [4.27.4 terminal gallery](samples/cli_4274/README.md),
+[HTML reports](samples/html4274/README.md) and
+[original run](artifacts/live-e2e-20261107-083145/results.json) remain available
+separately from this refreshed capture set.
 
 Earlier galleries remain labelled with their capture version:
 [4.27.3 terminal](samples/cli_4273/README.md), [4.27.3 HTML](samples/html4273/README.md),
@@ -283,6 +299,7 @@ unless you pass `-n` or `-A`):
 | `kdip` | 4 namespace IP pool |
 | `kdmemlive` | 5 live memory dashboard |
 | `kdio` | 6 network and disk IO |
+| `kdfmea` | FMEA worksheet (`kdash --fmea`); accepts `--access`, export and gate options |
 | `kdx` | dashboard with interactive mode enabled (`kdash -X`) |
 | `kdsh [FILTER]` | shell-mode pod list; one matching pod opens a shell directly |
 | `kdsnap [sel]` | one HTML report per view: `all` (default), `2`, `25`, `nodes,mem` |
@@ -373,7 +390,7 @@ matching workload scaled to zero remains visible.
 
 | Key | Action | Key | Action |
 |---|---|---|---|
-| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `Tab` | switch view | `x` | HTML report: all tabs + history since start |
+| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `M`, `Tab` | switch view; `: access` opens access review | `x` | HTML report: all tabs + history since start |
 | `e` | HTML menu (all-tabs report, current view, views 1-6, all, bundle) | | |
 | `j` `k`, arrows | scroll | `/` | change pod regex live (empty = all) |
 | `h` `l`, arrows | pan left / right | `0` | back to column 1 |
@@ -878,11 +895,11 @@ kdash offers the typed-path `kubectl cp` flow. Both routes need `tar` in the ima
 the browser also needs a usable `sh`. Names and paths are passed as arguments rather
 than evaluated as host shell commands.
 
-The current flow is captured in the [4.27.4 gallery](samples/cli_4274/README.md):
-[shell pod list](samples/cli_4274/native/25-shell-picker.png),
-[shell inside the container](samples/cli_4274/native/26-shell-inside.png),
-[download browser](samples/cli_4274/native/31-download-browser.png) and
-[upload browser](samples/cli_4274/native/27-upload-browser.png). The gallery's manifest
+The current flow is captured in the [4.28.1 gallery](samples/cli_4281/README.md):
+[shell pod list](samples/cli_4281/native/25-shell-picker.png),
+[shell inside the container](samples/cli_4281/native/26-shell-inside.png),
+[download browser](samples/cli_4281/native/31-download-browser.png) and
+[upload browser](samples/cli_4281/native/27-upload-browser.png). The gallery's manifest
 pairs each image with its raw live screen. Earlier typed-path and browser flows
 remain in the [4.14.0](samples/cli_414/README.md) and
 [4.19.2](samples/cli_419/README.md) historical galleries.
@@ -963,9 +980,10 @@ Every run is audited. Nothing to enable, and no option switches it off.
 | An attachment refused or blocked while interactive mode is off | `INTERACTIVE_BLOCKED` |
 | Interactive mode switched with `X`; transfer cancelled before copying | `INTERACTIVE_ON` `INTERACTIVE_OFF` `CP_CANCEL` |
 | A certificate check run, and the background check that found something due (counts only, never a token) | `CERTS` `CERTS_WARNING` |
+| FMEA assessment, access checks, site overrides, view changes and worksheet exports | `FMEA` `FMEA_ACCESS` `FMEA_SITE_OVERRIDE` `FMEA_VIEW` `FMEA_EXPORT` |
 
 **Read-only guard.** Every kubectl call goes through a wrapper that allows only reads:
-`get`, `top`, `describe`, `logs`, `version`, `api-resources`, `auth can-i`, and the
+`get`, `top`, `describe`, `logs`, `version`, `api-resources`, `auth can-i` / `auth whoami`, and the
 read-only `config` subcommands. Any other verb (`delete`, `apply`, `patch`,
 `config set-context` ...) is refused with exit 126 and recorded as refused.
 
@@ -1023,6 +1041,59 @@ journalctl -t kdash --since today # syslog copy
 gate on them: `0` nothing inside the warning window, `1` a warning or a login
 that needs renewing, `2` something critical or expired. A usage error still exits
 `2`, so check stderr when the distinction matters.
+
+## FMEA and access review
+
+Press `M`, or run `kdash --fmea`, to assess the built-in failure-mode catalogue
+against the Kubernetes objects and signals available in the selected scope. It
+covers pods, workloads, jobs, storage, services, ingress, networking, configuration,
+autoscaling, disruption budgets, quotas, nodes, control-plane components,
+certificates, admission webhooks and access. A row includes the failure mode,
+current evidence, effect, possible cause and any confirming read commands.
+
+`S` is severity, `O` occurrence and `D` difficulty of detection, each scored 1–10.
+These scores and priority categories are project heuristics for operational triage.
+The default ordering uses HIGH / MEDIUM / LOW Action Priority, then severity and
+RPN (`S × O × D`). In the view, `s` cycles AP / RPN / severity sort, `t` cycles
+resource kinds and `r` requests a fresh assessment. These scores guide review;
+confirm a finding and its operational impact before acting.
+
+```bash
+kdash -n team --fmea                       # worksheet with evidence and next reads
+kdash -n team --access                     # current user, permissions and coverage
+kdash -n team --fmea --run 3                # run row 3's confirming read commands
+kdash -n team --fmea -o csv > fmea.csv       # also tsv and json
+kdash -n team --fmea -o html                # write a worksheet; print its local path
+kdash -n team --fmea --fail-on medium       # exit 2 HIGH, 1 MEDIUM, otherwise 0
+kdash -n team --fmea --since 30d            # daily summaries from locally saved runs
+```
+
+`--access` maps `kubectl auth whoami` / `auth can-i` results to catalogue checks.
+Missing permissions, partial coverage and unavailable signals remain visible;
+they do not establish a healthy object. CPU near its limit indicates throttling
+risk; it does not measure throttling events. Missing volume metrics leave usage
+unknown. Suggested Role / ClusterRole YAML is
+printed for administrator review and is never applied by kdash.
+
+FMEA saves local history under `$KDASH_REPORT_DIR/fmea/runs/`, scoped by context
+and namespace. Occurrence is marked estimated when fewer than seven days of runs
+are available. The default lookback is 30 days and retention is 90 days;
+`KDASH_FMEA_SAVE=0` disables saving. Site files at `/etc/kdash-fmea.tsv` and
+`${XDG_CONFIG_HOME:-$HOME/.config}/kdash-fmea.tsv` override catalogue fields or add
+manual rows. The `kdash.io/criticality` label and site criticality entries adjust
+severity. See the [operating guide](DEVOPS_USER_GUIDE.md#review-failure-modes-and-access)
+for configuration and exact gate exit codes.
+
+## Changes in 4.28.1
+
+- Added FMEA (`M`, `--fmea`, `kdfmea`) with catalogue checks, severity / occurrence /
+  detection scores, Action Priority, current evidence and confirming reads.
+- Added `--access` and `: access` to show the current user's read permissions and
+  coverage gaps, with suggested read-only RBAC printed for review.
+- Added CSV, TSV, JSON and separate HTML worksheets, `--fail-on` pipeline gates,
+  saved-run trends (`--since`), site overrides and criticality adjustments.
+- Earlier version downloads, report galleries and raw validation evidence remain
+  available under their recorded versions.
 
 ## Changes in 4.27.4
 

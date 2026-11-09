@@ -1,0 +1,77 @@
+kdash instant check - finding #1 - context kdash-local - 2026-11-09 21:01:25 IST
+read-only commands, run now through the audited kubectl guard
+
+$ kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100
+ERROR intentional validation failure exit=42
+(0s)
+
+$ kubectl --context kdash-local -n kdash-e2e describe pod z-crash
+Name:             z-crash
+Namespace:        kdash-e2e
+Priority:         0
+Service Account:  default
+Node:             dev/172.18.0.2
+Start Time:       Sat, 07 Nov 2026 20:34:52 +0530
+Labels:           app=kdash-e2e
+                  role=failure
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.137
+IPs:
+  IP:  10.244.0.137
+Containers:
+  crash:
+    Container ID:  containerd://09489ccfb6a5fbdccdcf7ef02ff7d609bc30dae6df037c1c9e5deafe36f56de9
+    Image:         busybox:1.36
+    Image ID:      docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sh
+      -c
+      echo "ERROR intentional validation failure exit=42"; sleep 3; exit 42
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    42
+      Started:      Mon, 09 Nov 2026 21:00:46 +0530
+      Finished:     Mon, 09 Nov 2026 21:00:49 +0530
+    Ready:          False
+    Restart Count:  21
+    Limits:
+      cpu:     50m
+      memory:  32Mi
+    Requests:
+      cpu:        5m
+      memory:     4Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-96p78 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-96p78:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  2d                   default-scheduler  Successfully assigned kdash-e2e/z-crash to dev
+  Normal   Created    2d (x5 over 2d)      kubelet            Created container crash
+  Normal   Started    2d (x5 over 2d)      kubelet            Started container crash
+  Normal   Pulled     37m (x13 over 2d)    kubelet            Container image "busybox:1.36" already present on machine
+  Warning  BackOff    2m5s (x226 over 2d)  kubelet            Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
+(0s)

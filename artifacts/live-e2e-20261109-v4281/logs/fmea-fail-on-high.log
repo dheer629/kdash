@@ -1,0 +1,88 @@
+FMEA  -  failure modes of every object you can read, ranked by a project Action Priority heuristic - S severity, O occurrence, D detection
+
+ 5 HIGH  5 MEDIUM  40 LOW   48 of 50 modes visible to kubernetes-super-admin   (scored 0s ago - r re-scores)
+
+WORKSHEET  50 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
+┌────┬────────┬────┬────┬────┬─────┬────────┬──────────────────────┬──────────────────────┬──────────────────────────┐
+│ #  │ AP     │  S │  O │  D │ RPN │ ID     │ OBJECT               │ FAILURE MODE         │ NOW                      │
+├────┼────────┼────┼────┼────┼─────┼────────┼──────────────────────┼──────────────────────┼──────────────────────────┤
+│ 1  │ HIGH   │ 10 │ 2* │ 10 │ 200 │ CP-03  │ cluster              │ No recent backup     │ not fully checked: etcd~ │
+│ 2  │ HIGH   │  8 │ 10 │  4 │ 320 │ PVC-01 │ kdash-e2e/z-unbound  │ Pending              │ claim is Pending - not ~ │
+│ 3  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/missing-b~ │ No endpoints         │ selector app=does-not-e~ │
+│ 4  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash    │ CrashLoopBackOff     │ CrashLoopBackOff, 21 re~ │
+│ 5  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending  │ Pending, unschedula~ │ Pending                  │
+│ 6  │ MEDIUM │ 10 │ 2* │  5 │ 100 │ CP-02  │ cluster              │ Quorum lost or unhe~ │ ok                       │
+│ 7  │ MEDIUM │  8 │ 2* │ 10 │ 160 │ PVC-02 │ -                    │ Volume full          │ not fully checked: kube~ │
+│ 8  │ MEDIUM │  7 │ 2* │  5 │  70 │ PVC-03 │ -                    │ Attach or mount fai~ │ all 2 pvcs ok            │
+│ 9  │ MEDIUM │  7 │  4 │  2 │  56 │ PVC-04 │ storageclass/local-~ │ Reclaim policy Dele~ │ 7 bound volume(s) delet~ │
+│ 10 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/deploymen~ │ All replicas on one~ │ 2 of 2 replicas on dev   │
+│ 11 │ LOW    │ 10 │ 2* │  3 │  60 │ CP-01  │ cluster              │ Unreachable or slow  │ ok                       │
+│ 12 │ LOW    │ 10 │ 2* │  2 │  40 │ CRT-01 │ cluster              │ API or kubelet cert~ │ ok                       │
+│ 13 │ LOW    │  9 │ 2* │  4 │  72 │ ADM-01 │ -                    │ Webhook down with f~ │ all 2 webhooks ok        │
+│ 14 │ LOW    │  9 │ 2* │  4 │  72 │ DNS-01 │ -                    │ DNS failing          │ no dns in scope          │
+│ 15 │ LOW    │  9 │ 2* │  4 │  72 │ WRK-01 │ -                    │ All replicas unavai~ │ all 1 deployments ok     │
+│ 16 │ LOW    │  8 │ 2* │  4 │  64 │ NOD-01 │ -                    │ NotReady             │ all 1 nodes ok           │
+│ 17 │ LOW    │  8 │ 2* │  4 │  64 │ WRK-04 │ -                    │ Ordinal stuck, late~ │ no statefulsets in scope │
+│ 18 │ LOW    │  8 │ 2* │  3 │  48 │ ACC-02 │ cluster              │ Provider unreachabl~ │ ok                       │
+│ 19 │ LOW    │  7 │ 2* │  4 │  56 │ CFG-01 │ -                    │ Referenced object m~ │ all 5 pods ok            │
+│ 20 │ LOW    │  7 │ 2* │  4 │  56 │ JOB-02 │ -                    │ Not running on sche~ │ no cronjobs in scope     │
+│ 21 │ LOW    │  7 │ 2* │  4 │  56 │ NOD-02 │ -                    │ Memory, disk or PID~ │ all 1 nodes ok           │
+│ 22 │ LOW    │  7 │ 2* │  4 │  56 │ SVC-03 │ -                    │ External IP pending  │ all 2 services ok        │
+│ 23 │ LOW    │  7 │ 2* │  3 │  42 │ ING-01 │ -                    │ Backend Service mis~ │ all 1 ingresses ok       │
+│ 24 │ LOW    │  7 │ 2* │  3 │  42 │ QTA-01 │ -                    │ Quota nearly used up │ no quotas in scope       │
+│ 25 │ LOW    │  7 │ 2* │  2 │  28 │ ING-02 │ -                    │ TLS secret missing ~ │ all 1 ingresses ok       │
+│ 26 │ LOW    │  6 │ 2* │  8 │  96 │ NET-01 │ -                    │ Default deny blocks~ │ no netpols in scope      │
+│ 27 │ LOW    │  6 │ 2* │  6 │  72 │ ACC-01 │ cluster              │ Permission denied    │ ok                       │
+│ 28 │ LOW    │  6 │ 2* │  5 │  60 │ CRD-01 │ -                    │ Operator not running │ all 1 deployments ok     │
+│ 29 │ LOW    │  6 │ 2* │  5 │  60 │ JOB-01 │ -                    │ Failed after backof~ │ all 1 jobs ok            │
+│ 30 │ LOW    │  6 │ 2* │  5 │  60 │ POD-05 │ -                    │ Readiness probe fai~ │ all 5 pods ok            │
+│ 31 │ LOW    │  6 │ 2* │  4 │  48 │ HPA-01 │ -                    │ Cannot read metrics  │ no hpas in scope         │
+│ 32 │ LOW    │  6 │ 2* │  4 │  48 │ POD-02 │ -                    │ OOMKilled            │ all 5 pods ok            │
+│ 33 │ LOW    │  6 │ 2* │  4 │  48 │ POD-04 │ -                    │ ImagePullBackOff     │ all 5 pods ok            │
+│ 34 │ LOW    │  6 │ 2* │  4 │  48 │ WRK-02 │ -                    │ Rollout stuck        │ all 1 deployments ok     │
+│ 35 │ LOW    │  6 │ 2* │  4 │  48 │ WRK-05 │ -                    │ Missing on some nod~ │ no daemonsets in scope   │
+│ 36 │ LOW    │  6 │ 2* │  3 │  36 │ SVC-02 │ -                    │ targetPort not expo~ │ all 2 services ok        │
+│ 37 │ LOW    │  6 │ 2* │  2 │  24 │ CFG-02 │ -                    │ Certificate inside ~ │ no cmcerts in scope      │
+│ 38 │ LOW    │  6 │ 2* │  2 │  24 │ WRK-03 │ -                    │ Single replica       │ all 1 workloads ok       │
+│ 39 │ LOW    │  5 │ 2* │  6 │  60 │ POD-06 │ -                    │ Liveness probe kill~ │ all 5 pods ok            │
+│ 40 │ LOW    │  5 │ 2* │  5 │  50 │ HPA-02 │ -                    │ Pinned at maxReplic~ │ no hpas in scope         │
+│ 41 │ LOW    │  5 │ 2* │  5 │  50 │ POD-07 │ -                    │ Evicted              │ all 5 pods ok            │
+│ 42 │ LOW    │  5 │ 2* │  5 │  50 │ POD-09 │ -                    │ Stuck Terminating    │ all 5 pods ok            │
+│ 43 │ LOW    │  5 │  4 │  2 │  40 │ PDB-02 │ kdash-e2e/deploymen~ │ Missing for a multi~ │ 2 replicas, no PodDisru~ │
+│ 44 │ LOW    │  5 │ 2* │  3 │  30 │ NOD-04 │ -                    │ Limits far above al~ │ all 1 nodes ok           │
+│ 45 │ LOW    │  5 │ 2* │  2 │  20 │ PDB-01 │ -                    │ Allows 0 disruptions │ no pdbs in scope         │
+│ 46 │ LOW    │  4 │ 2* │  6 │  48 │ POD-08 │ -                    │ CPU limit pressure   │ all 5 pods ok            │
+│ 47 │ LOW    │  4 │ 2* │  4 │  32 │ NS-01  │ -                    │ Stuck Terminating    │ all 12 namespaces ok     │
+│ 48 │ LOW    │  4 │ 2* │  2 │  16 │ NOD-03 │ -                    │ Cordoned and forgot~ │ all 1 nodes ok           │
+│ 49 │ LOW    │  4 │ 2* │  2 │  16 │ PVC-05 │ -                    │ Expansion not allow~ │ all 1 storageclasses ok  │
+│ 50 │ LOW    │  4 │ 2* │  2 │  16 │ WRK-06 │ -                    │ No requests or limi~ │ all 5 pods ok            │
+└────┴────────┴────┴────┴────┴─────┴────────┴──────────────────────┴──────────────────────┴──────────────────────────┘
+  AP is a project heuristic, not a certified standard implementation; RPN (S x O x D) is shown but does not rank. Unknown and no-access rows are never OK.
+
+NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  kdash --fmea --run N runs the read commands of row N
+
+  #2  CRITICAL  kdash-e2e/z-unbound  PVC-01 Pending: claim is Pending - not bound to a volume
+      read   kubectl --context kdash-local -n kdash-e2e describe pvc z-unbound  # the provisioner's reason is in the events
+      read   kubectl --context kdash-local get storageclass kdash-e2e-intentionally-missing -o wide  # provisioner and binding mode
+
+  #3  CRITICAL  kdash-e2e/missing-backend  SVC-01 No endpoints: selector app=does-not-exist matches no pod in this scope
+      read   kubectl --context kdash-local -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      read   kubectl --context kdash-local -n kdash-e2e get pods --show-labels  # labels the pods really have
+      CHANGE kubectl --context kdash-local -n kdash-e2e edit service missing-backend  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+  #4  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 21 restarts (last: Error)
+      read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
+
+  #5  CRITICAL  kdash-e2e/z-pending  POD-03 Pending, unschedulable: Pending
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-pending  # the scheduler's message is in the events
+      read   kubectl --context kdash-local -n kdash-e2e get pvc  # an unbound claim also keeps a pod Pending
+
+  #9  WARNING  storageclass/local-path  PVC-04 Reclaim policy Delete on stateful data: 7 bound volume(s) deleted with their claims
+      read   kubectl --context kdash-local get pv -o custom-columns=NAME:.metadata.name,CLAIM:.spec.claimRef.name,CLASS:.spec.storageClassName,RECLAIM:.spec.persistentVolumeReclaimPolicy  # volumes and their reclaim policy
+      CHANGE kubectl --context kdash-local patch pv PV-NAME -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'  # keep the data of an important volume when its claim is deleted
+
+  #10  WARNING  kdash-e2e/deployment/app-server  WRK-07 All replicas on one node: 2 of 2 replicas on dev
+      read   kubectl --context kdash-local -n kdash-e2e get pods -o wide | grep app-server  # where the replicas run
+      note   add podAntiAffinity or topologySpreadConstraints (topologyKey kubernetes.io/hostname) in the chart
+

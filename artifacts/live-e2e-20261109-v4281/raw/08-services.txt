@@ -1,0 +1,50 @@
+ KDASH 4.28.1 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-09 21:03:02 IST
+ match .*   poll 2s  spec 3s/30s  session 21:02:29 up 33s   sort cpu ▼ high first
+ health ! pods 3/5 ready  restarts 37  OOM risk 0  OOMKilled 0  no-limit 0  │ cpu 6m ░░░░░░ 1% lim  mem 3Mi ░░░░░░ 1% lim  │ workloads 4  │ events 15m ! 0 ^ 0
+Data pods=fresh age=3s metrics=available | K check now | i inspect | 8 services 9 storage E events ! explain C certs : commands
+ SERVICES AND BACKENDS   observed configuration and readiness - reachability is not tested
+
+DATA SOURCES
+┌───────────┬──────────────┬──────┬─────────────────────────────────────────────────────────┐
+│ SOURCE    │ STATE        │ READ │ DETAIL                                                  │
+├───────────┼──────────────┼──────┼─────────────────────────────────────────────────────────┤
+│ services  │ ● collecting │    - │ first read in progress; values appear when it completes │
+│ pods      │ ● collecting │    - │ first read in progress; values appear when it completes │
+│ endpoints │ ● collecting │    - │ first read in progress; values appear when it completes │
+│ ingresses │ ● collecting │    - │ first read in progress; values appear when it completes │
+└───────────┴──────────────┴──────┴─────────────────────────────────────────────────────────┘
+
+SERVICES   source unknown
+  no Services in this scope (source unknown)
+
+FINDINGS   critical first - the next commands for each are listed below the table
+  nothing wrong found in the collected Services and routes
+
+BACKENDS   selector and the Ready pods it selects (first 3)
+  no selector-based Services
+
+INGRESS ROUTES
+  unknown - ingresses source unknown
+
+  Readiness is what the API reports. DNS, ingress controllers, NetworkPolicy, routing, TLS and application responses are not tested.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | j/k scroll | h/l pan | i inspect | : commands | q ›
+ ● LIVE 21:03:02  next 1s  data 2s old  spec 3/30s  fetch 0.0s  poll 2s  AUDITED | services | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

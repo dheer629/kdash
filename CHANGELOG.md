@@ -5,6 +5,27 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.28.1] - 2026-11-09
+
+### Added
+- **FMEA** (`M`, `--fmea`, `kdfmea`): a built-in catalogue assesses failure modes
+  across readable Kubernetes objects and available signals, with severity,
+  occurrence and detection scores, project HIGH / MEDIUM / LOW priority heuristics, RPN,
+  current evidence and confirming read commands. The view supports kind filters
+  and AP / RPN / severity sorting; `--fmea --run N` runs a row's confirming reads.
+- **ACCESS** (`--access`, `: access`): current identity and read permissions are
+  checked with `auth whoami` / `auth can-i` and mapped to catalogue checks.
+  Missing permissions and unavailable signals remain visible; suggested
+  read-only Role / ClusterRole YAML is printed for administrator review.
+- CSV, TSV, JSON and separate self-contained HTML FMEA worksheets, plus
+  `--fail-on high|medium|low` pipeline gates and `--since 30d` daily summaries
+  from locally saved assessments.
+- Site TSV overrides and manual rows, `kdash.io/criticality` adjustments, local
+  occurrence history and configurable assessment/access refresh and retention.
+  Occurrence is marked estimated with fewer than seven days of saved runs.
+- Completion and installed shell integration include the new FMEA/access views,
+  flags, export formats and `kdfmea` shortcut.
+
 ## [4.27.4] - 2026-11-07
 
 ### Fixed

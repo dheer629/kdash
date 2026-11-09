@@ -213,6 +213,16 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
         for file, pattern in [('login-cleanup-regression.log', r'PASS: [0-9]+ login-cleanup checks'),
                               ('login-flow-regression.log', r'PASS: [0-9]+ login-flow PTY checks')]:
             require(bool(re.search(pattern, utf8(run / file))), f'login regression was not recorded: {file}')
+    if tuple(int(n) for n in version.split('.')) >= (4, 28, 1):
+        require({'fmea-summary', 'csv-fmea', 'tsv-fmea', 'fmea-json', 'fmea-json-real-rows',
+                 'fmea-html', 'fmea-access', 'fmea-fail-on-high', 'fmea-trend',
+                 'fmea-real-finding-selected', 'fmea-run-finding', 'fmea-run-read-commands-only'}.issubset(names),
+                'live FMEA coverage is incomplete')
+        for name, text in {'88-fmea': 'WORKSHEET', '89-access': 'PERMISSIONS',
+                           '90-fmea-kind': 'showing kind', '91-fmea-sort': 'WORKSHEET'}.items():
+            require(text in utf8(run / 'raw' / (name + '.txt')), f'FMEA evidence missing: {name}')
+        require(bool(re.search(r'PASS: [0-9]+ FMEA (?:fixture )?checks', utf8(run / 'fmea-regression.log'))),
+                'FMEA regression was not recorded')
     browser = json.loads(utf8(run / "browser-results.json"))
     require(browser.get("status") == "PASS" and browser.get("source_sha256") == source_sha,
             "browser validation failed or tested another CLI")
@@ -220,6 +230,12 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
             "browser functionality checks incomplete")
     report = within(run, browser["report"])
     require(hashlib.sha256(report.read_bytes()).hexdigest() == browser["report_sha256"], "tested HTML report changed")
+    for extra in browser.get('additional_reports', []):
+        require(hashlib.sha256(within(run, extra['report']).read_bytes()).hexdigest() == extra['sha256'],
+                'additional tested HTML report changed')
+    if tuple(int(n) for n in version.split('.')) >= (4, 28, 1):
+        require('html-fmea-real-rows' in {c['name'] for c in browser['checks']} and browser.get('additional_reports'),
+                'FMEA HTML browser coverage is missing')
     for shot in browser["screenshots"]:
         file = within(repo, shot["file"])
         validate_png(file)
