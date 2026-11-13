@@ -1,0 +1,50 @@
+ KDASH │ DOWNLOAD │ REVIEW │ vcluster-docker_dev │ kdash-e2e                                                                               nothing is copied before Enter
+
+┌─ DOWNLOAD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── review ─┐
+│ FROM   app-server-8fb4699bc-cx5vz ► app ► /tmp/kdash-transfer                                                                                                         │
+│ TO     /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/work/   same names as in the container                                          │
+├────────────────────────────────┬────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ITEM                           │       SIZE │ NOTE                                                                                                                    │
+├────────────────────────────────┼────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ upload-tree/                   │   20.0 KiB │ directory - exists here                                                                                                 │
+├────────────────────────────────┴────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 item  ·  20.0 KiB  ·  SHA-256 verified after the copy                                                                                                               │
+├────────────────────────────┬───────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ CHECK                      │ RESULT    │ DETAIL                                                                                                                       │
+├────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ tar in the container       │ ● pass    │ streams the selection                                                                                                        │
+│ checksum in the container  │ ● pass    │ sha256sum - every file is verified after the copy                                                                            │
+│ readable in the container  │ ● pass    │ 1 of 1 item(s)                                                                                                               │
+│ local directory            │ ● pass    │ writable                                                                                                                     │
+│ local free space           │ ● pass    │ 476.7 GiB free, about 21.0 KiB needed                                                                                        │
+│ names                      │ ● check   │ 1 item already here - Enter asks: replace or keep both                                                                       │
+└────────────────────────────┴───────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  READY   5 checks passed, 1 to note (yellow)
+ <enter> download  <f> zip  <l> other folder  <n> rename (archives)  <b> back to files  <q> cancel
+ choose >
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

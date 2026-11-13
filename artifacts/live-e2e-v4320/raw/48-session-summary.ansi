@@ -1,0 +1,50 @@
+
+root@app$ printf 'KDASH_DETAIL_MODE_OK\n'; id
+KDASH_DETAIL_MODE_OK
+uid=0(root) gid=0(root) groups=0(root),10(wheel)
+root@app$ exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;7m KDASH [0m  shell closed  [1mapp-server-8fb4699bc-cx5vz[0m  [90mcontainer[39m [1mapp[0m  [90mexit status[39m 0  [90mduration[39m 4s  [90maudited[39m
+[1;7m KDASH [0m  session closed  [90mcontext[39m vcluster-docker_dev  [90mnamespace[39m kdash-e2e  [90mduration[39m 3m 21s  [90maudited[39m
+        [90mhistory[39m  /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/reports/sessions/kdash_vcluster-docker_dev_kdash-e2e_20261114_014751
+        [90mreport[39m   kdash --session-report latest   [90m(every tab + the full history as HTML)[39m
+
+Pane is dead (status 0, Sat Nov 14 01:51:13 2026)

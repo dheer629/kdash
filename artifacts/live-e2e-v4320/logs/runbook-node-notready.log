@@ -1,0 +1,27 @@
+RUNBOOK - node-notready  -  printed procedures with your cluster's names filled in - kdash never runs them
+runbooks:   1 etcd-restore    2 cert-rotate   [3 node-notready]   4 api-unreachable    5 oidc-login    [ ] previous / next   (kdash --runbook NAME)
+
+WHEN TO USE  -  a node is NotReady or Unknown
+
+NODES  1 node
+┌──────┬────────┬─────────┬──────────────┬───────┬────────────┐
+│ NODE │ ROLE   │ READY   │ REASON       │ SINCE │ SCHEDULING │
+├──────┼────────┼─────────┼──────────────┼───────┼────────────┤
+│ dev  │ server │ ● Ready │ KubeletReady │ 6d05h │ -          │
+└──────┴────────┴─────────┴──────────────┴───────┴────────────┘
+
+  STEP 1  what the API knows
+      read   kubectl --context vcluster-docker_dev describe node NODE  # conditions (MemoryPressure, DiskPressure, PIDPressure) and recent events
+      read   kubectl --context vcluster-docker_dev get pods -A -o wide --field-selector spec.nodeName=NODE  # what runs there
+
+  STEP 2  on the node
+      read   [on NODE] sudo systemctl status rke2-agent rke2-server --no-pager  # which one is installed and running
+      read   [on NODE] sudo journalctl -u rke2-agent -u rke2-server --since -30min --no-pager | tail -n 100  # kubelet / containerd errors
+      read   [on NODE] df -h / /var/lib/rancher; free -m  # disk or memory exhausted?
+      read   [on NODE] sudo /var/lib/rancher/rke2/bin/crictl --runtime-endpoint unix:///run/k3s/containerd/containerd.sock ps  # are the containers up?
+
+  STEP 3  recover
+      CHANGE [on NODE] sudo systemctl restart rke2-agent  # (rke2-server on a server node)
+      CHANGE kubectl --context vcluster-docker_dev cordon NODE  # stop new pods landing there while you work on it
+      CHANGE kubectl --context vcluster-docker_dev drain NODE --ignore-daemonsets --delete-emptydir-data --timeout=10m  # move workloads away (emptyDir data is lost)
+      CHANGE kubectl --context vcluster-docker_dev uncordon NODE  # when it is healthy again

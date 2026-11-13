@@ -1,0 +1,4 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1794601530	info	SESSION	kdash-e2e	kdash 4.32.0 started on Dheeraj by root - filter .*
+1794601561	warn	RESTART	z-crash	restarts +1 (now 92), last exit Error
+1794601571	info	SESSION	kdash-e2e	kdash stopped after 42s

@@ -26,22 +26,62 @@ interactive_hint() {
 # The kubectl guard reads the exported KDASH_ALLOW_INTERACTIVE on every call, so the
 # change applies at once. Both directions are audited.
 interactive_toggle() {
-    local ans="" rows
+    local ans="" key="" cols old_int interrupted=0 confirmed=0 read_rc
     if interactive_enabled; then
         KDASH_ALLOW_INTERACTIVE=0; export KDASH_ALLOW_INTERACTIVE
         declare -F audit >/dev/null && audit INTERACTIVE_OFF "by key X"
         INTERACTIVE_MSG="interactive mode OFF - kdash is read-only again"
         return 0
     fi
-    rows="${KDASH_LINES:-$(tput lines 2>/dev/null || echo 24)}"
-    printf '\033[%s;1H\033[K\033[?25h\033[1;97;41m Turn on interactive mode? S shell / U upload / D download run in YOUR name and are audited writes. [y/N] \033[0m ' "$rows"
-    IFS= read -rsn1 ans </dev/tty || ans=""
-    printf '\033[?25l'
-    case "$ans" in
-        y|Y) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
+    if [ ! -t 0 ] || [ ! -t 1 ]; then
+        INTERACTIVE_MSG="interactive mode stays off - confirmation requires a terminal"
+        declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X reason=no-terminal"
+        return 0
+    fi
+    old_int="$(trap -p INT)"
+    trap 'interrupted=1' INT
+    cols="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+    case "$cols" in ''|*[!0-9]*) cols=80 ;; esac
+    [ "$cols" -ge 24 ] || cols=24
+    # A separate modal fits narrow screens and never writes beyond the last row.
+    printf '\033[r\033[H\033[2J\033[?25h Turn on interactive mode?\n\n'
+    printf '%s\n' 'S shell / U upload / D download run in YOUR name and are audited writes.' \
+        'This enables interactive actions for this kdash session only.' | fold -s -w "$((cols - 2))"
+    printf '\n [y/N] Enter confirms; Esc, q or Ctrl-C cancels.\n > '
+    while [ "$interrupted" = 0 ]; do
+        key=""
+        if IFS= read -rsn1 -t 0.2 key </dev/tty; then :
+        else
+            read_rc=$?
+            # A signal can arrive between the loop condition and read. A short
+            # timeout guarantees cancellation is observed without another key.
+            [ "$read_rc" -gt 128 ] && [ "$interrupted" = 0 ] && continue
+            break
+        fi
+        [ "$interrupted" = 0 ] || break
+        case "$key" in
+            ''|$'\r') confirmed=1; break ;;
+            $'\033'|$'\003'|$'\004'|q|Q) break ;;
+            $'\177'|$'\b') [ -z "$ans" ] || { ans="${ans%?}"; printf '\b \b'; } ;;
+            $'\025') while [ -n "$ans" ]; do ans="${ans%?}"; printf '\b \b'; done ;;
+            *) if [[ "$key" == [[:print:]] ]] && [ "${#ans}" -lt 32 ]; then ans+="$key"; printf '%s' "$key"; fi ;;
+        esac
+    done
+    # Modal input must not become dashboard actions (CRLF, an Escape sequence,
+    # or the remainder of a pasted answer). The bounded drain never waits on a
+    # new line and leaves ordinary keys typed after the redraw to the caller.
+    local discard i
+    for ((i = 0; i < 32; i++)); do
+        IFS= read -rsn1 -t 0.01 discard </dev/tty || break
+    done
+    if [ -n "$old_int" ]; then eval "$old_int"; else trap - INT; fi
+    printf '\033[?25l\033[H\033[2J'
+    case "$confirmed:$interrupted:${ans,,}" in
+        1:0:y|1:0:yes) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
              declare -F audit >/dev/null && audit INTERACTIVE_ON "by key X"
              INTERACTIVE_MSG="interactive mode ON - S shell, U upload, D download (X turns it off)" ;;
-        *)   INTERACTIVE_MSG="interactive mode stays off" ;;
+        *)   declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X"
+             INTERACTIVE_MSG="interactive mode stays off" ;;
     esac
     return 0
 }
@@ -2922,7 +2962,7 @@ login__cache_state() {
 }
 
 # Stand-in browsers: a helper that "opens" the login page in a browser (xdg-open, BROWSER,
-# ...) - on a director host that is usually nothing, or a remote X11 window - records the
+# ...) - on a headless host that is usually nothing, or a remote X11 window - records the
 # URL here instead, and kdash shows it. KDASH_LOGIN_BROWSER=system lets it open a browser.
 login__browser_dir() { # dir -> creates the stand-ins, empties the URL record
   local d="$1" b

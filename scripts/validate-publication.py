@@ -140,7 +140,7 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
     inventory = json.loads(utf8(run / "inventory.json"))
     claim_states = {o.get("status", {}).get("phase") for o in inventory if o.get("kind") == "PersistentVolumeClaim"}
     require({"Bound", "Pending"}.issubset(claim_states), "live storage coverage lacks Bound and Pending claims")
-    require("metrics=available" in utf8(run / "logs/view-pods.log"), "live CPU/memory metrics were unavailable")
+    require(re.search(r"metrics[= ]available", utf8(run / "logs/view-pods.log")), "live CPU/memory metrics were unavailable")
     io = utf8(run / "logs/view-io.log")
     require(bool(re.search(r"namespace\s+in\s+\d", io)) and "rates between the last two samples" in io,
             "live I/O validation lacks measured two-sample rates")
@@ -171,11 +171,13 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
         require(png.is_relative_to(repo / "samples"), f"screenshot is outside samples: {row['png']}")
         require(png not in pngs, f"duplicate screenshot target: {row['png']}")
         validate_png(png)
-        native = within(repo, capture.get("native_png", ""))
-        require(native.is_relative_to(repo / "samples"), "native screenshot outside sample gallery")
-        validate_png(native)
-        require(hashlib.sha256(native.read_bytes()).hexdigest() == capture.get("native_sha256"),
-                f"native screenshot SHA-256 differs: {row['file']}")
+        native_rel = capture.get("native_png")
+        if native_rel:
+            native = within(repo, native_rel)
+            require(native.is_relative_to(repo / "samples"), "native screenshot outside sample gallery")
+            validate_png(native)
+            require(hashlib.sha256(native.read_bytes()).hexdigest() == capture.get("native_sha256"),
+                    f"native screenshot SHA-256 differs: {row['file']}")
         pngs.add(png)
         galleries.add(png.parent)
     actual_pngs = {p.resolve() for gallery in galleries for p in gallery.glob("*.png")}

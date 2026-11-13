@@ -1,0 +1,6 @@
+POD,NODE,POOL,KIND,WORKLOAD,MEM_USED_Mi,MEM_REQ_Mi,MEM_LIM_Mi,PCT_OF_REQ,PCT_OF_LIM,RESTARTS,LAST_TERMINATION,RISK
+app-server-8fb4699bc-cx5vz,dev,"role:control-plane,master",Deployment,app-server,2,12,96,16.7,2.1,14,Unknown,
+app-server-8fb4699bc-t7zxj,dev,"role:control-plane,master",Deployment,app-server,0,12,96,0.0,0.0,14,Unknown,
+completed-check-m9swm,dev,"role:control-plane,master",Job,completed-check,,4,32,,,0,,
+z-crash,dev,"role:control-plane,master",Pod,z-crash,,4,32,,,90,Error,
+z-pending,(unscheduled),(none),Pod,z-pending,,4,32,,,0,,

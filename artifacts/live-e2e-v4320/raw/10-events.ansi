@@ -1,0 +1,50 @@
+[1;7m KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [1;7m E EVENTS [0m [90m ! WHY [39m  [1m2026-11-14 01:48:31[0m[90m IST[39m
+[90m┌─ [1m[39mSCOPE[0m[90m ──────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ────────┐
+│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                     [90m│[39m [1m[31m! pods 3/5 ready[0m[90m   restarts [35m118[39m             [90m│[39m [90mcpu [39m     6m [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mworkloads [39m4                 [90m│
+│[39m [90mpoll 2s  spec 9s/30s   session [39m01:47:52[90m up [39m39s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [32m0[39m       [90m│[39m [90mmem [39m    2Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [32m^ 0[39m         [90m│
+└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
+[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m10s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
+[1;7m KUBERNETES EVENTS [0m  [90mAPI events, newest first - local session changes are recorded separately[39m
+
+[1mDATA SOURCES[0m[90m   context vcluster-docker_dev[39m
+[90m┌────────┬───────┬─────────┬───────────┬────────────────┐[39m
+[90m│[39m [1mSOURCE[0m [90m│[39m [1mSTATE[0m [90m│[39m [1m   READ[0m [90m│[39m [1mSCOPE    [0m [90m│[39m [1mDETAIL        [0m [90m│[39m
+[90m├────────┼───────┼─────────┼───────────┼────────────────┤[39m
+[90m│[39m events [90m│[39m [32m● ok [39m [90m│[39m 11s ago [90m│[39m kdash-e2e [90m│[39m [90mread succeeded[39m [90m│[39m
+[90m└────────┴───────┴─────────┴───────────┴────────────────┘[39m
+
+[1mEVENTS[0m  [90m4 events   3 warning, 1 normal[39m
+[90m┌───────────┬───────────┬────────────────────┬─────────────────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────────────────┐
+│[39m [1mLAST SEEN[0m [90m│[39m [1mTYPE     [0m [90m│[39m [1mREASON            [0m [90m│[39m [1mOBJECT                         [0m [90m│[39m [1mCOUNT[0m [90m│[39m [1mFIRST SEEN[0m [90m│[39m [1mMESSAGE                                                           [0m [90m│
+├───────────┼───────────┼────────────────────┼─────────────────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────────────────┤
+│[39m 4m        [90m│[39m [35m● Warning[39m [90m│[39m [1mProvisioningFailed[0m [90m│[39m PersistentVolumeClaim/z-unbound [90m│[39m   901 [90m│[39m [90m3h46m ago [39m [90m│[39m storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not~ [90m│
+│[39m 4m        [90m│[39m [35m● Warning[39m [90m│[39m [1mBackOff           [0m [90m│[39m Pod/z-crash                     [90m│[39m  1032 [90m│[39m [90m3h46m ago [39m [90m│[39m Back-off restarting failed container crash in pod z-crash_kdash-e~ [90m│
+│[39m 24m       [90m│[39m [35m● Warning[39m [90m│[39m [1mFailedScheduling  [0m [90m│[39m Pod/z-pending                   [90m│[39m    42 [90m│[39m [90m3h46m ago [39m [90m│[39m 0/1 nodes are available: pod has unbound immediate PersistentVolu~ [90m│
+│[39m 54m       [90m│[39m [32m● Normal [39m [90m│[39m Pulled             [90m│[39m Pod/z-crash                     [90m│[39m    38 [90m│[39m [90m3h46m ago [39m [90m│[39m Container image "busybox:1.36" already present on machine          [90m│
+└───────────┴───────────┴────────────────────┴─────────────────────────────────┴───────┴────────────┴────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[39mK check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c[2m›
+[0;7m ● LIVE 01:48:32  next 0s  data 2s old  spec 10/30s  fetch 0.0s  poll 2s  AUDITED | events | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit   [0m

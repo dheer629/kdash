@@ -1,0 +1,50 @@
+[1;7m KDASH │ COMMAND PALETTE │ context vcluster-docker_dev │ namespace kdash-e2e                                                               Enter on an empty line cancels
+
+[0m shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list
+ quit                    Leave kdash (also Q on any screen)
+ secrets                 Certificates and keys in Secrets: expiry, users, paths (also Y)
+ fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)
+ inspect                 Choose a pod and inspect it
+ filter                  Structured pod filters
+ pods / nodes / workloads / ip / mem / io / alerts
+ check / services / storage / events / explain / doctor / certs
+ runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]
+ help                    Dashboard help
+
+ Commands use fixed handlers and never execute shell text.
+ :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

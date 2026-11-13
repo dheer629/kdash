@@ -28,8 +28,8 @@ with the header badge and scriptable exit codes, interactive-mode switching from
 pod details and logs, framed pickers, saved namespace defaults, expandable
 bounded logs and checked file transfers. Its live WSL evidence is indexed by
 [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt), with terminal and report
-galleries in [`samples/cli_4281/`](samples/cli_4281/README.md) and
-[`samples/html4281/`](samples/html4281/README.md). The release-time 4.27.4
+galleries in [`samples/cli_4320/`](samples/cli_4320/README.md) and
+[`samples/html4320/`](samples/html4320/README.md). The release-time 4.27.4
 [terminal gallery](samples/cli_4274/README.md),
 [HTML reports](samples/html4274/README.md) and
 [original run](artifacts/live-e2e-20261107-083145/results.json) remain unchanged.

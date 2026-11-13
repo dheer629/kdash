@@ -1,0 +1,50 @@
+[1;7m KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 01:55:53[0m[90m IST[39m
+[90m┌─ [1m[39mSCOPE[0m[90m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ───────┐
+│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                      [90m│[39m [1m[31m! pods 3/5 ready[0m[90m   restarts [35m119[39m             [90m│[39m [90mcpu [39m     6m [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mworkloads [39m4                [90m│
+│[39m [90mpoll 2s  spec 23s/30s   session [39m01:55:29[90m up [39m24s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [32m0[39m       [90m│[39m [90mmem [39m    2Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [32m^ 0[39m        [90m│
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m23s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
+[1;7m CHECK NOW [0m  [90meverything kdash can see that is wrong right now - most severe first, with the commands to check and fix it[39m
+
+ [1m[97m[41m 3 CRITICAL [0m [1m[30m[43m 2 WARNING [0m  [90mchecked 3s ago - r re-checks now[39m
+
+[1mAREAS[0m  [90m8 areas[39m
+[90m┌──────────────┬───────────────┬──────────┬──────────────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1mAREA        [0m [90m│[39m [1mSTATUS       [0m [90m│[39m [1mFINDINGS[0m [90m│[39m [1mDETAIL                                                          [0m [90m│[39m
+[90m├──────────────┼───────────────┼──────────┼──────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m api          [90m│[39m [32m● OK         [39m [90m│[39m        0 [90m│[39m pods read 23s ago                                                [90m│[39m
+[90m│[39m nodes        [90m│[39m [32m● OK         [39m [90m│[39m        0 [90m│[39m 1 of 1 Ready                                                     [90m│[39m
+[90m│[39m pods         [90m│[39m [1m[31m● CRITICAL   [0m [90m│[39m        2 [90m│[39m 5 pods in the dashboard scope                                    [90m│[39m
+[90m│[39m services     [90m│[39m [1m[31m● CRITICAL   [0m [90m│[39m        1 [90m│[39m services ok, endpoints ok, ingresses ok                          [90m│[39m
+[90m│[39m storage      [90m│[39m [1m[31m● CRITICAL   [0m [90m│[39m        2 [90m│[39m claims ok, volumes ok                                            [90m│[39m
+[90m│[39m certificates [90m│[39m [32m● OK         [39m [90m│[39m        0 [90m│[39m full check 18s ago                                               [90m│[39m
+[90m│[39m secrets      [90m│[39m [32m● OK         [39m [90m│[39m        0 [90m│[39m 0 certificates in 0 Secrets - Y shows who uses them and where    [90m│[39m
+[90m│[39m etcd         [90m│[39m [90m● not visible[39m [90m│[39m        0 [90m│[39m snapshots: unavailable - on a server: sudo rke2 etcd-snapshot ls [90m│[39m
+[90m└──────────────┴───────────────┴──────────┴──────────────────────────────────────────────────────────────────┘[39m
+
+[1mFINDINGS[0m  [90m5 findings   critical first - Enter runs the read commands of one now (CHANGE commands are never run)[39m
+[90m┌───┬────────────┬──────────┬─────────────────┬──────────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1m#[0m [90m│[39m [1mSEVERITY  [0m [90m│[39m [1mAREA    [0m [90m│[39m [1mOBJECT         [0m [90m│[39m [1mFINDING                                                     [0m [90m│[39m
+[90m├───┼────────────┼──────────┼─────────────────┼──────────────────────────────────────────────────────────────┤[39m
+[90m│[39m 1 [90m│[39m [1m[31m● CRITICAL[0m [90m│[39m pods     [90m│[39m z-crash         [90m│[39m CrashLoopBackOff, 91 restarts (last: Error)                  [90m│[39m
+[90m│[39m 2 [90m│[39m [1m[31m● CRITICAL[0m [90m│[39m services [90m│[39m missing-backend [90m│[39m selector app=does-not-exist matches no pod in this scope     [90m│[39m
+[90m│[39m 3 [90m│[39m [1m[31m● CRITICAL[0m [90m│[39m storage  [90m│[39m z-unbound       [90m│[39m claim is Pending - not bound to a volume                     [90m│[39m
+[90m│[39m 4 [90m│[39m [35m● WARNING [39m [90m│[39m pods     [90m│[39m z-pending       [90m│[39m Pending                                                      [90m│[39m
+[90m│[39m 5 [90m│[39m [35m● WARNING [39m [90m│[39m storage  [90m│[39m z-unbound       [90m│[39m storage class kdash-e2e-intentionally-missing does not exist [90m│[39m
+[90m└───┴────────────┴──────────┴─────────────────┴──────────────────────────────────────────────────────────────┘[39m
+
+[1mNEXT COMMANDS[0m  [90mread = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now[39m
+
+  [1m#1[0m  CRITICAL  [1mz-crash[0m  [90mCrashLoopBackOff, 91 restarts (last: Error)[39m
+      [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100  [90m# why the last run ended[39m
+      [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-crash  [90m# exit codes, reasons and events[39m
+
+  [1m#2[0m  CRITICAL  [1mmissing-backend[0m  [90mselector app=does-not-exist matches no pod in this scope[39m
+      [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  [90m# what the Service selects[39m
+      [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e get pods --show-labels  [90m# labels the pods really have[39m
+      [1m[33mCHANGE[0m kubectl --context vcluster-docker_dev -n kdash-e2e edit service missing-backend  [90m# make spec.selector match the pod labels (or fix the labels on the workloa[2m[39m›
+
+[0m  [1m#3[0m  CRITICAL  [1mz-unbound[0m  [90mclaim is Pending - not bound to a volume[39m
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c[2m›
+[0;7m ○ LIVE 01:55:53  next 1s  data 1s old  spec 23/30s  fetch 0.0s  poll 2s  AUDITED | check | rows 1-41/52 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html

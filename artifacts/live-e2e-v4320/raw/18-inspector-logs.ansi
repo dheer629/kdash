@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ vcluster-docker_dev │ kdash-e2e                                                                                                                LOGS
+[0m[90m┌─[39m [1mLOGS[0m [90m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [90mREAD-ONLY / audited[39m [90m─┐[39m
+[90m│[39m [90mPOD      [39m  [1mapp-server-8fb4699bc-cx5vz[0m                                                                                                                                 [90m│[39m
+[90m│[39m [90mCONTAINER[39m  [1mapp[0m   [32m● Running[39m   [90mready[39m   [90mrestarts[39m 7   [90mlast exit[39m [1m[31mUnknown exit=255[0m   [90mbusybox:1.36[39m                                                                           [90m│[39m
+[90m└─[39m [1mrows 1-38 / 5000 · 5000 lines 544.4 KiB, newest only (+ more, A all)[0m [90m────────────────────────────────────────────────────────────────────────────────────────────────┘[39m
+2026-11-13T18:56:19.589772960Z 2026-11-13T18:56:19+00:00 INFO request=4423 service=app-server healthy=true
+2026-11-13T18:56:19.590516756Z 2026-11-13T18:56:19+00:00 WARN request=4423 demonstration warning from live workload
+2026-11-13T18:56:21.591911394Z 2026-11-13T18:56:21+00:00 INFO request=4424 service=app-server healthy=true
+2026-11-13T18:56:21.592483001Z 2026-11-13T18:56:21+00:00 WARN request=4424 demonstration warning from live workload
+2026-11-13T18:56:23.586092423Z 2026-11-13T18:56:23+00:00 INFO request=4425 service=app-server healthy=true
+2026-11-13T18:56:23.587026435Z 2026-11-13T18:56:23+00:00 WARN request=4425 demonstration warning from live workload
+2026-11-13T18:56:25.588277890Z 2026-11-13T18:56:25+00:00 INFO request=4426 service=app-server healthy=true
+2026-11-13T18:56:25.589183578Z 2026-11-13T18:56:25+00:00 WARN request=4426 demonstration warning from live workload
+2026-11-13T18:56:27.590737033Z 2026-11-13T18:56:27+00:00 INFO request=4427 service=app-server healthy=true
+2026-11-13T18:56:27.591024348Z 2026-11-13T18:56:27+00:00 WARN request=4427 demonstration warning from live workload
+2026-11-13T18:56:29.592631455Z 2026-11-13T18:56:29+00:00 INFO request=4428 service=app-server healthy=true
+2026-11-13T18:56:29.592997941Z 2026-11-13T18:56:29+00:00 WARN request=4428 demonstration warning from live workload
+2026-11-13T18:56:31.595161319Z 2026-11-13T18:56:31+00:00 INFO request=4429 service=app-server healthy=true
+2026-11-13T18:56:31.595889521Z 2026-11-13T18:56:31+00:00 WARN request=4429 demonstration warning from live workload
+2026-11-13T18:56:33.597218679Z 2026-11-13T18:56:33+00:00 INFO request=4430 service=app-server healthy=true
+2026-11-13T18:56:33.598052004Z 2026-11-13T18:56:33+00:00 WARN request=4430 demonstration warning from live workload
+2026-11-13T18:56:35.599096870Z 2026-11-13T18:56:35+00:00 INFO request=4431 service=app-server healthy=true
+2026-11-13T18:56:35.600323309Z 2026-11-13T18:56:35+00:00 WARN request=4431 demonstration warning from live workload
+2026-11-13T18:56:37.603471298Z 2026-11-13T18:56:37+00:00 INFO request=4432 service=app-server healthy=true
+2026-11-13T18:56:37.603522823Z 2026-11-13T18:56:37+00:00 WARN request=4432 demonstration warning from live workload
+2026-11-13T18:56:39.603748415Z 2026-11-13T18:56:39+00:00 INFO request=4433 service=app-server healthy=true
+2026-11-13T18:56:39.604395031Z 2026-11-13T18:56:39+00:00 WARN request=4433 demonstration warning from live workload
+2026-11-13T18:56:41.606125175Z 2026-11-13T18:56:41+00:00 INFO request=4434 service=app-server healthy=true
+2026-11-13T18:56:41.606861749Z 2026-11-13T18:56:41+00:00 WARN request=4434 demonstration warning from live workload
+2026-11-13T18:56:43.608727526Z 2026-11-13T18:56:43+00:00 INFO request=4435 service=app-server healthy=true
+2026-11-13T18:56:43.608930878Z 2026-11-13T18:56:43+00:00 WARN request=4435 demonstration warning from live workload
+2026-11-13T18:56:45.609898791Z 2026-11-13T18:56:45+00:00 INFO request=4436 service=app-server healthy=true
+2026-11-13T18:56:45.611251207Z 2026-11-13T18:56:45+00:00 WARN request=4436 demonstration warning from live workload
+2026-11-13T18:56:47.612706125Z 2026-11-13T18:56:47+00:00 INFO request=4437 service=app-server healthy=true
+2026-11-13T18:56:47.612995637Z 2026-11-13T18:56:47+00:00 WARN request=4437 demonstration warning from live workload
+2026-11-13T18:56:49.614272022Z 2026-11-13T18:56:49+00:00 INFO request=4438 service=app-server healthy=true
+2026-11-13T18:56:49.614986470Z 2026-11-13T18:56:49+00:00 WARN request=4438 demonstration warning from live workload
+2026-11-13T18:56:51.615900569Z 2026-11-13T18:56:51+00:00 INFO request=4439 service=app-server healthy=true
+2026-11-13T18:56:51.616267232Z 2026-11-13T18:56:51+00:00 WARN request=4439 demonstration warning from live workload
+2026-11-13T18:56:53.595160113Z 2026-11-13T18:56:53+00:00 INFO request=4440 service=app-server healthy=true
+2026-11-13T18:56:53.595394019Z 2026-11-13T18:56:53+00:00 WARN request=4440 demonstration warning from live workload
+2026-11-13T18:56:55.596854669Z 2026-11-13T18:56:55+00:00 INFO request=4441 service=app-server healthy=true
+2026-11-13T18:56:55.597188237Z 2026-11-13T18:56:55+00:00 WARN request=4441 demonstration warning from live workload
+[90m┌─[39m [1mPANES[0m [90m─────┬─[39m [1mLOGS[0m [90m────────┬─[39m [1mATTACH[0m [90m────┬─[39m [1mREAD[0m [90m───────┬─[39m [1mMOVE[0m [90m────────────────┬─[39m [1mFIND[0m [90m────────────┬─[39m [1mLEAVE[0m [90m────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1ms[0m  summary  [90m│[39m [1ml[0m  logs       [90m│[39m [1mS[0m  shell    [90m│[39m [1mW[0m  wrap on   [90m│[39m [1mj/k[0m         scroll    [90m│[39m [1m/[0m    find         [90m│[39m [1m?[0m  keys                                                        [90m│[39m
+[90m│[39m [1md[0m  describe [90m│[39m [1mp[0m  prev logs  [90m│[39m [1mU[0m  upload   [90m│[39m [1mJ[0m  JSON off  [90m│[39m [1mg/G[0m         top / end [90m│[39m [1m&[0m    only matches [90m│[39m [1mq[0m  back                                                        [90m│[39m
+[90m│[39m [1me[0m  events   [90m│[39m [1mc[0m  container  [90m│[39m [1mD[0m  download [90m│[39m [1mL[0m  level all [90m│[39m [1mleft/right[0m  pan       [90m│[39m [1mn/N[0m  next / prev  [90m│[39m [1mQ[0m  quit                                                        [90m│[39m
+[90m│[39m [1m![0m  why      [90m│[39m [1mf[0m  follow off [90m│[39m [1mw[0m  export   [90m│[39m [1m+[0m  4x lines  [90m│[39m [1mA[0m           all lines [90m│[39m [1mr[0m    reload       [90m│[39m                                                                [90m│[39m
+[90m└─────────────┴───────────────┴─────────────┴──────────────┴───────────────────────┴───────────────────┴────────────────────────────────────────────────────────────────┘[39m
+

@@ -1,0 +1,3 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1794601466	info	SESSION	kdash-e2e	kdash 4.32.0 started on Dheeraj by root - filter .*
+1794601493	info	SESSION	kdash-e2e	kdash stopped after 27s

@@ -1,0 +1,34 @@
+WHY - INCIDENT EVIDENCE  -  warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context vcluster-docker_dev
+┌────────┬───────┬────────┬─────────────────────────┬────────────────┐
+│ SOURCE │ STATE │   READ │ SCOPE                   │ DETAIL         │
+├────────┼───────┼────────┼─────────────────────────┼────────────────┤
+│ events │ ● ok  │ 0s ago │ kdash-e2e / pod z-crash │ read succeeded │
+└────────┴───────┴────────┴─────────────────────────┴────────────────┘
+
+WARNING EVIDENCE  1 item   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────┬─────────┬───────┬──────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT      │ REASON  │ COUNT │ CATEGORY │ MESSAGE                                                                                                   │
+├───┼───────────┼─────────────┼─────────┼───────┼──────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 2m        │ Pod/z-crash │ BackOff │  1032 │ restart  │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3) │
+└───┴───────────┴─────────────┴─────────┴───────┴──────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+POSSIBLE EXPLANATIONS  1 category   hypotheses to check, not conclusions
+┌──────────┬──────────┬──────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY │ EVIDENCE │ POSSIBLE EXPLANATION                                                     │
+├──────────┼──────────┼──────────────────────────────────────────────────────────────────────────┤
+│ restart  │ #1       │ a container may be exiting repeatedly - the event alone does not say why │
+└──────────┴──────────┴──────────────────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
+
+  #1    evidence #1  (WARNING EVIDENCE above)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-crash
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100
+
+  >   restart  crash loop  what usually fixes it
+      note   the previous logs (above) show the exit reason; a config or Secret change is the usual cause - compare with the last rollout:
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e rollout history deployment/DEPLOYMENT  # what changed and when
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.

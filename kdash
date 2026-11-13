@@ -6301,15 +6301,45 @@ END {
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
 '
 tk_table() { # title [subtitle] [empty-message] [one many] < TSV (header line first)
+  # Structured output keeps the table schema: one record per row, no borders and
+  # no colour markers. Header cells drop the width/align modifiers (> * ~).
+  if [ "${TK_FORMAT:-text}" != text ]; then
+    printf '# %s\n' "$1"
+    LC_ALL=C awk -F'\t' -v fmt="$TK_FORMAT" '
+      { out=""; for (i=1; i<=NF; i++) {
+          v=$i
+          if (NR==1) { sub(/^>/,"",v); sub(/[*~]$/,"",v) }
+          else sub(/^\{[rygbd]\}/,"",v)
+          if (fmt=="csv") { gsub(/"/,"\"\"",v); v="\"" v "\"" }
+          out=out (i>1 ? (fmt=="csv" ? "," : "\t") : "") v
+        } print out }
+    '
+    return
+  fi
   LC_ALL=C awk -v title="$1" -v sub_="${2:-}" -v empty="${3:-}" -v one="${4:-item}" -v many="${5:-items}" -v count="${TK_COUNT:-1}" "$TK_TABLE_AWK"
 }
 tk_by_severity() { LC_ALL=C awk -F'\t' '{ r = ($1 ~ /CRIT/) ? 1 : ($1 ~ /WARN/) ? 2 : 3; print r "\t" $0 }' | LC_ALL=C sort -t $'\t' -k1,1n -k3,3 | cut -f2-; }
 tk_colorize() { sed 's/~\[\([0-9;]*\)m/\x1b[\1m/g'; }
 tk_note() { # dim footnote line
+  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '  ~[90m%s~[0m\n' "$*"; else printf '  %s\n' "$*"; fi
 }
 tk_title() { # view title + subtitle, then a blank line
+  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1;7m %s ~[0m  ~[90m%s~[0m\n' "$1" "$2"; else printf '%s  -  %s\n' "$1" "$2"; fi
+}
+# One-shot toolkit renderers. TK_FORMAT must be exported before a renderer runs so
+# tk_table emits CSV/TSV instead of a boxed table (--once -o csv|tsv).
+toolkit_once() { # view [renderer arguments]
+    local view="$1" TK_FORMAT="${OUTFMT:-text}"
+    shift
+    export TK_FORMAT
+    case "$view" in
+        services) if declare -F health_render_services >/dev/null; then health_render_services "$@"; fi ;;
+        storage) if declare -F health_render_storage >/dev/null; then health_render_storage "$@"; fi ;;
+        events) events_render "$@" ;; explain) explain_render "$@" ;;
+        certs) if declare -F certs_render >/dev/null; then certs_render "$@"; fi ;;
+    esac
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
 TK_TIME_AWK='
@@ -7594,9 +7624,12 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       ) & pid=$!
       while kill -0 "$pid" 2>/dev/null; do
         INSPECTOR_KEY=""; IFS= read -rsn1 -t 0.1 INSPECTOR_KEY </dev/tty || true
-        case "$INSPECTOR_KEY" in q|b|$'\033')
-          kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
-          return 0 ;;
+        case "$INSPECTOR_KEY" in
+          q|b|$'\033')
+            kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+            return 0 ;;
+          Q) kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; kdash_quit "loading" ;;
+          X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
         esac
       done
       wait "$pid" 2>/dev/null || true
@@ -7632,7 +7665,9 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $ptitle "
     hdr="${UI_BAR}"$'\033[K\n'
     bx_init
-    local IW=$((INSPECTOR_COLS - 1)) rinfo="audited"; [ "$follow" = 1 ] && rinfo="follow ${INSPECTOR_FOLLOW_SECS:-5}s"
+    local IW=$((INSPECTOR_COLS - 1)) rinfo="READ-ONLY"
+    interactive_enabled && rinfo="INTERACTIVE"
+    rinfo+=" / audited"; [ "$follow" = 1 ] && rinfo+=" / follow ${INSPECTOR_FOLLOW_SECS:-5}s"
     bx_top "$IW" "$ptitle" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     bx_row "$IW" "${PC_D}POD      ${PC_R}  ${PC_B}${pod}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     if [ -n "$c_n" ]; then
@@ -7695,6 +7730,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
            [ -z "${INTERACTIVE_WHY:-}" ] || msg="$INTERACTIVE_WHY"
            rows_stale=1
          fi ;;
+      X) interactive_toggle; msg="$INTERACTIVE_MSG"; rows_stale=1 ;;
       j) offset=$((offset + 1)) ;; k) offset=$((offset - 1)) ;; ' ') offset=$((offset + rows)) ;; b) offset=$((offset - rows)) ;;
       g) offset=0 ;; G) offset=999999 ;;
       '/') if inspector_search_prompt "$pane" find; then viewdirty=1; fi ;;
@@ -8035,9 +8071,11 @@ picker_draw() {
   case "${KDASH_ATTACH_ACTION:-}" in
     S) banner=" ${PC_PTR} Enter opens a SHELL " ;; U) banner=" ${PC_PTR} Enter UPLOADS into the pod " ;; D) banner=" ${PC_PTR} Enter DOWNLOADS from the pod " ;; *) banner="" ;;
   esac
-  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
+  # Keep the permission state in the left title: optional right-hand chips are
+  # hidden on narrow terminals, which must never hide whether writes are enabled.
   if interactive_enabled; then mode="INTERACTIVE"; else mode="READ-ONLY"; fi
-  right=" ${mode} ${PC_SEP} ${#PK_V[@]} of ${#PK_KEY[@]} pods "
+  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} ${mode} ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
+  right=" ${#PK_V[@]} of ${#PK_KEY[@]} pods "
   ui_bar "$PK_COLS" "$title" "$right" "$banner"
   buf=$'\033[H'"${UI_BAR}"$'\033[K\n'
   # status counts, worst first; a status that does not fit is left out whole
@@ -8464,22 +8502,62 @@ interactive_hint() {
 # The kubectl guard reads the exported KDASH_ALLOW_INTERACTIVE on every call, so the
 # change applies at once. Both directions are audited.
 interactive_toggle() {
-    local ans="" rows
+    local ans="" key="" cols old_int interrupted=0 confirmed=0 read_rc
     if interactive_enabled; then
         KDASH_ALLOW_INTERACTIVE=0; export KDASH_ALLOW_INTERACTIVE
         declare -F audit >/dev/null && audit INTERACTIVE_OFF "by key X"
         INTERACTIVE_MSG="interactive mode OFF - kdash is read-only again"
         return 0
     fi
-    rows="${KDASH_LINES:-$(tput lines 2>/dev/null || echo 24)}"
-    printf '\033[%s;1H\033[K\033[?25h\033[1;97;41m Turn on interactive mode? S shell / U upload / D download run in YOUR name and are audited writes. [y/N] \033[0m ' "$rows"
-    IFS= read -rsn1 ans </dev/tty || ans=""
-    printf '\033[?25l'
-    case "$ans" in
-        y|Y) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
+    if [ ! -t 0 ] || [ ! -t 1 ]; then
+        INTERACTIVE_MSG="interactive mode stays off - confirmation requires a terminal"
+        declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X reason=no-terminal"
+        return 0
+    fi
+    old_int="$(trap -p INT)"
+    trap 'interrupted=1' INT
+    cols="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
+    case "$cols" in ''|*[!0-9]*) cols=80 ;; esac
+    [ "$cols" -ge 24 ] || cols=24
+    # A separate modal fits narrow screens and never writes beyond the last row.
+    printf '\033[r\033[H\033[2J\033[?25h Turn on interactive mode?\n\n'
+    printf '%s\n' 'S shell / U upload / D download run in YOUR name and are audited writes.' \
+        'This enables interactive actions for this kdash session only.' | fold -s -w "$((cols - 2))"
+    printf '\n [y/N] Enter confirms; Esc, q or Ctrl-C cancels.\n > '
+    while [ "$interrupted" = 0 ]; do
+        key=""
+        if IFS= read -rsn1 -t 0.2 key </dev/tty; then :
+        else
+            read_rc=$?
+            # A signal can arrive between the loop condition and read. A short
+            # timeout guarantees cancellation is observed without another key.
+            [ "$read_rc" -gt 128 ] && [ "$interrupted" = 0 ] && continue
+            break
+        fi
+        [ "$interrupted" = 0 ] || break
+        case "$key" in
+            ''|$'\r') confirmed=1; break ;;
+            $'\033'|$'\003'|$'\004'|q|Q) break ;;
+            $'\177'|$'\b') [ -z "$ans" ] || { ans="${ans%?}"; printf '\b \b'; } ;;
+            $'\025') while [ -n "$ans" ]; do ans="${ans%?}"; printf '\b \b'; done ;;
+            *) if [[ "$key" == [[:print:]] ]] && [ "${#ans}" -lt 32 ]; then ans+="$key"; printf '%s' "$key"; fi ;;
+        esac
+    done
+    # Modal input must not become dashboard actions (CRLF, an Escape sequence,
+    # or the remainder of a pasted answer). The bounded drain never waits on a
+    # new line and leaves ordinary keys typed after the redraw to the caller.
+    local discard i
+    for ((i = 0; i < 32; i++)); do
+        IFS= read -rsn1 -t 0.01 discard </dev/tty || break
+    done
+    if [ -n "$old_int" ]; then eval "$old_int"; else trap - INT; fi
+    printf '\033[?25l\033[H\033[2J'
+    case "$confirmed:$interrupted:${ans,,}" in
+        1:0:y|1:0:yes) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
              declare -F audit >/dev/null && audit INTERACTIVE_ON "by key X"
              INTERACTIVE_MSG="interactive mode ON - S shell, U upload, D download (X turns it off)" ;;
-        *)   INTERACTIVE_MSG="interactive mode stays off" ;;
+        *)   declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X"
+             INTERACTIVE_MSG="interactive mode stays off" ;;
     esac
     return 0
 }
@@ -11360,7 +11438,7 @@ login__cache_state() {
 }
 
 # Stand-in browsers: a helper that "opens" the login page in a browser (xdg-open, BROWSER,
-# ...) - on a director host that is usually nothing, or a remote X11 window - records the
+# ...) - on a headless host that is usually nothing, or a remote X11 window - records the
 # URL here instead, and kdash shows it. KDASH_LOGIN_BROWSER=system lets it open a browser.
 login__browser_dir() { # dir -> creates the stand-ins, empties the URL record
   local d="$1" b
@@ -13067,7 +13145,7 @@ fi
 case "$VIEW" in services|storage|events|explain)
     if [ "$ONCE" = 1 ]; then
         events_collect; health_collect
-        case "$VIEW" in services) health_render_services ;; storage) health_render_storage ;; events) events_render ;; explain) explain_render ;; esac
+        toolkit_once "$VIEW"
         exit 0
     fi ;;
 esac
@@ -13136,7 +13214,10 @@ fi
 
 if [ "$ONCE" = 1 ]; then
   if [ "$OUTFMT" != text ]; then
-    emit_tables "$OUTFMT" "$VIEW"
+    case "$VIEW" in
+      services|storage|events|explain|certs) toolkit_once "$VIEW" ;;
+      *) emit_tables "$OUTFMT" "$VIEW" ;;
+    esac
   elif [ "$VIEW" = all ]; then
     first=1
     for v in pods nodes workloads ip mem io alerts; do

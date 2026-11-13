@@ -131,8 +131,8 @@ kdash --version                                    # kdash 4.14.0
 ## Screenshots
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed browser checks** and **87 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.4 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-20261107-083145/checks.tsv).
+Run `live-e2e-v4320` records **198 passed live checks**, **19 passed browser checks** and **91 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-v4320/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
@@ -157,9 +157,25 @@ Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed b
 
 
 
-The current gallery is [`samples/cli_4281/`](samples/cli_4281/README.md), captured
-from the installed **kdash 4.28.1** against the Kubernetes cluster running in local
-Ubuntu WSL. It includes RUNBOOK, CHECK and CERTIFICATES screens. The cluster uses
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The current gallery is [`samples/cli_4320/`](samples/cli_4320/README.md), captured
+from the installed **kdash 4.32.0** against the Kubernetes cluster running in local
+Ubuntu WSL. It includes the SECRETS MAP (`Y`), FMEA (`M`), ACCESS (`: access`),
+RUNBOOK, CHECK and CERTIFICATES screens, the interactive-mode toggle (`X`) in the
+dashboard and pod detail, and the full transfer and inspector flows. The cluster uses
 certificate authentication; OIDC flow tests use controlled helpers rather than
 a real provider login. The dedicated `kdash-e2e`
 namespace supplies real running workloads, services, storage and failure cases.
@@ -173,33 +189,33 @@ The [evidence index](artifacts/README.md) explains the run results and coverage.
 
 | View | Live screen | View | Live screen |
 |---|---|---|---|
-| 1 PODS | [pods](samples/cli_4281/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_4281/native/02-nodes.png) |
-| 3 WORKLOADS | [workloads](samples/cli_4281/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_4281/native/04-ip.png) |
-| 5 MEMORY | [memory](samples/cli_4281/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_4281/native/06-io.png) |
-| 7 ALERTS | [alerts](samples/cli_4281/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_4281/native/08-services.png) |
-| 9 STORAGE | [storage](samples/cli_4281/native/09-storage.png) | E / ! | [Events](samples/cli_4281/native/10-events.png) / [explanations](samples/cli_4281/native/11-explain.png) |
+| 1 PODS | [pods](samples/cli_4320/native/01-pods.png) | 2 NODE POOLS | [nodes](samples/cli_4320/native/02-nodes.png) |
+| 3 WORKLOADS | [workloads](samples/cli_4320/native/03-workloads.png) | 4 IP POOL | [IP](samples/cli_4320/native/04-ip.png) |
+| 5 MEMORY | [memory](samples/cli_4320/native/05-mem.png) | 6 NET & DISK IO | [IO](samples/cli_4320/native/06-io.png) |
+| 7 ALERTS | [alerts](samples/cli_4320/native/07-alerts.png) | 8 SERVICES | [services](samples/cli_4320/native/08-services.png) |
+| 9 STORAGE | [storage](samples/cli_4320/native/09-storage.png) | E / ! | [Events](samples/cli_4320/native/10-events.png) / [explanations](samples/cli_4320/native/11-explain.png) |
 
 | Framed namespace selection | Framed pod selection |
 |---|---|
-| <img src="samples/cli_4281/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_4281/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
+| <img src="samples/cli_4320/native/12-namespace-picker.png" width="450" alt="Live namespace picker with access status, selected row and grouped key panel"> | <img src="samples/cli_4320/native/14-pod-picker.png" width="450" alt="Live pod picker with aligned resource columns, status counts and selected row"> |
 
 | Inspector summary | Log search |
 |---|---|
-| <img src="samples/cli_4281/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary, current mode and wrapped key hints"> | <img src="samples/cli_4281/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
+| <img src="samples/cli_4320/native/17-inspector-summary.png" width="450" alt="Framed pod inspector with summary, current mode and wrapped key hints"> | <img src="samples/cli_4320/native/19-inspector-find.png" width="450" alt="Inspector showing highlighted matches from actual container logs"> |
 
 | Container download browser | Local upload browser |
 |---|---|
-| <img src="samples/cli_4281/native/31-download-browser.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_4281/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
+| <img src="samples/cli_4320/native/49-download-review.png" width="450" alt="Live container file browser with framed file listing and action panel"> | <img src="samples/cli_4320/native/27-upload-browser.png" width="450" alt="Local file browser used for a real upload to the WSL Kubernetes pod"> |
 
-See the [complete gallery and manifest](samples/cli_4281/README.md) for every
+See the [complete gallery and manifest](samples/cli_4320/README.md) for every
 captured control, theme, narrow layout, report and transfer step, and
-[`samples/html4281/`](samples/html4281/README.md) for the generated HTML reports.
+[`samples/html4320/`](samples/html4320/README.md) for the generated HTML reports.
 Missing metrics or denied data appear as unavailable; the captures preserve what
 the cluster actually returned.
 
 | Generated HTML overview | Recorded memory and CPU |
 |---|---|
-| <img src="samples/html4281/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html4281/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
+| <img src="samples/html4320/screenshots/overview.png" width="450" alt="Actual browser screenshot of the live WSL namespace report"> | <img src="samples/html4320/screenshots/mem.png" width="450" alt="Actual browser screenshot of measured memory and CPU history"> |
 
 The release-time [4.27.4 terminal gallery](samples/cli_4274/README.md),
 [HTML reports](samples/html4274/README.md) and
@@ -897,11 +913,11 @@ kdash offers the typed-path `kubectl cp` flow. Both routes need `tar` in the ima
 the browser also needs a usable `sh`. Names and paths are passed as arguments rather
 than evaluated as host shell commands.
 
-The current flow is captured in the [4.28.1 gallery](samples/cli_4281/README.md):
-[shell pod list](samples/cli_4281/native/25-shell-picker.png),
-[shell inside the container](samples/cli_4281/native/26-shell-inside.png),
-[download browser](samples/cli_4281/native/31-download-browser.png) and
-[upload browser](samples/cli_4281/native/27-upload-browser.png). The gallery's manifest
+The current flow is captured in the [4.28.1 gallery](samples/cli_4320/README.md):
+[shell pod list](samples/cli_4320/native/25-shell-picker.png),
+[shell inside the container](samples/cli_4320/native/26-shell-inside.png),
+[download browser](samples/cli_4320/native/49-download-review.png) and
+[upload browser](samples/cli_4320/native/27-upload-browser.png). The gallery's manifest
 pairs each image with its raw live screen. Earlier typed-path and browser flows
 remain in the [4.14.0](samples/cli_414/README.md) and
 [4.19.2](samples/cli_419/README.md) historical galleries.

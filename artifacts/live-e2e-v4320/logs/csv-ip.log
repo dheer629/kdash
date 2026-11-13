@@ -1,0 +1,20 @@
+# ip
+POD,POD_IP,NODE,POOL,HOST_IP,KIND,WORKLOAD,STATUS,NOTE
+z-crash,10.244.0.133,dev,"role:control-plane,master",172.18.0.2,Pod,z-crash,CrashLoopBackOff,
+app-server-8fb4699bc-cx5vz,10.244.0.135,dev,"role:control-plane,master",172.18.0.2,Deployment,app-server,Running,
+app-server-8fb4699bc-t7zxj,10.244.0.138,dev,"role:control-plane,master",172.18.0.2,Deployment,app-server,Running,
+completed-check-m9swm,,dev,"role:control-plane,master",172.18.0.2,Job,completed-check,Succeeded,NO_IP
+z-pending,,(unscheduled),(none),,Pod,z-pending,Pending,NO_IP
+
+# subnets
+SUBNET,PODS,NODES
+10.244.0.0/24,3,dev
+
+# ipblocks
+NODE,POOL,INTERNAL_IP,POD_CIDR,CIDR_ADDRESSES,NS_PODS_WITH_IP,HOST_NETWORK_PODS,IP_BLOCKS_OBSERVED
+dev,"role:control-plane,master",172.18.0.2,10.244.0.0/24,254,3,0,10.244.0.128/26
+
+# services
+NAMESPACE,SERVICE,TYPE,CLUSTER_IP,EXTERNAL_IPS,LB_INGRESS,PORTS
+kdash-e2e,app-server,ClusterIP,10.111.83.216,,,80/TCP
+kdash-e2e,missing-backend,ClusterIP,10.104.104.128,,,80/TCP

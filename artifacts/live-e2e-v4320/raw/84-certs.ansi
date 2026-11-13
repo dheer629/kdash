@@ -1,0 +1,50 @@
+[1;7m KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 01:55:39[0m[90m IST[39m
+[90m┌─ [1m[39mSCOPE[0m[90m ──────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ────────┐
+│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                     [90m│[39m [1m[31m! pods 3/5 ready[0m[90m   restarts [35m119[39m             [90m│[39m [90mcpu [39m     6m [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mworkloads [39m4                 [90m│
+│[39m [90mpoll 2s  spec 9s/30s   session [39m01:55:29[90m up [39m10s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [32m0[39m       [90m│[39m [90mmem [39m    2Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [32m^ 0[39m         [90m│
+└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
+[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m9s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
+[1;7m CERTIFICATES AND LOGINS [0m  [90mexpiry of the TLS certificates and logins this cluster and your access depend on - TLS handshakes only, nothing is changed[39m
+
+[1mDATA SOURCES[0m
+[90m┌──────────────────┬───────┬────────┬─────────────────────────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1mSOURCE          [0m [90m│[39m [1mSTATE[0m [90m│[39m [1m  READ[0m [90m│[39m [1mDETAIL                                                                     [0m [90m│[39m
+[90m├──────────────────┼───────┼────────┼─────────────────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m cert-kubeconfig  [90m│[39m [32m● ok [39m [90m│[39m 5s ago [90m│[39m [90mcontext vcluster-docker_dev read locally (tokens are never shown or stored)[39m [90m│[39m
+[90m│[39m cert-tls         [90m│[39m [32m● ok [39m [90m│[39m 4s ago [90m│[39m [90m2 of 3 TLS endpoints answered from this host                               [39m [90m│[39m
+[90m│[39m cert-webhooks    [90m│[39m [32m● ok [39m [90m│[39m 4s ago [90m│[39m [90mread succeeded                                                             [39m [90m│[39m
+[90m│[39m cert-apiservices [90m│[39m [32m● ok [39m [90m│[39m 4s ago [90m│[39m [90mread succeeded                                                             [39m [90m│[39m
+[90m│[39m cert-manager     [90m│[39m [32m● ok [39m [90m│[39m 4s ago [90m│[39m [90mread succeeded                                                             [39m [90m│[39m
+[90m│[39m cert-nodes       [90m│[39m [32m● ok [39m [90m│[39m 4s ago [90m│[39m [90mread succeeded                                                             [39m [90m│[39m
+[90m│[39m cert-ingress     [90m│[39m [32m● ok [39m [90m│[39m 4s ago [90m│[39m [90mread succeeded                                                             [39m [90m│[39m
+[90m└──────────────────┴───────┴────────┴─────────────────────────────────────────────────────────────────────────────┘[39m
+
+[1mEXPIRY[0m  [90m5 items   soonest first - warning under 30 days, critical under 7 days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)[39m
+[90m┌────────┬───────┬──────────────────┬─────────────────────────┬────────────────────────┬───────────────────────────────────┬─────────────────────────────────────────────┐
+│[39m [1mSTATUS[0m [90m│[39m [1m LEFT[0m [90m│[39m [1mEXPIRES UTC     [0m [90m│[39m [1mWHAT                   [0m [90m│[39m [1mOBJECT                [0m [90m│[39m [1mWHERE                            [0m [90m│[39m [1mNOTE                                       [0m [90m│
+├────────┼───────┼──────────────────┼─────────────────────────┼────────────────────────┼───────────────────────────────────┼─────────────────────────────────────────────┤
+│[39m [32m● OK  [39m [90m│[39m 197 d [90m│[39m 2027-05-30 02:59 [90m│[39m kubelet                 [90m│[39m dev                    [90m│[39m 172.18.0.2:10250                  [90m│[39m [90mlogs, exec and metrics go through it; issu~[39m [90m│
+│[39m [32m● OK  [39m [90m│[39m 197 d [90m│[39m 2027-05-30 03:03 [90m│[39m client certificate      [90m│[39m kubernetes-super-admin [90m│[39m vcluster-docker_dev               [90m│[39m [90missued by kubernetes - kubectl stops worki~[39m [90m│
+│[39m [32m● OK  [39m [90m│[39m 324 d [90m│[39m 2027-10-04 06:06 [90m│[39m webhook CA (mutating)   [90m│[39m cert-manager-webhook   [90m│[39m cert-manager/cert-manager-webhook [90m│[39m [90mCA cert-manager-webhook-ca - calls fail (x~[39m [90m│
+│[39m [32m● OK  [39m [90m│[39m 324 d [90m│[39m 2027-10-04 06:06 [90m│[39m webhook CA (validating) [90m│[39m cert-manager-webhook   [90m│[39m cert-manager/cert-manager-webhook [90m│[39m [90mCA cert-manager-webhook-ca - calls fail (x~[39m [90m│
+│[39m [32m● OK  [39m [90m│[39m 364 d [90m│[39m 2027-11-13 16:31 [90m│[39m API endpoint            [90m│[39m vcluster-docker_dev    [90m│[39m localhost:10093                   [90m│[39m [90mwhat kubectl connects to; issuer kubernetes[39m [90m│
+└────────┴───────┴──────────────────┴─────────────────────────┴────────────────────────┴───────────────────────────────────┴─────────────────────────────────────────────┘
+
+[1m[39mFINDINGS[0m[90m   critical first; includes x509 errors in Kubernetes events - next commands below[39m
+  [90mnothing expires within 30 days[39m
+
+[1mNOT CHECKED[0m  [90m2 items   no expiry date could be read for these from this host[39m
+[90m┌───────────────┬────────────────┬────────────────────────┬────────────────────────────┬──────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1mSTATE        [0m [90m│[39m [1mWHAT          [0m [90m│[39m [1mOBJECT                [0m [90m│[39m [1mWHERE                     [0m [90m│[39m [1mWHY                                                     [0m [90m│[39m
+[90m├───────────────┼────────────────┼────────────────────────┼────────────────────────────┼──────────────────────────────────────────────────────────┤[39m
+[90m│[39m [90m● skip verify[39m [90m│[39m API service CA [90m│[39m v1beta1.metrics.k8s.io [90m│[39m kube-system/metrics-server [90m│[39m [90minsecureSkipTLSVerify - no expiry to check (True Passed)[39m [90m│[39m
+[90m│[39m [90m● unreachable[39m [90m│[39m kube-apiserver [90m│[39m dev                    [90m│[39m 172.18.0.2:6443            [90m│[39m [90mConnection refused from this host                       [39m [90m│[39m
+[90m└───────────────┴────────────────┴────────────────────────┴────────────────────────────┴──────────────────────────────────────────────────────────┘[39m
+
+
+
+
+
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c[2m›
+[0m[97m[45m AUDITED session 20261114-015529-40164 - every action is logged; use is your responsibility (kdash --about) | ○ LIVE 01:55:39  next 1s  data 1s old  fetch 0.0s  AUDITED[39m[49m

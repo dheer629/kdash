@@ -1,0 +1,50 @@
+   ACTUAL      CPU in millicores (1000m = 1 core) and memory in MiB, measured by metrics-server.
+               T = trend since the last poll: up / down / flat.
+   ASSIGNED    requests (reserved for scheduling) and limits (hard cap) from the pod spec.
+   UTILISATION used as % of request and of limit. Red at >= 90% of the limit:
+               CPU is throttled, memory is about to be OOM-killed.
+   RDY / RST   ready containers / all containers, and restarts.
+   Detail line CPU and memory sparkline of the pod (last 40 session samples + now; memory
+               coloured by % of its limit, pk = peak), node, pool, pod IP, QoS class, status
+               and the last exit reason (OOMKilled ...).
+   Timeline    namespace CPU and memory over the session (z window, c hides the graphs).
+
+ KEYS
+   1-9 / Tab  switch view          n  pick another namespace     /  pod name filter (regex)
+   s          next sort key        o  reverse the sort order     w  PODS grouped / flat
+   j k arrows scroll               h l arrows  pan left / right  g G  top / bottom
+   d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
+   x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
+   P          pause / resume live  + -  poll interval 1..60 s
+   T          colour theme         z  chart window (all/15m/1h/6h/24h)
+   Z          NODE POOLS auto zoom / true scale     c  PODS timeline graphs on / off
+   ?          this help            q  quit
+   Enter / i  inspect a pod: s summary, d describe, e events, ! why, l current logs,
+              p previous logs, c choose container, / find (& only matches), n N jumps,
+              L log level, f follow logs, w export the pane, ? keys, q back
+   :          command palette (fixed commands, never shell text)   F  structured filters
+   L          OIDC login: runs the login helper in the foreground and shows its URL (with the
+              ssh -L tunnel command when the callback is on this host); kdash continues afterwards.
+              An expired login opens this by itself (KDASH_LOGIN_AUTO=0: only with L)
+   K          CHECK NOW: everything wrong right now in every area, most severe first, with next
+              commands; Enter runs the read commands of a finding at once (also in 8 / 9 / ! / C)
+   R          runbooks with this cluster's names filled in: etcd restore, certificate rotation,
+              node NotReady, API unreachable, OIDC login ( [ and ] switch runbook )
+   Y          secrets map: certificates and keys in Secrets, expiry, who manages and uses them, the
+              path in the container and on the node, what needs a restart after a rotation
+   M          FMEA: every failure mode of every object you can read, ranked by Action Priority,
+              with next commands; only what your RBAC allows is checked (: access shows it)
+   C          certificates and logins: expiry of the API, node, kubelet, webhook, cert-manager
+              and ingress certificates and of your OIDC login (warning < 30 d, critical < 7 d)
+   Times are this host's clock (date): TZ=UTC kdash shows UTC.
+   Audit       this session is audited: every action, namespace
+               switch, report and kubectl call is logged. kdash --audit shows the log.
+   Edges       a dim > at the right edge = the line continues (l pans), < at the left = panned.
+   Alerts      a new critical event (OOMKilled, CrashLoop, NotReady node ...) turns the status
+               bar red for 30 s; --bell also rings the terminal bell.
+   Status bar  LIVE clock, next refresh, data age, spec age, fetch time and poll interval.
+               It turns red when metrics fail or the data is stale, magenta while paused.
+
+ COLOURS   green = fine / this namespace     blue = information / other namespaces
+           magenta = warning / requested      bold red = critical     grey = secondary / free
+

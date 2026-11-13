@@ -1,0 +1,6 @@
+P	app-server-8fb4699bc-cx5vz	dev	Running	2/2	14	Unknown	Deployment/app-server	0
+P	app-server-8fb4699bc-t7zxj	dev	Running	2/2	14	Unknown	Deployment/app-server	0
+P	completed-check-m9swm	dev	Succeeded	0/1	0	-	Job/completed-check	0
+P	z-crash	dev	CrashLoopBackOff	0/1	90	Error	Pod/z-crash	0
+P	z-pending	(unscheduled)	Pending	0/1	0	-	Pod/z-pending	0
+N	dev	-	Ready

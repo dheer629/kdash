@@ -1,0 +1,50 @@
+ KDASH │ SELECT POD │ INTERACTIVE │ context vcluster-docker_dev │ namespace kdash-e2e  ► Enter opens a SHELL                                                  5 of 5 pods
+ pods    ● CrashLoopBackOff 1  ● Pending 1  ● Running 2  ● Succeeded 1
+ / search   view all (u)   sort name
+┌──────────────────────────────────────────────────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┬────────────────────────┐
+│ POD                                                                              │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │ NODE                   │
+├──────────────────────────────────────────────────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┼────────────────────────┤
+│ app-server-8fb4699bc-cx5vz                                                       │ Running          │ 2/2   │  14 │     3m │     2Mi │    2% │ dev  last-exit Unknown │
+│ app-server-8fb4699bc-t7zxj                                                       │ Running          │ 2/2   │  14 │     3m │     0Mi │    0% │ dev  last-exit Unknown │
+│ completed-check-m9swm                                                            │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                    │
+│ z-crash                                                                          │ CrashLoopBackOff │ 0/1   │  91 │      - │       - │     - │ dev  last-exit Error   │
+│ z-pending                                                                        │ Pending          │ 0/1   │   0 │      - │       - │     - │ (unscheduled)          │
+└──────────────────────────────────────────────────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┴────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── 1 / 5   1 failing   1 pending / starting ──────────────────────────────────────────────────────────────────────────────────────────────────────── live · refresh 2s ──
+┌─ MOVE ──────────────────┬─ FIND ──────────────────────────┬─ IN THE SHELL ────────────────┬─ SHELL ───────────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ /    search pod / status / node │ exit      back to this list   │ Enter  open a shell in the highlighted pod                                │
+│ PgUp/PgDn  page         │ u    needs attention only       │ kdswitch  related pods        │        then: pick the container                                           │
+│ g / G      first / last │ Esc  clear the search           │ kdquit    leave kdash         │ q      back to the dashboard                                              │
+│ 12         go to row 12 │      5 of 5 pods                │           runs with your RBAC │ Q      quit kdash                                                         │
+└─────────────────────────┴─────────────────────────────────┴───────────────────────────────┴───────────────────────────────────────────────────────────────────────────┘

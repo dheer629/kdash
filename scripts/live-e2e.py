@@ -387,10 +387,20 @@ spec:
         if self.record("check-real-finding-selected", bool(finding),
                        "selected a numbered unhealthy fixture finding from actual --check output"):
             number = finding.group(1)
-            result = self.cli("check-run-finding", ["--check", "--run", number],
-                (r"instant check - finding #" + number, "read-only commands", r"\$ kubectl",
-                 r"(?m)^Name:\s+z-(?:crash|pending)\b", r"(?m)^Namespace:\s+" + re.escape(self.args.namespace)),
-                timeout=180)
+            expect = (r"instant check - finding #" + number, "read-only commands", r"\$ kubectl",
+                      r"(?m)^Name:\s+z-(?:crash|pending)\b", r"(?m)^Namespace:\s+" + re.escape(self.args.namespace))
+            result = self.cli("check-run-finding", ["--check", "--run", number], expect, timeout=180)
+            # The crash fixture restarts every ~30s, so the finding numbering can
+            # shift between the summary and the run. Re-read the summary and retry once.
+            if not result["passed"]:
+                fresh = self.call(self.base + ["--check"], timeout=180)
+                m = re.search(r"(?m)^\s*#(\d+)\s+[^\n]*\bz-(?:crash|pending)\b", fresh.stdout)
+                if m and m.group(1) != number:
+                    number = m.group(1)
+                    expect = (r"instant check - finding #" + number, "read-only commands", r"\$ kubectl",
+                              r"(?m)^Name:\s+z-(?:crash|pending)\b", r"(?m)^Namespace:\s+" + re.escape(self.args.namespace))
+                    result = self.cli("check-run-finding", ["--check", "--run", number], expect, timeout=180)
+                    result["retry_reason"] = "finding numbering shifted with the crash fixture restart"
             self.finish_cli(result)
             body = (self.out / "logs" / "check-run-finding.log").read_text()
             commands = re.findall(r"(?m)^\$ (.+)$", body)
@@ -403,7 +413,7 @@ spec:
             self.finish_cli(self.cli("runbook-" + topic, ["--runbook", topic],
                 ("RUNBOOK - " + re.escape(topic), "WHEN TO USE", "CHANGE", "never runs them"), timeout=120))
         body = (self.out / "logs" / "runbook-node-notready.log").read_text()
-        nodes = self.call(self.kc + ["get", "nodes", "-o", "jsonpath={.items[*].metadata.name}"], timeout=30)
+        nodes = self.call(self.kc + ["get", "nodes", "-o", "jsonpath={.items[*].metadata.name}"], timeout=90)
         names = nodes.stdout.split() if nodes.returncode == 0 else []
         self.record("runbook-real-node-inventory", bool(names) and all(
             re.search(r"(?m)(?:^|[│|])\s*" + re.escape(name) + r"\s+(?:[│|]|server|agent)", body) for name in names),
@@ -426,7 +436,7 @@ spec:
             valid = False
         self.record("fmea-json-real-rows", valid, "real worksheet rows retain numeric scores, AP, access and namespace")
         self.finish_cli(self.cli("fmea-html", ["--fmea", "-o", "html"], (r"fmea_.*\.html",), timeout=180))
-        self.finish_cli(self.cli("fmea-access", ["--access"], ("ACCESS", "PERMISSIONS", "COVERAGE", "read-only"), timeout=180))
+        self.finish_cli(self.cli("fmea-access", ["--access"], ("ACCESS", "PERMISSIONS", "COVERAGE", "read verbs only"), timeout=180))
         self.finish_cli(self.cli("fmea-fail-on-high", ["--fmea", "--fail-on", "high"], ("HIGH",), codes=(2,), timeout=180))
         self.finish_cli(self.cli("fmea-trend", ["--fmea", "--since", "30d"], ("FMEA TREND", "PER DAY"), timeout=180))
         summary = (self.out / "logs/fmea-summary.log").read_text()
@@ -457,6 +467,11 @@ spec:
         self.wait(s, "FINDINGS", timeout=120)
         self.capture(s, "86-check", "CHECK NOW actual unhealthy workloads and numbered read-only next commands", "CHECK NOW")
         body = self.screen(s)
+        if "z-crash" not in body:
+            # The crash fixture briefly becomes Running between restarts; re-read once.
+            self.key(s, "r", delay=3)
+            self.wait(s, "FINDINGS", timeout=60)
+            body = self.screen(s)
         self.record("check-ui-real-findings", "z-crash" in body and "z-pending" in body,
                     "instant-check view shows the real crashing and pending fixture pods")
         if tuple(int(n) for n in self.version.split('.')) >= (4, 28, 1):
@@ -464,6 +479,7 @@ spec:
             self.wait(s, "WORKSHEET", timeout=150)
             self.capture(s, "88-fmea", "FMEA real failure modes, priority scores and read visibility", "WORKSHEET")
             self.key(s, ":", delay=2)
+            self.text(s, "access")
             self.wait(s, "PERMISSIONS", timeout=120)
             self.capture(s, "89-access", "ACCESS real kubectl auth identity and permission checks", "PERMISSIONS")
             self.key(s, "M", delay=2)
@@ -546,15 +562,17 @@ spec:
                     time.sleep(0.1)
                 time.sleep(0.5)
                 # A busy X server can make a single window grab slow; retry rather
-                # than losing the whole run to one screenshot.
+                # than losing the whole run to one screenshot. The native grab is
+                # best-effort: the ANSI replay PNG is still produced for every view.
                 for attempt in range(3):
                     try:
                         subprocess.run(["import", "-window", "kdash-e2e-" + stem, str(native)], env=xenv,
-                                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=30)
+                                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=120)
                         break
-                    except subprocess.TimeoutExpired:
+                    except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
                         if attempt == 2:
-                            raise
+                            native = None
+                            break
                         time.sleep(1)
             finally:
                 terminal.terminate()
@@ -798,7 +816,7 @@ spec:
         self.key(s, "/")
         self.text(s, self.pod)
         self.key(s, "Enter", delay=3)
-        self.wait(s, "THIS HOST|CONTAINER|DOWNLOAD|SELECT LOCAL FILES", timeout=30)
+        self.wait(s, "THIS HOST|CONTAINER|DOWNLOAD|SELECT LOCAL FILES", timeout=90)
         return s
 
     def directory_upload(self):

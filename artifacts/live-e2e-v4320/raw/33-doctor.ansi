@@ -1,0 +1,50 @@
+[1;7m KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 01:50:23[0m[90m IST[39m
+[90m┌─ [1m[39mSCOPE[0m[90m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ───────┐
+│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                      [90m│[39m [1m[31m! pods 3/5 ready[0m[90m   restarts [35m118[39m             [90m│[39m [90mcpu [39m     6m [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mworkloads [39m4                [90m│
+│[39m [90mpoll 2s  spec 9s/30s   session [39m01:47:52[90m up [39m2m31s      [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [32m0[39m       [90m│[39m [90mmem [39m    2Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [32m^ 0[39m        [90m│
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m9s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
+[1;7m KDASH 4.32.0 DOCTOR [0m  [90mread-only capability checks - no cluster changes are made[39m
+
+[1mCONNECTION[0m
+[90m┌──────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1mSETTING     [0m [90m│[39m [1mVALUE                                                                                                [0m [90m│[39m
+[90m├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m context      [90m│[39m vcluster-docker_dev                                                                                   [90m│[39m
+[90m│[39m namespace    [90m│[39m kdash-e2e                                                                                             [90m│[39m
+[90m│[39m kubeconfig   [90m│[39m /home/user/.kube/config                                                                              [90m│[39m
+[90m│[39m API endpoint [90m│[39m https://localhost:10093                                                                               [90m│[39m
+[90m│[39m audit log    [90m│[39m /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/audit/audit_202611.log [90m│[39m
+[90m└──────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────┘[39m
+
+[1mCHECKS[0m  [90m9 checks   all required checks passed[39m
+[90m┌─────────────────────────────────┬────────┬──────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┐[39m
+[90m│[39m [1mCHECK                          [0m [90m│[39m [1mRESULT[0m [90m│[39m [1mDETAIL                                                  [0m [90m│[39m [1mNEXT STEP                                                  [0m [90m│[39m
+[90m├─────────────────────────────────┼────────┼──────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┤[39m
+[90m│[39m pods                            [90m│[39m [32m● PASS[39m [90m│[39m readable (an empty namespace is valid)                   [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m│[39m nodes                           [90m│[39m [32m● PASS[39m [90m│[39m readable                                                 [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m│[39m services                        [90m│[39m [32m● PASS[39m [90m│[39m readable                                                 [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m│[39m endpointslices.discovery.k8s.io [90m│[39m [32m● PASS[39m [90m│[39m readable                                                 [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m│[39m persistentvolumeclaims          [90m│[39m [32m● PASS[39m [90m│[39m readable                                                 [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m│[39m events                          [90m│[39m [32m● PASS[39m [90m│[39m readable                                                 [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m│[39m metrics                         [90m│[39m [32m● PASS[39m [90m│[39m pod CPU / memory readable                                [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m│[39m certificates                    [90m│[39m [32m● PASS[39m [90m│[39m nothing expires within 30 days (API endpoint, kubeconfi~ [90m│[39m [90mkdash --certs also probes nodes, kubelets and ingress hosts[39m [90m│[39m
+[90m│[39m local reports                   [90m│[39m [32m● PASS[39m [90m│[39m writable: /mnt/c/Users/user/OneDrive/Desktop/AI Projec~ [90m│[39m [90m-                                                          [39m [90m│[39m
+[90m└─────────────────────────────────┴────────┴──────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────┘[39m
+
+  [90mRead-only checks complete; no cluster changes made.[39m
+
+
+
+
+
+
+
+
+
+
+
+
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c[2m›
+[0;7m ○ LIVE 01:50:23  next 1s  data 1s old  spec 9/30s  fetch 0.0s  poll 2s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit    [0m

@@ -1,0 +1,8 @@
+FMEA TREND  -  high / medium / low per day from saved runs of vcluster-docker_dev / kdash-e2e (last 30 days)
+
+PER DAY  1 day   the last run of each day, newest first
+┌────────────┬──────┬────────┬─────┬─────────┬──────┐
+│ DAY        │ HIGH │ MEDIUM │ LOW │ VISIBLE │ RUNS │
+├────────────┼──────┼────────┼─────┼─────────┼──────┤
+│ 2026-11-14 │    5 │      5 │  40 │   50/50 │    8 │
+└────────────┴──────┴────────┴─────┴─────────┴──────┘

@@ -1,0 +1,50 @@
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:56:08 IST
+┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
+│ match .*   sort cpu ▼ high first                     │ ! pods 3/5 ready   restarts 120             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                 │
+│ poll 2s  spec 8s/30s   session 01:55:29 up 39s       │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 1         │
+└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
+ DATA ● pods fresh 8s old  metrics available │ C certs  M fmea (5 high, 100% visible) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ FMEA   failure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection
+
+  5 HIGH   5 MEDIUM   40 LOW   50 of 50 modes visible to kubernetes-super-admin  scored 10s ago - r re-scores, : access shows your rights
+  showing kind: Pod (t cycles, empty = all)
+
+WORKSHEET  13 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
+┌────┬──────┬───┬────┬───┬─────┬────────┬─────────────────────────────────┬──────────────────────────────────────┬─────────────────────────────────────────────┐
+│ #  │ AP   │ S │  O │ D │ RPN │ ID     │ OBJECT                          │ FAILURE MODE                         │ NOW                                         │
+├────┼──────┼───┼────┼───┼─────┼────────┼─────────────────────────────────┼──────────────────────────────────────┼─────────────────────────────────────────────┤
+│ 1  │ HIGH │ 7 │ 10 │ 4 │ 280 │ POD-01 │ kdash-e2e/z-crash               │ CrashLoopBackOff                     │ CrashLoopBackOff, 91 restarts (last: Error) │
+│ 2  │ HIGH │ 7 │ 10 │ 4 │ 280 │ POD-03 │ kdash-e2e/z-pending             │ Pending, unschedulable               │ Pending                                     │
+│ 3  │ LOW  │ 6 │ 2* │ 5 │  60 │ POD-05 │ -                               │ Readiness probe failing              │ all 5 pods ok                               │
+│ 4  │ LOW  │ 6 │ 2* │ 4 │  48 │ HPA-01 │ -                               │ Cannot read metrics                  │ no hpas in scope                            │
+│ 5  │ LOW  │ 6 │ 2* │ 4 │  48 │ POD-02 │ -                               │ OOMKilled                            │ all 5 pods ok                               │
+│ 6  │ LOW  │ 6 │ 2* │ 4 │  48 │ POD-04 │ -                               │ ImagePullBackOff                     │ all 5 pods ok                               │
+│ 7  │ LOW  │ 5 │ 2* │ 6 │  60 │ POD-06 │ -                               │ Liveness probe kills a healthy pod   │ all 5 pods ok                               │
+│ 8  │ LOW  │ 5 │ 2* │ 5 │  50 │ HPA-02 │ -                               │ Pinned at maxReplicas                │ no hpas in scope                            │
+│ 9  │ LOW  │ 5 │ 2* │ 5 │  50 │ POD-07 │ -                               │ Evicted                              │ all 5 pods ok                               │
+│ 10 │ LOW  │ 5 │ 2* │ 5 │  50 │ POD-09 │ -                               │ Stuck Terminating                    │ all 5 pods ok                               │
+│ 11 │ LOW  │ 5 │  4 │ 2 │  40 │ PDB-02 │ kdash-e2e/deployment/app-server │ Missing for a multi-replica workload │ 2 replicas, no PodDisruptionBudget          │
+│ 12 │ LOW  │ 5 │ 2* │ 2 │  20 │ PDB-01 │ -                               │ Allows 0 disruptions                 │ no pdbs in scope                            │
+│ 13 │ LOW  │ 4 │ 2* │ 6 │  48 │ POD-08 │ -                               │ CPU throttled                        │ all 5 pods ok                               │
+└────┴──────┴───┴────┴───┴─────┴────────┴─────────────────────────────────┴──────────────────────────────────────┴─────────────────────────────────────────────┘
+  AP follows the AIAG-VDA 2019 table; RPN (S x O x D) is shown but does not rank. "no access" rows are never counted as OK.
+
+NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now
+
+  #1  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 91 restarts (last: Error)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
+
+  #2  CRITICAL  kdash-e2e/z-pending  POD-03 Pending, unschedulable: Pending
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-pending  # the scheduler's message is in the events
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get pvc  # an unbound claim also keeps a pod Pending
+
+
+
+
+
+
+
+M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
+ FMEA kind: Pod | ● LIVE 01:56:08  next 1s  data 1s old  spec 8/30s  fetch 0.0s  poll 2s  AUDITED | fmea | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html

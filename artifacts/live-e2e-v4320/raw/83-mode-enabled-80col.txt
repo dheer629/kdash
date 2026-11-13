@@ -1,0 +1,30 @@
+ KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:55:12 IST
+ match .*   sort cpu ▼ high first
+ ! pods 3/5 ready rst 119 oom 0 oomk 0 nolim 0 cpu 7m 1% lim mem 2Mi 1% lim wl 4
+     ev15m ! 0 ^ 0
+ DATA ● pods fresh 7s old  metrics available │ C certs │ K check now │ i inspec›
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo›
+                                       │   ACTUAL (live)    │    ASSIGNED (req ›
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  ME›
+────────────────────────────────────────────────────────────────────────────────
+► TIMELINE  01:55:05 -> 01:55:12 IST  (all since kdash started, z window, c hid›
+  CPU used - namespace
+         one sample so far - the chart starts with the 2nd (run kdash live)
+  MEMORY used - namespace
+         one sample so far - the chart starts with the 2nd (run kdash live)
+
+► PODS ────────────────────────────────────────────────────────────────────────
+► Deployment app-server  (2 p~ 2/2  28 │      7 ·       2 · │     50    500    ›
+  app-server-8fb4699bc-cx5vz   2/2  14 │      4 ·       2 · │     25    250    ›
+      cpu ░░                mem ░░                pk 2Mi    node dev   pool rol›
+    ├─ app                     Y     7 │      3 ·       2 · │     20    200    ›
+        last-exit Unknown
+    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50    ›
+        last-exit Unknown
+  app-server-8fb4699bc-t7zxj   2/2  14 │      3 ·       0 · │     25    250    ›
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool rol›
+────────────────────────────────────────────────────────────────────────────────
+TOTAL (5 pods, 4 workloads)        119 │      7 ·       2 · │     65    650    ›
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9›
+ interactive mode ON - S shell, U upload, D download (X turns it off) | ● LIVE >

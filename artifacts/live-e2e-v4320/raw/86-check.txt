@@ -1,0 +1,50 @@
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:55:53 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                      │ ! pods 3/5 ready   restarts 119             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                │
+│ poll 2s  spec 23s/30s   session 01:55:29 up 24s       │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 23s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ CHECK NOW   everything kdash can see that is wrong right now - most severe first, with the commands to check and fix it
+
+  3 CRITICAL   2 WARNING   checked 3s ago - r re-checks now
+
+AREAS  8 areas
+┌──────────────┬───────────────┬──────────┬──────────────────────────────────────────────────────────────────┐
+│ AREA         │ STATUS        │ FINDINGS │ DETAIL                                                           │
+├──────────────┼───────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
+│ api          │ ● OK          │        0 │ pods read 23s ago                                                │
+│ nodes        │ ● OK          │        0 │ 1 of 1 Ready                                                     │
+│ pods         │ ● CRITICAL    │        2 │ 5 pods in the dashboard scope                                    │
+│ services     │ ● CRITICAL    │        1 │ services ok, endpoints ok, ingresses ok                          │
+│ storage      │ ● CRITICAL    │        2 │ claims ok, volumes ok                                            │
+│ certificates │ ● OK          │        0 │ full check 18s ago                                               │
+│ secrets      │ ● OK          │        0 │ 0 certificates in 0 Secrets - Y shows who uses them and where    │
+│ etcd         │ ● not visible │        0 │ snapshots: unavailable - on a server: sudo rke2 etcd-snapshot ls │
+└──────────────┴───────────────┴──────────┴──────────────────────────────────────────────────────────────────┘
+
+FINDINGS  5 findings   critical first - Enter runs the read commands of one now (CHANGE commands are never run)
+┌───┬────────────┬──────────┬─────────────────┬──────────────────────────────────────────────────────────────┐
+│ # │ SEVERITY   │ AREA     │ OBJECT          │ FINDING                                                      │
+├───┼────────────┼──────────┼─────────────────┼──────────────────────────────────────────────────────────────┤
+│ 1 │ ● CRITICAL │ pods     │ z-crash         │ CrashLoopBackOff, 91 restarts (last: Error)                  │
+│ 2 │ ● CRITICAL │ services │ missing-backend │ selector app=does-not-exist matches no pod in this scope     │
+│ 3 │ ● CRITICAL │ storage  │ z-unbound       │ claim is Pending - not bound to a volume                     │
+│ 4 │ ● WARNING  │ pods     │ z-pending       │ Pending                                                      │
+│ 5 │ ● WARNING  │ storage  │ z-unbound       │ storage class kdash-e2e-intentionally-missing does not exist │
+└───┴────────────┴──────────┴─────────────────┴──────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now
+
+  #1  CRITICAL  z-crash  CrashLoopBackOff, 91 restarts (last: Error)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
+
+  #2  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get pods --show-labels  # labels the pods really have
+      CHANGE kubectl --context vcluster-docker_dev -n kdash-e2e edit service missing-backend  # make spec.selector match the pod labels (or fix the labels on the workloa›
+
+  #3  CRITICAL  z-unbound  claim is Pending - not bound to a volume
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c›
+ ○ LIVE 01:55:53  next 1s  data 1s old  spec 23/30s  fetch 0.0s  poll 2s  AUDITED | check | rows 1-41/52 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html

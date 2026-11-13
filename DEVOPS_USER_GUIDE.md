@@ -29,12 +29,26 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 
 `artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4281/` follows this source and includes the runbook, check and certificates screens; the 4.24.1, 4.23.2 and older galleries support historical observations.
 
-## Current 4.28.1 validation and visual changes
+## Current 4.32.0 validation and visual changes
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed browser checks** and **87 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.4 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-20261107-083145/checks.tsv).
+Run `live-e2e-v4320` records **198 passed live checks**, **19 passed browser checks** and **91 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-v4320/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

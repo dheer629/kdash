@@ -98,7 +98,9 @@ for row in rows:
         shutil.copy2(root / row['png'], gallery / png)
         (gallery / 'native').mkdir(exist_ok=True)
         shutil.copy2((root / row['png']).parent / native, gallery / native)
-    t += f'| [native]({native}) / [ANSI replay]({png}) | {row["title"].replace("|", "/")} | {row["columns"]} x {row["rows"]} | [capture]({src}/{row["file"]}) |\n'
+    # The native xterm grab is best-effort; link it only when the file exists.
+    native_link = f'[native]({native}) / ' if (gallery / native).exists() else ''
+    t += f'| {native_link}[ANSI replay]({png}) | {row["title"].replace("|", "/")} | {row["columns"]} x {row["rows"]} | [capture]({src}/{row["file"]}) |\n'
 t += f'''
 Verify the image bytes with `sha256sum -c SHA256SUMS` in this directory.
 See the [generated HTML reports](../{html.name}/README.md), [sample index](../README.md)

@@ -1,0 +1,92 @@
+file	columns	rows	title	png
+raw/01-pods.ansi	170	50	kdash 4.32.0 | PODS live requests, limits and measured usage	samples/cli_4320/01-pods.png
+raw/02-nodes.ansi	170	50	kdash 4.32.0 | NODE POOLS real allocatable capacity and namespace share	samples/cli_4320/02-nodes.png
+raw/03-workloads.ansi	170	50	kdash 4.32.0 | WORKLOADS live replicas and placement	samples/cli_4320/03-workloads.png
+raw/04-ip.ansi	170	50	kdash 4.32.0 | IP POOL real pod, node and service addresses	samples/cli_4320/04-ip.png
+raw/05-mem.ansi	170	50	kdash 4.32.0 | MEMORY live history and pod usage	samples/cli_4320/05-mem.png
+raw/06-io.ansi	170	50	kdash 4.32.0 | NETWORK AND DISK IO capability and live samples	samples/cli_4320/06-io.png
+raw/07-alerts.ansi	170	50	kdash 4.32.0 | ALERTS real unhealthy fixture workloads	samples/cli_4320/07-alerts.png
+raw/08-services.ansi	170	50	kdash 4.32.0 | SERVICES ingress, ready endpoints and missing backend	samples/cli_4320/08-services.png
+raw/09-storage.ansi	170	50	kdash 4.32.0 | STORAGE bound volume and pending claim	samples/cli_4320/09-storage.png
+raw/10-events.ansi	170	50	kdash 4.32.0 | EVENTS real Kubernetes scheduler and kubelet events	samples/cli_4320/10-events.png
+raw/11-explain.ansi	170	50	kdash 4.32.0 | INCIDENT EVIDENCE from actual failing workloads	samples/cli_4320/11-explain.png
+raw/12-namespace-picker.ansi	170	50	kdash 4.32.0 | Framed namespace picker with access and persistent default controls	samples/cli_4320/12-namespace-picker.png
+raw/13-namespace-filter.ansi	170	50	kdash 4.32.0 | Live namespace search and context-sensitive action panel	samples/cli_4320/13-namespace-filter.png
+raw/67-namespace-saved-default.ansi	170	50	kdash 4.32.0 | A subsequent launch opens the namespace saved with d	samples/cli_4320/67-namespace-saved-default.png
+raw/68-namespace-typed.ansi	170	50	kdash 4.32.0 | t opens an explicitly typed namespace	samples/cli_4320/68-namespace-typed.png
+raw/14-pod-picker.ansi	170	50	kdash 4.32.0 | Framed live pod picker with CPU, memory, restarts and attention state	samples/cli_4320/14-pod-picker.png
+raw/15-pod-picker-help.ansi	170	50	kdash 4.32.0 | Pod picker navigation, filters and action keys	samples/cli_4320/15-pod-picker-help.png
+raw/16-container-picker.ansi	170	50	kdash 4.32.0 | Framed multi-container picker with resource/state columns	samples/cli_4320/16-container-picker.png
+raw/17-inspector-summary.ansi	170	50	kdash 4.32.0 | Inspector summary of a real running pod	samples/cli_4320/17-inspector-summary.png
+raw/75-detail-shell-blocked.ansi	170	50	kdash 4.32.0 | Read-only inspector refuses shell actions and explains X	samples/cli_4320/75-detail-shell-blocked.png
+raw/76-detail-confirmation.ansi	170	50	kdash 4.32.0 | X opens confirmation directly from pod detail	samples/cli_4320/76-detail-confirmation.png
+raw/77-detail-cancel.ansi	170	50	kdash 4.32.0 | Declining keeps pod detail read-only	samples/cli_4320/77-detail-cancel.png
+raw/78-detail-interactive-on.ansi	170	50	kdash 4.32.0 | Whole yes answer enables the inspector without leaking keys	samples/cli_4320/78-detail-interactive-on.png
+raw/79-detail-shell.ansi	170	50	kdash 4.32.0 | Actual container shell opened after enabling X in detail	samples/cli_4320/79-detail-shell.png
+raw/80-detail-interactive-off.ansi	170	50	kdash 4.32.0 | X disables interactive actions immediately in the inspector	samples/cli_4320/80-detail-interactive-off.png
+raw/81-detail-shell-blocked-again.ansi	170	50	kdash 4.32.0 | Shell is refused again after disabling X	samples/cli_4320/81-detail-shell-blocked-again.png
+raw/18-inspector-logs.ansi	170	50	kdash 4.32.0 | Bounded timestamped logs from the live app container	samples/cli_4320/18-inspector-logs.png
+raw/62-inspector-expand.ansi	170	50	kdash 4.32.0 | Expanded bounded log read from the live container	samples/cli_4320/62-inspector-expand.png
+raw/63-inspector-all.ansi	170	50	kdash 4.32.0 | All available live container logs within the byte cap	samples/cli_4320/63-inspector-all.png
+raw/64-inspector-nowrap.ansi	170	50	kdash 4.32.0 | Unwrapped logs with horizontal navigation	samples/cli_4320/64-inspector-nowrap.png
+raw/65-inspector-json.ansi	170	50	kdash 4.32.0 | Readable JSON log formatting enabled	samples/cli_4320/65-inspector-json.png
+raw/66-inspector-follow.ansi	170	50	kdash 4.32.0 | Live follow periodically refreshes actual container logs	samples/cli_4320/66-inspector-follow.png
+raw/19-inspector-find.ansi	170	50	kdash 4.32.0 | Log search highlighting with context retained	samples/cli_4320/19-inspector-find.png
+raw/20-inspector-only-matches.ansi	170	50	kdash 4.32.0 | Only matching warning lines from real logs	samples/cli_4320/20-inspector-only-matches.png
+raw/21-inspector-help.ansi	170	50	kdash 4.32.0 | Inspector help for log filtering and export	samples/cli_4320/21-inspector-help.png
+raw/22-inspector-export.ansi	170	50	kdash 4.32.0 | Visible log pane exported locally	samples/cli_4320/22-inspector-export.png
+raw/32-command-palette.ansi	170	50	kdash 4.32.0 | Fixed-command palette	samples/cli_4320/32-command-palette.png
+raw/33-doctor.ansi	170	50	kdash 4.32.0 | Live connection, TLS, RBAC and metrics checks	samples/cli_4320/33-doctor.png
+raw/34-pod-filter.ansi	170	50	kdash 4.32.0 | Dashboard pod regular expression applied	samples/cli_4320/34-pod-filter.png
+raw/35-structured-filters.ansi	170	50	kdash 4.32.0 | Atomic label, status, node, workload and unhealthy filters	samples/cli_4320/35-structured-filters.png
+raw/36-detail-lines.ansi	170	50	kdash 4.32.0 | Toggle container detail lines	samples/cli_4320/36-detail-lines.png
+raw/37-pods-only.ansi	170	50	kdash 4.32.0 | Pod totals without container rows	samples/cli_4320/37-pods-only.png
+raw/38-sort-order.ansi	170	50	kdash 4.32.0 | Sort key and reverse direction	samples/cli_4320/38-sort-order.png
+raw/39-paused-interval.ansi	170	50	kdash 4.32.0 | Paused collection and changed polling interval	samples/cli_4320/39-paused-interval.png
+raw/40-theme-dark.ansi	170	50	kdash 4.32.0 | Dark colour theme	samples/cli_4320/40-theme-dark.png
+raw/41-theme-light.ansi	170	50	kdash 4.32.0 | Light colour theme	samples/cli_4320/41-theme-light.png
+raw/42-theme-mono.ansi	170	50	kdash 4.32.0 | Monochrome colour theme	samples/cli_4320/42-theme-mono.png
+raw/43-node-scale.ansi	170	50	kdash 4.32.0 | Node scope and true-scale resource bars	samples/cli_4320/43-node-scale.png
+raw/44-history-window.ansi	170	50	kdash 4.32.0 | Memory history with changed chart window	samples/cli_4320/44-history-window.png
+raw/45-html-menu.ansi	170	50	kdash 4.32.0 | Local HTML report selection menu	samples/cli_4320/45-html-menu.png
+raw/46-html-report-written.ansi	170	50	kdash 4.32.0 | All-tabs report generated from live session	samples/cli_4320/46-html-report-written.png
+raw/47-dashboard-help.ansi	170	50	kdash 4.32.0 | Dashboard navigation and interactive controls	samples/cli_4320/47-dashboard-help.png
+raw/48-session-summary.ansi	170	50	kdash 4.32.0 | Completed live session and retained history	samples/cli_4320/48-session-summary.png
+raw/23-interactive-blocked.ansi	170	50	kdash 4.32.0 | Shell refused while interactive mode is disabled	samples/cli_4320/23-interactive-blocked.png
+raw/24-interactive-confirmation.ansi	170	50	kdash 4.32.0 | Explicit interactive-mode confirmation	samples/cli_4320/24-interactive-confirmation.png
+raw/25-shell-picker.ansi	170	50	kdash 4.32.0 | Shell-mode pod picker and action panel	samples/cli_4320/25-shell-picker.png
+raw/26-shell-inside.ansi	170	50	kdash 4.32.0 | Actual shell inside the live app container	samples/cli_4320/26-shell-inside.png
+raw/27-upload-browser.ansi	170	50	kdash 4.32.0 | Local framed file browser with enabled upload actions	samples/cli_4320/27-upload-browser.png
+raw/28-upload-destination.ansi	170	50	kdash 4.32.0 | Remote destination browser before any transfer	samples/cli_4320/28-upload-destination.png
+raw/29-upload-review.ansi	170	50	kdash 4.32.0 | Upload preflight checks and explicit review	samples/cli_4320/29-upload-review.png
+raw/30-upload-result.ansi	170	50	kdash 4.32.0 | Real upload result with source and destination hashes	samples/cli_4320/30-upload-result.png
+raw/70-directory-upload-review.ansi	170	50	kdash 4.32.0 | Directory upload preflight and recursive checksum checks	samples/cli_4320/70-directory-upload-review.png
+raw/71-directory-upload-result.ansi	170	50	kdash 4.32.0 | Actual directory upload with recursive fingerprints	samples/cli_4320/71-directory-upload-result.png
+raw/31-download-browser.ansi	170	50	kdash 4.32.0 | Remote framed file browser with selection and preview keys	samples/cli_4320/31-download-browser.png
+raw/49-download-review.ansi	170	50	kdash 4.32.0 | Download preflight, selected format and name conflict checks	samples/cli_4320/49-download-review.png
+raw/50-download-result.ansi	170	50	kdash 4.32.0 | Real download result and per-item hash verification	samples/cli_4320/50-download-result.png
+raw/55-download-keep-review.ansi	170	50	kdash 4.32.0 | Download preflight, selected format and name conflict checks	samples/cli_4320/55-download-keep-review.png
+raw/56-download-keep-result.ansi	170	50	kdash 4.32.0 | Real download result and per-item hash verification	samples/cli_4320/56-download-keep-result.png
+raw/57-directory-download-review.ansi	170	50	kdash 4.32.0 | Download preflight, selected format and name conflict checks	samples/cli_4320/57-directory-download-review.png
+raw/58-directory-download-result.ansi	170	50	kdash 4.32.0 | Real download result and per-item hash verification	samples/cli_4320/58-directory-download-result.png
+raw/59-download-zip-review.ansi	170	50	kdash 4.32.0 | Download preflight, selected format and name conflict checks	samples/cli_4320/59-download-zip-review.png
+raw/60-download-zip-result.ansi	170	50	kdash 4.32.0 | Real download result and per-item hash verification	samples/cli_4320/60-download-zip-result.png
+raw/61-download-tgz-review.ansi	170	50	kdash 4.32.0 | Download preflight, selected format and name conflict checks	samples/cli_4320/61-download-tgz-review.png
+raw/69-download-tgz-result.ansi	170	50	kdash 4.32.0 | Real download result and per-item hash verification	samples/cli_4320/69-download-tgz-result.png
+raw/51-pods-100col.ansi	100	40	kdash 4.32.0 | PODS at 100 columns	samples/cli_4320/51-pods-100col.png
+raw/52-picker-100col.ansi	100	40	kdash 4.32.0 | Framed pod picker at 100 columns	samples/cli_4320/52-picker-100col.png
+raw/53-namespace-100col.ansi	100	40	kdash 4.32.0 | Namespace picker and action panel at 100 columns	samples/cli_4320/53-namespace-100col.png
+raw/51-pods-80col.ansi	80	30	kdash 4.32.0 | PODS at 80 columns	samples/cli_4320/51-pods-80col.png
+raw/82-mode-confirmation-80col.ansi	80	30	kdash 4.32.0 | Confirmation remains usable in an 80-column terminal	samples/cli_4320/82-mode-confirmation-80col.png
+raw/83-mode-enabled-80col.ansi	80	30	kdash 4.32.0 | Uppercase Y plus Enter enables interactive mode at 80 columns	samples/cli_4320/83-mode-enabled-80col.png
+raw/52-picker-80col.ansi	80	30	kdash 4.32.0 | Framed pod picker at 80 columns	samples/cli_4320/52-picker-80col.png
+raw/53-namespace-80col.ansi	80	30	kdash 4.32.0 | Namespace picker and action panel at 80 columns	samples/cli_4320/53-namespace-80col.png
+raw/54-ascii-picker.ansi	170	50	kdash 4.32.0 | ASCII framed picker with colour disabled	samples/cli_4320/54-ascii-picker.png
+raw/84-certs.ansi	170	50	kdash 4.32.0 | CERTIFICATES AND LOGINS real TLS and kubeconfig expiry evidence	samples/cli_4320/84-certs.png
+raw/85-runbook.ansi	170	50	kdash 4.32.0 | RUNBOOK printed etcd recovery procedure with live cluster inventory	samples/cli_4320/85-runbook.png
+raw/87-runbook-topic.ansi	170	50	kdash 4.32.0 | RUNBOOK next topic displays certificate rotation instructions	samples/cli_4320/87-runbook-topic.png
+raw/86-check.ansi	170	50	kdash 4.32.0 | CHECK NOW actual unhealthy workloads and numbered read-only next commands	samples/cli_4320/86-check.png
+raw/88-fmea.ansi	170	50	kdash 4.32.0 | FMEA real failure modes, priority scores and read visibility	samples/cli_4320/88-fmea.png
+raw/89-access.ansi	170	50	kdash 4.32.0 | ACCESS real kubectl auth identity and permission checks	samples/cli_4320/89-access.png
+raw/90-fmea-kind.ansi	170	50	kdash 4.32.0 | FMEA kind filter on actual worksheet rows	samples/cli_4320/90-fmea-kind.png
+raw/91-fmea-sort.ansi	170	50	kdash 4.32.0 | FMEA worksheet sorted by risk priority number	samples/cli_4320/91-fmea-sort.png

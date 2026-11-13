@@ -1,0 +1,50 @@
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:48:31 IST
+┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
+│ match .*   sort cpu ▼ high first                     │ ! pods 3/5 ready   restarts 118             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                 │
+│ poll 2s  spec 9s/30s   session 01:47:52 up 39s       │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0         │
+└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
+ DATA ● pods fresh 10s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ KUBERNETES EVENTS   API events, newest first - local session changes are recorded separately
+
+DATA SOURCES   context vcluster-docker_dev
+┌────────┬───────┬─────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │    READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼─────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 11s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴─────────┴───────────┴────────────────┘
+
+EVENTS  4 events   3 warning, 1 normal
+┌───────────┬───────────┬────────────────────┬─────────────────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────────────────┐
+│ LAST SEEN │ TYPE      │ REASON             │ OBJECT                          │ COUNT │ FIRST SEEN │ MESSAGE                                                            │
+├───────────┼───────────┼────────────────────┼─────────────────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────────────────┤
+│ 4m        │ ● Warning │ ProvisioningFailed │ PersistentVolumeClaim/z-unbound │   901 │ 3h46m ago  │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not~ │
+│ 4m        │ ● Warning │ BackOff            │ Pod/z-crash                     │  1032 │ 3h46m ago  │ Back-off restarting failed container crash in pod z-crash_kdash-e~ │
+│ 24m       │ ● Warning │ FailedScheduling   │ Pod/z-pending                   │    42 │ 3h46m ago  │ 0/1 nodes are available: pod has unbound immediate PersistentVolu~ │
+│ 54m       │ ● Normal  │ Pulled             │ Pod/z-crash                     │    38 │ 3h46m ago  │ Container image "busybox:1.36" already present on machine          │
+└───────────┴───────────┴────────────────────┴─────────────────────────────────┴───────┴────────────┴────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c›
+ ● LIVE 01:48:32  next 0s  data 2s old  spec 10/30s  fetch 0.0s  poll 2s  AUDITED | events | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

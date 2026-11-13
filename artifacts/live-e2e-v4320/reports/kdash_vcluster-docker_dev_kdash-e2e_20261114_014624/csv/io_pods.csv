@@ -1,0 +1,6 @@
+POD,NODE,WORKLOAD,NET_RX_Bps,NET_TX_Bps,DISK_R_Bps,DISK_W_Bps,DISK_R_IOPS,DISK_W_IOPS
+app-server-8fb4699bc-cx5vz,dev,Deployment/app-server,,,,,,
+app-server-8fb4699bc-t7zxj,dev,Deployment/app-server,,,,,,
+completed-check-m9swm,dev,Job/completed-check,,,,,,
+z-crash,dev,Pod/z-crash,,,,,,
+z-pending,(unscheduled),Pod/z-pending,,,,,,

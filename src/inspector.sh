@@ -627,9 +627,12 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       ) & pid=$!
       while kill -0 "$pid" 2>/dev/null; do
         INSPECTOR_KEY=""; IFS= read -rsn1 -t 0.1 INSPECTOR_KEY </dev/tty || true
-        case "$INSPECTOR_KEY" in q|b|$'\033')
-          kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
-          return 0 ;;
+        case "$INSPECTOR_KEY" in
+          q|b|$'\033')
+            kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+            return 0 ;;
+          Q) kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; kdash_quit "loading" ;;
+          X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
         esac
       done
       wait "$pid" 2>/dev/null || true
@@ -665,7 +668,9 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $ptitle "
     hdr="${UI_BAR}"$'\033[K\n'
     bx_init
-    local IW=$((INSPECTOR_COLS - 1)) rinfo="audited"; [ "$follow" = 1 ] && rinfo="follow ${INSPECTOR_FOLLOW_SECS:-5}s"
+    local IW=$((INSPECTOR_COLS - 1)) rinfo="READ-ONLY"
+    interactive_enabled && rinfo="INTERACTIVE"
+    rinfo+=" / audited"; [ "$follow" = 1 ] && rinfo+=" / follow ${INSPECTOR_FOLLOW_SECS:-5}s"
     bx_top "$IW" "$ptitle" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     bx_row "$IW" "${PC_D}POD      ${PC_R}  ${PC_B}${pod}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     if [ -n "$c_n" ]; then
@@ -728,6 +733,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
            [ -z "${INTERACTIVE_WHY:-}" ] || msg="$INTERACTIVE_WHY"
            rows_stale=1
          fi ;;
+      X) interactive_toggle; msg="$INTERACTIVE_MSG"; rows_stale=1 ;;
       j) offset=$((offset + 1)) ;; k) offset=$((offset - 1)) ;; ' ') offset=$((offset + rows)) ;; b) offset=$((offset - rows)) ;;
       g) offset=0 ;; G) offset=999999 ;;
       '/') if inspector_search_prompt "$pane" find; then viewdirty=1; fi ;;
@@ -1068,9 +1074,11 @@ picker_draw() {
   case "${KDASH_ATTACH_ACTION:-}" in
     S) banner=" ${PC_PTR} Enter opens a SHELL " ;; U) banner=" ${PC_PTR} Enter UPLOADS into the pod " ;; D) banner=" ${PC_PTR} Enter DOWNLOADS from the pod " ;; *) banner="" ;;
   esac
-  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
+  # Keep the permission state in the left title: optional right-hand chips are
+  # hidden on narrow terminals, which must never hide whether writes are enabled.
   if interactive_enabled; then mode="INTERACTIVE"; else mode="READ-ONLY"; fi
-  right=" ${mode} ${PC_SEP} ${#PK_V[@]} of ${#PK_KEY[@]} pods "
+  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} ${mode} ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
+  right=" ${#PK_V[@]} of ${#PK_KEY[@]} pods "
   ui_bar "$PK_COLS" "$title" "$right" "$banner"
   buf=$'\033[H'"${UI_BAR}"$'\033[K\n'
   # status counts, worst first; a status that does not fit is left out whole

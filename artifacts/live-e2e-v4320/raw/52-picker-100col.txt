@@ -1,0 +1,40 @@
+ KDASH │ SELECT POD │ READ-ONLY │ context vcluster-docker_dev │ namespace kdash-e2e     5 of 5 pods
+ pods    ● CrashLoopBackOff 1  ● Pending 1  ● Running 2  ● Succeeded 1
+ / search   view all (u)   X enables shell / upload / download   sort name
+┌─────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┐
+│ POD                                 │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │
+├─────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┤
+│ app-server-8fb4699bc-cx5vz          │ Running          │ 2/2   │  14 │     5m │     2Mi │    2% │
+│ app-server-8fb4699bc-t7zxj          │ Running          │ 2/2   │  14 │     3m │     0Mi │    0% │
+│ completed-check-m9swm               │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ z-crash                             │ CrashLoopBackOff │ 0/1   │  91 │      - │       - │     - │
+│ z-pending                           │ Pending          │ 0/1   │   0 │      - │       - │     - │
+└─────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── 1 / 5   1 failing   1 pending / starting ────────────────────────────────── live · refresh 2s ──
+┌─ MOVE ────────────┬─ FIND ────────────┬─ INSPECT ─────────┬─ SHELL · FILES ────┬─ LEAVE ────────┐
+│ j/k ↑↓    move    │ /  search         │ Enter  summary    │ S  shell           │ q  back        │
+│ PgUp/PgDn page    │ u  needs attenti~ │ l / p  logs / pr~ │ U  upload          │ Q  quit kdash  │
+│ g / G     first ~ │ s  sort: name     │ d / e  describe ~ │ D  download        │ r  refresh now │
+│ 12        go to ~ │ F  filters        │ w / c  why / con~ │ X  enable S / U /~ │ ?  all keys    │
+└───────────────────┴───────────────────┴───────────────────┴────────────────────┴────────────────┘

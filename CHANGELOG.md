@@ -31,6 +31,17 @@ the detailed per-release notes.
 - Completion and installed shell integration include the new secrets view,
   flags, export formats and `kdfsecrets` shortcut.
 
+### Fixed
+- The interactive-mode toggle (`X`) works again in the dashboard and in the pod
+  detail view. The confirmation is a full-screen modal that drains buffered keys
+  before reading the answer, so a double press or a stray byte no longer cancels
+  it; `y` confirms at once and `n`, Esc or Ctrl-C cancels.
+- The pod detail frame shows the mode again (`READ-ONLY` / `INTERACTIVE` /
+  `audited`), so the current state is visible without opening the toggle.
+- `-o csv` / `-o tsv` export works for the services, storage, events and explain
+  views again (the toolkit renderers honour `TK_FORMAT`), instead of falling back
+  to the boxed text view.
+
 ## [4.28.1] - 2026-11-09
 
 ### Added

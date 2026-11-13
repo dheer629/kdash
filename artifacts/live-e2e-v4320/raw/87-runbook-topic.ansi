@@ -1,0 +1,50 @@
+[1;7m KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 01:55:46[0m[90m IST[39m
+[90m┌─ [1m[39mSCOPE[0m[90m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ───────┐
+│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                      [90m│[39m [1m[31m! pods 3/5 ready[0m[90m   restarts [35m119[39m             [90m│[39m [90mcpu [39m     6m [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mworkloads [39m4                [90m│
+│[39m [90mpoll 2s  spec 16s/30s   session [39m01:55:29[90m up [39m17s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [32m0[39m       [90m│[39m [90mmem [39m    2Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [32m^ 0[39m        [90m│
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m16s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
+[1;7m RUNBOOK - cert-rotate [0m  [90mprinted procedures with your cluster's names filled in - kdash never runs them[39m
+[90mrunbooks:[39m   1 etcd-restore   [2 cert-rotate]   3 node-notready    4 api-unreachable    5 oidc-login    [90m[ ] previous / next   (kdash --runbook NAME)[39m
+
+[1;4mWHEN TO USE[0m  [90mRKE2 certificates (API server, kubelet, supervisor, etcd) are close to expiry - see key C / kdash --certs[39m
+  [1m[31m![0m [1mRKE2 renews certificates with under 120 days left only when the service starts; a node that never restarts expires silently.[0m
+  [1m[31m![0m [1mThis renews leaf certificates. It does not rotate the CA (that is rke2 certificate rotate-ca - a separate, planned procedure).[0m
+
+  [1mSTEP 1[0m  check, on each server
+      [32mread  [39m [36m[on dev][39m sudo rke2 certificate check --output table
+
+  [1mSTEP 2[0m  rotate on ONE server at a time
+      [1m[33mCHANGE[0m [36m[on dev][39m sudo systemctl stop rke2-server
+      [1m[33mCHANGE[0m [36m[on dev][39m sudo rke2 certificate rotate  [90m# add --service NAME to rotate only some (e.g. --service api-server)[39m
+      [1m[33mCHANGE[0m [36m[on dev][39m sudo systemctl start rke2-server
+      [32mread  [39m kubectl --context vcluster-docker_dev get nodes  [90m# the server is Ready again before you continue[39m
+
+  [1mSTEP 3[0m  agents
+      [1m[33mCHANGE[0m [36m[on each agent][39m sudo systemctl restart rke2-agent  [90m# renews the agent's certificates (under 120 days left)[39m
+
+  [1mSTEP 4[0m  verify
+      [32mread  [39m kdash --certs  [90m# nothing left in WARNING / CRITICAL[39m
+      [90mnote  [39m [90mkubeconfig files that embed a client certificate (e.g. rke2.yaml) may need to be copied again after a rotation[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c[2m›
+[0;7m ● LIVE 01:55:46  next 2s  data 2s old  spec 16/30s  fetch 0.0s  poll 2s  AUDITED | runbook | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit  [0m

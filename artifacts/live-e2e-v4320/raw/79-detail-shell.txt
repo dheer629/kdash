@@ -1,0 +1,50 @@
+ KDASH   connecting   app-server-8fb4699bc-cx5vz  container app  context vcluster-docker_dev ...
+ KDASH | SHELL | context vcluster-docker_dev | namespace kdash-e2e | audited    exit: back   exit 198: related pods   exit 197: leave kdash
+ POD        app-server-8fb4699bc-cx5vz | Running   ready 2/2   restarts 14   QoS Burstable
+ CONTAINER  app  busybox:1.36 | state Running, ready, restarts 7, last exit Unknown exit=255
+ NODE       dev   10.244.0.135 | cpu 3m / 250m   mem 2Mi / 96Mi (2%)   user root
+
+root@app$ printf 'KDASH_DETAIL_MODE_OK\n'; id
+KDASH_DETAIL_MODE_OK
+uid=0(root) gid=0(root) groups=0(root),10(wheel)
+root@app$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

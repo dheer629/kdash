@@ -1,8 +1,8 @@
 # kdash samples
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed browser checks** and **87 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.27.4 in namespace `kdash-e2e`.
-[Inspect the recorded checks](../artifacts/live-e2e-20261107-083145/checks.tsv).
+Run `live-e2e-v4320` records **198 passed live checks**, **19 passed browser checks** and **91 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](../artifacts/live-e2e-v4320/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
@@ -27,15 +27,32 @@ Run `live-e2e-20261107-083145` records **183 passed live checks**, **17 passed b
 
 
 
-The current **4.28.1** terminal gallery is [`cli_4281/`](cli_4281/README.md),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The current **4.32.0** terminal gallery is [`cli_4320/`](cli_4320/README.md),
 captured from the installed utility against real Kubernetes workloads in local WSL.
 Its raw ANSI/plain-text screens and verification results are indexed by
 [`../artifacts/latest-e2e.txt`](../artifacts/latest-e2e.txt). The corresponding
-report files are in [`html4281/`](html4281/README.md). The `native/` gallery contains
+report files are in [`html4320/`](html4320/README.md). The `native/` gallery contains
 actual live WSL xterm screenshots; companion PNGs replay saved ANSI captures.
 Current values and local namespace names are preserved unchanged.
 
-Version 4.28.1 adds FMEA and ACCESS views plus separate FMEA worksheet exports.
+Version 4.32.0 adds the SECRETS MAP (`Y`, `--secrets`) and restores the
+interactive-mode toggle (`X`) in the dashboard and pod detail, the pod-detail
+mode indicator, and CSV/TSV export for the services, storage, events and explain
+views. It retains the FMEA and ACCESS views plus separate FMEA worksheet exports.
 Use the recorded checks to assess which signals and actions were exercised;
 priority scores are project heuristics and coverage gaps remain visible.
 
