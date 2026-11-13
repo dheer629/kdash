@@ -41,7 +41,7 @@ END {
   if (sub_ != "") t = t K("90", "   " sub_)
   print ""; print t
   if (nr == 0) { print "  " K("90", empty != "" ? empty : "none"); exit }
-  for (i = 1; i < nc; i++) if (WD[i] > 56) WD[i] = 56
+  if (W > 0) for (i = 1; i < nc; i++) if (WD[i] > 56) WD[i] = 56     # no width given (a pipe, a file): nothing is cut
   # framed: │ c1 │ c2 │ ... │  -> 1 + sum(width + 3) characters
   if (W > 0) {
     tot = 1; for (i = 1; i <= nc; i++) tot += WD[i] + 3
@@ -68,45 +68,15 @@ END {
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
 '
 tk_table() { # title [subtitle] [empty-message] [one many] < TSV (header line first)
-  # Structured output keeps the table schema: one record per row, no borders and
-  # no colour markers. Header cells drop the width/align modifiers (> * ~).
-  if [ "${TK_FORMAT:-text}" != text ]; then
-    printf '# %s\n' "$1"
-    LC_ALL=C awk -F'\t' -v fmt="$TK_FORMAT" '
-      { out=""; for (i=1; i<=NF; i++) {
-          v=$i
-          if (NR==1) { sub(/^>/,"",v); sub(/[*~]$/,"",v) }
-          else sub(/^\{[rygbd]\}/,"",v)
-          if (fmt=="csv") { gsub(/"/,"\"\"",v); v="\"" v "\"" }
-          out=out (i>1 ? (fmt=="csv" ? "," : "\t") : "") v
-        } print out }
-    '
-    return
-  fi
   LC_ALL=C awk -v title="$1" -v sub_="${2:-}" -v empty="${3:-}" -v one="${4:-item}" -v many="${5:-items}" -v count="${TK_COUNT:-1}" "$TK_TABLE_AWK"
 }
 tk_by_severity() { LC_ALL=C awk -F'\t' '{ r = ($1 ~ /CRIT/) ? 1 : ($1 ~ /WARN/) ? 2 : 3; print r "\t" $0 }' | LC_ALL=C sort -t $'\t' -k1,1n -k3,3 | cut -f2-; }
 tk_colorize() { sed 's/~\[\([0-9;]*\)m/\x1b[\1m/g'; }
 tk_note() { # dim footnote line
-  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '  ~[90m%s~[0m\n' "$*"; else printf '  %s\n' "$*"; fi
 }
 tk_title() { # view title + subtitle, then a blank line
-  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1;7m %s ~[0m  ~[90m%s~[0m\n' "$1" "$2"; else printf '%s  -  %s\n' "$1" "$2"; fi
-}
-# One-shot toolkit renderers. TK_FORMAT must be exported before a renderer runs so
-# tk_table emits CSV/TSV instead of a boxed table (--once -o csv|tsv).
-toolkit_once() { # view [renderer arguments]
-    local view="$1" TK_FORMAT="${OUTFMT:-text}"
-    shift
-    export TK_FORMAT
-    case "$view" in
-        services) if declare -F health_render_services >/dev/null; then health_render_services "$@"; fi ;;
-        storage) if declare -F health_render_storage >/dev/null; then health_render_storage "$@"; fi ;;
-        events) events_render "$@" ;; explain) explain_render "$@" ;;
-        certs) if declare -F certs_render >/dev/null; then certs_render "$@"; fi ;;
-    esac
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
 TK_TIME_AWK='

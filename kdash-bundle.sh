@@ -29,7 +29,7 @@
 #                                   otherwise ~/.kdash-completion.bash
 #    ~/.kdash-shell.bash            shell integration: kdash always resolves to
 #                                   the v4 binary; kdpods kdnodes kdwl kdip
-#                                   kdmemlive kdsnap kdhist kdns kdio kdreport kdtop kdmem kdwatch kdfmea
+#                                   kdmemlive kdsnap kdhist kdns kdio kdreport kdtop kdmem kdwatch kdfmea kdsecrets
 #    ~/.bashrc, ~/.bash_profile     one marker block at the END of each that
 #                                   sources ~/.kdash-shell.bash, so it loads
 #                                   after any older kdash function or alias
@@ -43,13 +43,22 @@ set -uo pipefail
 # A damaged PATH from an earlier shell start-up must not stop the repair.
 PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; export PATH
 
-VERSION="4.28.1"
+VERSION="4.32.0"
 PREFIX=""; DO_SHELL=1; UNINSTALL=0; KEEP_OLD=0; CHECK_ONLY=0; DRY_RUN=0
 BEGIN_MARK="# >>> kdash setup >>>"
 END_MARK="# <<< kdash setup <<<"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 
-say()  { printf '%s\n' "$*"; }
+# Output is grouped in two frames (FILES, VERIFICATION). Lines are printed as they
+# happen - nothing is buffered - each behind the frame's left border.
+SAY_PRE=""
+case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in
+  *[Uu][Tt][Ff]*) BOX_V="│ "; BOX_T="┌─"; BOX_B="└─"; BOX_H="─" ;;
+  *) BOX_V="| "; BOX_T="+-"; BOX_B="+-"; BOX_H="-" ;;
+esac
+say()  { printf '%s%s\n' "$SAY_PRE" "$*"; }
+box_open() { local h; box_close; printf -v h '%*s' $(( 74 - ${#1} )) ''; printf '%s %s %s\n' "$BOX_T" "$1" "${h// /$BOX_H}"; SAY_PRE="$BOX_V"; }
+box_close() { local h; [ -n "$SAY_PRE" ] || return 0; printf -v h '%*s' 76 ''; printf '%s%s\n' "$BOX_B" "${h// /$BOX_H}"; SAY_PRE=""; }
 warn() { printf 'kdash-setup: %s\n' "$*" >&2; }
 die()  { printf 'kdash-setup: %s\n' "$*" >&2; exit 1; }
 
@@ -358,6 +367,7 @@ if [ -f "$USERCONF" ] && grep -q 'kcns\|\$(' "$USERCONF"; then
 fi
 
 #-- 1. the dashboard ----------------------------------------------------------
+box_open "FILES"
 mkdir -p "$PREFIX" 2>/dev/null || die "cannot create $PREFIX"
 [ -w "$PREFIX" ] || die "$PREFIX is not writable (re-run with sudo, or use --prefix DIR)"
 
@@ -389,7 +399,7 @@ cat > "$tmp" <<'KDASH_PAYLOAD_EOF'
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.28.1"
+KDASH_VERSION="4.32.0"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"
@@ -436,7 +446,9 @@ AUDIT_ARGV="$*"
 AUDIT_T0="$(date +%s)"
 KDASH_LAUNCH_DIR="${KDASH_LAUNCH_DIR:-$PWD}"      # downloads land here, uploads start here
 AUDIT_SID="$(date +%Y%m%d-%H%M%S)-$$"
-# Auth helpers inherit this per-run identity, including helpers detached by kubectl.
+# Every kubectl kdash starts carries this tag, and so do the login helpers kubectl starts.
+# kubelogin keeps running (port 8000, polling the provider) after its kubectl ends; the
+# tag finds those helpers so kdash can stop them (login__kill_stale, and on exit).
 export KDASH_LOGIN_TAG="kdash-$AUDIT_SID"
 AUDIT_USER="$(id -un 2>/dev/null || printf '%s' "${USER:-unknown}")"
 AUDIT_REAL="${SUDO_USER:-$(logname 2>/dev/null || printf '%s' "$AUDIT_USER")}"
@@ -620,16 +632,40 @@ audit_files() {           # every audit file this user can read, oldest first
   { ls -1 "$AUDIT_DIR"/audit_*.log 2>/dev/null
     [ "${AUDIT_ALL:-0}" = 1 ] && ls -1 "$AUDIT_CENTRAL"/audit_*.log 2>/dev/null; } | sort -u | while IFS= read -r f; do [ -r "$f" ] && printf '%s\n' "$f"; done
 }
-audit_show() {            # last N events, newest last
-  local n="${1:-40}" re="${AUDIT_GREP:-.}" fs
+audit_show() {            # last N events, newest last - one framed table
+  local n="${1:-40}" re="${AUDIT_GREP:-.}" fs cols=0 glyph=unicode
   fs="$(audit_files)"; [ -n "$fs" ] || { printf 'no audit log yet in %s\n' "$AUDIT_DIR"; return 0; }
+  # on a terminal the DETAIL column is cut to the window; piped or redirected, nothing is cut
+  if [ -t 1 ]; then cols="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}"; elif [ -n "${KDASH_COLUMNS:-}" ]; then cols="$KDASH_COLUMNS"; fi
+  case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in *UTF-8*|*utf8*|*UTF8*) ;; *) glyph=ascii ;; esac
+  [ "${BARCHR:-}" != ascii ] || glyph=ascii
   printf '%s\n' "$fs" | while IFS= read -r f; do grep -v '^#' "$f"; done | sort -s -t$'\t' -k2,2n | grep -E -- "$re" | tail -n "$n" |
-    awk -F'\t' -v c="$([ -t 1 ] && printf 1 || printf 0)" '
-      function C(k, s) { return c ? "\033[" k "m" s "\033[0m" : s }
-      BEGIN { printf "%-24s %-22s %-22s %-28s %-20s %s\n", "TIME", "USER (REAL) @HOST", "FROM / TTY", "CONTEXT / NAMESPACE", "EVENT", "DETAIL" }
-      { t = substr($1, 1, 19) substr($1, 20); sub("T", " ", t); u = $4 ($5 != $4 ? " (" $5 ")" : "") "@" $7
-        ev = $14; k = (ev ~ /FAIL|DECLINED|REFUSED|DENIED|ALERT/) ? "1;31" : ((ev ~ /START|END/) ? "1;94" : ((ev ~ /REPORT|ACCEPT/) ? "32" : "0"))
-        printf "%-24s %-22s %-22s %-28s %s %s\n", t, substr(u, 1, 22), substr($8 " " $9, 1, 22), substr($12 " / " $13, 1, 28), C(k, sprintf("%-20s", ev)), $15 }'
+    LC_ALL=C awk -F'\t' -v c="$([ -t 1 ] && printf 1 || printf 0)" -v W="$cols" -v g="$glyph" '
+      function C(k, s) { return (c && k != "") ? "\033[" k "m" s "\033[0m" : s }
+      function vl(s,   t) { t = s; gsub(/[\200-\277]/, "", t); return length(t) }
+      function pad(s, w,   x) { x = w - vl(s); return s sprintf("%" (x > 0 ? x : 0) "s", "") }
+      function hl(l, j, r,   s, i, k) { s = l; for (i = 1; i <= NC; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < NC ? j : r) } return C("90", s) }
+      BEGIN { NC = split("TIME\tUSER @ HOST\tFROM / TTY\tCONTEXT / NAMESPACE\tEVENT\tDETAIL", H, "\t"); for (i = 1; i <= NC; i++) WD[i] = length(H[i])
+        if (g == "ascii") { GTL = GTR = GBL = GBR = GLT = GRT = GTT = GBT = GX = "+"; BH = "-"; BV = "|" }
+        else { GTL = "\342\224\214"; GTR = "\342\224\220"; GBL = "\342\224\224"; GBR = "\342\224\230"; GLT = "\342\224\234"; GRT = "\342\224\244"; GTT = "\342\224\254"; GBT = "\342\224\264"; GX = "\342\224\274"; BH = "\342\224\200"; BV = "\342\224\202" } }
+      { t = $1; sub("T", " ", t); nr++
+        R[nr, 1] = t; R[nr, 2] = $4 ($5 != $4 ? " (" $5 ")" : "") "@" $7; R[nr, 3] = $8 " " $9; R[nr, 4] = $12 " / " $13; R[nr, 5] = $14; R[nr, 6] = $15
+        for (i = 1; i <= NC; i++) if (vl(R[nr, i]) > WD[i]) WD[i] = vl(R[nr, i]) }
+      END { if (W > 0) { tot = 1; for (i = 1; i <= NC; i++) tot += WD[i] + 3
+              while (tot > W && WD[NC] > 20) { WD[NC]--; tot-- }
+              while (tot > W) { m = 0; for (i = 2; i <= NC; i++) if (i != 5 && WD[i] > 10 && (m == 0 || WD[i] > WD[m])) m = i
+                if (m == 0) break; WD[m]--; tot-- } }
+        printf "%s  %s\n", C("1", "AUDIT LOG"), C("90", nr " event" (nr == 1 ? "" : "s") ", oldest first (kdash --audit-verify checks the chain)")
+        print hl(GTL, GTT, GTR)
+        line = C("90", BV); for (i = 1; i <= NC; i++) line = line " " C("1", pad((length(H[i]) > WD[i] ? substr(H[i], 1, WD[i] - 1) "~" : H[i]), WD[i])) " " C("90", BV); print line
+        print hl(GLT, GX, GRT)
+        for (n = 1; n <= nr; n++) { line = C("90", BV)
+          for (i = 1; i <= NC; i++) { v = R[n, i]; if (v == "") v = "-"
+            if (vl(v) > WD[i]) v = substr(v, 1, WD[i] - 1) "~"
+            k = ""; if (i == 5) k = (v ~ /FAIL|DECLINED|REFUSED|DENIED|ALERT/) ? "1;31" : ((v ~ /START|END/) ? "1;94" : ((v ~ /REPORT|ACCEPT|EXPORT/) ? "32" : ""))
+            line = line " " C(k, pad(v, WD[i])) " " C("90", BV) }
+          print line }
+        print hl(GBL, GBT, GBR) }'
 }
 audit_verify() {          # recompute every chain; rc 0 = intact, 1 = broken
   local f bad=0 fs
@@ -690,13 +726,31 @@ audit_export() {          # --audit-report [DIR]: CSV + HTML of the audit log
   printf 'kdash audit export\n  html  %s\n  csv   %s\n' "$html" "$csv"
   audit_file AUDIT_EXPORT "$html"
 }
+# a framed two-column table: title, then key / value pairs; values are cut to the window
+kdash_box2() {
+  local title="$1" w="${KDASH_COLUMNS:-${COLUMNS:-100}}" kw=0 vw=0 i h v tl tr bl br hz vb
+  shift; local a=("$@")
+  case "$w" in ''|*[!0-9]*) w=100 ;; esac
+  if [ "${BARCHR:-unicode}" = ascii ]; then tl=+; tr=+; bl=+; br=+; hz=-; vb='|'; else tl='┌'; tr='┐'; bl='└'; br='┘'; hz='─'; vb='│'; fi
+  for ((i = 0; i < ${#a[@]}; i += 2)); do [ "${#a[i]}" -le "$kw" ] || kw=${#a[i]}; [ "${#a[i+1]}" -le "$vw" ] || vw=${#a[i+1]}; done
+  [ $((kw + vw + 7)) -le "$w" ] || vw=$((w - kw - 7)); [ "$vw" -ge 12 ] || vw=12
+  [ $((kw + vw + 2)) -gt "${#title}" ] || vw=$(( ${#title} - kw ))
+  printf -v h '%*s' $((kw + vw + 2 - ${#title})) ''; printf '%s%s %s %s%s\n' "$tl" "$hz" "$title" "${h// /$hz}" "$tr"
+  for ((i = 0; i < ${#a[@]}; i += 2)); do
+    v="${a[i+1]}"; [ "${#v}" -le "$vw" ] || v="${v:0:$((vw - 1))}~"
+    printf '%s %-*s %s %-*s %s\n' "$vb" "$kw" "${a[i]}" "$vb" "$vw" "$v" "$vb"
+  done
+  printf -v h '%*s' $((kw + vw + 5)) ''; printf '%s%s%s\n' "$bl" "${h// /$hz}" "$br"
+}
 kdash_about() {
-  printf 'kdash %s - live Kubernetes namespace operations dashboard\nauthor   %s\n\n' "${KDASH_VERSION:-}" "$KDASH_AUTHOR"
-  disclaimer_text 78; printf '\n'
+  local sl=off acc="not yet"
+  kdash_box2 "KDASH" "version" "${KDASH_VERSION:-}" "what" "live Kubernetes namespace operations dashboard" "author" "$KDASH_AUTHOR"
+  printf '\n'; disclaimer_text 78; printf '\n'
   [ "$AUDIT_READY" = 1 ] || audit_init
-  printf 'audit    local    %s\n         central  %s\n         syslog   %s\n         session  %s (%s@%s from %s)\n' "${AUDIT_FILE:-not writable}" \
-    "${AUDIT_CFILE:-not configured ($AUDIT_CENTRAL missing or not writable)}" "$([ "$AUDIT_SYSLOG" = 1 ] && command -v logger >/dev/null 2>&1 && echo "on (logger -t kdash)" || echo off)" "$AUDIT_SID" "$AUDIT_USER" "$AUDIT_HOST" "$AUDIT_FROM"
-  printf 'accepted %s\n' "$( [ -f "$DISCLAIMER_FILE" ] && cut -f2-6 "$DISCLAIMER_FILE" | tr '\t' ' ' || echo 'not yet')"
+  ! { [ "$AUDIT_SYSLOG" = 1 ] && command -v logger >/dev/null 2>&1; } || sl="on (logger -t kdash)"
+  [ ! -f "$DISCLAIMER_FILE" ] || acc="$(cut -f2-6 "$DISCLAIMER_FILE" | tr '\t' ' ')"
+  kdash_box2 "AUDIT" "local" "${AUDIT_FILE:-not writable}" "central" "${AUDIT_CFILE:-not configured ($AUDIT_CENTRAL missing or not writable)}" \
+    "syslog" "$sl" "session" "$AUDIT_SID ($AUDIT_USER@$AUDIT_HOST from $AUDIT_FROM)" "accepted" "$acc"
 }
 
 _kdash_help() {
@@ -798,10 +852,15 @@ DIAGNOSTICS (read-only)
                         read commands of finding N and prints their output; exit 0/1/2
       --fmea            FMEA worksheet: every generic failure mode (pods, workloads, jobs, PVCs, services,
                         ingress, config, HPA, PDB, quotas, nodes, control plane, webhooks, RBAC) on every
-                        object you can read, ranked by bundled Action Priority rules; -o csv|tsv|json|html;
+                        object you can read, ranked by AIAG-VDA Action Priority; -o csv|tsv|json|html;
                         --fail-on high|medium|low (exit 2 high / 1 medium); --since 30d (trend);
                         --run N runs the read commands of row N. Site file: ~/.config/kdash-fmea.tsv
       --access          your RBAC access (auth whoami / can-i) and what each FMEA check needs
+      --secrets         secrets map: every certificate in every Secret you can read (subject, SAN, issuer,
+                        expiry, key present), who manages it, which workloads / Services / ingresses use it,
+                        the path in the container and the kubelet path on the node, and what needs a
+                        restart after a rotation. Values are never fetched. -o csv|tsv|json|html;
+                        --fail-on high|medium (exit 2 expired or critical / 1 warning); --run N
       --runbook [NAME]  print a runbook with this cluster's names filled in (default etcd-restore):
                         etcd-restore cert-rotate node-notready api-unreachable oidc-login
       --explain [POD]   event-backed hypotheses and next checks, then exit
@@ -812,7 +871,7 @@ DIAGNOSTICS (read-only)
       -v services|storage   service/backend map or PVC/PV health (keys 8/9)
   Enter/i inspector   : command palette   F structured filters
   K check now   E Kubernetes Events   ! explanations   8 services   9 storage   C certificates   R runbooks
-  M FMEA (failure modes, : access for your RBAC)
+  M FMEA (failure modes, : access for your RBAC)   Y secrets map (certificates, keys, users, paths)
 
 OTHER
   -X, --allow-interactive  enable S shell / U upload / D download (shell shortcut: kdx;
@@ -954,7 +1013,7 @@ _kdash_complete() {
         --no-io --prom-url --prom-svc --io-wait
         -C --containers -D --no-detail --ascii -N --no-color -S --no-altscreen
         --selector --status --node --workload --unhealthy --request-timeout
-        --doctor --check --fmea --access --fail-on --since --run --events --certs --runbook --explain --inspect --container --logs -X --allow-interactive --shell-picker
+        --doctor --check --fmea --access --secrets --fail-on --since --run --events --certs --runbook --explain --inspect --container --logs -X --allow-interactive --shell-picker
         --about --audit --audit-all --audit-grep --audit-verify --audit-report --accept-disclaimer --bell
         --install --completion -V --version -h --help"
   case "$prev" in
@@ -965,7 +1024,7 @@ _kdash_complete() {
     -s|--sort)
       COMPREPLY=( $(compgen -W "cpu mem cpupct mempct name restarts" -- "$cur") ); return ;;
     -v|--view)
-      COMPREPLY=( $(compgen -W "pods nodes workloads ip mem io alerts services storage events explain certs runbook check fmea access all" -- "$cur") ); return ;;
+      COMPREPLY=( $(compgen -W "pods nodes workloads ip mem io alerts services storage events explain certs runbook check fmea access secrets all" -- "$cur") ); return ;;
     --fail-on)
       COMPREPLY=( $(compgen -W "high medium low" -- "$cur") ); return ;;
     --runbook)
@@ -1012,6 +1071,7 @@ norm_view() {
     K|check|triage|now) echo check ;;
     M|fmea|failure-modes|risk|risks) echo fmea ;;
     access|rbac|rights|permissions) echo access ;;
+    Y|secrets|secret|secret-map|secretmap|keys|tls) echo secrets ;;
     all) echo all ;;
     *) return 1 ;;
   esac
@@ -1031,6 +1091,7 @@ while [ $# -gt 0 ]; do
     --certs)           DO_CERTS=1; ONCE=1; VIEW=certs; shift ;;
     --check)           DO_CHECK=1; ONCE=1; VIEW=check; shift ;;
     --fmea)            DO_FMEA=1; ONCE=1; VIEW=fmea; shift ;;
+    --secrets|--secret-map) DO_SECRETS=1; ONCE=1; VIEW=secrets; shift ;;
     --access)          DO_FMEA=1; FMEA_ACCESS_ONLY=1; ONCE=1; VIEW=access; shift ;;
     --fail-on)         need_arg "$@"; FMEA_FAIL_ON="$2"; shift 2 ;;
     --since)           need_arg "$@"; FMEA_SINCE="$2"; shift 2 ;;
@@ -1116,9 +1177,9 @@ case "${KDASH_INSPECT_LOGS:-}" in ''|current|previous) ;; *) die "--logs must be
 for _filter in "$KDASH_STATUS_FILTER" "$KDASH_WORKLOAD_FILTER"; do
     printf '' | grep -E -- "$_filter" >/dev/null 2>&1; [ $? -le 1 ] || die "invalid structured filter regex"
 done
-_norm="$(norm_view "$VIEW")" || die "unknown view '$VIEW' (use pods | nodes | workloads | ip | mem | io | alerts | services | storage | events | explain | certs | runbook | check | fmea | access | all)"
+_norm="$(norm_view "$VIEW")" || die "unknown view '$VIEW' (use pods | nodes | workloads | ip | mem | io | alerts | services | storage | events | explain | certs | runbook | check | fmea | access | secrets | all)"
 VIEW="$_norm"
-case "$OUTFMT" in text|tsv|csv) ;; json|html) [ "${DO_FMEA:-0}" = 1 ] || die "-o $OUTFMT is only for --fmea (text | tsv | csv)" ;; *) die "unknown output format '$OUTFMT' (text | tsv | csv; --fmea also json | html)" ;; esac
+case "$OUTFMT" in text|tsv|csv) ;; json|html) [ "${DO_FMEA:-0}" = 1 ] || [ "${DO_SECRETS:-0}" = 1 ] || die "-o $OUTFMT is only for --fmea and --secrets (text | tsv | csv)" ;; *) die "unknown output format '$OUTFMT' (text | tsv | csv; --fmea and --secrets also json | html)" ;; esac
 case "${FMEA_FAIL_ON:-}" in ''|high|medium|low) ;; *) die "--fail-on takes high | medium | low" ;; esac
 case "$SORT" in cpu|mem|cpupct|mempct|name|restarts) ;; *) die "unknown sort key '$SORT' (cpu | mem | cpupct | mempct | name | restarts)" ;; esac
 case "$BARCHR" in safe|unicode) BARCHR=unicode ;; full|ascii) ;; *) die "unknown glyph set '$BARCHR' (safe | full | ascii)" ;; esac
@@ -1178,10 +1239,9 @@ if [ "${DO_INSTALL:-0}" = 1 ]; then
   if [ -n "${INSTALL_DIR:-}" ]; then dir="$INSTALL_DIR"
   elif [ "$(id -u)" -eq 0 ]; then dir="/usr/local/bin"
   else dir="$HOME/.local/bin"; fi
-  # Install problems are environment problems, not usage errors: exit 1.
-  mkdir -p "$dir" 2>/dev/null || fail "cannot create $dir"
-  [ -w "$dir" ] || fail "$dir is not writable (try: sudo install -m755 \"$SELF\" $dir/kdash)"
-  install -m 755 "$SELF" "$dir/kdash" || fail "install failed"
+  mkdir -p "$dir" 2>/dev/null || die "cannot create $dir"
+  [ -w "$dir" ] || die "$dir is not writable (try: sudo install -m755 \"$SELF\" $dir/kdash)"
+  install -m 755 "$SELF" "$dir/kdash" || die "install failed"
   printf 'installed: %s/kdash (v%s)\n' "$dir" "$KDASH_VERSION"
   if [ "$(id -u)" -eq 0 ] && [ -d /etc/bash_completion.d ]; then
     "$dir/kdash" --completion bash > /etc/bash_completion.d/kdash 2>/dev/null &&
@@ -1212,9 +1272,7 @@ if [ -n "$CTX" ] && [ "${CTX_EXPLICIT:-0}" = 1 ]; then
   if ! "${KC[@]}" config get-contexts -o name 2>/dev/null | grep -qx -- "$CTX"; then
     matches="$("${KC[@]}" config get-contexts -o name 2>/dev/null | grep -F -- "$CTX")"
     count="$(printf '%s\n' "$matches" | grep -c .)"
-    # A context that cannot be resolved is an environment problem, like an
-    # unreadable kubeconfig: exit 1 (runtime), not 2 (usage error).
-    [ "$count" -eq 1 ] || fail "context '$CTX' matched $count contexts:
+    [ "$count" -eq 1 ] || die "context '$CTX' matched $count contexts:
 $matches"
     CTX="$matches"
   fi
@@ -1223,20 +1281,17 @@ elif [ -n "$CTX" ]; then
   KC+=(--context "$CTX")
 fi
 if [ -z "$NS" ] && [ "$ALL_NS" = 0 ] && [ "$DO_SREP" = 0 ]; then
-  # An explicit -n wins; a choice saved with d wins over the kubeconfig default.
-  if [ -n "${KDASH_NS_MAP:-}" ]; then
+  if [ -n "$CTX" ]; then
+    NS="$("${KC[@]}" config view -o jsonpath="{.contexts[?(@.name==\"$CTX\")].context.namespace}" 2>/dev/null)"
+  else
+    NS="$("${KC[@]}" config view --minify -o jsonpath='{..namespace}' 2>/dev/null)"
+  fi
+  if [ -z "$NS" ] && [ -n "${KDASH_NS_MAP:-}" ]; then
     _cur="${CTX:-$("${KC[@]}" config current-context 2>/dev/null)}"
     for _pair in $KDASH_NS_MAP; do
       case "$_pair" in "$_cur="*) NS="${_pair#*=}"; break ;; esac
     done
     unset _pair _cur
-  fi
-  if [ -z "$NS" ]; then
-    if [ -n "$CTX" ]; then
-      NS="$("${KC[@]}" config view -o jsonpath="{.contexts[?(@.name==\"$CTX\")].context.namespace}" 2>/dev/null)"
-    else
-      NS="$("${KC[@]}" config view --minify -o jsonpath='{..namespace}' 2>/dev/null)"
-    fi
   fi
   if [ -z "$NS" ]; then
     if [ "$INTERACTIVE" = 1 ]; then PICK_NS=1          # ask instead of guessing "default"
@@ -1265,10 +1320,7 @@ ERRLOG="$TMPD/stderr"
 cleanup() {
   local rc=$?
   declare -F toolkit_cancel >/dev/null && toolkit_cancel
-  if declare -F login__kill_stale >/dev/null; then
-    login__kill_stale
-    [ -z "${LOGIN_ACTIVE_TAG:-}" ] || KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__kill_stale
-  fi
+  declare -F login__kill_stale >/dev/null && login__kill_stale
   [ "${AUDIT_STARTED:-0}" = 1 ] && audit_end "$rc"
   if [ "$LOOPED" = 1 ]; then
     LOOPED=0
@@ -1717,7 +1769,24 @@ function titlebar(w,   l, r, g, ww) {
   if (!color) { print l sprintf("%" g "s", "") r > hdrf; return }
   print C("7;1", l sprintf("%" g "s", "") r) > hdrf
 }
+# The summary lines of a view (written to SUMF) inside one frame as wide as the table
+# below; the label sits in the top border. Falls back to the plain lines and a rule when
+# a line would not fit, on narrow windows, or with KDASH_HEADER=compact.
+function sbox(label, w,   ln, n, i, S, mx, pw, tl, tr, bl, br, hz, plain) {
+  close(SUMF); n = 0; mx = 0
+  while ((getline ln < SUMF) > 0) { S[++n] = ln; if (vlen(ln) > mx) mx = vlen(ln) }
+  close(SUMF); printf "" > SUMF; close(SUMF)
+  pw = (termw + 0 > 0) ? termw + 0 : 160; if (w + 0 > 0 && w + 0 < pw) pw = w + 0
+  plain = (ENVIRON["KDASH_HEADER"] == "compact" || NAR || n == 0 || mx + 3 > pw)
+  if (plain) { for (i = 1; i <= n; i++) print S[i] > hdrf; print C("90", rule(HR, w)) > hdrf; return }
+  if (bar == "ascii") { tl = "+"; tr = "+"; bl = "+"; br = "+"; hz = "-" }
+  else { tl = "\342\224\214"; tr = "\342\224\220"; bl = "\342\224\224"; br = "\342\224\230"; hz = HR }
+  print C("90", tl hz " ") C("1", label) C("90", " " rule(hz, pw - vlen(label) - 5) tr) > hdrf
+  for (i = 1; i <= n; i++) print C("90", VB) S[i] sprintf("%" (pw - 2 - vlen(S[i])) "s", "") C("90", VB) > hdrf
+  print C("90", bl rule(hz, pw - 2) br) > hdrf
+}
 function header(title, w,   tstr, tw, sauth) {
+  SUMF = hdrf ".sum"; printf "" > SUMF; close(SUMF)
   SG = "\037"; NAR = (termw + 0 > 0 && termw + 0 < 110)
   # the tab bar needs roughly 15 characters for the version and 25 for the clock
   tstr = tabs(view, (termw + 0 > 0) ? termw - 28 : 0)
@@ -1727,11 +1796,15 @@ function header(title, w,   tstr, tw, sauth) {
   sauth = (author != "" && termw + 0 >= 150 && termw + 0 - tw - 42 >= vlen("    by " author "  " VB " AUDITED"))
   titlebar(w)
   pack(" " SG tstr SG " " C("1", (now > 0) ? ((termw + 0 < 100) ? thms(now) : tymd(now) " " thms(now)) : ts) C("90", (now > 0) ? " " tzname : ""), termw, hdrf)
+  if (hpanel(w)) { }
+  else {
   pack((TBCTX ? "" : " " C("90", "ctx") " " ctxn SG "   " C("90", "ns") " " ns SG "  ") " " C("90", "match") " " filt SG (NAR ? "" : "   " C("90", spectxt)) \
        SG ((sstart > 0 && now > 0 && !NAR) ? C("90", "  session ") thms(sstart) C("90", " up ") tdur(now - sstart) : "") SG "   " C("1;94", view == "ip" ? "sorted by IP address" : sortlabel()), termw, hdrf)
   if (M["pods"] + 0 > 0) healthline()
+  }
   if (nswarn)  print C("35", " ! your context binds no namespace - showing \"default\". Use: kdash -n <namespace>") > hdrf
   if (!topok)  print C("35", " ! kubectl top unavailable - live usage shows \"-\", requests / limits still live") > hdrf
+  print "\001DATASTRIP\001" > hdrf      # render() puts the status strip here
   if (title != "") printf " %s\n", C("1;35", title) > hdrf
 }
 # one line of health for every view: readiness, restarts, memory risks, CPU / memory
@@ -1755,6 +1828,67 @@ function healthline(   ph, np, s, eb, ew, ln, a, cm, cc, d) {
     close(evf)
     s = s SG C("90", (NAR ? " ev15m " : "  " VB " events 15m ")) C(eb ? "1;31" : "32", "! " eb) " " C(ew ? "35" : "32", "^ " ew) }
   pack(s, termw, hdrf)
+}
+# The status panel under the tab bar: four framed cards (scope, pod health, usage
+# against limits, workloads and events) that share the window width. Tried widest
+# first: with usage bars and the session clock, then without; a window too narrow
+# for either (or KDASH_HEADER=compact) gets the packed one-line form instead.
+function hpcell(s, w,   p) { p = w - vlen(s); return s (p > 0 ? sprintf("%" p "s", "") : "") }
+function hpanel(w,   pw, v, n, i, T, A, B, D, l4, CW, tot, ex, bw, np, ph, cc, cm, d, eb, ew, ln, a, l1, l2, l3, tl, tr, bl, br, tj, bj, hz, x) {
+  if (ENVIRON["KDASH_HEADER"] == "compact" || NAR || !TBCTX) return 0
+  pw = (termw + 0 > 0) ? termw + 0 : 160; if (w + 0 > 0 && w + 0 < pw) pw = w + 0
+  if (bar == "ascii") { tl = "+"; tr = "+"; bl = "+"; br = "+"; tj = "+"; bj = "+"; hz = "-" }
+  else { tl = "\342\224\214"; tr = "\342\224\220"; bl = "\342\224\224"; br = "\342\224\230"; tj = "\342\224\254"; bj = "\342\224\264"; hz = HR }
+  np = M["pods"] + 0; ph = M["pods_healthy"] + 0
+  cc = pct(nv(M["cpu_used"]), nv(M["cpu_lim"])); cm = pct(nv(M["mem_used"]), nv(M["mem_lim"]))
+  eb = -1
+  if (evf != "") { eb = 0; ew = 0
+    while ((getline ln < evf) > 0) { split(ln, a, "\t"); if (a[1] !~ /^[0-9]+$/ || a[1] + 0 < now - 900) continue; if (a[2] == "bad") eb++; else if (a[2] == "warn") ew++ }
+    close(evf) }
+  for (v = 1; v <= 3; v++) {
+    bw = (v == 1) ? 8 : 0; n = 0; split("", D)
+    n++; T[n] = "SCOPE"
+    A[n] = C("90", "match ") filt "   " C("1;94", view == "ip" ? "sorted by IP address" : sortlabel())
+    B[n] = C("90", spectxt) ((sstart > 0 && now > 0 && v == 1) ? C("90", "   session ") thms(sstart) C("90", " up ") tdur(now - sstart) : "")
+    n++; T[n] = "POD HEALTH"
+    A[n] = C(ph < np ? "1;31" : "32", (ph < np ? "! " : "") "pods " ph "/" np " ready") C("90", "   restarts ") C(M["restarts"] + 0 > 0 ? "35" : "32", M["restarts"] + 0)
+    if (np == 0) A[n] = C("90", "pods 0   (none read yet, or none match)")
+    B[n] = C("90", "OOM risk ") C(M["pods_mem_ge90_limit"] + 0 > 0 ? "1;31" : "32", M["pods_mem_ge90_limit"] + 0) C("90", "   OOMKilled ") C(M["pods_oomkilled"] + 0 > 0 ? "1;31" : "32", M["pods_oomkilled"] + 0) \
+           C("90", "   no-limit ") C(M["pods_no_mem_limit"] + 0 > 0 ? "35" : "32", M["pods_no_mem_limit"] + 0)
+    n++; T[n] = "USAGE vs LIMITS"
+    A[n] = C("90", "cpu ") sprintf("%7s", hcpu(nv(M["cpu_used"]))) " " (bw ? mkbar(cc, bw) " " : "") (cc < 0 ? C("90", "   -") : C(heat(cc), sprintf("%3.0f%%", cc))) C("90", " lim")
+    B[n] = C("90", "mem ") sprintf("%7s", hmem(nv(M["mem_used"]))) " " (bw ? mkbar(cm, bw) " " : "") (cm < 0 ? C("90", "   -") : C(heat(cm), sprintf("%3.0f%%", cm))) C("90", " lim")
+    x = (M["workloads"] != "" && M["workloads"] != "-")
+    if (x || eb >= 0) {
+      n++; T[n] = (x ? "WORKLOADS" : "") ((x && eb >= 0) ? " " FLAT " " : "") (eb >= 0 ? "EVENTS" : "")
+      d = M["workloads_degraded"] + 0
+      A[n] = x ? (C("90", "workloads ") M["workloads"] (d > 0 || M["workloads_rolling"] + 0 > 0 ? C("90", " (") : "") (d > 0 ? C("1;31", d " degraded") : "") \
+        (d > 0 && M["workloads_rolling"] + 0 > 0 ? C("90", ", ") : "") (M["workloads_rolling"] + 0 > 0 ? C("35", M["workloads_rolling"] " rolling") : "") (d > 0 || M["workloads_rolling"] + 0 > 0 ? C("90", ")") : "")) : ""
+      B[n] = (eb >= 0) ? (C("90", "events 15m ") C(eb ? "1;31" : "32", "! " eb) "  " C(ew ? "35" : "32", "^ " ew)) : ""
+      if (!x) { A[n] = B[n]; B[n] = "" }
+    }
+    if (v == 3) {      # narrower window: the same facts on three rows
+      A[1] = C("90", "match ") filt; B[1] = C("1;94", view == "ip" ? "sorted by IP address" : sortlabel()); D[1] = C("90", spectxt)
+      B[2] = C("90", "OOM risk ") C(M["pods_mem_ge90_limit"] + 0 > 0 ? "1;31" : "32", M["pods_mem_ge90_limit"] + 0) C("90", "   OOMKilled ") C(M["pods_oomkilled"] + 0 > 0 ? "1;31" : "32", M["pods_oomkilled"] + 0)
+      D[2] = C("90", "no-limit ") C(M["pods_no_mem_limit"] + 0 > 0 ? "35" : "32", M["pods_no_mem_limit"] + 0)
+      D[3] = ""; if (n > 3) D[4] = ""
+    }
+    tot = 1
+    for (i = 1; i <= n; i++) { CW[i] = vlen(T[i]) + 2; if (vlen(A[i]) > CW[i]) CW[i] = vlen(A[i]); if (vlen(B[i]) > CW[i]) CW[i] = vlen(B[i]); if (vlen(D[i]) > CW[i]) CW[i] = vlen(D[i]); tot += CW[i] + 3 }
+    if (tot <= pw) break
+  }
+  if (tot > pw) return 0
+  ex = pw - tot; for (i = 1; i <= n; i++) { x = int(ex / (n - i + 1)); CW[i] += x; ex -= x }
+  l1 = C("90", tl); l2 = C("90", VB); l3 = C("90", VB); l4 = C("90", VB); ln = C("90", bl)
+  for (i = 1; i <= n; i++) {
+    l1 = l1 C("90", hz " ") C("1", T[i]) C("90", " " rule(hz, CW[i] - vlen(T[i]) - 1) (i < n ? tj : tr))
+    l2 = l2 " " hpcell(A[i], CW[i]) " " C("90", VB)
+    l3 = l3 " " hpcell(B[i], CW[i]) " " C("90", VB)
+    l4 = l4 " " hpcell(D[i], CW[i]) " " C("90", VB)
+    ln = ln C("90", rule(hz, CW[i] + 2) (i < n ? bj : br))
+  }
+  print l1 > hdrf; print l2 > hdrf; print l3 > hdrf; if (v == 3) print l4 > hdrf; print ln > hdrf
+  return 1
 }
 function note(s) { print C("90", " " s) > hdrf }
 function sect(s, w) { printf "%s %s %s\n", C("1;94", ARW), C("1", s), C("90", rule(HR, w - length(s) - 4)) > bodyf }
@@ -2668,30 +2802,30 @@ END {
   header("NODE POOLS   " (cl ? "this namespace vs " (part ? (sel ? "the selected namespaces (--compare)" : "every namespace you can read") : "the whole cluster") : "where this namespace runs") ", per pool and worker node", LINEW)
   printf " %s %s pods on %s of %s nodes   mem used %s  req %s  lim %s   cpu used %s  req %s  lim %s\n",
     C("1;32", padr(ns == "(all namespaces)" ? "scope" : "namespace", 10)), M["pods"], M["nodes_hosting"], M["nodes_total"],
-    hsz(nv(M["mem_used"])), hsz(nv(M["mem_req"])), hsz(nv(M["mem_lim"])), hcpu(nv(M["cpu_used"])), hcpu(nv(M["cpu_req"])), hcpu(nv(M["cpu_lim"])) > hdrf
+    hsz(nv(M["mem_used"])), hsz(nv(M["mem_req"])), hsz(nv(M["mem_lim"])), hcpu(nv(M["cpu_used"])), hcpu(nv(M["cpu_req"])), hcpu(nv(M["cpu_lim"])) > SUMF
   x = sprintf("%s nodes  %s pools   alloc mem %s  cpu %s", M["cluster_nodes"], M["pools"], hsz(nv(M["cluster_mem_alloc"])), hcpu(nv(M["cluster_cpu_alloc"])))
   if (nv(M["cluster_mem_used"]) >= 0) x = x sprintf("   used mem %s (%s)  cpu %s (%s)", hsz(nv(M["cluster_mem_used"])), pp(pct(nv(M["cluster_mem_used"]), nv(M["cluster_mem_alloc"]))), hcpu(nv(M["cluster_cpu_used"])), pp(pct(nv(M["cluster_cpu_used"]), nv(M["cluster_cpu_alloc"]))))
-  printf " %s %s\n", C("1;94", padr("cluster", 10)), x > hdrf
+  printf " %s %s\n", C("1;94", padr("cluster", 10)), x > SUMF
   if (cl) printf " %s %s pods in %s namespace%s   requested mem %s (%s of cluster)  cpu %s (%s)%s%s\n", C("1;94", padr(part ? (sel ? "selected" : "readable") : "requests", 10)), M["cluster_pods"], M["cluster_namespaces"], (M["cluster_namespaces"] == 1 ? "" : "s"),
       hsz(nv(M["cluster_mem_req"])), pp(pct(nv(M["cluster_mem_req"]), nv(M["cluster_mem_alloc"]))), hcpu(nv(M["cluster_cpu_req"])), pp(pct(nv(M["cluster_cpu_req"]), nv(M["cluster_cpu_alloc"]))),
       (sco ? sprintf("   used mem %s  cpu %s (pod metrics)", hsz(nv(M["scope_mem_used"])), hcpu(nv(M["scope_cpu_used"]))) : ""),
-      (part ? C("90", "   (" M["cluster_ns_read"] ")") : "") > hdrf
+      (part ? C("90", "   (" M["cluster_ns_read"] ")") : "") > SUMF
   # the comparison that matters with namespace rights: this namespace vs all you can read
   if (cl && part) printf " %s %s   mem used %s  req %s   cpu used %s  req %s   pods %s\n", C("90", padr("", 10)), C("1", "namespace share of " (sel ? "the selected namespaces" : "all " nread " namespaces you can read") (M["cluster_namespaces"] + 0 < nread ? " (" M["cluster_namespaces"] " with pods)" : "")),
       fpp(pct(nv(M["mem_used"]), nv(M["scope_mem_used"]))), fpp(pct(nv(M["mem_req"]), nv(M["cluster_mem_req"]))),
-      fpp(pct(nv(M["cpu_used"]), nv(M["scope_cpu_used"]))), fpp(pct(nv(M["cpu_req"]), nv(M["cluster_cpu_req"]))), fpp(pct(M["pods"] + 0, M["cluster_pods"] + 0)) > hdrf
+      fpp(pct(nv(M["cpu_used"]), nv(M["scope_cpu_used"]))), fpp(pct(nv(M["cpu_req"]), nv(M["cluster_cpu_req"]))), fpp(pct(M["pods"] + 0, M["cluster_pods"] + 0)) > SUMF
   printf " %s namespace share of cluster   mem used %s  req %s   cpu used %s  req %s   pool label %s\n", C("90", padr("", 10)),
     pp(pct(nv(M["mem_used"]), nv(M["cluster_mem_alloc"]))), pp(pct(nv(M["mem_req"]), nv(M["cluster_mem_alloc"]))),
     pp(pct(nv(M["cpu_used"]), nv(M["cluster_cpu_alloc"]))), pp(pct(nv(M["cpu_req"]), nv(M["cluster_cpu_alloc"]))),
-    (M["pool_key"] == "-" ? "n/a" : M["pool_key"]) > hdrf
-  if (nodestate != "ok") print C("35", " ! node read " nodestate " - pools and allocatable unknown; nodes taken from pod placement (needs get/list nodes)") > hdrf
-  if (!nm_ok) print C("35", " ! node metrics " (topnstate == "off" ? "disabled" : topnstate) " - whole-node usage unavailable (needs nodes.metrics.k8s.io)") > hdrf
+    (M["pool_key"] == "-" ? "n/a" : M["pool_key"]) > SUMF
+  if (nodestate != "ok") print C("35", " ! node read " nodestate " - pools and allocatable unknown; nodes taken from pod placement (needs get/list nodes)") > SUMF
+  if (!nm_ok) print C("35", " ! node metrics " (topnstate == "off" ? "disabled" : topnstate) " - whole-node usage unavailable (needs nodes.metrics.k8s.io)") > SUMF
   if (nv(M["cluster_metrics_total"]) > 0 && nv(M["cluster_metrics_nodes"]) > 0 && M["cluster_metrics_nodes"] + 0 < M["cluster_metrics_total"] + 0)
-    print C("94", sprintf(" i node metrics for %d of %d nodes (NotReady / unreachable nodes report none) - cluster and pool \"used\" cover the measured nodes", M["cluster_metrics_nodes"], M["cluster_metrics_total"])) > hdrf
-  if (part && sel) print C("94", " i comparing with the namespaces given by --compare / KDASH_COMPARE_NS (" nread " readable)") (M["scope_no_access"] != "-" && M["scope_no_access"] != "" ? C("35", "   no access, left out: " M["scope_no_access"]) : "") > hdrf
-  else if (part) print C("94", " i namespace rights only - comparing with the " nread " namespace(s) you can read (kubectl auth can-i list pods), not the whole cluster" (sco ? "; usage = their pod metrics" : "")) > hdrf
-  else if (!cl) print C("35", " ! cluster pod read " (M["cluster_state"] == "-" ? "off" : M["cluster_state"]) " and no other namespace readable - right graph: this namespace against its own limits" (M["cluster_state"] == "off" ? " (--no-cluster)" : "")) > hdrf
-  print C("90", rule(HR, LINEW)) > hdrf
+    print C("94", sprintf(" i node metrics for %d of %d nodes (NotReady / unreachable nodes report none) - cluster and pool \"used\" cover the measured nodes", M["cluster_metrics_nodes"], M["cluster_metrics_total"])) > SUMF
+  if (part && sel) print C("94", " i comparing with the namespaces given by --compare / KDASH_COMPARE_NS (" nread " readable)") (M["scope_no_access"] != "-" && M["scope_no_access"] != "" ? C("35", "   no access, left out: " M["scope_no_access"]) : "") > SUMF
+  else if (part) print C("94", " i namespace rights only - comparing with the " nread " namespace(s) you can read (kubectl auth can-i list pods), not the whole cluster" (sco ? "; usage = their pod metrics" : "")) > SUMF
+  else if (!cl) print C("35", " ! cluster pod read " (M["cluster_state"] == "-" ? "off" : M["cluster_state"]) " and no other namespace readable - right graph: this namespace against its own limits" (M["cluster_state"] == "off" ? " (--no-cluster)" : "")) > SUMF
+  sbox("NAMESPACE vs CLUSTER", LINEW)
   close(hdrf)
 
   if (nn == 0) { print C("1;31", nodata != "" ? " " nodata : " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
@@ -2828,9 +2962,9 @@ END {
   printf " %s %s   pods %s (%s ready)   %s degraded  %s rolling out  %s HA risk  %s skewed  %s unscheduled\n", C("1", "workloads " M["workloads"] ":"),
     (M["workload_kinds"] == "-" ? "" : M["workload_kinds"]), M["pods"], M["pods_healthy"],
     C(M["workloads_degraded"] > 0 ? "1;31" : "32", M["workloads_degraded"] + 0), C(M["workloads_rolling"] > 0 ? "35" : "32", M["workloads_rolling"] + 0),
-    C(M["ha_risk"] > 0 ? "1;31" : "32", M["ha_risk"] + 0), C(M["skewed"] > 0 ? "35" : "32", M["skewed"] + 0), C(M["unscheduled_workloads"] > 0 ? "1;31" : "32", M["unscheduled_workloads"] + 0) > hdrf
-  if (M["workload_state"] != "ok") print C("35", " ! workload read " M["workload_state"] " - desired replicas and rollout unknown, workloads derived from pod owners (needs get deployments / statefulsets / daemonsets)") > hdrf
-  print C("90", rule(HR, LINEW)) > hdrf
+    C(M["ha_risk"] > 0 ? "1;31" : "32", M["ha_risk"] + 0), C(M["skewed"] > 0 ? "35" : "32", M["skewed"] + 0), C(M["unscheduled_workloads"] > 0 ? "1;31" : "32", M["unscheduled_workloads"] + 0) > SUMF
+  if (M["workload_state"] != "ok") print C("35", " ! workload read " M["workload_state"] " - desired replicas and rollout unknown, workloads derived from pod owners (needs get deployments / statefulsets / daemonsets)") > SUMF
+  sbox("WORKLOADS", LINEW)
   close(hdrf)
   if (nw == 0) { print C("1;31", " no workloads or pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
 
@@ -2903,13 +3037,13 @@ END {
   header("IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses", LINEW)
   printf " %s %s %s   %s %s   %s %s   %s %s   %s %s\n", C("90", "pod IPs"), C("1", M["pod_ips"]), C("90", "in use"),
     C("90", "no IP"), (M["no_ip"] > 0 ? C("35", M["no_ip"]) : M["no_ip"]), C("90", "host-network"), M["host_network"],
-    C("90", "duplicate"), (M["duplicate_ip_pods"] > 0 ? C("1;31", M["duplicate_ip_pods"]) : C("32", "0")), C("90", "subnets"), M["subnets"] > hdrf
+    C("90", "duplicate"), (M["duplicate_ip_pods"] > 0 ? C("1;31", M["duplicate_ip_pods"]) : C("32", "0")), C("90", "subnets"), M["subnets"] > SUMF
   printf " %s %s   %s %s   %s %s   %s %s   %s %s   %s %s\n", C("90", "services"), M["services"], C("90", "ClusterIP"), M["cluster_ips"],
     C("90", "headless"), M["headless"], C("90", "NodePort"), M["nodeports"], C("90", "LoadBalancer"), M["loadbalancers"],
-    C("90", "external addresses"), M["external_addressed"] > hdrf
-  if (svcstate != "ok") print C("35", " ! services read " svcstate) > hdrf
-  if (nodestate != "ok") print C("35", " ! node read " nodestate " - node IPs and podCIDR unknown; IP blocks inferred from pod IPs") > hdrf
-  print C("90", rule(HR, LINEW)) > hdrf
+    C("90", "external addresses"), M["external_addressed"] > SUMF
+  if (svcstate != "ok") print C("35", " ! services read " svcstate) > SUMF
+  if (nodestate != "ok") print C("35", " ! node read " nodestate " - node IPs and podCIDR unknown; IP blocks inferred from pod IPs") > SUMF
+  sbox("ADDRESSES", LINEW)
   close(hdrf)
   nsn = readtab("subnets.tsv", "S"); nb = readtab("ipblocks.tsv", "B"); nsv = readtab("services.tsv", "V"); nip = readtab("ip.tsv", "I")
   if (nip == 0) { print C("1;31", nodata != "" ? " " nodata : " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
@@ -2962,22 +3096,22 @@ END {
   SPW = LINEW - 60; if (SPW > 60) SPW = 60; if (SPW < 10) SPW = 10
   header("MEMORY   live namespace memory dashboard", LINEW)
   printf " %s used %s  req %s  lim %s   used/req %s  used/lim %s  %s\n", C("1", "MEMORY"), C("1;94", sprintf("%8s", hmem(mu))),
-    sprintf("%8s", hmem(mr)), sprintf("%8s", hmem(ml)), fpp(pct(mu, mr)), fpp(pct(mu, ml)), mkbar(pct(mu, ml), 24) > hdrf
+    sprintf("%8s", hmem(mr)), sprintf("%8s", hmem(ml)), fpp(pct(mu, mr)), fpp(pct(mu, ml)), mkbar(pct(mu, ml), 24) > SUMF
   # time charts: session samples (ns.tsv) since kdash started, else the poll history
   nmh = tsload(sesf, 8, 0); src = "session"; if (nmh < 2) { nmh = tsload(histf, 2, 0); src = "poll" }
   twindow(nmh > 0 ? TC_T[1] : now); first_ = (nmh > 0) ? TC_T[1] : now
   for (i = 1; i <= nmh; i++) if (TC_T[i] >= TW0) wn_++
   printf " %s %s %s %s %s   %s   %s   %s\n", C("90", "window"), C("1", tday(TW0)), C("90", "->"), C("1", thms(now)), C("90", tzlabel()),
     tdur(now - TW0) C("90", ", " twinlabel()), C("90", "samples ") (wn_ + 0) C("90", (src == "session") ? " every " smp "s" : " (polls)"),
-    C("90", "z: 15m 1h 6h 24h all") > hdrf
+    C("90", "z: 15m 1h 6h 24h all") > SUMF
   printf " %s used %s  req %s  lim %s   used/req %s  used/lim %s  %s\n", C("1", "CPU   "), C("1;94", sprintf("%8s", hcpu(cu))),
-    sprintf("%8s", hcpu(cr)), sprintf("%8s", hcpu(cl)), fpp(pct(cu, cr)), fpp(pct(cu, cl)), C("94", spark(hc, 24)) > hdrf
+    sprintf("%8s", hcpu(cr)), sprintf("%8s", hcpu(cl)), fpp(pct(cu, cr)), fpp(pct(cu, cl)), C("94", spark(hc, 24)) > SUMF
   printf " %s %s   %s %s   %s %s   %s %s   %s %s\n", C("90", "risk  >=90% of limit"), (M["pods_mem_ge90_limit"] > 0 ? C("1;31", M["pods_mem_ge90_limit"]) : C("32", "0")),
     C("90", "no limit"), (M["pods_no_mem_limit"] > 0 ? C("35", M["pods_no_mem_limit"]) : C("32", "0")),
     C("90", "over request"), M["pods_over_mem_request"], C("90", "OOMKilled before"), (M["pods_oomkilled"] > 0 ? C("1;31", M["pods_oomkilled"]) : C("32", "0")),
-    C("90", "restarts"), M["restarts"] > hdrf
-  if (topnstate != "ok") print C("35", " ! node metrics " (topnstate == "off" ? "disabled" : topnstate) " - node bars show this namespace vs allocatable only") > hdrf
-  print C("90", rule(HR, LINEW)) > hdrf
+    C("90", "restarts"), M["restarts"] > SUMF
+  if (topnstate != "ok") print C("35", " ! node metrics " (topnstate == "off" ? "disabled" : topnstate) " - node bars show this namespace vs allocatable only") > SUMF
+  sbox("USAGE and RISK", LINEW)
   close(hdrf)
 
   nn = readtab("nodes.tsv", "N"); nm = readtab("memory.tsv", "R"); nw = readtab("workloads.tsv", "Y")
@@ -3059,20 +3193,20 @@ END {
   st = M["io_state"]; okd = (st == "prom-url" || st == "prom-svc" || st == "kubelet")
   # the IO view sorts by traffic: cpu -> network in+out, mem -> disk read+write, cpupct -> in, mempct -> out, restarts -> IOPS
   header("NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod", LINEW)
-  if (okd) printf " %s %s   %s\n", C("90", "source"), M["io_source"], C("90", "sampled every " M["io_every"] "s, last " M["io_age"] "s ago, rates between the last two samples") > hdrf
-  else if (st == "warming-up") printf " %s %s   %s\n", C("90", "source"), M["io_source"], C("35", "first rates after the second sample (about " M["io_every"] "s)") > hdrf
-  else if (st == "not-sampled") print C("35", " ! IO is sampled in live mode (or with --io-wait SEC in one-shot modes) - rates need two samples") > hdrf
-  else if (st == "off") print C("90", " IO collection disabled (--no-io / KDASH_IO=0)") > hdrf
+  if (okd) printf " %s %s   %s\n", C("90", "source"), M["io_source"], C("90", "sampled every " M["io_every"] "s, last " M["io_age"] "s ago, rates between the last two samples") > SUMF
+  else if (st == "warming-up") printf " %s %s   %s\n", C("90", "source"), M["io_source"], C("35", "first rates after the second sample (about " M["io_every"] "s)") > SUMF
+  else if (st == "not-sampled") print C("35", " ! IO is sampled in live mode (or with --io-wait SEC in one-shot modes) - rates need two samples") > SUMF
+  else if (st == "off") print C("90", " IO collection disabled (--no-io / KDASH_IO=0)") > SUMF
   else {
-    print C("35", " ! no IO source readable with your rights - metrics-server only has CPU and memory") > hdrf
-    if (M["io_reason"] != "-") print C("90", "   tried: " M["io_reason"]) > hdrf
-    print C("90", "   to enable: --prom-url http://<prometheus>:9090 (curl from this host)  |  --prom-svc [ns/]<prometheus-service>:<port> (needs services/proxy)  |  nodes/proxy (kubelet)") > hdrf
+    print C("35", " ! no IO source readable with your rights - metrics-server only has CPU and memory") > SUMF
+    if (M["io_reason"] != "-") print C("90", "   tried: " M["io_reason"]) > SUMF
+    print C("90", "   to enable: --prom-url http://<prometheus>:9090 (curl from this host)  |  --prom-svc [ns/]<prometheus-service>:<port> (needs services/proxy)  |  nodes/proxy (kubelet)") > SUMF
   }
   if (okd || st == "warming-up")
     printf " %s in %s/s  out %s/s   disk read %s/s  write %s/s   IOPS read %s  write %s   %s\n", C("1;32", padr("namespace", 10)),
       hb(nv(M["ns_net_rx"])), hb(nv(M["ns_net_tx"])), hb(nv(M["ns_disk_r"])), hb(nv(M["ns_disk_w"])), hio(nv(M["ns_riops"])), hio(nv(M["ns_wiops"])),
-      C("94", spark(IOH, 40)) > hdrf
-  print C("90", rule(HR, LINEW)) > hdrf
+      C("94", spark(IOH, 40)) > SUMF
+  sbox("IO SOURCE", LINEW)
   close(hdrf)
   nio = readtab("io_nodes.tsv", "I"); nip = readtab("io_pods.tsv", "Q")
   if (!okd) { print C("90", " nothing to show yet") > bodyf; close(bodyf); print C("90", rule(HR, LINEW)) > ftrf; close(ftrf); exit }
@@ -3275,8 +3409,8 @@ END {
   vd = NC ? C("7;1;31", "  CRITICAL  ") : (NW ? C("7;1;35", "  WARNING  ") : C("7;1;32", "  HEALTHY  "))
   printf " %s  %s %s   %s %s   %s %s   %s %s   %s\n", vd, C(NC ? "1;31" : "32", NC + 0), C("90", "critical"), C(NW ? "1;35" : "32", NW + 0), C("90", "warning"),
     C(NEWN ? "1;31" : "90", NEWN + 0), C("90", "new"), C(XCNT() ? "32" : "90", XCNT()), C("90", "cleared in 5 min"),
-    C("90", "rules run every refresh (" iv "s) on live data  " VB "  thresholds mem " memc "%  net " int(netw / 1048576) "MiB/s  iops " iopsw) > hdrf
-  print C("90", rule(HR, LINEW)) > hdrf
+    C("90", "rules run every refresh (" iv "s) on live data  " VB "  thresholds mem " memc "%  net " int(netw / 1048576) "MiB/s  iops " iopsw) > SUMF
+  sbox("ALERT STATE", LINEW)
   close(hdrf)
 
   # ---- section health grid
@@ -3658,11 +3792,6 @@ io_detect() {
   [ -z "$cand" ] && tried="$tried no Prometheus service in the namespace"
   # kubelet cAdvisor through the API node proxy
   nd="$(awk -F'\t' 'NR > 1 && $5 > 0 && $2 != "(unscheduled)" { print $2; exit }' "$MODEL/nodes.tsv" 2>/dev/null)"
-  if [ -z "$nd" ] && [ -z "$cand" ] && [ -z "$PROM_URL" ]; then
-    # The first asynchronous read has not produced the node model yet. Retry
-    # after adoption instead of caching a missing source for ten minutes.
-    IO_STATE="off"; IO_REASON="waiting for a node hosting the selected pods"; return 0
-  fi
   if [ -n "$nd" ]; then
     { "${KC[@]}" get --raw "/api/v1/nodes/$nd/proxy/metrics/cadvisor" --request-timeout=10s 2>"$err" | head -c 400 > "$TMPD/io.probe"; } 2>/dev/null
     if grep -q '^container_\|^# HELP' "$TMPD/io.probe" 2>/dev/null; then
@@ -4470,6 +4599,8 @@ function page_head(ttl, multi, res,   ln, i, j, ns5, sb, vk, vn) {
     print "<a class=\"tab on\" href=\"#overview\" data-tab=\"overview\" onclick=\"return kdTab(&quot;overview&quot;)\"><span class=\"k\">0</span>OVERVIEW</a>"
     for (i = 1; i <= 6; i++) printf "<a class=\"tab\" href=\"#%s\" data-tab=\"%s\" onclick=\"return kdTab(&quot;%s&quot;)\"><span class=\"k\">%d</span>%s</a>", vk[i], vk[i], vk[i], i, vn[i]
     print "<a class=\"tab\" href=\"#history\" data-tab=\"history\" onclick=\"return kdTab(&quot;history&quot;)\"><span class=\"k\">7</span>HISTORY</a>"
+    if (xfmea != "") print "<a class=\"tab\" href=\"#fmea\" data-tab=\"fmea\" onclick=\"return kdTab(&quot;fmea&quot;)\"><span class=\"k\">8</span>FMEA</a>"
+    if (xsec != "") print "<a class=\"tab\" href=\"#secrets\" data-tab=\"secrets\" onclick=\"return kdTab(&quot;secrets&quot;)\"><span class=\"k\">9</span>SECRETS</a>"
   } else {
     ns5 = split(sib, sb, ";"); for (i = 1; i <= ns5; i++) { j = index(sb[i], "="); if (j) SIB[substr(sb[i], 1, j - 1)] = substr(sb[i], j + 1) }
     for (i = 1; i <= 6; i++) {
@@ -4519,6 +4650,8 @@ BEGIN {
   print "<div class=\"view\" data-view=\"history\" hidden>"
   history()
   print "</div>"
+  if (xfmea != "") { print "<div class=\"view\" data-view=\"fmea\" hidden>"; while ((getline ln < xfmea) > 0) print ln; close(xfmea); print "</div>" }
+  if (xsec != "") { print "<div class=\"view\" data-view=\"secrets\" hidden>"; while ((getline ln < xsec) > 0) print ln; close(xsec); print "</div>" }
   emit_data()
   disc_block()
   printf "<footer>kdash %s &middot; author %s &middot; read-only namespace report &middot; %s / %s &middot; generated %s %s by %s &middot; audited session %s</footer>\n</main>\n</body>\n</html>\n", esc(ver), esc(author), esc(ctxn), esc(ns), tsx(nowe), tzs(), esc(auser), esc(asid)
@@ -5167,7 +5300,7 @@ SNAP_JS='
     document.querySelectorAll(".tab[data-tab]").forEach(function(a){a.classList.toggle("on",a.getAttribute("data-tab")===v);});
     try{history.replaceState(null,"","#"+v);}catch(e){}var g=document.getElementById("gq");if(g&&g.value)kdFind(g.value);renderAll();window.scrollTo(0,0);return false;};
   window.kdSev=function(s){document.querySelectorAll("#eventtable tbody tr").forEach(function(r){r.classList.toggle("r-hidden",!!s&&r.getAttribute("data-sev")!==s);});};
-  document.addEventListener("keydown",function(e){if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="SELECT"))return;var m={"0":"overview","1":"pods","2":"nodes","3":"workloads","4":"ip","5":"mem","6":"io","7":"history"};if(m[e.key]&&document.querySelector(".view"))kdTab(m[e.key]);if(e.key==="/"){var g=document.getElementById("gq");if(g){e.preventDefault();g.focus();}}});
+  document.addEventListener("keydown",function(e){if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="SELECT"))return;var m={"0":"overview","1":"pods","2":"nodes","3":"workloads","4":"ip","5":"mem","6":"io","7":"history","8":"fmea","9":"secrets"};if(m[e.key]&&document.querySelector(".view"))kdTab(m[e.key]);if(e.key==="/"){var g=document.getElementById("gq");if(g){e.preventDefault();g.focus();}}});
   document.addEventListener("DOMContentLoaded",function(){kdFmtTimes();build();var h=(location.hash||"").slice(1);if(h&&document.querySelector(".view[data-view=\""+h+"\"]"))kdTab(h);});
   var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderAll,150);});
 })();
@@ -5291,6 +5424,7 @@ namespace_report() {
   c="$COLOR"; COLOR=0
   for v in pods nodes workloads ip mem io; do RENDER_COLS=220 render_text_view "$v" > "$rawd/$v.txt"; done
   COLOR="$c"
+  report_extras "${sd:+session}"
   sha="$(cat "$rawd"/*.txt | { sha256sum 2>/dev/null || shasum -a 256; } | awk '{print $1}')"
   # memory trend for the MEMORY tab: the whole session when there is one
   hf="$HIST"; nf="$NHIST"
@@ -5318,6 +5452,7 @@ namespace_report() {
       -v nodestate="$NODES_STATE" -v topnstate="$TOPN_STATE" \
       -v ts="$(date '+%Y-%m-%d %H:%M:%S %z')" -v op="$(id -un 2>/dev/null || echo "${USER:-?}")" -v sha="${sha:--}" \
       -v author="$KDASH_AUTHOR" -v asid="$AUDIT_SID" -v auser="$AUDIT_USER@$AUDIT_HOST" -v nowe="$NOW_S" -v tzoff="$TZ_OFF" -v tzname="$TZ_NAME" -v fcf="$fcf" -v fcwin="$FC_WIN" \
+      -v xfmea="$([ -s "$TMPD/nsr_fmea.html" ] && printf '%s' "$TMPD/nsr_fmea.html")" -v xsec="$([ -s "$TMPD/nsr_secrets.html" ] && printf '%s' "$TMPD/nsr_secrets.html")" \
       -v notes="$(snapshot_notes | paste -sd"~" -)" "$SNAP_UI_AWK" < /dev/null > "$html.tmp" &&
     mv -f "$html.tmp" "$html" || { rm -f "$html.tmp"; return 1; }
   audit_file REPORT_HTML "$html"
@@ -5346,7 +5481,7 @@ session_report_main() {
   cp -f "$sd"/model/*.tsv "$MODEL/" || fail "cannot read $sd/model"
   SPEC_AT="$(awk -F'\t' '{ l = $1 } END { print l + 0 }' "$sd/ns.tsv")"
   printf 'kdash namespace report from session %s\n' "${sd##*/}"
-  namespace_report "$sd" | sed 's/^/  /'; [ "${PIPESTATUS[0]}" = 0 ] || exit 1
+  NSR_OFFLINE=1 namespace_report "$sd" | sed 's/^/  /'; [ "${PIPESTATUS[0]}" = 0 ] || exit 1
   printf '  index   %s/index.html\n' "$REPORT_DIR"
 }
 
@@ -5506,15 +5641,24 @@ make_report() {          # writes bundle + HTML, prints the paths
   cp -f "$html" "$dir/report.html"
   if [ "${TOOLKIT_REQUESTED:-0}" = 0 ]; then events_collect; health_collect; fi
   toolkit_export "$dir"
+  report_bundle_extras "$dir"
   ( cd "$dir" && find . -type f ! -name SHA256SUMS -print0 2>/dev/null | sort -z | xargs -0 sha256sum > SHA256SUMS 2>/dev/null ) || true
   REPORT_HTML="$html"; REPORT_BUNDLE="$dir"
   audit_file REPORT_BUNDLE "$html"
-  printf 'kdash report\n  html    %s\n  bundle  %s  (text views, tsv/, csv/, SHA256SUMS)\n' "$html" "$dir"
+  printf 'kdash report\n  html    %s\n  bundle  %s  (text views, fmea + secrets map, tsv/, csv/, SHA256SUMS)\n' "$html" "$dir"
 }
 
 #-- paint: clip to viewport, pin header/footer, horizontal scroll, no flicker ----
 # Lines are clipped to the terminal width (ANSI colour codes kept, UTF-8 aware) so
 # a wide table never wraps and breaks the frame; h / l scroll horizontally.
+# paint() runs CLIP_AWK once over header, body and footer: the body is cut to the
+# visible rows (b1..b2) and scrolled sideways (hoff); blank rows fill the gap before the footer
+CLIP_PRE_AWK='
+function kpad(   q) { if (!padded) { for (q = 0; q < npad; q++) printf "\033[K\n"; padded = 1 } }
+FNR == 1 { off = (FILENAME == bf) ? hoff : 0; if (FILENAME == ff) kpad() }
+FILENAME == bf && (FNR < b1 || FNR > b2) { next }
+END { kpad() }
+'
 CLIP_AWK='
 BEGIN { E = sprintf("%c", 27) }
 {
@@ -5541,13 +5685,19 @@ SCROLL=0; HSCROLL=0; FLASH=""; FLASH_UNTIL=0; FLASH_BG=""
 paint() {
   local rows cols hn fn bn budget max shown status pad="" ML="<" MR=">"
   [ "${BARCHR:-unicode}" = ascii ] || { ML=$'\342\200\271'; MR=$'\342\200\272'; }
-  rows="${KDASH_LINES:-$( (tput lines 2>/dev/null || echo "${LINES:-40}") )}"
-  cols="${KDASH_COLUMNS:-$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )}"
+  # window size: asked at most once a second (a key press must not start processes)
+  if [ -z "${PAINT_SZ:-}" ] || [ "${PAINT_SZ_AT:-}" != "$SECONDS" ]; then
+    PAINT_SZ="$(stty size </dev/tty 2>/dev/null)" || PAINT_SZ=""
+    case "$PAINT_SZ" in [0-9]*' '[0-9]*) ;; *) PAINT_SZ="$( (tput lines 2>/dev/null || echo "${LINES:-40}") ) $( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )" ;; esac
+    PAINT_SZ_AT="$SECONDS"
+  fi
+  rows="${KDASH_LINES:-${PAINT_SZ% *}}"; cols="${KDASH_COLUMNS:-${PAINT_SZ#* }}"
   if [ "$cols" -lt 60 ] || [ "$rows" -lt 12 ]; then
     printf '\033[H kdash: terminal %sx%s is too small\n need at least 60x12 (80x24 recommended)\n\n %s %s  ns %s\n q quits, resize to continue\033[J' "$cols" "$rows" "$(date +%H:%M:%S)" "${TZ_NAME:-}" "$NS"
     return
   fi
-  hn=$(wc -l < "$HDRF"); fn=$(wc -l < "$FTRF"); bn=$(wc -l < "$BODYF")
+  local -a _pl=()
+  mapfile -t _pl < "$HDRF"; hn=${#_pl[@]}; mapfile -t _pl < "$FTRF"; fn=${#_pl[@]}; mapfile -t _pl < "$BODYF"; bn=${#_pl[@]}; _pl=()
   budget=$(( rows - hn - fn - 1 ))
   [ "$budget" -lt 3 ] && budget=3
   max=$(( bn - budget )); [ "$max" -lt 0 ] && max=0
@@ -5555,9 +5705,9 @@ paint() {
   [ "$SCROLL" -lt 0 ] && SCROLL=0
   [ "$HSCROLL" -lt 0 ] && HSCROLL=0
   shown=$(( bn - SCROLL )); [ "$shown" -gt "$budget" ] && shown=$budget; [ "$shown" -lt 0 ] && shown=0
-  local i=$shown; while [ "$i" -lt "$budget" ]; do pad="${pad}"$'\033[K\n'; i=$((i+1)); done
   local now age nxt spin live bg="7" lt speck
-  now=$(date +%s); printf -v lt '%(%H:%M:%S)T' "$now" 2>/dev/null || lt="$(date +%H:%M:%S)"
+  printf -v now '%(%s)T' -1 2>/dev/null || now=$(date +%s)
+  printf -v lt '%(%H:%M:%S)T' "$now" 2>/dev/null || lt="$(date +%H:%M:%S)"
   if [ "${SPEC_AT:-0}" -gt 0 ]; then speck="$(( now - SPEC_AT ))"; else speck='-'; fi
   # live clock: data age, next refresh, spec age, fetch time; stale data turns the bar red,
   # a paused dashboard magenta
@@ -5566,7 +5716,7 @@ paint() {
   else spin=$'\342\227\217'; [ $(( now % 2 )) = 1 ] && spin=$'\342\227\213'; fi   # heartbeat: filled / hollow dot
   if [ "$PAUSED" = 1 ]; then live="PAUSED $(( now - PAUSED_AT ))s (P resumes)"; bg="45;97"
   else
-    live="$spin LIVE $lt  next $(printf '%ss' "$nxt")"
+    live="$spin LIVE $lt  next ${nxt}s"
     if [ "${TOP_OK:-0}" != 1 ]; then live="$live  metrics FAILING"; bg="41;97"
     elif [ "$age" -ge 0 ]; then live="$live  data ${age}s old"
       [ "$age" -gt $(( ${INTERVAL%.*} * 3 + 10 )) ] && bg="41;97"; fi
@@ -5575,7 +5725,8 @@ paint() {
   local view_seg keys seg k hs=""
   [ "$HSCROLL" -gt 0 ] && hs=" | col +$HSCROLL (h/l)"
   if [ "$bn" -gt "$budget" ]; then view_seg="$VIEW | rows $((SCROLL+1))-$((SCROLL+shown))/$bn$hs"; else view_seg="$VIEW$hs"; fi
-  keys=("? help" "1-9 view" "n ns" "s sort($SORT$([ "$SORT_REV" = 1 ] && echo ' rev'))" "/ filter" "P pause" "x html" "q/Q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme" "8/9 svc" "E events" "! why" "i inspect" ": commands" "S/U/D attach")
+  local srev=""; [ "$SORT_REV" != 1 ] || srev=" rev"
+  keys=("? help" "1-9 view" "n ns" "s sort($SORT$srev)" "/ filter" "P pause" "x html" "q/Q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme" "8/9 svc" "E events" "! why" "i inspect" ": commands" "S/U/D attach")
   if [ -n "$FLASH" ] && [ "$now" -le "$FLASH_UNTIL" ]; then
     status=" $FLASH | $live"; [ -n "$FLASH_BG" ] && bg="$FLASH_BG"
   else FLASH_BG=""; status=" $live"; fi
@@ -5587,15 +5738,16 @@ paint() {
   [ "$seg" != " |" ] && status="$status$seg"
   if [ "${#status}" -gt "$cols" ]; then status="${status:0:$(( cols - 1 ))}>"; else printf -v status '%-*s' "$cols" "$status"; fi
   [ "$COLOR" = 1 ] && status=$'\033['"${bg}m${status}"$'\033[0m'
-  {
-    printf '\033[H'
-    LC_ALL=C awk -v w="$cols" -v off=0 -v ml="$ML" -v mr="$MR" "$CLIP_AWK" "$HDRF"
-    sed -n "$((SCROLL+1)),$((SCROLL+budget))p" "$BODYF" | LC_ALL=C awk -v w="$cols" -v off="$HSCROLL" -v ml="$ML" -v mr="$MR" "$CLIP_AWK"
-    printf '%s' "$pad"
-    LC_ALL=C awk -v w="$cols" -v off=0 -v ml="$ML" -v mr="$MR" "$CLIP_AWK" "$FTRF"
-    printf '%s\033[K\033[J' "$status"
-  } > "$TMPD/frame"
-  cat "$TMPD/frame"
+  # one awk clips header, the visible slice of the body and the footer; ui_flush then
+  # sends the whole frame, or - after a scroll key or a clock tick - only what changed
+  local frame
+  frame=$(LC_ALL=C awk -v w="$cols" -v off=0 -v hoff="$HSCROLL" -v ml="$ML" -v mr="$MR" -v bf="$BODYF" -v ff="$FTRF" \
+      -v b1="$((SCROLL + 1))" -v b2="$((SCROLL + budget))" -v npad="$((budget - shown))" "$CLIP_PRE_AWK$CLIP_AWK" "$HDRF" "$BODYF" "$FTRF"; printf x)
+  frame=$'\033[H'"${frame%x}${status}"$'\033[K'
+  # every 10 s the whole frame is sent anyway, so anything else that wrote to the screen cannot stay
+  [ $((SECONDS - ${PAINT_FULL_AT:-0})) -lt 10 ] || DASH_FL=1
+  [ "${DASH_FL:-1}" != 1 ] || PAINT_FULL_AT=$SECONDS
+  ui_flush "$frame" "dash:$cols:$rows:${THEME:-}" "${DASH_FL:-1}"; DASH_FL=1
 }
 
 cycle_sort() {
@@ -5775,6 +5927,26 @@ H
                restarts = IOPS, name.
 H
     ;;
+    secrets) cat <<'H'
+ SECRETS MAP - certificates and keys in Secrets (read-only, only what your RBAC allows).
+   Never read   private keys, passwords, tokens: kubectl's template drops every value that is
+                not a PEM certificate before kdash receives it. Key names and sizes only.
+   CERTIFICATES one row per certificate: state, days left, expiry, subject, SAN, issuer, key
+                algorithm, whether its private key is beside it, who manages it, who uses it.
+   WHERE USED   workload, the Services in front of it, how it is consumed (volume, projected,
+                env, envFrom, imagePull, ingress TLS), the path in the container, the kubelet
+                path on the node, and what happens after a rotation: volumes are synced by the
+                kubelet, env and subPath consumers need a restart.
+   THIS HOST    on a node, kdash compares the kubelet's file with the Secret: in sync / STALE.
+   FINDINGS     expired / expiring, a Secret that does not exist but is needed, tls.key missing,
+                weak keys, pods still running the previous certificate, the same certificate in
+                several Secrets. Enter runs the read commands of a finding.
+   No access    without the right to read Secrets the references from pods and ingresses are
+                still mapped, and the certificate table says "not visible".
+   CLI          kdash --secrets [-o csv|tsv|json|html] [--fail-on high|medium] [--run N]
+                KDASH_SECRETS_KEYCHECK=1 also checks that tls.key belongs to tls.crt.
+H
+    ;;
     fmea|access) cat <<'H'
  FMEA - failure mode and effects analysis of everything you can read (read-only).
    Catalogue   about 50 generic failure modes per Kubernetes resource type (pods, workloads,
@@ -5785,7 +5957,7 @@ H
    O           occurrence: 10 = happening now; otherwise how often it failed in saved runs of
                the last 30 days (* = estimated, under 7 days of runs).
    D           detection: how early kdash sees it; +2 with partial access, 10 with no access.
-   AP          bundled action priority rules: HIGH / MEDIUM / LOW. RPN = S x O x D is
+   AP          action priority, AIAG-VDA 2019 table: HIGH / MEDIUM / LOW. RPN = S x O x D is
                shown but does not rank. A "no access" row is never counted as OK.
    Access      : access (or kdash --access): your user and groups (auth whoami), every
                permission the checks need (auth can-i) and a read-only Role to ask for.
@@ -5818,6 +5990,8 @@ H
               commands; Enter runs the read commands of a finding at once (also in 8 / 9 / ! / C)
    R          runbooks with this cluster's names filled in: etcd restore, certificate rotation,
               node NotReady, API unreachable, OIDC login ( [ and ] switch runbook )
+   Y          secrets map: certificates and keys in Secrets, expiry, who manages and uses them, the
+              path in the container and on the node, what needs a restart after a rotation
    M          FMEA: every failure mode of every object you can read, ranked by Action Priority,
               with next commands; only what your RBAC allows is checked (: access shows it)
    C          certificates and logins: expiry of the API, node, kubelet, webhook, cert-manager
@@ -5872,7 +6046,7 @@ ns_save_default() { # namespace ("" removes the entry)
   [ -z "$1" ] || map="${map:+$map }$CTX_NAME=$1"
   mkdir -p "$(dirname "$f")" 2>/dev/null || return 1
   { [ -r "$f" ] && grep -v '^[[:space:]]*KDASH_NS_MAP=' "$f"
-    printf 'KDASH_NS_MAP=%q\n' "$map"; } > "$f.tmp.$$" 2>/dev/null && mv -f "$f.tmp.$$" "$f" || { rm -f "$f.tmp.$$"; return 1; }
+    printf 'KDASH_NS_MAP="%s"\n' "$map"; } > "$f.tmp.$$" 2>/dev/null && mv -f "$f.tmp.$$" "$f" || { rm -f "$f.tmp.$$"; return 1; }
   KDASH_NS_MAP="$map"
   audit NS_DEFAULT "context=$CTX_NAME namespace=${1:-<removed>}"
   return 0
@@ -5989,8 +6163,9 @@ ns_pick() { # start|live -> PICKED (a namespace, or "*" for all); 1 = cancelled
       "d|$([ -n "$name" ] && printf 'open %s + always use it for %s' "$name" "$CTX_NAME" || printf 'open + always use it')|$ok_" \
       "x|$([ -n "$saved" ] && printf 'forget the default (%s)' "$saved" || printf 'forget the default (none saved)')|$([ -n "$saved" ] && echo 1 || echo 0)"
     buf+="$XFER_PANEL"
-    printf '%s\033[J' "$buf"
+    ui_flush "$buf" "nspick:$PK_COLS:$PK_ROWS" "${NSP_FL:-1}"; NSP_FL=1
     picker_key 300 || continue
+    if [ "$typing" = 1 ]; then NSP_FL=0; else case "$PK_KEY_IN" in j|k|g|G|b|' '|/|'<UP>'|'<DN>'|'<PGUP>'|'<PGDN>'|'<HOME>'|'<END>') NSP_FL=0 ;; esac; fi
     msg=""; act=""
     if [ "$typing" = 1 ]; then
       case "$PK_KEY_IN" in
@@ -6115,13 +6290,9 @@ doctor_run() {
         printf 'metrics\t{y}INFO\t%s; requests / limits and object health remain available\tcheck metrics-server and your metrics.k8s.io permissions\n' "$(doctor_classify "$err")" >> "$rows"
     fi
     # certificates and login: the quick check (kubeconfig, API endpoint, CA bundles)
-    # The certificates subsystem lives in a later module; a module is also sourced
-    # standalone by the tests, so run it only when it is present.
-    local cq="$TMPD/certd" cs="" cb=""
-    if declare -F certs_collect >/dev/null; then
-      ( TOOLKIT_DIR="$cq"; rm -rf "$cq"; mkdir -p "$cq"; certs_collect quick ) > /dev/null 2>&1
-      cs="$(cat "$cq/certs.summary" 2>/dev/null)"; cb="$(certs_badge "$cs")"
-    fi
+    local cq="$TMPD/certd" cs cb
+    ( TOOLKIT_DIR="$cq"; rm -rf "$cq"; mkdir -p "$cq"; certs_collect quick ) > /dev/null 2>&1
+    cs="$(cat "$cq/certs.summary" 2>/dev/null)"; cb="$(certs_badge "$cs")"
     if [ -z "$cs" ]; then printf 'certificates\t{y}INFO\tcould not be checked\tkdash --certs\n' >> "$rows"
     elif [ -z "$cb" ]; then printf 'certificates\t{g}PASS\tnothing expires within %s days (API endpoint, kubeconfig, login, CA bundles)\tkdash --certs also probes nodes, kubelets and ingress hosts\n' "$CERT_WARN_DAYS" >> "$rows"
     else
@@ -6263,7 +6434,7 @@ fetch_adopt() {
     if [ "$SPEC_OK" = 1 ]; then FETCH_SUCCESS=$(cat "$job/finished"); FETCH_FAILURES=0
       [ -z "${SPEC_REASON:-}" ] || { SPEC_REASON=""; declare -F flash >/dev/null && flash "API reads work again" 5; }
     else FETCH_FAILURES=$(( FETCH_FAILURES + 1 ))
-      if [ -s "$job/spec.err" ] && declare -F login_note_failure >/dev/null && login_note_failure "$job/spec.err"; then
+      if [ -s "$job/spec.err" ] && login_note_failure "$job/spec.err"; then
         SPEC_REASON="OIDC login needed - press L (the login URL is shown, kdash continues afterwards)"
       elif [ -s "$job/spec.err" ]; then
         SPEC_REASON="$(doctor_classify "$job/spec.err") - $(head -n 1 "$job/spec.err" | LC_ALL=C tr -d '\000-\037' | cut -c1-110)"
@@ -6289,7 +6460,7 @@ fetch_adopt() {
 
 fetch() {
     if [ "${INTERACTIVE:-0}" != 1 ]; then fetch_sync; return; fi
-    declare -F login_watch_jobs >/dev/null && login_watch_jobs
+    login_watch_jobs
     fetch_adopt
     [ -z "${FETCH_PID:-}" ] || return 0
     [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0      # no reads until the login is done (key L)
@@ -6303,7 +6474,7 @@ toolkit_tick() {
         if [ -d "$TMPD/toolkit-next" ]; then
             rm -rf "$TOOLKIT_DIR"; mv "$TMPD/toolkit-next" "$TOOLKIT_DIR"
         fi
-        if declare -F fmea_badge >/dev/null; then FMEA_BADGE="$(fmea_badge)"; fi
+        FMEA_BADGE="$(fmea_badge)"
         TOOLKIT_NEXT=$(( $(date +%s) + 30 ))
     fi
     [ "${TOOLKIT_REQUESTED:-0}" = 1 ] || return 0
@@ -6315,14 +6486,16 @@ toolkit_tick() {
         local next="$TMPD/toolkit-next"
         mkdir -p "$next"; cp -Rf "$TOOLKIT_DIR"/. "$next/" 2>/dev/null || true
         TOOLKIT_DIR="$next"
-        declare -F events_collect >/dev/null && events_collect
-        declare -F health_collect >/dev/null && health_collect
+        events_collect; health_collect
         # TLS handshakes are slower: only for the certificates view, at most every KDASH_CERT_TTL s
-        if [ "$VIEW" = certs ] && declare -F certs_collect >/dev/null && [ "$(certs_age)" -ge "${KDASH_CERT_TTL:-300}" ]; then certs_collect full; audit CERTS "$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"; fi
-        if [ "$VIEW" = runbook ] && declare -F rb_collect >/dev/null && [ "$(rb_age)" -ge 60 ]; then rb_collect; fi
-        if [ "$VIEW" = check ] && declare -F check_collect >/dev/null && [ "$(check_age)" -ge 25 ]; then check_collect; audit CHECK "view=check"; fi
-        if { [ "$VIEW" = fmea ] || [ "$VIEW" = access ]; } && declare -F fmea_collect >/dev/null && [ "$(fmea_age)" -ge "${KDASH_FMEA_TTL:-60}" ]; then
-            if declare -F check_collect >/dev/null && [ "$(check_age)" -ge 25 ]; then check_collect; fi
+        if [ "$VIEW" = certs ] && [ "$(certs_age)" -ge "${KDASH_CERT_TTL:-300}" ]; then certs_collect full; audit CERTS "$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"; fi
+        if [ "$VIEW" = runbook ] && [ "$(rb_age)" -ge 60 ]; then rb_collect; fi
+        if [ "$VIEW" = check ] && [ "$(check_age)" -ge 25 ]; then check_collect; audit CHECK "view=check"; fi
+        if [ "$VIEW" = secrets ] && [ "$(sm_age)" -ge "${KDASH_SECRETS_TTL:-60}" ]; then
+            sm_collect; audit SECRETS "view $(awk -F'\t' '{ printf "secrets=%s certificates=%s expired=%s critical=%s warning=%s access=%s", $1, $2, $3, $4, $5, $9 }' "$TOOLKIT_DIR/sm.summary" 2>/dev/null)"
+        fi
+        if { [ "$VIEW" = fmea ] || [ "$VIEW" = access ]; } && [ "$(fmea_age)" -ge "${KDASH_FMEA_TTL:-60}" ]; then
+            [ "$(check_age)" -lt 25 ] || check_collect
             fmea_collect view; audit FMEA "view=$VIEW $(awk -F'\t' '{ printf "high=%s medium=%s low=%s visible=%s/%s", $1, $2, $3, $4, $5 }' "$TOOLKIT_DIR/fmea.summary" 2>/dev/null)"
         fi
         TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}" doctor_run > "$TOOLKIT_DIR/doctor.txt"
@@ -6354,35 +6527,47 @@ toolkit_panel() {
     # read commands shown in this view, by finding number: Enter runs them (check_run_prompt)
     RB_CAPTURE="$TOOLKIT_DIR/run-$view.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="Enter runs the read commands of a finding now"
     case "$view" in
-        services) if declare -F health_render_services >/dev/null; then health_render_services; fi ;;
-        storage) if declare -F health_render_storage >/dev/null; then health_render_storage; fi ;;
-        events) if declare -F events_render >/dev/null; then events_render; fi ;;
-        explain) if declare -F explain_render >/dev/null; then explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}"; fi ;;
-        certs) if declare -F certs_render >/dev/null; then certs_render; fi ;;
-        runbook) if declare -F rb_render >/dev/null; then rb_render "${RB_TOPIC:-etcd-restore}"; fi ;;
-        check) if declare -F check_render >/dev/null; then check_render; fi ;;
-        fmea) if declare -F fmea_render >/dev/null; then fmea_render; fi ;;
-        access) if declare -F fmea_access_render >/dev/null; then fmea_access_render; fi ;;
+        services) health_render_services ;; storage) health_render_storage ;;
+        events) events_render ;; explain) explain_render "${NS/\(all namespaces\)/}" "${EXPLAIN_POD:-}" ;;
+        certs) certs_render ;;
+        runbook) rb_render "${RB_TOPIC:-etcd-restore}" ;;
+        check) check_render ;;
+        fmea) fmea_render ;;
+        access) fmea_access_render ;;
+        secrets) sm_render ;;
         doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
     esac | toolkit_clean | tk_colorize > "$BODYF"
     RB_CAPTURE=""; RB_RUN_HINT=""
     export -n TK_COLOR TK_COLS TK_GLYPH
     case "$view" in
+      secrets) printf 'Y secrets | Enter run checks | r re-read | C certs (endpoints, nodes) | M fmea | K check | j/k scroll | h/l pan (wide tables) | : commands | q quit\n' > "$FTRF" ;;
       fmea|access) printf 'M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
-      *) printf 'K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF" ;;
+      *) printf 'K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF" ;;
     esac
 }
 
 render() {
-    case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access) toolkit_panel "$VIEW" ;;
+    case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access|secrets) toolkit_panel "$VIEW" ;;
         *) render_core ;;
     esac
     local age=never status=not-collected
     [ "${SPEC_AT:-0}" = 0 ] || age="$(( $(date +%s) - SPEC_AT ))s"
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
-    printf 'Data pods=%s age=%s metrics=%s | K check now | i inspect | 8 services 9 storage E events ! explain C certs%s : commands\n' \
-        "$status" "$age" "$([ "$TOP_OK" = 1 ] && echo available || echo unavailable)" "${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+ M fmea ($FMEA_BADGE)}" >> "$HDRF"
+    # status strip: how fresh the data is (dot: green = fresh with metrics), then the shortcuts as chips
+    local sd="" sb="" sg="" sy="" sr="" sdot sv="|" smet=available
+    [ "$TOP_OK" = 1 ] || smet=unavailable
+    if [ "${COLOR:-1}" = 1 ]; then sd=$'\033[90m'; sb=$'\033[1m'; sg=$'\033[32m'; sy=$'\033[33m'; sr=$'\033[0m'; fi
+    [ "${BARCHR:-unicode}" = ascii ] && sdot="*" || { sdot=$'\342\227\217'; sv=$'\342\224\202'; }
+    if [ "$status" = fresh ] && [ "$TOP_OK" = 1 ]; then sdot="$sg$sdot$sr"; else sdot="$sy$sdot$sr"; fi
+    local strip hdrall
+    # the certificate and FMEA badges come first: they are findings, the rest are shortcuts
+    local sp=" ${sd}${sv}${sr} "
+    strip=" ${sb}DATA${sr} ${sdot} pods ${sb}${status}${sr} ${sd}${age} old${sr}  metrics ${sb}${smet}${sr}${sp}${sb}C${sr} certs${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+  ${sb}M${sr} fmea ($FMEA_BADGE)}"
+    strip+="${sp}${sb}K${sr} check now${sp}${sb}i${sr} inspect${sp}${sb}8${sr} services  ${sb}9${sr} storage  ${sb}E${sr} events  ${sb}!${sr} explain${sp}${sb}:${sr} commands"
+    hdrall="$(< "$HDRF")"
+    if [[ "$hdrall" == *$'\001DATASTRIP\001'* ]]; then printf '%s\n' "${hdrall/$'\001DATASTRIP\001'/$strip}" > "$HDRF"
+    else printf '%s\n' "$strip" >> "$HDRF"; fi
     [ "${LOGIN_NEEDED:-0}" != 1 ] || printf 'LOGIN NEEDED: the OIDC login for %s has expired - press L (kdash shows the login URL and continues afterwards)\n' "$CTX_NAME" >> "$HDRF"
     local source updated
     for source in nodes svc; do
@@ -6413,14 +6598,10 @@ toolkit_export() {
     local dir="$1" item
     [ -d "$dir" ] || return 0
     for item in services storage events explain; do
-        case "$item" in
-            services) if declare -F health_render_services >/dev/null; then health_render_services; fi ;;
-            storage) if declare -F health_render_storage >/dev/null; then health_render_storage; fi ;;
-            events) if declare -F events_render >/dev/null; then events_render; fi ;;
-            explain) if declare -F explain_render >/dev/null; then explain_render; fi ;;
-        esac | toolkit_clean > "$dir/$item.txt"
+        case "$item" in services) health_render_services ;; storage) health_render_storage ;;
+            events) events_render ;; explain) explain_render ;; esac | toolkit_clean > "$dir/$item.txt"
     done
-    [ ! -d "$TOOLKIT_DIR/certs" ] || { declare -F certs_render >/dev/null && certs_render | toolkit_clean > "$dir/certs.txt"; }
+    [ ! -d "$TOOLKIT_DIR/certs" ] || certs_render | toolkit_clean > "$dir/certs.txt"
     mkdir -p "$dir/diagnostics"
     cp -f "$TOOLKIT_DIR"/*.tsv "$TOOLKIT_DIR"/*.status "$dir/diagnostics/" 2>/dev/null || true
 }
@@ -6468,7 +6649,7 @@ END {
   if (sub_ != "") t = t K("90", "   " sub_)
   print ""; print t
   if (nr == 0) { print "  " K("90", empty != "" ? empty : "none"); exit }
-  for (i = 1; i < nc; i++) if (WD[i] > 56) WD[i] = 56
+  if (W > 0) for (i = 1; i < nc; i++) if (WD[i] > 56) WD[i] = 56     # no width given (a pipe, a file): nothing is cut
   # framed: │ c1 │ c2 │ ... │  -> 1 + sum(width + 3) characters
   if (W > 0) {
     tot = 1; for (i = 1; i <= nc; i++) tot += WD[i] + 3
@@ -6495,45 +6676,15 @@ END {
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
 '
 tk_table() { # title [subtitle] [empty-message] [one many] < TSV (header line first)
-  # Structured output keeps the table schema: one record per row, no borders and
-  # no colour markers. Header cells drop the width/align modifiers (> * ~).
-  if [ "${TK_FORMAT:-text}" != text ]; then
-    printf '# %s\n' "$1"
-    LC_ALL=C awk -F'\t' -v fmt="$TK_FORMAT" '
-      { out=""; for (i=1; i<=NF; i++) {
-          v=$i
-          if (NR==1) { sub(/^>/,"",v); sub(/[*~]$/,"",v) }
-          else sub(/^\{[rygbd]\}/,"",v)
-          if (fmt=="csv") { gsub(/"/,"\"\"",v); v="\"" v "\"" }
-          out=out (i>1 ? (fmt=="csv" ? "," : "\t") : "") v
-        } print out }
-    '
-    return
-  fi
   LC_ALL=C awk -v title="$1" -v sub_="${2:-}" -v empty="${3:-}" -v one="${4:-item}" -v many="${5:-items}" -v count="${TK_COUNT:-1}" "$TK_TABLE_AWK"
 }
 tk_by_severity() { LC_ALL=C awk -F'\t' '{ r = ($1 ~ /CRIT/) ? 1 : ($1 ~ /WARN/) ? 2 : 3; print r "\t" $0 }' | LC_ALL=C sort -t $'\t' -k1,1n -k3,3 | cut -f2-; }
 tk_colorize() { sed 's/~\[\([0-9;]*\)m/\x1b[\1m/g'; }
 tk_note() { # dim footnote line
-  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '  ~[90m%s~[0m\n' "$*"; else printf '  %s\n' "$*"; fi
 }
 tk_title() { # view title + subtitle, then a blank line
-  [ "${TK_FORMAT:-text}" = text ] || return 0
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1;7m %s ~[0m  ~[90m%s~[0m\n' "$1" "$2"; else printf '%s  -  %s\n' "$1" "$2"; fi
-}
-# One-shot toolkit renderers. TK_FORMAT must be exported before a renderer runs so
-# tk_table emits CSV/TSV instead of a boxed table (--once -o csv|tsv).
-toolkit_once() { # view [renderer arguments]
-    local view="$1" TK_FORMAT="${OUTFMT:-text}"
-    shift
-    export TK_FORMAT
-    case "$view" in
-        services) if declare -F health_render_services >/dev/null; then health_render_services "$@"; fi ;;
-        storage) if declare -F health_render_storage >/dev/null; then health_render_storage "$@"; fi ;;
-        events) events_render "$@" ;; explain) explain_render "$@" ;;
-        certs) if declare -F certs_render >/dev/null; then certs_render "$@"; fi ;;
-    esac
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
 TK_TIME_AWK='
@@ -7340,13 +7491,15 @@ inspector_size() {
 # a bare Esc still means "back".
 inspector_decode_escape() {
   local seq="" extra=""
-  IFS= read -rsn2 -t 0.05 seq </dev/tty || true
+  # byte by byte: a slow link may deliver ESC and the rest of an arrow key apart
+  IFS= read -rsn1 -t 0.15 seq </dev/tty || seq=""
+  case "$seq" in '['|O) IFS= read -rsn1 -t 0.15 extra </dev/tty || extra=""; seq="[$extra"; extra="" ;; esac
   case "$seq" in
     '[A') INSPECTOR_KEY=k ;; '[B') INSPECTOR_KEY=j ;;
     '[C') INSPECTOR_KEY='<RIGHT>' ;; '[D') INSPECTOR_KEY='<LEFT>' ;;
     '[H') INSPECTOR_KEY=g ;; '[F') INSPECTOR_KEY=G ;;
     '[5'|'[6'|'[1'|'[4')
-      IFS= read -rsn1 -t 0.05 extra </dev/tty || true
+      IFS= read -rsn1 -t 0.15 extra </dev/tty || true
       case "$seq$extra" in '[5~') INSPECTOR_KEY=b ;; '[6~') INSPECTOR_KEY=' ' ;; '[1~') INSPECTOR_KEY=g ;; '[4~') INSPECTOR_KEY=G ;; esac ;;
   esac
 }
@@ -7653,8 +7806,9 @@ inspector_container_picker() { # ns pod dir
         "q / Esc|back|1" "Q|quit kdash|1" "||0" "||0"
     fi
     buf+="$BX_PANEL"
-    printf '%s\033[J' "$buf"
+    ui_flush "$buf" "ctrpick:$PK_COLS:$PK_ROWS" "${CTP_FL:-1}"; CTP_FL=1
     picker_key 60 || continue
+    case "$PK_KEY_IN" in j|k|g|G|'<UP>'|'<DN>'|'<HOME>'|'<END>') CTP_FL=0 ;; esac
     msg=""
     # a digit picks that row; Enter / i the highlighted one
     case "$PK_KEY_IN" in [1-9]) i=$((PK_KEY_IN - 1)); [ "$i" -lt "$n" ] || continue; chosen=$i; PK_KEY_IN='<ENTER>' ;; esac
@@ -7741,11 +7895,26 @@ inspector_pane_title() { # pane -> title shown in the bar
 # The pod detail key rows: three groups (PANES, READ, MOVE) of whole "<key> label"
 # pairs; a group that does not fit the width continues on the next row -> IK_LINES
 inspector_keylines() {
+  local s_w=off s_j=off s_f=off
+  [ "${INSPECTOR_WRAP:-1}" != 1 ] || s_w=on; [ "${INSPECTOR_JSON:-0}" != 1 ] || s_j=on; [ "${follow:-0}" != 1 ] || s_f=on
   IK_LINES=()
-  _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download \
-    X "interactive $([ "${KDASH_ALLOW_INTERACTIVE:-0}" = 1 ] && printf on || printf off)"
-  _ik_group READ W "wrap $([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo on || echo off)" J "JSON $([ "${INSPECTOR_JSON:-0}" = 1 ] && echo on || echo off)" \
-    "+" "4x lines" A "all lines" "left/right" pan f "follow $([ "${follow:-0}" = 1 ] && printf on || printf off)" L "level ${INSPECTOR_LEVEL_NAME:-all}" w export
+  # wide, tall screens: one framed panel, seven aligned columns; otherwise the wrapped rows
+  if [ "${INSPECTOR_COLS:-100}" -ge 128 ] && [ "${INSPECTOR_ROWS:-24}" -ge 30 ] && [ "${KDASH_KEYS:-panel}" != compact ]; then
+    local ln
+    bx_panel "$INSPECTOR_COLS" 7 "PANES" "LOGS" "ATTACH" "READ" "MOVE" "FIND" "LEAVE" \
+      "s|summary|1" "d|describe|1" "e|events|1" "!|why|1" \
+      "l|logs|1" "p|prev logs|1" "c|container|1" "f|follow $s_f|1" \
+      "S|shell|1" "U|upload|1" "D|download|1" "w|export|1" \
+      "W|wrap $s_w|1" "J|JSON $s_j|1" "L|level ${INSPECTOR_LEVEL_NAME:-all}|1" "+|4x lines|1" \
+      "j/k|scroll|1" "g/G|top / end|1" "left/right|pan|1" "A|all lines|1" \
+      "/|find|1" "&|only matches|1" "n/N|next / prev|1" "r|reload|1" \
+      "?|keys|1" "q|back|1" "Q|quit|1" "||1"
+    while IFS= read -r ln; do IK_LINES+=("${ln%$'\033[K'}"); done <<< "$BX_PANEL"
+    return 0
+  fi
+  _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download
+  _ik_group READ W "wrap $s_w" J "JSON $s_j" \
+    "+" "4x lines" A "all lines" "left/right" pan f "follow $s_f" L "level ${INSPECTOR_LEVEL_NAME:-all}" w export
   _ik_group MOVE / find "&" "only matches" "n/N" "next / prev" "j/k" scroll g/G "top / end" r reload "?" keys q back Q quit
 }
 _ik_group() { # title pairs...
@@ -7765,6 +7934,9 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   local offset=0 count=0 total=0 matches=0 msg="" rows pid rc keep_offset=0 follow=0 atbottom=0 vcols=0 hoff=0
   INSPECTOR_JUMPED=""
   local container file="" target=0 idx=0 cline="" pinfo=""
+  # speed: one frame per key through ui_flush (only changed lines are sent, no screen clear),
+  # and what a scroll key cannot change is not looked up again
+  local ifl=1 ptitle="" ptitle_for="" crow="" crow_key="" rgen=0 frame btxt nb t_
   container="$(inspect_container_for "$ns" "$pod")"     # never a container of another pod
   local INSPECTOR_REFRESH_EVENTS=0
   INSPECTOR_PANE=""
@@ -7797,16 +7969,13 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       ) & pid=$!
       while kill -0 "$pid" 2>/dev/null; do
         INSPECTOR_KEY=""; IFS= read -rsn1 -t 0.1 INSPECTOR_KEY </dev/tty || true
-        case "$INSPECTOR_KEY" in
-          Q) kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; kdash_quit "pod detail loading" ;;
-          X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
-          q|b|$'\033')
+        case "$INSPECTOR_KEY" in q|b|$'\033')
           kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
           return 0 ;;
         esac
       done
       wait "$pid" 2>/dev/null || true
-      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; viewdirty=1
+      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; viewdirty=1; ifl=1; rgen=$((rgen + 1))
       [ "$pane" != summary ] || rows_stale=1      # the summary pane shows per-container state
       if [ -z "$container" ]; then container="$(awk -F '\t' 'NF >= 2 {print $2; exit}' "$d/rows" 2>/dev/null)"; fi
       [ "$keep_offset" = 1 ] || offset=0
@@ -7830,14 +7999,16 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     picker_colors
     # title bar, pod, container, then a rule that says where in the pane we are
     local c_n="" c_rd="" c_rs="" c_st="" c_lx="" c_im="" stc hdr
-    IFS=$'\t' read -r _ c_n c_rd c_rs c_st c_lx c_im < <(awk -F '\t' -v want="$container" '$2 == want { print; exit }' "$d/rows" 2>/dev/null) || true
-    ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $(inspector_pane_title "$pane") "
+    if [ "$crow_key" != "$container:$rgen" ]; then
+      crow="$(awk -F '\t' -v want="$container" '$2 == want { print; exit }' "$d/rows" 2>/dev/null)"; crow_key="$container:$rgen"
+    fi
+    IFS=$'\t' read -r _ c_n c_rd c_rs c_st c_lx c_im <<< "$crow" || true
+    [ "$ptitle_for" = "$pane" ] || { ptitle="$(inspector_pane_title "$pane")"; ptitle_for="$pane"; }
+    ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $ptitle "
     hdr="${UI_BAR}"$'\033[K\n'
     bx_init
-    local IW=$((INSPECTOR_COLS - 1)) rinfo="READ-ONLY"
-    interactive_enabled && rinfo="INTERACTIVE"
-    rinfo+=" / audited"; [ "$follow" = 1 ] && rinfo+=" / follow ${INSPECTOR_FOLLOW_SECS:-5}s"
-    bx_top "$IW" "$(inspector_pane_title "$pane")" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
+    local IW=$((INSPECTOR_COLS - 1)) rinfo="audited"; [ "$follow" = 1 ] && rinfo="follow ${INSPECTOR_FOLLOW_SECS:-5}s"
+    bx_top "$IW" "$ptitle" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     bx_row "$IW" "${PC_D}POD      ${PC_R}  ${PC_B}${pod}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     if [ -n "$c_n" ]; then
       case "$c_st" in Running) stc="$PC_OK" ;; Completed) stc="$PC_D" ;; *CrashLoop*|*Error*|*OOMKilled*|*ImagePull*|*ErrImage*) stc="$PC_BAD" ;; *) stc="$PC_WARN" ;; esac
@@ -7852,7 +8023,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     # what was read (log panes: lines, size, complete or not); wrap and JSON state is on the READ key line
     [ "${INSPECTOR_VIEW_LOGICAL:-$total}" = "$total" ] || pinfo="$pinfo ${PC_MID} ${INSPECTOR_VIEW_LOGICAL} shown"
     case "$pane" in
-      current|previous) if [ -s "$body.info" ]; then pinfo="$pinfo ${PC_MID} $(cat "$body.info")"; else pinfo="$pinfo ${PC_MID} $total lines"; fi ;;
+      current|previous) if [ -s "$body.info" ]; then pinfo="$pinfo ${PC_MID} $(< "$body.info")"; else pinfo="$pinfo ${PC_MID} $total lines"; fi ;;
       *) pinfo="$pinfo ${PC_MID} $total lines" ;;
     esac
     [ -z "${INSPECTOR_SEARCH:-}" ] || {
@@ -7862,18 +8033,17 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     case "${INSPECTOR_LEVEL_NAME:-all}" in all) ;; *) pinfo="$pinfo ${PC_MID} level $INSPECTOR_LEVEL_NAME" ;; esac
     ui_vlen "$pinfo"; [ "$UI_VL" -le $((INSPECTOR_COLS - 12)) ] || { pinfo="${pinfo:0:$((INSPECTOR_COLS - 14))}~"; }
     bx_bot "$IW" "${PC_B}${pinfo}${PC_R}" ""
-    printf '\033[H\033[2J%s%s\033[K\n' "$hdr" "$BX_LINE"
-    inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo 0 || echo "$hoff")"
-    # k9s-style hints: panes, reading tools, moving / leaving (wrapped on narrow screens)
-    inspector_keylines
-    local kr=$((INSPECTOR_ROWS - ${#IK_LINES[@]})) kl   # the message row stays last
-    printf '\033[%s;1H\033[J' "$kr"
-    for kl in "${IK_LINES[@]}"; do printf '\033[%s;1H%s\033[K' "$kr" "$kl"; kr=$((kr + 1)); done
-    if [ -n "$msg" ]; then
-      printf '\033[%s;1H\033[1;33m %s\033[0m\033[K' "$INSPECTOR_ROWS" "${msg:0:$((INSPECTOR_COLS - 2))}"
-    else
-      printf '\033[%s;1H\033[K' "$INSPECTOR_ROWS"
-    fi
+    frame=$'\033[H'"${hdr}${BX_LINE}"$'\033[K\n'
+    if [ "${INSPECTOR_WRAP:-1}" = 1 ]; then t_=0; else t_=$hoff; fi
+    btxt="$(inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$t_"; printf x)"; btxt="${btxt%x}"
+    t_="${btxt//[!$'\n']/}"; nb=${#t_}
+    frame+="${btxt//$'\n'/$'\033[K\n'}"
+    for ((; nb < rows; nb++)); do frame+=$'\033[K\n'; done
+    # k9s-style hints: panes, reading tools, moving / leaving (framed panel, or wrapped rows on small screens)
+    local kl
+    for kl in "${IK_LINES[@]}"; do frame+="${kl}"$'\033[K\n'; done
+    if [ -n "$msg" ]; then frame+=$'\033[1;33m'" ${msg:0:$((INSPECTOR_COLS - 2))}"$'\033[0m\033[K'; else frame+=$'\033[K'; fi
+    ui_flush "$frame" "detail:$INSPECTOR_COLS:$INSPECTOR_ROWS" "$ifl"; ifl=1
     if [ "$follow" = 1 ] && { [ "$pane" = current ] || [ "$pane" = previous ]; }; then
       [ "$offset" -lt "$((count > rows ? count - rows : 0))" ] && atbottom=0 || atbottom=1
       if ! inspector_key "${INSPECTOR_FOLLOW_SECS:-5}"; then
@@ -7885,12 +8055,12 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       fi
     elif inspector_key; then :; else return 0; fi
     msg=""
+    case "$INSPECTOR_KEY" in j|k|' '|b|g|G|n|N|L|W|J|'<LEFT>'|'<RIGHT>') ifl=0 ;; esac   # the screen stays ours: send the difference
     case "$INSPECTOR_KEY" in
       q|$'\033') return 0 ;;
       Q) kdash_quit inspector ;;
       s) pane=summary ;; d) pane=describe ;; e) pane=events ;; '!') pane=explain ;; l) pane=current ;; p) pane=previous ;;
       # Interactive attachments (opt-in): the pod and container you are looking at.
-      X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
       S|U|D)
          if ! interactive_enabled; then msg="$(interactive_hint)"
          else
@@ -8022,15 +8192,12 @@ picker_colors() {
     PC_R=""; PC_B=""; PC_D=""; PC_INV=""; PC_OK=""; PC_BAD=""; PC_WARN=""; PC_INFO=""; PC_TITLE=""; PC_ACT=""
   fi
   if [ "${BARCHR:-unicode}" = ascii ]; then PC_PTR=">"; PC_UP="^"; PC_DN="v"; PC_CARET="_"; PC_SEP="|"; PC_HR="-"; PC_DOT="*"; PC_MID="-"
-  else PC_PTR=$'\342\226\266'; PC_UP=$'\342\206\221'; PC_DN=$'\342\206\223'; PC_CARET=$'\342\226\217'
+  else PC_PTR=$'\342\226\272'; PC_UP=$'\342\206\221'; PC_DN=$'\342\206\223'; PC_CARET=$'\342\226\214'
        PC_SEP=$'\342\224\202'; PC_HR=$'\342\224\200'; PC_DOT=$'\342\227\217'; PC_MID=$'\302\267'; fi
   # header row of a table: bold + underlined (reads on light and dark backgrounds)
   if [ "${COLOR:-1}" = 1 ]; then PC_HDR=$'\033[1;4m'; else PC_HDR=""; fi
   # a glyph is 1 character in a UTF-8 locale but 3 bytes in the C locale
-  # Detect the locale independently of the chosen border set: file names and
-  # log text may contain UTF-8 even when --ascii chooses plain border glyphs.
-  local utf8_probe=$'\342\224\202'
-  UI_BYTES=0; [ "${#utf8_probe}" -le 1 ] || UI_BYTES=1
+  UI_BYTES=0; [ "${#PC_SEP}" -le 1 ] || UI_BYTES=1
 }
 
 # ---- shared screen chrome: title bar, rules and key hints look the same on every
@@ -8042,6 +8209,47 @@ ui_vlen() { # text -> UI_VL (visible characters; no escape codes in the text)
 }
 # full-width reverse title bar: left text, an optional action chip, right text;
 # the right part is dropped, then the left cut, when the window is too narrow
+# Write one frame. A frame is a buffer that starts at the top-left corner, one screen
+# line per text line. When the previous frame of the same screen (same key) is still
+# what the terminal shows, only the lines that differ are sent - a cursor move repaints
+# two rows instead of the whole screen, which is what makes scrolling quick over SSH.
+# full=1 (or another key, or KDASH_REDRAW=full) sends everything.
+UI_FL_KEY=""; UI_FL_PREV=()
+ui_flush() { # buffer key [full]
+  local key="$2" i n pn out=""
+  local -a L
+  mapfile -t L <<< "$1"
+  n=${#L[@]}; [ "$n" = 0 ] || [ -n "${L[n-1]}" ] || { unset 'L[n-1]'; n=$((n - 1)); }
+  pn=${#UI_FL_PREV[@]}
+  if [ "${3:-0}" = 1 ] || [ "$key" != "$UI_FL_KEY" ] || [ "${KDASH_REDRAW:-diff}" = full ] || [ "$pn" = 0 ]; then
+    printf '%s\033[J' "$1"
+  else
+    # a list that moved by one row: let the terminal scroll that band, then only the
+    # rows that really differ (the cursor row, the new row) are sent
+    if [ "${KDASH_REDRAW:-diff}" != noscroll ] && [ "$n" = "$pn" ]; then
+      local a=-1 b=-1 up=0 dn=0
+      for ((i = 1; i < n - 1; i++)); do
+        [ "${L[i]}" != "${UI_FL_PREV[i]}" ] || continue
+        [ "${L[i]}" != "${UI_FL_PREV[i+1]}" ] || up=$((up + 1)); [ "${L[i]}" != "${UI_FL_PREV[i-1]}" ] || dn=$((dn + 1))
+      done
+      if [ "$up" -ge 6 ] && [ "$up" -gt "$dn" ]; then
+        for ((i = 1; i < n - 1; i++)); do [ "${L[i]}" = "${UI_FL_PREV[i]}" ] || [ "${L[i]}" != "${UI_FL_PREV[i+1]}" ] || { [ "$a" -ge 0 ] || a=$i; b=$i; }; done
+        out+=$'\033['"$((a + 1));$((b + 2))"$'r\033['"$((b + 2))"$';1H\n\033[r'
+        for ((i = a; i <= b; i++)); do UI_FL_PREV[i]="${UI_FL_PREV[i+1]}"; done; UI_FL_PREV[b+1]=""
+      elif [ "$dn" -ge 6 ] && [ "$dn" -gt "$up" ]; then
+        for ((i = 1; i < n - 1; i++)); do [ "${L[i]}" = "${UI_FL_PREV[i]}" ] || [ "${L[i]}" != "${UI_FL_PREV[i-1]}" ] || { [ "$a" -ge 0 ] || a=$i; b=$i; }; done
+        out+=$'\033['"$((a));$((b + 1))"$'r\033['"$((a))"$';1H\033M\033[r'
+        for ((i = b; i >= a; i--)); do UI_FL_PREV[i]="${UI_FL_PREV[i-1]}"; done; UI_FL_PREV[a-1]=""
+      fi
+    fi
+    for ((i = 0; i < n; i++)); do
+      [ "${L[i]}" = "${UI_FL_PREV[i]-}" ] || out+=$'\033['"$((i + 1))"';1H'"${L[i]#$'\033[H'}"
+    done
+    out+=$'\033['"$((n + 1))"';1H'; [ "$n" -ge "$pn" ] || out+=$'\033[J'
+    printf '%s' "$out"
+  fi
+  UI_FL_KEY="$key"; UI_FL_PREV=("${L[@]}")
+}
 ui_bar() { # width left right [chip] -> UI_BAR
   local w="$1" l="$2" r="$3" chip="${4:-}" lv rv cv gap sp
   ui_vlen "$l"; lv=$UI_VL; ui_vlen "$r"; rv=$UI_VL; cv=0
@@ -8101,7 +8309,7 @@ ui_keys() { # width pairs... -> UI_KEYS
 # Cut a coloured line to the visible width (escape sequences are copied, not counted).
 # A line that wraps would scroll the whole picker and push its title off the screen.
 pk_fit() { # string width -> PK_FIT
-  local str="$1" w="$2" out="" i=0 n=${#1} vis=0 ch j step
+  local str="$1" w="$2" out="" i=0 n=${#1} vis=0 ch j
   if [ "$n" -le "$w" ]; then PK_FIT="$str"; return 0; fi
   while [ "$i" -lt "$n" ]; do
     ch="${str:i:1}"
@@ -8110,20 +8318,18 @@ pk_fit() { # string width -> PK_FIT
       out+="${str:i:$((j - i + 1))}"; i=$((j + 1)); continue
     fi
     [ "$vis" -lt "$w" ] || break
-    # In the C locale Bash slices bytes. Keep each UTF-8 glyph intact and count
-    # its leading byte once, so clipping a framed row cannot split its border.
-    step=1
-    if [ "${UI_BYTES:-0}" = 1 ]; then
-      case "$ch" in [$'\302'-$'\337']) step=2 ;; [$'\340'-$'\357']) step=3 ;; [$'\360'-$'\364']) step=4 ;; esac
-    fi
-    out+="${str:i:step}"; vis=$((vis + 1)); i=$((i + step))
+    out+="$ch"; vis=$((vis + 1)); i=$((i + 1))
   done
   PK_FIT="$out${PC_R:-}"
 }
 
+PK_SZ_AT=""; PK_SZ=""
 picker_size() {
+  # asked on every key press: the terminal is queried at most once a second (and at
+  # once after a resize signal), so moving the cursor starts no process
   local s
-  s="$(stty size </dev/tty 2>/dev/null)" || s=""
+  if [ -n "$PK_SZ" ] && [ "$PK_SZ_AT" = "$SECONDS" ] && [ "${PK_RESIZED:-0}" != 1 ]; then s="$PK_SZ"
+  else s="$(stty size </dev/tty 2>/dev/null)" || s=""; PK_SZ="$s"; PK_SZ_AT="$SECONDS"; fi
   PK_ROWS="${KDASH_LINES:-${s% *}}"; PK_COLS="${KDASH_COLUMNS:-${s#* }}"
   case "$PK_ROWS" in ''|*[!0-9]*) PK_ROWS=24 ;; esac
   case "$PK_COLS" in ''|*[!0-9]*) PK_COLS=100 ;; esac
@@ -8204,11 +8410,9 @@ picker_draw() {
   case "${KDASH_ATTACH_ACTION:-}" in
     S) banner=" ${PC_PTR} Enter opens a SHELL " ;; U) banner=" ${PC_PTR} Enter UPLOADS into the pod " ;; D) banner=" ${PC_PTR} Enter DOWNLOADS from the pod " ;; *) banner="" ;;
   esac
+  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
   if interactive_enabled; then mode="INTERACTIVE"; else mode="READ-ONLY"; fi
-  # Keep the permission state in the left title: optional right-hand chips are
-  # hidden on narrow terminals, which must never hide whether writes are enabled.
-  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} ${mode} ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
-  right=" ${#PK_V[@]} of ${#PK_KEY[@]} pods "
+  right=" ${mode} ${PC_SEP} ${#PK_V[@]} of ${#PK_KEY[@]} pods "
   ui_bar "$PK_COLS" "$title" "$right" "$banner"
   buf=$'\033[H'"${UI_BAR}"$'\033[K\n'
   # status counts, worst first; a status that does not fit is left out whole
@@ -8334,7 +8538,7 @@ picker_draw() {
       "q|back|1" "Q|quit kdash|1" "r|refresh now|1" "?|all keys|1"
   fi
   buf+="$BX_PANEL"
-  printf '%s\033[J' "$buf"
+  ui_flush "$buf" "podpick:$PK_COLS:$PK_ROWS" "${PK_FL:-1}"; PK_FL=1
 }
 
 # One key; arrows and page keys become tokens. Returns 1 on timeout (live refresh).
@@ -8343,12 +8547,13 @@ picker_key() { # timeout
   PK_KEY_IN=""
   IFS= read -rsn1 -t "$1" PK_KEY_IN </dev/tty || { PK_KEY_IN=""; return 1; }
   if [ "$PK_KEY_IN" = $'\033' ]; then
-    IFS= read -rsn2 -t 0.03 seq </dev/tty || true
+    IFS= read -rsn1 -t 0.15 seq </dev/tty || seq=""
+    case "$seq" in '['|O) IFS= read -rsn1 -t 0.15 extra </dev/tty || extra=""; seq+="$extra"; extra="" ;; esac
     case "$seq" in
       '[A'|'OA') PK_KEY_IN='<UP>' ;; '[B'|'OB') PK_KEY_IN='<DN>' ;; '[H'|'OH') PK_KEY_IN='<HOME>' ;; '[F'|'OF') PK_KEY_IN='<END>' ;;
       '[C'|'OC') PK_KEY_IN='<RIGHT>' ;; '[D'|'OD') PK_KEY_IN='<LEFT>' ;;
       '[5'|'[6'|'[1'|'[4'|'[7'|'[8')
-        IFS= read -rsn1 -t 0.03 extra </dev/tty || true
+        IFS= read -rsn1 -t 0.15 extra </dev/tty || true
         case "$seq$extra" in '[5~') PK_KEY_IN='<PGUP>' ;; '[6~') PK_KEY_IN='<PGDN>' ;; '[1~'|'[7~') PK_KEY_IN='<HOME>' ;; '[4~'|'[8~') PK_KEY_IN='<END>' ;; esac ;;
       '') PK_KEY_IN='<ESC>' ;;
       *) PK_KEY_IN='<ESC>' ;;
@@ -8459,9 +8664,11 @@ inspector_open() { # optional explicit ns/pod; otherwise the pod picker
         ! login_auto_maybe || { PK_RESIZED=1; continue; }
       fi
       [ -z "$PK_NUM" ] || [ $((SECONDS - PK_NUM_AT)) -lt 2 ] || PK_NUM=""
-      continue
+      PK_FL=0; continue
     fi
     k="$PK_KEY_IN"; PK_MSG=""
+    # keys that only move, sort or filter leave the screen ours: the next frame sends the difference
+    if [ "$PK_TYPING" = 1 ]; then PK_FL=0; else case "$k" in j|k|g|G|b|' '|/|'<UP>'|'<DN>'|'<PGUP>'|'<PGDN>'|'<HOME>'|'<END>'|'<LEFT>'|'<RIGHT>'|[0-9]|u|s) PK_FL=0 ;; esac; fi
     if [ "$PK_TYPING" = 1 ]; then            # live filter input
       case "$k" in
         '<ENTER>') PK_TYPING=0 ;;
@@ -8584,7 +8791,7 @@ inspector_filter_prompt() {
 inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
-  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n secrets                 Certificates and keys in Secrets: expiry, users, paths (also Y)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
   IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
   case "$command" in *$'\e'*) return 0 ;; esac
   case "$command" in
@@ -8596,6 +8803,7 @@ inspector_palette() {
       KDASH_ATTACH_ACTION=S; inspector_open; KDASH_ATTACH_ACTION="" ;;
     pods|nodes|workloads|ip|mem|io|alerts) VIEW="$command"; SCROLL=0; HSCROLL=0 ;;
     services|storage|events|explain|doctor|certs|runbook|check) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    secrets|secret|Y|secret-map|tls) VIEW=secrets; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(sm_age)" -lt 60 ] || TOOLKIT_NEXT=0; audit SECRETS_VIEW "from=palette" ;;
     fmea|M|access|rbac) VIEW="$(norm_view "$command")"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(fmea_age)" -lt 60 ] || TOOLKIT_NEXT=0; audit FMEA_VIEW "view=$VIEW from=palette" ;;
     runbook\ *) RB_TOPIC="${command#runbook }"; VIEW=runbook; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     help|'?') if declare -F show_help >/dev/null; then show_help; else printf '\n Use ? on the dashboard for help.\n'; fi ;;
@@ -8631,62 +8839,22 @@ interactive_hint() {
 # The kubectl guard reads the exported KDASH_ALLOW_INTERACTIVE on every call, so the
 # change applies at once. Both directions are audited.
 interactive_toggle() {
-    local ans="" key="" cols old_int interrupted=0 confirmed=0 read_rc
+    local ans="" rows
     if interactive_enabled; then
         KDASH_ALLOW_INTERACTIVE=0; export KDASH_ALLOW_INTERACTIVE
         declare -F audit >/dev/null && audit INTERACTIVE_OFF "by key X"
         INTERACTIVE_MSG="interactive mode OFF - kdash is read-only again"
         return 0
     fi
-    if [ ! -t 0 ] || [ ! -t 1 ]; then
-        INTERACTIVE_MSG="interactive mode stays off - confirmation requires a terminal"
-        declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X reason=no-terminal"
-        return 0
-    fi
-    old_int="$(trap -p INT)"
-    trap 'interrupted=1' INT
-    cols="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 80)}"
-    case "$cols" in ''|*[!0-9]*) cols=80 ;; esac
-    [ "$cols" -ge 24 ] || cols=24
-    # A separate modal fits narrow screens and never writes beyond the last row.
-    printf '\033[r\033[H\033[2J\033[?25h Turn on interactive mode?\n\n'
-    printf '%s\n' 'S shell / U upload / D download run in YOUR name and are audited writes.' \
-        'This enables interactive actions for this kdash session only.' | fold -s -w "$((cols - 2))"
-    printf '\n [y/N] Enter confirms; Esc, q or Ctrl-C cancels.\n > '
-    while [ "$interrupted" = 0 ]; do
-        key=""
-        if IFS= read -rsn1 -t 0.2 key </dev/tty; then :
-        else
-            read_rc=$?
-            # A signal can arrive between the loop condition and read. A short
-            # timeout guarantees cancellation is observed without another key.
-            [ "$read_rc" -gt 128 ] && [ "$interrupted" = 0 ] && continue
-            break
-        fi
-        [ "$interrupted" = 0 ] || break
-        case "$key" in
-            ''|$'\r') confirmed=1; break ;;
-            $'\033'|$'\003'|$'\004'|q|Q) break ;;
-            $'\177'|$'\b') [ -z "$ans" ] || { ans="${ans%?}"; printf '\b \b'; } ;;
-            $'\025') while [ -n "$ans" ]; do ans="${ans%?}"; printf '\b \b'; done ;;
-            *) if [[ "$key" == [[:print:]] ]] && [ "${#ans}" -lt 32 ]; then ans+="$key"; printf '%s' "$key"; fi ;;
-        esac
-    done
-    # Modal input must not become dashboard actions (CRLF, an Escape sequence,
-    # or the remainder of a pasted answer). The bounded drain never waits on a
-    # new line and leaves ordinary keys typed after the redraw to the caller.
-    local discard i
-    for ((i = 0; i < 32; i++)); do
-        IFS= read -rsn1 -t 0.01 discard </dev/tty || break
-    done
-    if [ -n "$old_int" ]; then eval "$old_int"; else trap - INT; fi
-    printf '\033[?25l\033[H\033[2J'
-    case "$confirmed:$interrupted:${ans,,}" in
-        1:0:y|1:0:yes) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
+    rows="${KDASH_LINES:-$(tput lines 2>/dev/null || echo 24)}"
+    printf '\033[%s;1H\033[K\033[?25h\033[1;97;41m Turn on interactive mode? S shell / U upload / D download run in YOUR name and are audited writes. [y/N] \033[0m ' "$rows"
+    IFS= read -rsn1 ans </dev/tty || ans=""
+    printf '\033[?25l'
+    case "$ans" in
+        y|Y) KDASH_ALLOW_INTERACTIVE=1; export KDASH_ALLOW_INTERACTIVE
              declare -F audit >/dev/null && audit INTERACTIVE_ON "by key X"
              INTERACTIVE_MSG="interactive mode ON - S shell, U upload, D download (X turns it off)" ;;
-        *)   declare -F audit >/dev/null && audit INTERACTIVE_DECLINED "by key X"
-             INTERACTIVE_MSG="interactive mode stays off" ;;
+        *)   INTERACTIVE_MSG="interactive mode stays off" ;;
     esac
     return 0
 }
@@ -8790,9 +8958,9 @@ exec sh -i
 # bash code run by PROMPT_COMMAND inside the container (passed as an argument, never
 # written to a file). The first run defines the drawing functions, kdquit / kdswitch,
 # a clear() and Ctrl-L that keep the header, then clears the screen. The header is a
-# 5-row panel: a title bar (reverse video), POD / CONTAINER / NODE rows with the
-# values in one aligned column and the live state right of a divider, and a rule
-# carrying the OS and shell. Glyph widths are measured with __kd_vlen, so alignment
+# 6-row panel: a title bar (reverse video) and a frame of up to three cards - POD
+# (pod, container, node), STATE and RESOURCES - whose bottom border carries the OS and
+# shell. A narrow window drops RESOURCES, then STATE; values are cut with ~, never wrapped. Glyph widths are measured with __kd_vlen, so alignment
 # holds in UTF-8 and in POSIX-locale containers (where bash counts bytes).
 INTERACTIVE_HDR_CODE='
 if ! declare -F __kd_hdr >/dev/null 2>&1; then
@@ -8801,6 +8969,8 @@ if ! declare -F __kd_hdr >/dev/null 2>&1; then
   else KD_B=; KD_G=; KD_E=; KD_V=; KD_X=; fi
   if [ "$KDASH_H_GLYPH" = ascii ]; then KD_RULE="-"; KD_SEP="|"; KD_DOT="*"; KD_MID="-"
   else KD_RULE="─"; KD_SEP="│"; KD_DOT="●"; KD_MID="·"; fi
+  if [ "$KDASH_H_GLYPH" = ascii ]; then KD_TL="+"; KD_TR="+"; KD_BL="+"; KD_BR="+"; KD_TJ="+"; KD_BJ="+"
+  else KD_TL="┌"; KD_TR="┐"; KD_BL="└"; KD_BR="┘"; KD_TJ="┬"; KD_BJ="┴"; fi
   KD_USER=$(id -un 2>/dev/null || id -u 2>/dev/null); KD_UID=$(id -u 2>/dev/null)
   KD_OS=$( (. /etc/os-release 2>/dev/null && printf "%s" "${PRETTY_NAME:-$NAME}") )
   case "$KDASH_H_STATUS" in Running) KD_S=$KD_G ;; ""|-) KD_S= ;; *) KD_S=$KD_E ;; esac
@@ -8831,56 +9001,108 @@ if ! declare -F __kd_hdr >/dev/null 2>&1; then
       [ -n "$txt" ] || break
       used=$(( used + KD_VL )); cl+="$col$txt$KD_X"
     done
-    printf "\e[%d;1H%s\e[K" "$row" "$cl"
+    __kd_put "$row" "$cl"
   }
+  __kd_rep() { local r n=$1; [ "$n" -gt 0 ] || n=0; printf -v r "%*s" "$n" ""; KD_REP=${r// /$KD_RULE}; }
+  # one framed row: per card its width, the plain text (measured) and the coloured text (shown)
+  __kd_cells() {
+    local row=$1 out="$KD_SEP" w pad; shift
+    while [ $# -ge 3 ]; do
+      w=$1; __kd_vlen "$2"; pad=$(( w - KD_VL )); [ "$pad" -ge 0 ] || pad=0
+      printf -v pad "%*s" "$pad" ""; out+=" $3$KD_X$pad $KD_SEP"; shift 3
+    done
+    __kd_put "$row" "$out"
+  }
+  KD_PIN=${KD_PIN0:-0}
+  __kd_put() { if [ "$KD_PIN" = 1 ]; then printf "\e[%d;1H%s\e[K" "$1" "$2"; else printf "%s\n" "$2"; fi; }
   __kd_hdr() {
     local L R gap lw cw t lim pod_ ctr_ img_ node_ tail n rule
     __kd_size
-    printf "\e7\e[6;%dr" "$KD_R"
+    [ "$KD_PIN" != 1 ] || printf "\e7\e[7;%dr" "$KD_R"
     # title bar: identity on the left, the three exits on the right (shortened or
     # dropped when the window is narrow)
     L=" KDASH $KD_SEP SHELL $KD_SEP context $KDASH_CONTEXT $KD_SEP namespace $KDASH_NAMESPACE $KD_SEP audited "
-    for R in " exit back to kdash  $KD_MID  kdswitch related pods  $KD_MID  kdquit leave kdash " " exit $KD_MID kdswitch $KD_MID kdquit " ""; do
+    if [ "$KD_PIN" = 1 ]; then t="kdpin release header"; else t="kdpin pin header"; fi
+    for R in " exit back to kdash  $KD_MID  kdswitch related pods  $KD_MID  kdquit leave kdash  $KD_MID  $t " " exit $KD_MID kdswitch $KD_MID kdquit $KD_MID kdpin " " exit $KD_MID kdswitch $KD_MID kdquit " ""; do
       __kd_vlen "$L$R"; [ "$KD_VL" -gt "$KD_C" ] || break
     done
     __kd_vlen "$L"
     if [ "$KD_VL" -gt "$KD_C" ]; then L=" KDASH $KD_SEP SHELL $KD_SEP $KDASH_NAMESPACE "; L=${L:0:$KD_C}; KD_VL=${#L}; R=""; fi
     gap=$(( KD_C - KD_VL )); __kd_vlen "$R"; gap=$(( gap - KD_VL )); [ "$gap" -ge 0 ] || gap=0
     printf -v t "%*s" "$gap" ""
-    printf "\e[1;1H%s%s%s%s%s%s\e[K" "$KD_V$KD_B" "$L" "$KD_X$KD_V" "$t" "$R" "$KD_X"
-    # value column: as wide as the longest value, leaving room for the state column
+    __kd_put 1 "$KD_V$KD_B$L$KD_X$KD_V$t$R$KD_X"
+    # the cards: natural widths first, then what the window allows
+    local nc=3 W1 W2=7 W3=11 a x s1 s2 s3 r1 r2 r3 top bot wl
+    s1="status  $KD_DOT ${KDASH_H_STATUS:--}   ready ${KDASH_H_READY:--}"
+    s2="state   ${KDASH_H_CSTATE:--}"
+    s3="restarts ${KDASH_H_RESTARTS:--}   QoS ${KDASH_H_QOS:--}"
+    r1="cpu   ${KDASH_H_CPU:--}"; r2="mem   ${KDASH_H_MEM:--}"; r3="user  $KD_USER${KD_UID:+ (uid $KD_UID)}"
+    for x in "$s1" "$s2" "$s3"; do __kd_vlen "$x"; [ "$KD_VL" -le "$W2" ] || W2=$KD_VL; done
+    for x in "$r1" "$r2" "$r3"; do __kd_vlen "$x"; [ "$KD_VL" -le "$W3" ] || W3=$KD_VL; done
     lw=${#KDASH_POD}
     t="$KDASH_CONTAINER  $KDASH_H_IMAGE"; [ "${#t}" -le "$lw" ] || lw=${#t}
     t="$KDASH_H_NODE   $KDASH_H_IP"; [ "${#t}" -le "$lw" ] || lw=${#t}
-    lim=$(( KD_C - 12 - 4 - 34 )); [ "$lim" -ge 20 ] || lim=20; [ "$lw" -le "$lim" ] || lw=$lim
+    a=$(( KD_C - 10 - W2 - W3 ))
+    if [ "$a" -lt 31 ]; then nc=2; a=$(( KD_C - 7 - W2 )); fi
+    if [ "$a" -lt 31 ]; then nc=1; a=$(( KD_C - 4 )); fi
+    [ "$a" -ge 14 ] || a=14
+    W1=$(( 11 + lw )); [ "$W1" -le "$a" ] || W1=$a; lw=$(( W1 - 11 ))
+    x=$(( a - W1 )); case $nc in 3) W3=$(( W3 + x )) ;; 2) W2=$(( W2 + x )) ;; *) W1=$(( W1 + x )) ;; esac
     __kd_pad "$KDASH_POD" "$lw"; pod_=$KD_P
     cw=${#KDASH_CONTAINER}; [ "$cw" -le "$lw" ] || cw=$lw
     __kd_pad "$KDASH_CONTAINER" "$cw"; ctr_=$KD_P
     if [ $(( lw - cw )) -ge 6 ]; then __kd_pad "  $KDASH_H_IMAGE" $(( lw - cw )); img_=$KD_P; else printf -v img_ "%*s" $(( lw - cw )) ""; fi
     __kd_pad "$KDASH_H_NODE   $KDASH_H_IP" "$lw"; node_=$KD_P
-    __kd_line 2 "" " POD        " "$KD_B" "$pod_" "" "  $KD_SEP " "$KD_B$KD_S" "$KD_DOT ${KDASH_H_STATUS:--}" \
-      "" "   ready " "$KD_B" "${KDASH_H_READY:--}" "" "   restarts " "$KD_B" "${KDASH_H_RESTARTS:--}" "" "   QoS " "$KD_B" "${KDASH_H_QOS:--}"
-    __kd_line 3 "" " CONTAINER  " "$KD_B$KD_G" "$ctr_" "" "$img_" "" "  $KD_SEP " "" "state " "$KD_B" "${KDASH_H_CSTATE:--}"
-    __kd_line 4 "" " NODE       " "$KD_B" "$node_" "" "  $KD_SEP " "" "cpu " "$KD_B" "${KDASH_H_CPU:--}" \
-      "" "   mem " "$KD_B" "${KDASH_H_MEM:--}" "" "   user " "$KD_B" "$KD_USER" "" "${KD_UID:+ (uid $KD_UID)}"
-    # rule, with the OS and shell set into its right end
+    # top border with the card titles
+    __kd_rep $(( W1 - 4 )); top="$KD_TL$KD_RULE ${KD_B}POD$KD_X $KD_REP"; wl=$W1
+    [ "$nc" -lt 2 ] || { __kd_rep $(( W2 - 6 )); top+="$KD_TJ$KD_RULE ${KD_B}STATE$KD_X $KD_REP"; wl=$W2; }
+    [ "$nc" -lt 3 ] || { __kd_rep $(( W3 - 10 )); top+="$KD_TJ$KD_RULE ${KD_B}RESOURCES$KD_X $KD_REP"; wl=$W3; }
+    __kd_put 2 "$top$KD_TR"
+    # three rows
+    local -a A2=() A3=() A4=()
+    A2=("$W1" "pod        $pod_" "pod        $KD_B$pod_"); A3=("$W1" "container  $ctr_$img_" "container  $KD_B$KD_G$ctr_$KD_X$img_"); A4=("$W1" "node       $node_" "node       $KD_B$node_")
+    if [ "$nc" -ge 2 ]; then
+      A2+=("$W2" "$s1" "status  $KD_B$KD_S$KD_DOT ${KDASH_H_STATUS:--}$KD_X   ready $KD_B${KDASH_H_READY:--}")
+      A3+=("$W2" "$s2" "state   $KD_B${KDASH_H_CSTATE:--}")
+      A4+=("$W2" "$s3" "restarts $KD_B${KDASH_H_RESTARTS:--}$KD_X   QoS $KD_B${KDASH_H_QOS:--}")
+    fi
+    if [ "$nc" -ge 3 ]; then
+      A2+=("$W3" "$r1" "cpu   $KD_B${KDASH_H_CPU:--}"); A3+=("$W3" "$r2" "mem   $KD_B${KDASH_H_MEM:--}"); A4+=("$W3" "$r3" "user  $KD_B$KD_USER$KD_X${KD_UID:+ (uid $KD_UID)}")
+    fi
+    __kd_cells 3 "${A2[@]}"; __kd_cells 4 "${A3[@]}"; __kd_cells 5 "${A4[@]}"
+    # bottom border; the OS and shell are set into its right end when they fit
     tail=" ${KD_OS:+$KD_OS, }bash ${BASH_VERSION%%(*} "
-    n=$(( KD_C - ${#tail} - 2 )); [ "$n" -ge 10 ] || { tail=""; n=$KD_C; }
-    printf -v rule "%*s" "$n" ""; rule=${rule// /$KD_RULE}
-    [ -z "$tail" ] || rule+="$tail$KD_RULE$KD_RULE"
-    printf "\e[5;1H%s\e[K" "$rule"
-    if [ "${1:-}" = home ]; then printf "\e[6;1H"; else printf "\e8"; fi
+    [ "${#tail}" -le "$wl" ] || tail=" bash ${BASH_VERSION%%(*} "
+    [ "${#tail}" -le "$wl" ] || tail=""
+    bot="$KD_BL"
+    if [ "$nc" -ge 2 ]; then __kd_rep $(( W1 + 2 )); bot+="$KD_REP$KD_BJ"; fi
+    if [ "$nc" -ge 3 ]; then __kd_rep $(( W2 + 2 )); bot+="$KD_REP$KD_BJ"; fi
+    if [ -n "$tail" ]; then __kd_rep $(( wl - ${#tail} )); bot+="$KD_REP$tail$KD_RULE$KD_RULE"; else __kd_rep $(( wl + 2 )); bot+="$KD_REP"; fi
+    __kd_put 6 "$bot$KD_BR"
+    [ "$KD_PIN" = 1 ] || return 0
+    if [ "${1:-}" = home ]; then printf "\e[7;1H"; else printf "\e8"; fi
   }
-  clear() { printf "\e[r\e[H\e[2J"; __kd_hdr home; }
+  # the header scrolls away like any output (default) or stays pinned at the top: kdpin
+  # switches between the two, kdheader prints / repaints it
+  clear() { if [ "$KD_PIN" = 1 ]; then printf "\e[r\e[H\e[2J"; __kd_hdr home; else printf "\e[H\e[2J"; fi; }
+  kdheader() { __kd_hdr; }
+  kdpin() {
+    if [ "$KD_PIN" = 1 ]; then
+      KD_PIN=0; printf "\e7\e[r\e8"; printf "kdash: header released - it scrolls away with the output (kdpin pins it again, kdheader prints it)\n"
+    else
+      KD_PIN=1; printf "\e[H\e[2J"; __kd_hdr home
+    fi
+  }
   kdquit() { exit 197; }      # kdash quits at once
   kdswitch() { exit 198; }    # kdash shows the pods of the same workload, in shell mode
   bind -x "\"\C-l\": clear" 2>/dev/null
   # resetting the scroll region homes the cursor (VT100): go back to the last line, or
   # whatever is printed next (kubectl, kdash, the host prompt) overwrites the session
-  trap "printf \"\e[r\e[9999;1H\n\"" EXIT
+  __kd_bye() { [ "$KD_PIN" != 1 ] || printf "\e[r\e[9999;1H\n"; }
+  trap __kd_bye EXIT
   printf "\e[H\e[2J"; __kd_hdr home
 else
-  __kd_hdr
+  [ "$KD_PIN" != 1 ] || __kd_hdr
 fi
 PS1=$KDASH_PS1
 '
@@ -8925,7 +9147,7 @@ interactive_shell() { # ns pod [container]
     [ -z "$c" ] || args+=(-c "$c")
     args+=(-- sh -c "$INTERACTIVE_SHELL_SCRIPT" kdash "$ctx" "$ns" "$pod" "${c:-default}" "${COLOR:-1}" \
            "$([ "${BARCHR:-unicode}" = ascii ] && echo ascii || echo unicode)" "${pstatus:--}" "${pready:--}" "${prst:--}" \
-           "${pnode:--}" "${pip:--}" "${mem:--}" "${img:--}" "${cpu:--}" "${pqos:--}" "$cst" "$INTERACTIVE_HDR_CODE")
+           "${pnode:--}" "${pip:--}" "${mem:--}" "${img:--}" "${cpu:--}" "${pqos:--}" "$cst" "KD_PIN0=$([ "${KDASH_SHELL_HEADER:-scroll}" = pinned ] && echo 1 || echo 0); $INTERACTIVE_HDR_CODE")
     INTERACTIVE_KEEP=auto interactive_run "${KC[@]}" -n "$ns" "${args[@]}"; rc=$?
     INTERACTIVE_BANNER=""; INTERACTIVE_FOOTER=""
     audit EXEC_END "pod=$ns/$pod container=${c:--} rc=$rc"
@@ -9074,9 +9296,7 @@ bx_top() { # width title right [joint positions...]
   bx_repv "$BX_H" "$fill"; mid="$BX_REP"
   if [ $# -gt 0 ]; then   # put ┬ where the columns start (offsets from the left border)
     local off=$((tv ? tv + 3 : 0)) p
-    # A joint replaces one glyph, not one byte: BX_H is 3 bytes in a UTF-8 locale.
-    for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && {
-      i=$((i * ${#BX_H})); mid="${mid:0:i}${BX_TT}${mid:i+${#BX_H}}"; }; done
+    for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && mid="${mid:0:i}${BX_TT}${mid:i+1}"; done
   fi
   line="${BX_C}${BX_TL}${BX_R}"
   [ "$tv" = 0 ] || line+="${BX_C}${BX_H}${BX_R} ${PC_B}${t}${PC_R} "
@@ -9092,8 +9312,7 @@ bx_bot() { # width left-text right-text [joint positions...]
   [ "$fill" -ge 1 ] || { t=""; tv=0; fill=$((w - 2 - (rv ? rv + 3 : 0))); }
   bx_repv "$BX_H" "$fill"; mid="$BX_REP"
   local off=$((tv ? tv + 3 : 0))
-  for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && {
-    i=$((i * ${#BX_H})); mid="${mid:0:i}${BX_BT}${mid:i+${#BX_H}}"; }; done
+  for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && mid="${mid:0:i}${BX_BT}${mid:i+1}"; done
   BX_LINE="${BX_C}${BX_BL}${BX_R}"
   [ "$tv" = 0 ] || BX_LINE+="${BX_C}${BX_H}${BX_R} ${t} "
   BX_LINE+="${BX_C}${mid}${BX_R}"
@@ -9105,8 +9324,7 @@ bx_sep() { # width kind joint-positions...
   local w="$1" k="$2" mid i p g; shift 2
   case "$k" in t) g="$BX_TT" ;; b) g="$BX_BT" ;; *) g="$BX_X" ;; esac
   bx_repv "$BX_H" $((w - 2)); mid="$BX_REP"
-  for p in "$@"; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && {
-    i=$((i * ${#BX_H})); mid="${mid:0:i}${g}${mid:i+${#BX_H}}"; }; done
+  for p in "$@"; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && mid="${mid:0:i}${g}${mid:i+1}"; done
   BX_LINE="${BX_C}${BX_LT}${mid}${BX_RT}${BX_R}"
 }
 bx_row() { # width content  -> │ content │ (full width)
@@ -9116,11 +9334,9 @@ bx_row() { # width content  -> │ content │ (full width)
 # ┬ where only the lower one has, ┼ where both have
 bx_sep_mix() { # width "upper joints" "lower joints"
   local w="$1" mid i p; bx_repv "$BX_H" $((w - 2)); mid="$BX_REP"
-  for p in $2; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && {
-    i=$((i * ${#BX_H})); mid="${mid:0:i}${BX_BT}${mid:i+${#BX_H}}"; }; done
+  for p in $2; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && mid="${mid:0:i}${BX_BT}${mid:i+1}"; done
   for p in $3; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] || continue
-    i=$((i * ${#BX_H}))
-    if [ "${mid:i:${#BX_H}}" = "$BX_BT" ]; then mid="${mid:0:i}${BX_X}${mid:i+${#BX_H}}"; else mid="${mid:0:i}${BX_TT}${mid:i+${#BX_H}}"; fi; done
+    if [ "${mid:i:1}" = "$BX_BT" ]; then mid="${mid:0:i}${BX_X}${mid:i+1}"; else mid="${mid:0:i}${BX_TT}${mid:i+1}"; fi; done
   BX_LINE="${BX_C}${BX_LT}${mid}${BX_RT}${BX_R}"
 }
 # A whole table inside a frame that is already open: separator from the previous
@@ -9154,8 +9370,7 @@ bx_full() { # width content -> a full-width row after any section
 }
 bx_close() { # width
   local mid i p; bx_repv "$BX_H" $(($1 - 2)); mid="$BX_REP"
-  for p in ${BX_PREV:-}; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $(($1 - 2)) ] && {
-    i=$((i * ${#BX_H})); mid="${mid:0:i}${BX_BT}${mid:i+${#BX_H}}"; }; done
+  for p in ${BX_PREV:-}; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $(($1 - 2)) ] && mid="${mid:0:i}${BX_BT}${mid:i+1}"; done
   BX_OUT+="${BX_C}${BX_BL}${mid}${BX_BR}${BX_R}"$'\033[K\n'; BX_PREV=""
 }
 # Column layout: BX_W[] widths from natural sizes; the column marked flexible takes the
@@ -9183,7 +9398,7 @@ bx_layout() { # total-width flex-index natural-widths...
 bx_cells() { # aligns(l/r string per column, e.g. "llrl") cells... -> BX_LINE
   local al="$1" i=0 c line="${BX_C}${BX_V}${BX_R}"; shift
   for c in "$@"; do
-    bx_pad "$c" "${BX_CW[i]}" "$([ "${al:i:1}" = r ] && echo r)"
+    if [ "${al:i:1}" = r ]; then bx_pad "$c" "${BX_CW[i]}" r; else bx_pad "$c" "${BX_CW[i]}"; fi
     line+=" ${BX_PAD} ${BX_C}${BX_V}${BX_R}"; i=$((i + 1))
   done
   BX_LINE="$line"
@@ -9192,7 +9407,7 @@ bx_cells() { # aligns(l/r string per column, e.g. "llrl") cells... -> BX_LINE
 bx_cells_sel() { # aligns cells...
   local al="$1" i=0 c inner=""; shift
   for c in "$@"; do
-    bx_pad "$c" "${BX_CW[i]}" "$([ "${al:i:1}" = r ] && echo r)"
+    if [ "${al:i:1}" = r ]; then bx_pad "$c" "${BX_CW[i]}" r; else bx_pad "$c" "${BX_CW[i]}"; fi
     [ "$i" = 0 ] || inner+="$BX_V"
     inner+=" ${BX_PAD} "; i=$((i + 1))
   done
@@ -9338,7 +9553,7 @@ bx_panel() { # width ncols title1..N then N*4 cells (column by column) -> BX_PAN
   # natural width of a column: its widest key + label, or its title; the screen width
   # is shared out from that (narrow terminals shorten the widest columns first)
   for ((c = 0; c < nc; c++)); do KW[c]=1; ui_vlen "${TT[c]}"; nat[c]=$((UI_VL + 2)); local lmax=0
-    for ((r = 0; r < 4; r++)); do IFS='|' read -r i t o <<< "${CE[c * 4 + r]}"
+    for ((r = 0; r < 4; r++)); do each="${CE[c * 4 + r]}"; i="${each%%|*}"; rest="${each#*|}"; t="${rest%|*}"
       ui_vlen "$i"; [ "$UI_VL" -lt "${KW[c]}" ] || KW[c]=$((UI_VL + 1))
       ui_vlen "$t"; [ "$UI_VL" -le "$lmax" ] || lmax=$UI_VL; done
     [ $((KW[c] + 1 + lmax)) -le "${nat[c]}" ] || nat[c]=$((KW[c] + 1 + lmax)); done
@@ -9355,7 +9570,7 @@ bx_panel() { # width ncols title1..N then N*4 cells (column by column) -> BX_PAN
   for ((r = 0; r < 4; r++)); do
     local -a cells=()
     for ((c = 0; c < nc; c++)); do
-      IFS='|' read -r i t o <<< "${CE[c * 4 + r]}"
+      each="${CE[c * 4 + r]}"; i="${each%%|*}"; rest="${each#*|}"; t="${rest%|*}"; o="${rest##*|}"
       # narrow column: the key column shrinks so labels keep at least 7 cells
       local kwe="${KW[c]}"; [ $((BX_CW[c] - kwe - 1)) -ge 7 ] || { kwe=$((BX_CW[c] - 8)); [ "$kwe" -ge 2 ] || kwe=2; }
       xfer_cell "$i" "$t" "${o:-1}" "${BX_CW[c]}" "$kwe"; cells+=("$XFER_CELL")
@@ -9377,7 +9592,13 @@ xfer_browse() { # side mode title ns pod container start
   local side="$1" mode="$2" title="$3" ns="$4" pod="$5" c="$6" dir="$7" d="$TMPD/xfer"
   local -a T S H M N V
   local -A SEL=()
-  local sel=0 top=0 n=0 nv i j k line buf rows q="" typing=0 msg="" act="" reload=1 prev="" w_n w_s nsel selb t name mark st lw
+  local sel=0 top=0 n=0 nv i j k line buf rows q="" typing=0 qd=0 msg="" act="" reload=1 prev="" w_n w_s nsel selb t name mark st lw
+  # speed: nothing in the loop below starts a process, and what does not change between
+  # two key presses (host name, title bar, table head, the rows themselves, the filtered
+  # list) is kept; ui_flush then sends only the lines that differ
+  local hn fl=1 vkey="" lkey="" hdr3="" botl="" barkey="" bar1="" nfile=0 ndir=0 selb_h="" selb_p=-1 sp
+  local -a RC=()
+  hn=$(hostname 2>/dev/null)
   mkdir -p "$d"
   picker_colors
   printf '\033[?25l\033[2J'
@@ -9397,38 +9618,58 @@ xfer_browse() { # side mode title ns pod container start
       dir="$XFER_PWD"; prev="$dir"; reload=0; T=(); S=(); H=(); M=(); N=()
       while IFS=$'\t' read -r t k j line name; do T+=("$t"); S+=("$k"); H+=("$j"); M+=("$line"); N+=("$name"); done < "$d/list"
       [ "${#SEL[@]}" = 0 ] || act="${act:+$act - }marks cleared (one directory at a time)"
-      n=${#N[@]}; SEL=(); sel=0; top=0; q=""
+      n=${#N[@]}; SEL=(); sel=0; top=0; q=""; vkey=""; RC=(); fl=1
       [ "$side" != remote ] || [ "${XFER_TAR:-}" = 1 ] || msg="this container has no tar - transfers will not work (kubectl cp needs it too)"
     fi
     # visible rows (filter)
-    V=(); for ((i = 0; i < n; i++)); do [ -z "$q" ] || [[ "${N[i],,}" == *"${q,,}"* ]] || continue; V+=("$i"); done
+    if [ "$vkey" != "x$q" ]; then
+      V=(); nfile=0; ndir=0
+      for ((i = 0; i < n; i++)); do
+        [ -z "$q" ] || [[ "${N[i],,}" == *"${q,,}"* ]] || continue
+        V+=("$i"); case "${T[i]}" in f*) nfile=$((nfile + 1)) ;; d*) ndir=$((ndir + 1)) ;; esac
+      done
+      vkey="x$q"
+    fi
     nv=${#V[@]}
     [ "$sel" -lt "$nv" ] || sel=$((nv > 0 ? nv - 1 : 0)); [ "$sel" -ge 0 ] || sel=0
     [ "$sel" -ge "$top" ] || top=$sel; [ "$sel" -lt $((top + rows)) ] || top=$((sel - rows + 1))
     w_n=$((PK_COLS - 46)); [ "$w_n" -ge 16 ] || w_n=16
     nsel=0; selb=0; for k in "${!SEL[@]}"; do nsel=$((nsel + 1)); [ "${S[k]}" = - ] || selb=$((selb + S[k])); done
     # screen
-    ui_bar "$PK_COLS" " KDASH ${PC_SEP} ${title} ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $([ "$side" = remote ] && printf '%s %s %s' "$pod" "$PC_PTR" "$c" || printf 'this host %s %s' "$PC_PTR" "$(hostname 2>/dev/null)") "
-    buf=$'\033[H'"${UI_BAR}"$'\033[K\n'
+    if [ "$barkey" != "$PK_COLS" ]; then
+      if [ "$side" = remote ]; then ui_bar "$PK_COLS" " KDASH ${PC_SEP} ${title} ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $pod $PC_PTR $c "
+      else ui_bar "$PK_COLS" " KDASH ${PC_SEP} ${title} ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " this host $PC_PTR $hn "; fi
+      bar1="$UI_BAR"; barkey="$PK_COLS"
+    fi
+    buf=$'\033[H'"${bar1}"$'\033[K\n'
     # path on the left; entries / filter / marks on the right
     local pr pl
-    if [ "$typing" = 1 ]; then pr="${PC_INFO}/${PC_R} ${PC_B}${q}${PC_R}${PC_INFO}${PC_CARET}${PC_R}  ${PC_D}Enter keep  Esc clear${PC_R}"
+    if [ "$typing" = 1 ]; then
+      if [ "$mode" = dir ] || [ -z "$q" ]; then t=open; else t=keep; fi
+      pr="${PC_INFO}/${PC_R} ${PC_B}${q}${PC_R}${PC_INFO}${PC_CARET}${PC_R}  ${PC_D}FILTER: type a name ${PC_MID} ${PC_UP}${PC_DN} move ${PC_MID} Enter $t ${PC_MID} Esc clear${PC_R}"
     else
       pr="${PC_D}$n entries${PC_R}"; [ -z "$q" ] || pr+="  ${PC_MID}  ${PC_INFO}filter${PC_R} ${PC_B}${q}${PC_R} ${PC_D}($nv)${PC_R}"
-      [ "$mode" != pick ] || [ "$nsel" = 0 ] || pr+="  ${PC_MID}  ${PC_OK}${PC_B}${nsel} marked${PC_R}$([ "$selb" = 0 ] || printf ' %s%s%s' "$PC_D" "$(xfer_hsize "$selb")" "$PC_R")"
+      if [ "$selb" != "$selb_p" ]; then selb_h=""; [ "$selb" = 0 ] || selb_h=$(xfer_hsize "$selb"); selb_p=$selb; fi
+      [ "$mode" != pick ] || [ "$nsel" = 0 ] || { pr+="  ${PC_MID}  ${PC_OK}${PC_B}${nsel} marked${PC_R}"; [ "$selb" = 0 ] || pr+=" ${PC_D}${selb_h}${PC_R}"; }
     fi
-    pl=" ${PC_D}$([ "$side" = remote ] && echo CONTAINER || echo 'THIS HOST')${PC_R}  ${PC_B}${dir}${PC_R}"
+    if [ "$side" = remote ]; then pl=" ${PC_D}CONTAINER${PC_R}  ${PC_B}${dir}${PC_R}"; else pl=" ${PC_D}THIS HOST${PC_R}  ${PC_B}${dir}${PC_R}"; fi
     bx_vis "$pr"; local prw=$BX_VL; bx_cut "$pl" $((PK_COLS - 4 - prw)); bx_vis "$BX_CUT"
-    buf+="${BX_CUT}$(printf '%*s' $((PK_COLS - 2 - BX_VL - prw > 0 ? PK_COLS - 2 - BX_VL - prw : 1)) '')${pr}"$'\033[K\n'
+    printf -v sp '%*s' $((PK_COLS - 2 - BX_VL - prw > 0 ? PK_COLS - 2 - BX_VL - prw : 1)) ''
+    buf+="${BX_CUT}${sp}${pr}"$'\033[K\n'
     # the list, framed: [x] TYPE NAME SIZE MODIFIED
     local al
     if [ "$mode" = pick ]; then bx_layout "$((PK_COLS - 1))" 2 3 5 20 10 16; al="lllrl"
     else bx_layout "$((PK_COLS - 1))" 1 5 20 10 16; al="llrl"; fi
-    bx_sep "$((PK_COLS - 1))" t "${BX_J[@]}"; buf+="${BX_LINE/${BX_LT}/${BX_TL}}"; buf="${buf%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
-    if [ "$mode" = pick ]; then bx_cells "$al" "${PC_B}SEL${PC_R}" "${PC_B}TYPE${PC_R}" "${PC_B}NAME${PC_R}" "${PC_B}SIZE${PC_R}" "${PC_B}MODIFIED${PC_R}"
-    else bx_cells "$al" "${PC_B}TYPE${PC_R}" "${PC_B}NAME${PC_R}" "${PC_B}SIZE${PC_R}" "${PC_B}MODIFIED${PC_R}"; fi
-    buf+="$BX_LINE"$'\033[K\n'
-    bx_sep "$((PK_COLS - 1))" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
+    if [ "$lkey" != "$PK_COLS" ]; then   # table head and foot: once per window width
+      bx_sep "$((PK_COLS - 1))" t "${BX_J[@]}"; hdr3="${BX_LINE/${BX_LT}/${BX_TL}}"; hdr3="${hdr3%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
+      if [ "$mode" = pick ]; then bx_cells "$al" "${PC_B}SEL${PC_R}" "${PC_B}TYPE${PC_R}" "${PC_B}NAME${PC_R}" "${PC_B}SIZE${PC_R}" "${PC_B}MODIFIED${PC_R}"
+      else bx_cells "$al" "${PC_B}TYPE${PC_R}" "${PC_B}NAME${PC_R}" "${PC_B}SIZE${PC_R}" "${PC_B}MODIFIED${PC_R}"; fi
+      hdr3+="$BX_LINE"$'\033[K\n'
+      bx_sep "$((PK_COLS - 1))" x "${BX_J[@]}"; hdr3+="$BX_LINE"$'\033[K\n'
+      bx_sep "$((PK_COLS - 1))" b "${BX_J[@]}"; botl="${BX_LINE/${BX_LT}/${BX_BL}}"; botl="${botl%${BX_RT}${BX_R}}${BX_BR}${BX_R}"$'\033[K\n'
+      lkey="$PK_COLS"; RC=()
+    fi
+    buf+="$hdr3"
     # the frame is as tall as the list; the key panel stays at the bottom of the screen
     local shown=$((nv - top < rows ? nv - top : rows)); [ "$shown" -ge 1 ] || shown=1
     for ((i = 0; i < shown; i++)); do
@@ -9439,7 +9680,9 @@ xfer_browse() { # side mode title ns pod container start
         else bx_cells "$al" "" "${PC_D}$([ "$n" = 0 ] && printf 'empty directory' || printf 'nothing matches - Esc clears the filter')${PC_R}" "" ""; fi
         buf+="$BX_LINE"$'\033[K\n'; continue
       fi
-      k=${V[j]}; t=${T[k]}; name=${N[k]}
+      k=${V[j]}
+      if [ "$j" != "$sel" ] && [ -n "${RC[k]:-}" ]; then buf+="${RC[k]}"; continue; fi
+      t=${T[k]}; name=${N[k]}
       case "$t" in d*) st="dir"; name+="/" ;; f*) st="file" ;; *) st="other" ;; esac
       case "$t" in *l*) st="link" ;; esac
       if [ -n "${SEL[$k]:-}" ]; then mark="[x]"; else mark="[ ]"; fi
@@ -9450,11 +9693,11 @@ xfer_browse() { # side mode title ns pod container start
         local cc=""
         if [ -n "${SEL[$k]:-}" ]; then cc="${PC_OK}${PC_B}"; elif [[ "$t" == *x* ]]; then cc="$PC_D"; elif [[ "$t" == d* ]]; then cc="${PC_INFO}"; fi
         if [ -n "$cc" ]; then local -a c2=(); for name in "${cl[@]}"; do c2+=("${cc}${name}${PC_R}"); done; cl=("${c2[@]}"); fi
-        bx_cells "$al" "${cl[@]}"
+        bx_cells "$al" "${cl[@]}"; RC[k]="$BX_LINE"$'\033[K\n'
       fi
       buf+="$BX_LINE"$'\033[K\n'
     done
-    bx_sep "$((PK_COLS - 1))" b "${BX_J[@]}"; local bl="${BX_LINE/${BX_LT}/${BX_BL}}"; buf+="${bl%${BX_RT}${BX_R}}${BX_BR}${BX_R}"$'\033[K\n'
+    buf+="$botl"
     for ((i = shown; i < rows; i++)); do buf+=$'\033[K\n'; done
     # status rule: the last thing that happened (or a warning) and the position
     local lt rt cur="" curt="" cn="" up="${dir%/*}"; [ -n "$up" ] || up=/
@@ -9467,47 +9710,65 @@ xfer_browse() { # side mode title ns pod container start
     ui_rule "$((PK_COLS - 1))" "$lt" "$lw" "${PC_D}${rt}${PC_R}" "$UI_VL"
     buf+="$UI_RULE"$'\033[K\n'
     # key panel, labels for exactly this state
-    local c1 c2 c3 c4 t4 isd=0 isf=0 tgt="" nfile=0
+    local c1 c2 c3 c4 t4 t3 isd=0 isf=0 tgt="" l1 l2 l3 o1 o2 o3
     [[ "$curt" == d* ]] && isd=1; [[ "$curt" == f* ]] && isf=1
-    for k in "${V[@]}"; do [[ "${T[k]}" == f* ]] && nfile=$((nfile + 1)); done
     local nsd=0; for k in "${!SEL[@]}"; do [[ "${T[k]}" == d* ]] && nsd=$((nsd + 1)); done
     if [ "$nsel" -gt 0 ]; then
       tgt="$nsel marked"
-      if [ "$selb" != 0 ] && [ "$nsd" -gt 0 ]; then tgt+=" ($(xfer_hsize "$selb") + $nsd dir)"
-      elif [ "$selb" != 0 ]; then tgt+=" ($(xfer_hsize "$selb"))"; elif [ "$nsd" -gt 0 ]; then tgt+=" ($nsd dir)"; fi
+      if [ "$selb" != 0 ] && [ "$nsd" -gt 0 ]; then tgt+=" ($selb_h + $nsd dir)"
+      elif [ "$selb" != 0 ]; then tgt+=" ($selb_h)"; elif [ "$nsd" -gt 0 ]; then tgt+=" ($nsd dir)"; fi
     elif [ -n "$cn" ]; then tgt="$cn"; fi
-    c1=("j/k ${PC_UP}${PC_DN}|move|1" "PgUp/PgDn|page|1" "g / G|first / last|1" "/|$([ -n "$q" ] && printf '"%s" - Esc clears' "$q" || printf 'filter names')|1")
-    c2=("Enter|$( if [ "$isd" = 1 ]; then printf 'open %s/' "$cn"; elif [ "$isf" = 1 ] && [ "$mode" = pick ]; then printf 'mark %s' "$cn"; else printf 'open (directories)'; fi)|$([ "$isd" = 1 ] || { [ "$isf" = 1 ] && [ "$mode" = pick ]; } && echo 1 || echo 0)"
-        "h / Bksp|$([ "$dir" = / ] && printf 'up (already at /)' || printf 'up to %s' "$([ "$up" = / ] && echo / || echo "${up##*/}/")")|$([ "$dir" = / ] && echo 0 || echo 1)" "p|go to a path|1"
-        "v|$([ "$isf" = 1 ] && printf 'view %s' "$cn" || printf 'view (files only)')|$isf")
+    if [ -n "$q" ]; then l1="\"$q\" - Esc clears"; else l1="filter names"; fi
+    c1=("j/k ${PC_UP}${PC_DN}|move|1" "PgUp/PgDn|page|1" "g / G|first / last|1" "/|$l1|1")
+    if [ "$isd" = 1 ]; then l1="open $cn/"; o1=1; elif [ "$isf" = 1 ] && [ "$mode" = pick ]; then l1="mark $cn"; o1=1; else l1="open (directories)"; o1=0; fi
+    if [ "$dir" = / ]; then l2="up (already at /)"; o2=0; elif [ "$up" = / ]; then l2="up to /"; o2=1; else l2="up to ${up##*/}/"; o2=1; fi
+    if [ "$isf" = 1 ]; then l3="view $cn"; else l3="view (files only)"; fi
+    c2=("Enter|$l1|$o1" "h / Bksp|$l2|$o2" "p|go to a path|1" "v|$l3|$isf")
     if [ "$mode" = pick ]; then
-      c3=("Space|$([ -n "$cn" ] && { [ -n "${SEL[$cur]:-}" ] && printf 'unmark %s' "$cn" || printf 'mark %s' "$cn"; } || printf 'mark')|$([ -n "$cn" ] && echo 1 || echo 0)"
-          "a|mark all files ($nfile)|$([ "$nfile" -gt 0 ] && echo 1 || echo 0)" "n|clear $nsel mark$([ "$nsel" = 1 ] || echo s)|$([ "$nsel" -gt 0 ] && echo 1 || echo 0)" "r|reload this list|1")
+      t3=SELECT
+      if [ -z "$cn" ]; then l1="mark"; o1=0; elif [ -n "${SEL[$cur]:-}" ]; then l1="unmark $cn"; o1=1; else l1="mark $cn"; o1=1; fi
+      [ "$nfile" -gt 0 ] && o2=1 || o2=0; [ "$nsel" -gt 0 ] && o3=1 || o3=0; [ "$nsel" = 1 ] && l3="clear 1 mark" || l3="clear $nsel marks"
+      c3=("Space|$l1|$o1" "a|mark all files ($nfile)|$o2" "n|$l3|$o3" "r|reload this list|1")
     else
-      local ndir=0; for k in "${V[@]}"; do [[ "${T[k]}" == d* ]] && ndir=$((ndir + 1)); done
-      c3=("|in ${dir##*/}/|1" "|$ndir sub-director$([ "$ndir" = 1 ] && echo y || echo ies)|0" "|Enter opens one|0" "r|reload this list|1")
+      t3=DESTINATION
+      [ "$ndir" = 1 ] && l1="1 sub-directory" || l1="$ndir sub-directories"
+      c3=("|in ${dir##*/}/|1" "|$l1|0" "|Enter opens one|0" "r|reload this list|1")
     fi
+    [ -n "$tgt" ] && o1=1 || o1=0
     if [ "$side" = remote ] && [ "$mode" = pick ]; then
-      t4="DOWNLOAD"
-      c4=("d|$([ -n "$tgt" ] && printf 'download %s' "$tgt" || printf 'download')|$([ -n "$tgt" ] && echo 1 || echo 0)" "|then: review, confirm or cancel|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      t4="DOWNLOAD"; [ -n "$tgt" ] && l1="download $tgt" || l1="download"
+      c4=("d|$l1|$o1" "|then: review, confirm or cancel|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
     elif [ "$mode" = pick ]; then
-      t4="UPLOAD  step 1 of 2"
-      c4=("u|$([ -n "$tgt" ] && printf 'next: destination for %s' "$tgt" || printf 'next: destination')|$([ -n "$tgt" ] && echo 1 || echo 0)" "|nothing is copied yet|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      t4="UPLOAD  step 1 of 2"; [ -n "$tgt" ] && l1="next: destination for $tgt" || l1="next: destination"
+      c4=("u|$l1|$o1" "|nothing is copied yet|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
     else
       t4="UPLOAD  step 2 of 2"
       c4=("u|upload ${XFER_UPN:-the items} into ${dir##*/}/|1" "|then: review, confirm or cancel|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
     fi
-    xfer_panel "$PK_COLS" "MOVE" "OPEN ${PC_MID} VIEW" "$([ "$mode" = pick ] && echo SELECT || echo DESTINATION)" "$t4" "${c1[@]}" "${c2[@]}" "${c3[@]}" "${c4[@]}"
+    xfer_panel "$PK_COLS" "MOVE" "OPEN ${PC_MID} VIEW" "$t3" "$t4" "${c1[@]}" "${c2[@]}" "${c3[@]}" "${c4[@]}"
     buf+="$XFER_PANEL"
-    printf '%s\033[J' "$buf"
+    ui_flush "$buf" "xfer:$side:$mode:$PK_COLS:$PK_ROWS" "$fl"; fl=1
     picker_key 120 || continue
+    # after a key that only moves, marks or types in the filter the screen is still ours: send the difference
+    if [ "$typing" = 1 ]; then case "$PK_KEY_IN" in '<ENTER>'|'<LEFT>'|'<RIGHT>') ;; *) fl=0 ;; esac
+    else case "$PK_KEY_IN" in j|k|g|G|' '|a|n|/|'<UP>'|'<DN>'|'<PGUP>'|'<PGDN>'|'<HOME>'|'<END>'|'<ESC>') fl=0 ;; esac; fi
     msg=""; act=""
     if [ "$typing" = 1 ]; then
+      # the filter never traps the keys: arrows still move, Enter opens the directory under the
+      # cursor (destination list, or nothing typed yet), Backspace on an empty filter goes up
       case "$PK_KEY_IN" in
-        '<ENTER>') typing=0; [ -z "$q" ] || act="filter \"$q\": $nv match" ;; '<ESC>') typing=0; q=""; act="filter cleared" ;;
-        $'\177'|$'\b') q="${q%?}" ;; $'\025') q="" ;;
-        '<'*'>') ;; *) q+="$PK_KEY_IN"; sel=0 ;;
-      esac; continue
+        '<ESC>') typing=0; q=""; act="filter cleared"; continue ;;
+        '<ENTER>') typing=0
+          if [ "$mode" != dir ] && [ -n "$q" ]; then act="filter \"$q\": $nv match"; continue; fi ;;
+        $'\177'|$'\b')
+          if [ -n "$q" ]; then q="${q%?}"; qd=1; sel=0; continue; fi
+          typing=0; if [ "$qd" = 1 ]; then act="filter closed - Backspace again goes up one directory"; continue; fi ;;
+        $'\025') q=""; qd=1; continue ;;
+        '<UP>'|'<DN>'|'<PGUP>'|'<PGDN>'|'<HOME>'|'<END>') ;;
+        '<LEFT>'|'<RIGHT>') typing=0 ;;
+        '<'*'>') continue ;;
+        *) q+="$PK_KEY_IN"; sel=0; continue ;;
+      esac
     fi
     k=""; [ "$nv" = 0 ] || k=${V[sel]}
     # Esc clears an active filter first; only then does it leave (like q)
@@ -9520,7 +9781,7 @@ xfer_browse() { # side mode title ns pod container start
       '<PGDN>'|' '*) [ "$PK_KEY_IN" = '<PGDN>' ] && sel=$((sel + rows)) ;;
       '<PGUP>') sel=$((sel - rows)) ;;
       g|'<HOME>') sel=0 ;; G|'<END>') sel=$((nv - 1)) ;;
-      /) typing=1 ;;
+      /) typing=1; qd=0 ;;
       r) reload=1; act="reloaded" ;;
       h|'<LEFT>'|$'\177'|$'\b'|-) if [ "$dir" = / ]; then msg="already at /"; else dir="${dir%/*}"; [ -n "$dir" ] || dir=/; reload=1; act="up to $dir"; fi ;;
       l|'<RIGHT>') [ -n "$k" ] && [[ "${T[k]}" == d* ]] && { dir="${dir%/}/${N[k]}"; reload=1; act="opened ${N[k]}/"; } ;;
@@ -9532,12 +9793,12 @@ xfer_browse() { # side mode title ns pod container start
            fi ;;
       v) if [ -n "$k" ] && [[ "${T[k]}" == f* ]]; then xfer_view "$side" "$ns" "$pod" "$c" "$dir" "${N[k]}" "${S[k]}"; printf '\033[?25l\033[2J'; act="viewed ${N[k]}"
          else msg="v views files - the cursor is not on a file"; fi ;;
-      a) if [ "$mode" = pick ]; then i=0; for k in "${V[@]}"; do [[ "${T[k]}" == f* ]] && { SEL[$k]=1; i=$((i + 1)); }; done; act="marked all $i files (${#SEL[@]} marked)"; fi ;;
-      n) [ "${#SEL[@]}" = 0 ] && msg="nothing is marked" || act="cleared ${#SEL[@]} mark(s)"; SEL=() ;;
+      a) if [ "$mode" = pick ]; then i=0; for k in "${V[@]}"; do [[ "${T[k]}" == f* ]] && { SEL[$k]=1; i=$((i + 1)); }; done; act="marked all $i files (${#SEL[@]} marked)"; RC=(); fi ;;
+      n) [ "${#SEL[@]}" = 0 ] && msg="nothing is marked" || act="cleared ${#SEL[@]} mark(s)"; SEL=(); RC=() ;;
       '<ENTER>')
         [ -n "$k" ] || continue
         if [[ "${T[k]}" == d* ]]; then dir="${dir%/}/${N[k]}"; reload=1; act="opened ${N[k]}/"
-        elif [ "$mode" = pick ]; then if [ -n "${SEL[$k]:-}" ]; then unset "SEL[$k]"; act="unmarked ${N[k]} (${#SEL[@]} marked)"; else SEL[$k]=1; act="marked ${N[k]} (${#SEL[@]} marked)"; fi; sel=$((sel + 1))
+        elif [ "$mode" = pick ]; then if [ -n "${SEL[$k]:-}" ]; then unset "SEL[$k]" "RC[$k]"; act="unmarked ${N[k]} (${#SEL[@]} marked)"; else SEL[$k]=1; unset "RC[$k]"; act="marked ${N[k]} (${#SEL[@]} marked)"; fi; sel=$((sel + 1))
         else msg="${N[k]} is a file - choose a directory, then u"; fi ;;
       d|u)
         if [ "$mode" = dir ]; then [ "$PK_KEY_IN" = u ] || continue; XFER_DIR="$dir"; return 0; fi
@@ -9549,7 +9810,7 @@ xfer_browse() { # side mode title ns pod container start
     esac
     # Space toggles (picker_key returns it as a plain " ")
     if [ "$PK_KEY_IN" = " " ] && [ "$mode" = pick ] && [ -n "$k" ]; then
-      if [ -n "${SEL[$k]:-}" ]; then unset "SEL[$k]"; act="unmarked ${N[k]} (${#SEL[@]} marked)"; else SEL[$k]=1; act="marked ${N[k]} (${#SEL[@]} marked)"; fi
+      if [ -n "${SEL[$k]:-}" ]; then unset "SEL[$k]" "RC[$k]"; act="unmarked ${N[k]} (${#SEL[@]} marked)"; else SEL[$k]=1; unset "RC[$k]"; act="marked ${N[k]} (${#SEL[@]} marked)"; fi
       sel=$((sel + 1)); [ "$sel" -lt "$nv" ] || sel=$((nv - 1))
     fi
     [ "$sel" -ge 0 ] || sel=0
@@ -9638,16 +9899,9 @@ for n do
   if [ -L "$n" ]; then t=l; f=0; b=$(readlink -- "$n" | wc -c); h=$(readlink -- "$n" | hs)
   elif [ -f "$n" ]; then t=f; f=1; b=$(wc -c < "$n"); h=$(hs < "$n")
   elif [ -d "$n" ]; then t=d
-    # Include empty directories and link targets, and never follow links into this
-    # host. A changed or missing link must not receive a VERIFIED result.
-    l=$(find "$n" 2>/dev/null | LC_ALL=C sort | while IFS= read -r x; do
-      if [ -L "$x" ]; then printf "l %s %s %s\n" "$(readlink -- "$x" | wc -c | tr -d " ")" "$(readlink -- "$x" | hs)" "$x"
-      elif [ -f "$x" ]; then printf "f %s %s %s\n" "$(wc -c < "$x" | tr -d " ")" "$(hs < "$x")" "$x"
-      elif [ -d "$x" ]; then printf "d 0 - %s\n" "$x"
-      else printf "o 0 - %s\n" "$x"; fi
-    done)
+    l=$(find "$n" -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r x; do printf "%s %s %s\n" "$(wc -c < "$x" | tr -d " ")" "$(hs < "$x")" "$x"; done)
     f=0; b=0
-    while read -r k s r; do [ -n "$k" ] || continue; [ "$k" != f ] || f=$((f + 1)); b=$((b + s)); done <<EOT
+    while read -r s r; do [ -n "$s" ] || continue; f=$((f + 1)); b=$((b + s)); done <<EOT
 $l
 EOT
     h=$(printf "%s\n" "$l" | hs)
@@ -9679,24 +9933,6 @@ xfer_sum_parse() { # file prefix -> <prefix>T[name] F B H, <prefix>ALG
       I) eval "${2}T[\$n]=\$t; ${2}F[\$n]=\$f; ${2}B[\$n]=\$b; ${2}H[\$n]=\$h" ;;
     esac
   done < "$1"
-}
-xfer_archive_test() { # tgz|zip path -> XFER_ARCHIVE_TEST
-  XFER_ARCHIVE_TEST=""
-  case "$1" in
-    tgz)
-      if gzip -t "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK gzip -t passed"
-      else XFER_ARCHIVE_TEST="$XG_BAD gzip -t failed"; return 1; fi ;;
-    zip)
-      if command -v unzip >/dev/null 2>&1; then
-        if unzip -tq "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK unzip -t passed"
-        else XFER_ARCHIVE_TEST="$XG_BAD unzip -t failed"; return 1; fi
-      elif command -v python3 >/dev/null 2>&1; then
-        if python3 -c 'import sys,zipfile; sys.exit(zipfile.ZipFile(sys.argv[1]).testzip() is not None)' "$2" >/dev/null 2>&1; then XFER_ARCHIVE_TEST="$XG_OK zip test passed"
-        else XFER_ARCHIVE_TEST="$XG_BAD zip test failed"; return 1; fi
-      else XFER_ARCHIVE_TEST="$XG_WARN archive integrity test unavailable (install unzip or python3)"; fi ;;
-    *) XFER_ARCHIVE_TEST="$XG_BAD unknown archive format"; return 1 ;;
-  esac
-  return 0
 }
 xfer_glyphs() { if [ "${BARCHR:-unicode}" = ascii ]; then XG_OK="*"; XG_BAD="*"; XG_WARN="*"; XG_ELL=".."; else XG_OK="●"; XG_BAD="●"; XG_WARN="●"; XG_ELL="…"; fi; }
 # a solid status chip: READY / VERIFIED (green), CHECK (yellow), BLOCKED / FAILED (red)
@@ -9985,7 +10221,7 @@ xfer_download_once() { # ns pod container
         [ "$XFER_CONFLICT" = keep ] && name="$(xfer_free_name "$outdir" "$name")"
         out="$outdir/$name"
         ( cd "$stage" && tar czf "$out.part" -- "${items[@]}" ) 2>> "$d/err" && mv -f "$out.part" "$out" || rc=1
-        [ "$rc" = 0 ] && { xfer_archive_test tgz "$out" && atest="$XFER_ARCHIVE_TEST" || atest="$XFER_ARCHIVE_TEST"; } ;;
+        [ "$rc" = 0 ] && { gzip -t "$out" 2>/dev/null && atest="$XG_OK gzip -t passed" || atest="$XG_BAD gzip -t failed"; } ;;
       zip)
         [ "$XFER_CONFLICT" = keep ] && name="$(xfer_free_name "$outdir" "$name")"
         out="$outdir/$name"; rm -f "$out"
@@ -10018,7 +10254,8 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
 PY
           ) 2>> "$d/err" || rc=1; fi
         if [ "$rc" = 0 ]; then
-          xfer_archive_test zip "$out" && atest="$XFER_ARCHIVE_TEST" || atest="$XFER_ARCHIVE_TEST"
+          if command -v unzip >/dev/null 2>&1; then unzip -tq "$out" >/dev/null 2>&1 && atest="$XG_OK unzip -t passed" || atest="$XG_BAD unzip -t failed"
+          elif command -v python3 >/dev/null 2>&1; then python3 -c 'import sys,zipfile; sys.exit(zipfile.ZipFile(sys.argv[1]).testzip() is not None)' "$out" 2>/dev/null && atest="$XG_OK zip test passed" || atest="$XG_BAD zip test failed"; fi
         fi ;;
     esac
     [ "$fmt" = files ] || { [ "$rc" = 0 ] && command -v sha256sum >/dev/null && asum="$(sha256sum -- "$out" | cut -c1-64)"; }
@@ -10028,8 +10265,7 @@ PY
   ui_bar "$PK_COLS" " KDASH ${PC_SEP} DOWNLOAD ${PC_SEP} RESULT ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " audited "
   printf '\033[H\033[2J%s\n\n' "$UI_BAR"
   if [ "$rc" = 0 ]; then
-    [ "$XV_BAD" = 0 ] || rc=1
-    audit CP_END "pod=$ns/$pod dir=down rc=$rc entries=$count identical=$XV_OK differ=$XV_BAD alg=${STALG:-none} local=$(interactive_audit_path "$out")"
+    audit CP_END "pod=$ns/$pod dir=down rc=0 entries=$count identical=$XV_OK differ=$XV_BAD alg=${STALG:-none} local=$(interactive_audit_path "$out")"
     XR_SECS=$((SECONDS - t0))
     if [ "$fmt" = files ]; then
       local sv=""; for nm in "${saved[@]}"; do sv+="${sv:+  $PC_MID  }$nm"; done
@@ -10159,8 +10395,7 @@ xfer_upload_once() { # ns pod container
   ui_bar "$PK_COLS" " KDASH ${PC_SEP} UPLOAD ${PC_SEP} RESULT ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " audited "
   printf '\033[H\033[2J%s\n\n' "$UI_BAR"
   if [ "$rc" = 0 ]; then
-    [ "$XV_BAD" = 0 ] || rc=1
-    audit CP_END "pod=$ns/$pod dir=up rc=$rc identical=$XV_OK differ=$XV_BAD alg=${STALG:-none}"
+    audit CP_END "pod=$ns/$pod dir=up rc=0 identical=$XV_OK differ=$XV_BAD alg=${STALG:-none}"
     XR_SECS=$((SECONDS - t0))
     local sv=""; for nm in "${items[@]}"; do sv+="${sv:+  $PC_MID  }$nm"; done
     xfer_result_box UPLOAD "$d/verify" SAVED "${PC_B}${pod}${PC_R} ${PC_D}${PC_PTR}${PC_R} ${c:-default} ${PC_D}${PC_PTR}${PC_R} ${PC_B}${dst%/}/${PC_R}   ${sv:0:160}" \
@@ -10887,7 +11122,7 @@ rb_findings() { # title subtitle empty-text
 rb_next_list() { # numbered rows: N SEVERITY OBJECT FINDING HINTKEY
   local tmp="$1" n sev obj text hk key ns name x1 x2 x3 shown=0 max="${KDASH_HINT_MAX:-15}"
   awk -F'\t' '$5 != "" && $2 !~ /INFO/ { f = 1 } END { exit !f }' "$tmp" || return 0
-  RB_K="$(events_kubectl_prefix)"; RB_SEEN_FILE="$tmp.seen"; : > "$RB_SEEN_FILE"; : > "$tmp.keys"
+  RB_K="$(events_kubectl_prefix)"; RB_SEEN_FILE="$tmp.seen"; : > "$RB_SEEN_FILE"
   printf '\n'
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1mNEXT COMMANDS~[0m  ~[90mread = only reads, CHANGE = modifies the cluster or a node (printed only)%s~[0m\n' "${RB_RUN_HINT:+  -  $RB_RUN_HINT}"
   else printf 'NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)%s\n' "${RB_RUN_HINT:+  -  $RB_RUN_HINT}"; fi
@@ -11169,7 +11404,7 @@ rb_why_next() { # dir namespace pod
 # nodes, pods, services, storage, certificates and logins, etcd snapshots), most
 # severe first, each with its next commands. Enter (or --check --run N) runs the
 # READ commands of a finding at once and shows their output; CHANGE commands never run.
-CHECK_AREAS="api nodes pods services storage certificates etcd"
+CHECK_AREAS="api nodes pods services storage certificates secrets etcd"
 
 check_collect() { # API reads the instant check needs beyond the dashboard data
   # certificates: reuse a recent full check, else a quick one (kubeconfig, API endpoint, CA bundles)
@@ -11178,6 +11413,10 @@ check_collect() { # API reads the instant check needs beyond the dashboard data
     ( TOOLKIT_DIR="$cq"; rm -rf "$cq"; mkdir -p "$cq"; cp -f "${TOOLKIT_DIR%/check-certs}/events.tsv" "$cq/" 2>/dev/null; certs_collect quick ) > /dev/null 2>&1
   else rm -rf "$TOOLKIT_DIR/check-certs"; fi
   [ "$(rb_age)" -lt 60 ] || rb_collect
+  # certificates inside Secrets and who uses them (the secrets map, key Y): reused for KDASH_SECRETS_CHECK_TTL s
+  if [ "${KDASH_SECRETS_IN_CHECK:-1}" = 1 ]; then
+    [ "$(sm_age)" -lt "${KDASH_SECRETS_CHECK_TTL:-300}" ] || sm_collect > /dev/null 2>&1
+  else rm -f "$TOOLKIT_DIR/sm.at" "$TOOLKIT_DIR/sm-findings.tsv"; health__status sm-secrets disabled 'KDASH_SECRETS_IN_CHECK=0'; fi
   date +%s > "$TOOLKIT_DIR/check.at"
 }
 check_age() { local at; at="$(cat "${TOOLKIT_DIR:-/nonexistent}/check.at" 2>/dev/null)"; case "$at" in [0-9]*) printf '%s' "$(( $(date +%s) - at ))" ;; *) printf 999999 ;; esac; }
@@ -11274,13 +11513,17 @@ check_findings() {
   if [ -d "$TOOLKIT_DIR/check-certs/certs" ]; then
     ( TOOLKIT_DIR="$TOOLKIT_DIR/check-certs"; RB_COLLECT_FINDINGS="$out" RB_AREA=certificates certs_render ) > /dev/null 2>&1
   elif [ -d "$TOOLKIT_DIR/certs" ]; then RB_COLLECT_FINDINGS="$out" RB_AREA=certificates certs_render > /dev/null 2>&1; fi
+  # secrets map: expired / expiring certificates in Secrets, missing Secrets, broken chains, stale consumers
+  if [ -s "$TOOLKIT_DIR/sm-findings.tsv" ]; then
+    awk -F'\t' -v all="${ALL_NS:-0}" '{ o = $2; if (all != "1") sub(/^[^\/]*\//, "", o); printf "secrets\t%s\t%s\t%s\t%s\n", $1, o, $3, $4 }' "$TOOLKIT_DIR/sm-findings.tsv" >> "$out"
+  fi
   return 0
 }
 
 check_render() {
   local f="$TOOLKIT_DIR/check-findings.tsv" num="$TOOLKIT_DIR/check-numbered.tsv" crit warn a st det cnt
   tk_title "CHECK NOW" "everything kdash can see that is wrong right now - most severe first, with the commands to check and fix it"
-  if [ ! -f "$TOOLKIT_DIR/check.at" ]; then printf '\nChecking API, nodes, pods, services, storage, certificates and etcd snapshots...\n'; return 0; fi
+  if [ ! -f "$TOOLKIT_DIR/check.at" ]; then printf '\nChecking API, nodes, pods, services, storage, certificates, Secrets and etcd snapshots...\n'; return 0; fi
   check_findings
   # the verdict line
   crit="$(grep -c $'\t{r}CRITICAL' "$f")"; warn="$(grep -c $'\t{y}WARNING' "$f")"
@@ -11306,6 +11549,10 @@ check_render() {
         services) det="services $(health__state services), endpoints $(health__state endpoints), ingresses $(health__state ingresses)" ;;
         storage) det="claims $(health__state pvcs), volumes $(health__state pvs)" ;;
         certificates) det="$(if [ -d "$TOOLKIT_DIR/check-certs/certs" ]; then printf 'quick check (C for nodes, kubelets, ingress)'; elif [ -d "$TOOLKIT_DIR/certs" ]; then printf 'full check %ss ago' "$(certs_age)"; else printf 'not checked'; fi)" ;;
+        secrets) case "$(health__state sm-secrets)" in
+                   ok) det="$(awk -F'\t' '{ printf "%d certificates in %d Secrets", $2, $1 }' "$TOOLKIT_DIR/sm.summary" 2>/dev/null) - Y shows who uses them and where" ;;
+                   disabled) st="{d}not checked"; det="switched off (KDASH_SECRETS_IN_CHECK=0) - Y still shows the map" ;;
+                   *) [ "$cnt" != 0 ] || st="{d}not visible"; det="Secrets read $(health__state sm-secrets): certificates inside them are not visible to you" ;; esac ;;
         etcd) case "$(health__state rb-snapshots)" in ok) det="$(awk -F'|' '$1 == "E" { n++; if ($8 == "true") r++ } END { printf "%d snapshots, %d usable", n, r }' "$TOOLKIT_DIR/health-rb-snapshots.raw")" ;;
                 *) st="{d}not visible"; det="snapshots: $(health__state rb-snapshots) - on a server: sudo rke2 etcd-snapshot ls" ;; esac ;;
       esac
@@ -11488,7 +11735,7 @@ login__cache_state() {
 }
 
 # Stand-in browsers: a helper that "opens" the login page in a browser (xdg-open, BROWSER,
-# ...) - on a headless host (usually nothing), or a remote X11 window - records the
+# ...) - on a director host that is usually nothing, or a remote X11 window - records the
 # URL here instead, and kdash shows it. KDASH_LOGIN_BROWSER=system lets it open a browser.
 login__browser_dir() { # dir -> creates the stand-ins, empties the URL record
   local d="$1" b
@@ -11528,83 +11775,34 @@ login__issuer() { # the issuer URL and client id the context logs in with (from 
   printf '%s\t%s' "$iss" "$cid"
 }
 
-# Detached auth helpers can outlive kubectl and hold its callback port. Only stop
-# this run's tagged helpers, never a browser or another terminal's login attempt.
-login__process_start() { # pid -> Linux process birth identity (not just a reusable PID)
-  local stat rest
-  case "$1" in ''|*[!0-9]*) return 1 ;; esac
-  stat="$(cat "/proc/$1/stat" 2>/dev/null)" || return 1
-  rest="${stat##*) }"; [ "$rest" != "$stat" ] || return 1
-  # Field 22, after the parenthesized comm which itself may contain spaces or ')'.
-  set -- $rest
-  [ "$#" -ge 20 ] || return 1
-  case "${20}" in ''|*[!0-9]*) return 1 ;; esac
-  printf '%s' "${20}"
-}
-login__is_descendant() { # pid ancestor; status avoids splitting a process name
-  local p="$1" ancestor="$2" seen=" " label parent value rest
-  case "$p:$ancestor" in *[!0-9:]*|:*|*:) return 1 ;; esac
-  while [ "$p" -gt 0 ]; do
-    [ "$p" != "$ancestor" ] || return 0
-    case "$seen" in *" $p "*) return 1 ;; esac
-    seen="$seen$p "; parent=""
-    while read -r label value rest; do
-      [ "$label" != PPid: ] || { parent="$value"; break; }
-    done 2>/dev/null < "/proc/$p/status"
-    case "$parent" in ''|*[!0-9]*) return 1 ;; esac
-    p="$parent"
-  done
-  return 1
-}
-login__is_helper() { # exact command identity; do not search arbitrary arguments/URLs
-  local arg cmd="" first="" interpreter=0
-  while IFS= read -r -d '' arg; do
-    if [ -z "$first" ]; then
-      first="${arg##*/}"
-      case "$first" in sh|bash|dash|python|python[0-9]*|perl|ruby|node) interpreter=1; continue ;; esac
-      cmd="$first"; break
-    fi
-    [ "$interpreter" = 1 ] || break
-    case "$arg" in -c|-m|--) return 1 ;; -*) continue ;; esac
-    cmd="${arg##*/}"; break
-  done 2>/dev/null < "/proc/$1/cmdline"
-  case "$cmd" in kubelogin|oidc-login|oidc_login|kubectl-oidc_login|kubectl-oidc-login) return 0 ;; esac
-  [ -n "${LOGIN_HELPER_COMMAND:-}" ] && [ "$cmd" = "${LOGIN_HELPER_COMMAND##*/}" ]
-}
-login__tagged() { # pid: exact environment entry and effective UID ownership
-  local entry
-  [ -n "${KDASH_LOGIN_TAG:-}" ] && [ -O "/proc/$1" ] || return 1
-  while IFS= read -r -d '' entry; do
-    [ "$entry" != "KDASH_LOGIN_TAG=$KDASH_LOGIN_TAG" ] || return 0
-  done 2>/dev/null < "/proc/$1/environ"
-  return 1
-}
-login__same_helper() { # pid birth: recheck immediately before each signal
-  [ "$(login__process_start "$1")" = "$2" ] && login__tagged "$1" && login__is_helper "$1"
-}
-login__kill_stale() { # [keep-pid]: preserve that active tree, even within this run
-  local p birth keep="${1:-}" targets=() identities=() i
-  [ -n "${KDASH_LOGIN_TAG:-}" ] && [ -d /proc/self ] || return 0
-  # Resolve only the exec command name; never read the token or credential fields.
-  if [ -z "${LOGIN_HELPER_COMMAND:-}" ] && declare -F certs__kcfg >/dev/null; then
-    LOGIN_HELPER_COMMAND="$(certs__kcfg '{.users[0].user.exec.command}' 2>/dev/null)"
+# kill login helpers left behind by background reads (they hold the callback port 8000)
+login__kill_stale() { # [keep-pid]: every login helper started by this kdash (tagged), except keep-pid's tree
+  local p keep="${1:-}" pids="" sig
+  if [ -n "${KDASH_LOGIN_TAG:-}" ] && [ -d /proc/self ]; then
+    for p in /proc/[0-9]*; do
+      p="${p#/proc/}"; [ "$p" != "$$" ] || continue
+      [ -r "/proc/$p/environ" ] || continue
+      # (a process can end while this looks: every read is silent)
+      { tr '\0' '\n' < "/proc/$p/environ"; } 2>/dev/null | grep -qxF "KDASH_LOGIN_TAG=$KDASH_LOGIN_TAG" || continue
+      { tr '\0' ' ' < "/proc/$p/cmdline"; } 2>/dev/null | grep -qE 'oidc[-_]login|kubelogin|get-token|credential' || continue
+      if [ -n "$keep" ] && login__is_descendant "$p" "$keep"; then continue; fi
+      pids="$pids $p"
+    done
+  else
+    pids="$(ps -o pid=,args= -s "$(ps -o sid= $$ 2>/dev/null | tr -d ' ')" 2>/dev/null | grep -E 'oidc[-_]login get-token|kubelogin get-token' | grep -v grep | awk '{print $1}')"
   fi
-  for p in /proc/[0-9]*; do
-    p="${p#/proc/}"; [ "$p" != "${BASHPID:-$$}" ] && [ "$p" != "$$" ] || continue
-    [ -O "/proc/$p" ] && login__is_helper "$p" && login__tagged "$p" || continue
-    [ -z "$keep" ] || ! login__is_descendant "$p" "$keep" || continue
-    birth="$(login__process_start "$p")"; [ -n "$birth" ] || continue
-    login__same_helper "$p" "$birth" || continue
-    targets+=("$p"); identities+=("$birth")
-    kill -TERM "$p" 2>/dev/null || true
-  done
-  [ "${#targets[@]}" -gt 0 ] || return 0
-  sleep 0.3
-  for ((i=0; i<${#targets[@]}; i++)); do
-    p="${targets[$i]}"
-    login__same_helper "$p" "${identities[$i]}" && kill -KILL "$p" 2>/dev/null || true
-  done
+  [ -n "${pids// /}" ] || return 0
+  kill $pids 2>/dev/null; sleep 0.3
+  for p in $pids; do kill -0 "$p" 2>/dev/null && kill -9 "$p" 2>/dev/null; done
   return 0
+}
+login__is_descendant() { # pid ancestor
+  local p="$1" i=0
+  while [ -n "$p" ] && [ "$p" -gt 1 ] && [ "$i" -lt 30 ]; do
+    [ "$p" != "$2" ] || return 0
+    p="$( { awk '{print $4}' "/proc/$p/stat"; } 2>/dev/null)"; i=$((i + 1))
+  done
+  return 1
 }
 
 # A short look with no terminal: 0 = the API answers, 1 = a login is needed, 2 = another error.
@@ -11625,7 +11823,7 @@ login_probe() {
     sleep 0.2
   done
   wait "$pid" 2>/dev/null; rc=$?
-  login__kill_stale "${LOGIN_HP:-}"
+  login__kill_stale "${LOGIN_HP:-}"     # its helper may outlive kubectl (never the login screen's own)
   [ "$rc" != 0 ] || return 0
   if login_err_check "$err"; then LOGIN_URL="$(login_url_of "$err")"; return 1; fi
   return 2
@@ -11703,9 +11901,7 @@ login_interactive() { # start | session [auto]
         sleep 0.2; i=$((i + 1)); done ) & w=$!
     trap ':' INT
     elsewhere=0; n=0
-    # A separate attempt tag also protects helpers that detach from the active tree.
-    LOGIN_ACTIVE_TAG="${KDASH_LOGIN_TAG:-kdash-$$}-login-${BASHPID:-$$}-$RANDOM"
-    KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__env "$bdir" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami < /dev/tty > "$out" 2> >(tee -a "$f" > /dev/tty) & hp=$!
+    login__env "$bdir" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami < /dev/tty > "$out" 2> >(tee -a "$f" > /dev/tty) & hp=$!
     LOGIN_HP="$hp"
     # meanwhile, every KDASH_LOGIN_POLL s once the URL is out: a login completed in another
     # terminal (or a helper that never returns) must not keep kdash waiting
@@ -11716,10 +11912,7 @@ login_interactive() { # start | session [auto]
       if login__poll_ok; then elsewhere=1; login__kill_tree "$hp"; break; fi
     done
     wait "$hp" 2>/dev/null; rc=$?
-    LOGIN_HP=""
-    KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__kill_stale
-    LOGIN_ACTIVE_TAG=""
-    login__kill_stale
+    LOGIN_HP=""; login__kill_stale        # nothing of this attempt keeps running (port 8000, provider polling)
     [ "$elsewhere" = 0 ] || rc=0
     trap 'AUDIT_SIG=INT; cleanup; exit 0' INT
     kill "$w" 2>/dev/null; wait "$w" 2>/dev/null
@@ -11743,11 +11936,13 @@ login_interactive() { # start | session [auto]
     printf '\n\033[1;31m  The login did not complete (rc=%s).\033[0m Last messages:\n' "$rc" > /dev/tty
     tail -n 4 "$f" | sed 's/^/    /' > /dev/tty
     if grep -qiE 'discovery error|openid-configuration' "$f" && grep -qiE 'dial tcp|no such host|timeout|refused|x509|certificate' "$f"; then
-      printf '\n  \033[1mThe identity provider%s cannot be reached from this host\033[0m (network, proxy, DNS or its certificate).\n  Check: curl -sS %q\n' "${iss:+ $iss}" "${iss:-ISSUER}/.well-known/openid-configuration" > /dev/tty
+      printf '\n  \033[1mThe identity provider%s cannot be reached from this host\033[0m (network, proxy, DNS or its certificate) -
+  no login can work until it can. Check: curl -sS %s/.well-known/openid-configuration\n' "${iss:+ $iss}" "${iss:-ISSUER}" > /dev/tty
     fi
-    printf '\n  r try again   c continue with reads paused (L retries)   q quit kdash  > ' > /dev/tty
+    printf '\n  r try again   c continue without login (reads will fail)   q quit kdash  > ' > /dev/tty
     IFS= read -rsn1 key </dev/tty || key=q
     printf '\n' > /dev/tty
+    # c: the choice holds - no reads (they would start more logins) and no automatic login until L
     case "$key" in r|R) printf '\033[2J\033[H' > /dev/tty; continue ;; c|C) LOGIN_NEEDED=1; LOGIN_AUTO_DONE=1; break ;; *) cleanup 2>/dev/null; exit 4 ;; esac
   done
   if [ "$ok" = 1 ]; then
@@ -11809,8 +12004,8 @@ login_note_failure() { # errfile
 # signed-in user can read. S = catalogue severity (+ kdash.io/criticality label or
 # site file), O = what kdash sees now and in saved runs, D = how early a kdash
 # signal fires - and the user's own RBAC: a check the user cannot run is shown as
-# "no access" (D 10), never as OK. Action Priority (H/M/L) uses a project heuristic;
-# RPN = S x O x D is shown beside it but never ranks. No standards conformance is claimed.
+# "no access" (D 10), never as OK. Action Priority (H/M/L) = the AIAG-VDA 2019 table;
+# RPN = S x O x D is shown beside it but never ranks. Nothing here changes anything.
 
 # id kind mode effect cause signal requires S D count sources
 fmea_catalogue() {
@@ -11822,7 +12017,7 @@ POD-04	Pod	ImagePullBackOff	Rollouts and scale-up stall	Registry down, wrong tag
 POD-05	Pod	Readiness probe failing	Pod removed from Service endpoints	Slow start, dependency down, strict probe	Ready=False, Unhealthy events	list:pods	6	5	pods	spec
 POD-06	Pod	Liveness probe kills a healthy pod	Restart loop under load	Timeout too short for peak latency	Killing / Unhealthy (liveness) events	list:pods list:events	5	6	pods	spec events
 POD-07	Pod	Evicted	Pod lost, rescheduled elsewhere	Node pressure, ephemeral storage over limit	status.reason=Evicted	list:pods	5	5	pods	spec
-POD-08	Pod	CPU limit pressure	Risk of latency or throttling	CPU limit close to observed demand	live CPU near its limit; not a throttle measurement	list:pods get:pods.metrics.k8s.io	4	6	pods	spec pod-metrics
+POD-08	Pod	CPU throttled	Latency up, timeouts	CPU limit too low	live CPU vs limit (metrics-server)	list:pods get:pods.metrics.k8s.io	4	6	pods	spec
 POD-09	Pod	Stuck Terminating	Replacement and volume release blocked	Finalizer, lost node, preStop hang	deletionTimestamp older than the grace period	list:pods	5	5	pods	pods
 WRK-01	Deployment	All replicas unavailable	Service outage	Bad rollout, dependency down	availableReplicas=0	list:deployments.apps	9	4	deployments	fm-deploy
 WRK-02	Deployment	Rollout stuck	Mixed versions, less capacity	New pods failing, no room to surge	Progressing=False (ProgressDeadlineExceeded)	list:deployments.apps	6	4	deployments	fm-deploy
@@ -11834,7 +12029,7 @@ WRK-07	Any workload	All replicas on one node	One node loss takes every replica	N
 JOB-01	Job	Failed after backoffLimit	Batch work not done	App error, missing input	Failed condition	list:jobs.batch	6	5	jobs	fm-jobs
 JOB-02	CronJob	Not running on schedule	Missed backups, stale data	suspend, missed deadline, concurrency Forbid	lastSuccessfulTime vs lastScheduleTime	list:cronjobs.batch	7	4	cronjobs	fm-cron
 PVC-01	PersistentVolumeClaim	Pending	Pod cannot start	No StorageClass, provisioner down, quota	phase=Pending, ProvisioningFailed events	list:persistentvolumeclaims	8	4	pvcs	pvcs
-PVC-02	PersistentVolumeClaim	Volume full	Write errors, database stops	Growth without expansion	kubelet volume stats (Prometheus), used vs capacity	list:persistentvolumeclaims	8	3	pvcs	pvcs volume-metrics
+PVC-02	PersistentVolumeClaim	Volume full	Write errors, database stops	Growth without expansion	kubelet volume stats (Prometheus), used vs capacity	list:persistentvolumeclaims	8	3	pvcs	pvcs volume-metrics?
 PVC-03	PVC / PersistentVolume	Attach or mount failure	Pod stuck ContainerCreating	RWO multi-attach, CSI down, lost node	FailedAttachVolume / FailedMount events, lost claims	list:persistentvolumeclaims list:events	7	5	pvcs	pvcs events
 PVC-04	PersistentVolume	Reclaim policy Delete on stateful data	Data deleted with the claim	StorageClass default	persistentVolumeReclaimPolicy	list:persistentvolumes@	7	2	storageclasses	pvs
 PVC-05	StorageClass	Expansion not allowed	A full volume cannot grow online	allowVolumeExpansion false	StorageClass field	list:storageclasses.storage.k8s.io@	4	2	storageclasses	storageclasses
@@ -11846,7 +12041,7 @@ ING-02	Ingress	TLS secret missing or expiring	Clients fail TLS	Secret not renewe
 NET-01	NetworkPolicy	Default deny blocks needed traffic	Calls time out	New policy without an allow rule	policies selecting all pods without rules	list:networkpolicies.networking.k8s.io	6	8	netpols	fm-netpol
 DNS-01	CoreDNS	DNS failing	Every call by service name fails	CoreDNS pods down or overloaded	CoreDNS ready count	list:pods#kube-system	9	4	dns	fm-dns
 CFG-01	ConfigMap, Secret	Referenced object missing	CreateContainerConfigError	Not created, wrong name or key	waiting.reason, FailedMount events	list:pods list:events	7	4	pods	spec events
-CFG-02	Secret	Certificate inside it expiring	App TLS or auth fails	Not rotated	cert-manager Certificates, notAfter	list:certificates.cert-manager.io	6	2	cmcerts	cert-manager
+CFG-02	Secret	Certificate inside it expiring or broken	App TLS or auth fails	Not rotated, wrong chain or key	certificates in Secrets: notAfter, chain, key (and cert-manager)	list:secrets	6	2	certificates	sm-secrets
 HPA-01	HorizontalPodAutoscaler	Cannot read metrics	No scaling under load	metrics-server down, missing requests	ScalingActive=False	list:horizontalpodautoscalers.autoscaling	6	4	hpas	fm-hpa
 HPA-02	HorizontalPodAutoscaler	Pinned at maxReplicas	Overload, latency	Max set too low	currentReplicas = maxReplicas	list:horizontalpodautoscalers.autoscaling	5	5	hpas	fm-hpa
 PDB-01	PodDisruptionBudget	Allows 0 disruptions	Drains and upgrades hang	minAvailable equals replicas	disruptionsAllowed=0	list:poddisruptionbudgets.policy	5	2	pdbs	fm-pdb
@@ -11868,7 +12063,7 @@ NS-01	Namespace	Stuck Terminating	Namespace cannot be recreated	Finalizers, unav
 FMEA_CAT
 }
 
-# Project action-priority heuristic (same answer on every host)
+# AIAG-VDA 2019 action priority (same answer on every host)
 FMEA_AP_AWK='
 function ap(s, o, d) {
   if (s <= 1) return "L"
@@ -12045,6 +12240,8 @@ fmea_evaluate() {
       else if (key == "cert-webhook") id = "ADM-01"
       else if (key == "cert-ingress") id = "ING-02"
       else if (key == "cert-manager") id = "CFG-02"
+      else if (key ~ /^sm-(expired|expiring|key|weak|chain|restart)$/) { if (sev ~ /INFO/) next; id = "CFG-02" }
+      else if (key == "sm-missing") { id = "CFG-01"; st = "fail" }
       else if (key == "login") id = "ACC-02"
       if (id == "") next
       if (sev ~ /CRIT/ && id ~ /^(CRT|ING-02|CFG-02|ADM|ACC|PVC-02|CP-03)/) st = "fail"
@@ -12068,7 +12265,7 @@ fmea_evaluate() {
       wk = tolower(P[12]); wl = P[13]; node = P[7]
       PN[ns "/" pod] = 1; PWK[ns "/" pod] = wk "/" wl
       if (P[11] == "BestEffort" && wk != "job") { if (wl != "" && wl != "-") { be[ns "|" wk "/" wl]++ } else be[ns "|pod/" pod]++ }
-      if (P[16] + 0 > 0 && P[14] != "" && P[14] != "-" && P[14] + 0 >= 0.9 * P[16]) hit("POD-08", ns "/" pod, "risk", "cpu " P[14] "m of " P[16] "m limit (limit pressure, not measured throttling)", "fm-POD-08|" ns "|" pod, ns, "")
+      if (P[16] + 0 > 0 && P[14] != "" && P[14] != "-" && P[14] + 0 >= 0.9 * P[16]) hit("POD-08", ns "/" pod, "fail", "cpu " P[14] "m of " P[16] "m limit", "pod-oom|" ns "|" pod, ns, "")
       if (wl != "" && wl != "-" && wk ~ /^(deployment|statefulset|replicaset)$/ && P[4] == "Running") { g = ns "|" wk "/" wl; gp[g]++; if (!((g, node) in gn)) { gn[g, node] = 1; gnc[g]++; gnode[g] = node } }
       next }
     FILENAME ~ /nodes\.tsv$/ { if (FNR == 1) next; split($0, N, "\t"); if (N[16] + 0 > 0 && N[28] + 0 > N[16] * ovc / 100)
@@ -12150,7 +12347,7 @@ fmea_evaluate() {
   # object counts for services / ingresses come from the health reads
   { printf 'services\t%s\n' "$(grep -c '^S|' "$d/health-services.raw" 2>/dev/null)"
     printf 'ingresses\t%s\n' "$(cut -d'|' -f2,3 "$d/health-ingresses.raw" 2>/dev/null | sort -u | grep -c .)"
-    printf 'certificates\t%s\n' "$(ls "$d"/check-certs/certs/* "$d"/certs/* 2>/dev/null | wc -l | tr -d ' ')"
+    printf 'certificates\t%s\n' "$(awk -F'\t' '$4 == 1' "$d/sm-certs.tsv" 2>/dev/null | grep -c .)"
     printf 'cmcerts\t%s\n' "$(cat "$d/check-certs/health-cert-manager.raw" "$d/health-cert-manager.raw" 2>/dev/null | grep -c .)"
     printf 'cluster\t1\n'; } >> "$d/fmea-counts.tsv"
   return 0
@@ -12159,17 +12356,10 @@ fmea_evaluate() {
 # source states per catalogue source name -> "name state"
 fmea__source_states() {
   local s st
-  for s in spec pod-metrics events pods services endpoints ingresses pvcs pvs storageclasses volume-metrics rb-nodes rb-snapshots readyz certs cert-manager login \
+  for s in spec events pods services endpoints ingresses pvcs pvs storageclasses volume-metrics rb-nodes rb-snapshots readyz certs cert-manager sm-secrets login \
            fm-deploy fm-sts fm-ds fm-jobs fm-cron fm-hpa fm-pdb fm-quota fm-netpol fm-svclb fm-nodes fm-ns fm-dns fm-webhooks hpods; do
     case "$s" in
       spec) [ "${SPEC_OK:-0}" = 1 ] && st=ok || st="$(printf '%s' "${SPEC_REASON:-error}" | grep -qiE 'forbidden|403' && echo forbidden || echo error)" ;;
-      pod-metrics) if [ "${TOP_OK:-0}" = 1 ] && [ "${TOP_AT:-0}" -gt 0 ]; then st=ok; else st=no-data; fi ;;
-      volume-metrics) st="$(health__state volume-metrics)"
-        if [ "$st" = ok ] && ! awk -F'\t' '
-          FILENAME ~ /usage\.tsv$/ { if ($3 ~ /^[0-9]+$/ && $6 ~ /^[0-9]+$/ && $6 + 0 > 0 && $4 ~ /^[0-9]+$/ && $7 ~ /^[0-9]+$/ && ($4 - $7 <= 300) && ($7 - $4 <= 300)) known[$1 SUBSEP $2]=1; next }
-          { split($0, q, /[|]/); if (q[1] == "Q" && q[4] == "Bound" && !((q[2] SUBSEP q[3]) in known)) missing=1 }
-          END { exit missing }
-        ' "$TOOLKIT_DIR/health-volume-usage.tsv" "$TOOLKIT_DIR/health-pvcs.raw" 2>/dev/null; then st=partial; fi ;;
       events) st="$(cat "$TOOLKIT_DIR/events.status" 2>/dev/null)"; case "$st" in ok*) st=ok ;; *forbid*) st=forbidden ;; '') st=unknown ;; *) st=error ;; esac ;;
       hpods) st="$(health__state pods)" ;;
       certs) if [ -d "$TOOLKIT_DIR/check-certs/certs" ] || [ -d "$TOOLKIT_DIR/certs" ]; then st=ok; else st=no-data; fi ;;
@@ -12233,16 +12423,16 @@ fmea_score() {
         acc = (np == 0 || yes == np) ? "full" : (yes == 0 ? (er == np ? "unknown" : "none") : "partial")
         ns_ = split(SR[id], sr, " "); nosig = 0; part = 0; fs = 0; req = 0
         for (i = 1; i <= ns_; i++) { s = sr[i]; opt = (s ~ /\?$/); if (opt) sub(/\?$/, "", s); st = SS[s]; if (!opt) req++
-          if (st == "forbidden") { fs++; if (acc == "full") acc = "partial"; if (!opt) nosig = 1; miss = miss (miss == "" ? "" : " ") "read:" s }
-          else if (st != "ok") { if (opt) part = 1; else { nosig = 1; miss = miss (miss == "" ? "" : " ") "source:" s; if (st == "partial" && acc == "full") acc = "partial" } } }
+          if (st == "forbidden") { fs++; if (acc == "full") acc = "partial"; miss = miss (miss == "" ? "" : " ") "read:" s }
+          else if (st != "ok" && st != "") { if (opt) part = 1; else nosig = 1 } }
         # every read this mode needs was refused: no access, whatever can-i said
         if (req > 0 && fs >= req) acc = "none"
         if (part && acc == "full") { acc = "partial"; miss = miss (miss == "" ? "" : " ") "source:volume-metrics" }
         if (MAN[id] != "") { acc = "full"; nosig = 0 }
-        s0 = clamp(S0[id]); d0 = clamp(D0[id]); dd = (acc == "none" || acc == "unknown" || nosig) ? 10 : (acc == "partial" ? clamp(d0 + 2) : d0)
-        if (!has[id] && (acc == "none" || acc == "unknown" || acc == "partial" || nosig)) {
+        s0 = clamp(S0[id]); d0 = clamp(D0[id]); dd = acc == "partial" ? clamp(d0 + 2) : d0
+        if (!has[id] && (acc == "none" || acc == "unknown" || nosig)) {
           o = oh(id); e = EST; dx = 10; stt = (acc == "none" ? "noaccess" : "nosignal")
-          now_ = (acc == "none" ? "no access for " USER ": needs " hum(miss) : acc == "unknown" ? "not checked: the API did not answer the access check" : "not fully checked: " SG[id] (miss != "" ? " (needs " hum(miss) ")" : ""))
+          now_ = (acc == "none" ? "no access for " USER ": needs " hum(miss) : acc == "unknown" ? "not checked: the API did not answer the access check" : "not visible on this cluster: " SG[id])
           out(id, s0, o, dx, ID[k], (CK[id] == "cluster" ? "cluster" : "-"), now_, stt, acc, e, "", miss)
           continue }
         if (MAN[id] != "") { out(id, s0, MAN[id] + 0, d0, id, "site", "manual row from the site file", "risk", acc, 0, "", miss); continue }
@@ -12258,14 +12448,14 @@ fmea_score() {
           out(id, s0, o, dd, id, (CK[id] == "cluster" ? "cluster" : "-"), now_, "ok", acc, e, "", miss) }
       }
     }
-    function out(id, s, o, d, x, obj, now_, st, acc, est, hk, miss,   a, r) { s = clamp(s); o = clamp(o); d = clamp(d); a = ap(s, o, d); r = s * o * d
+    function out(id, s, o, d, x, obj, now_, st, acc, est, hk, miss,   a, r) { a = ap(s, o, d); r = s * o * d
       printf "%s\t%d\t%d\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", a, s, o, d, r, id, K[id], obj, MO[id], now_, st, acc, est, hk, EF[id], CA[id], OW[id], miss, SITE[id] }
   ' "$d/fmea-cat.tsv" "$d/fmea-access.tsv" "$d/fmea-src.tsv" "$d/fmea-hist.tsv" "$d/fmea-crit.tsv" "$d/fmea-counts.tsv" "$d/fmea-hits.tsv" |
     LC_ALL=C awk -F'\t' 'BEGIN { OFS = "\t" } { r = ($1 == "H") ? 1 : ($1 == "M") ? 2 : 3; print r, 100 - $2, 100000 - $5, $0 }' |
     LC_ALL=C sort -t $'\t' -k1,1n -k2,2n -k3,3n -k9,9 -k11,11 | cut -f4- > "$d/fmea-rows.tsv"
   # summary: H M L visible total user
   awk -F'\t' -v u="$(awk -F'\t' '$1 == "U" { print $2; exit }' "$d/fmea-access.tsv")" '
-    { c[$1]++; if (!($6 in seen)) { seen[$6] = 1; tot++; if ($11 ~ /^(ok|risk|fail)$/ && $12 ~ /^(full|partial)$/) vis++ } }
+    { c[$1]++; if (!($6 in seen)) { seen[$6] = 1; tot++; if ($11 != "noaccess") vis++ } }
     END { printf "%d\t%d\t%d\t%d\t%d\t%s\n", c["H"], c["M"], c["L"], vis, tot, u }' "$d/fmea-rows.tsv" > "$d/fmea.summary"
   date +%s > "$d/fmea.at"
 }
@@ -12292,6 +12482,10 @@ fmea_collect() { # cli|view
   # access just (re)checked: the node / snapshot reads must not be older than it
   if [ "${FMEA_ACCESS_FRESH:-0}" = 1 ] || [ "$(rb_age)" -ge 60 ]; then rb_collect; fi
   fmea_reads
+  # certificates in Secrets feed CFG-02, missing Secrets CFG-01 (the secrets map, reused while fresh)
+  if [ "${KDASH_SECRETS_IN_CHECK:-1}" = 1 ]; then
+    if [ "${FMEA_ACCESS_FRESH:-0}" = 1 ] || [ "$(sm_age)" -ge "${KDASH_SECRETS_CHECK_TTL:-300}" ]; then sm_collect > /dev/null 2>&1; fi
+  else health__status sm-secrets disabled 'KDASH_SECRETS_IN_CHECK=0'; fi
   rm -f "$TOOLKIT_DIR/check-findings.tsv"; check_findings > /dev/null 2>&1
   fmea_evaluate
   fmea_score
@@ -12341,10 +12535,6 @@ fmea_hints() { # key ns name x1 ...
     fm-WRK-07)
       rb_line read "$(rb_k "$ns" get pods -o wide) | grep $n" "where the replicas run"
       rb_line note "add podAntiAffinity or topologySpreadConstraints (topologyKey kubernetes.io/hostname) in the chart" ;;
-    fm-POD-08)
-      rb_line read "$(rb_k "$ns" top pod "$n" --containers)" "observed CPU usage; this does not measure throttled time"
-      rb_line read "$(rb_k "$ns" describe pod "$n")" "CPU requests, limits and current container state"
-      rb_line note "compare CPU usage over time; confirm throttling with container CPU throttle counters before changing a limit" ;;
     fm-POD-06)
       rb_line read "$(rb_k "$ns" describe pod "$n")" "the probe, its timeout and the kill events"
       rb_line note "raise timeoutSeconds / failureThreshold, or add a startupProbe for slow starts" ;;
@@ -12405,7 +12595,7 @@ fmea_hints() { # key ns name x1 ...
     fm-JOB-02)
       rb_line read "$(rb_k "$ns" get cronjob "$n" -o wide)" "schedule, suspend, last schedule"
       rb_line read "$(rb_k "$ns" get jobs --sort-by=.metadata.creationTimestamp)" "its recent jobs" ;;
-    *) return 1 ;;
+    *) sm_hints "$@"; return $? ;;
   esac
   return 0
 }
@@ -12414,7 +12604,7 @@ fmea_hints() { # key ns name x1 ...
 fmea__ap_word() { case "$1" in H) printf '{r}HIGH' ;; M) printf '{y}MEDIUM' ;; *) printf '{d}LOW' ;; esac; }
 fmea_render() {
   local d="$TOOLKIT_DIR" h m l v t u num="$TOOLKIT_DIR/fmea-numbered.tsv" kind="${FMEA_KIND:-}"
-  tk_title "FMEA" "failure modes of every object you can read, ranked by a project Action Priority heuristic - S severity, O occurrence, D detection"
+  tk_title "FMEA" "failure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection"
   if [ ! -s "$d/fmea-rows.tsv" ]; then printf '\nChecking your access (kubectl auth can-i), then scoring every failure mode ...\n'; return 0; fi
   IFS=$'\t' read -r h m l v t u < "$d/fmea.summary"
   if [ "${TK_COLOR:-0}" = 1 ]; then
@@ -12435,7 +12625,7 @@ fmea_render() {
         if ($12 == "noaccess") now_ = "{d}" now_; else if ($12 == "nosignal") now_ = "{d}" now_; else if ($12 == "ok") now_ = "{g}" now_; else if ($12 == "fail") now_ = "{r}" now_; else now_ = "{y}" now_
         print $1, apw($2), $3, o, $5, $6, $7, $9, $10, now_ }' "$num"; } |
     tk_table "WORKSHEET" "* = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind" "nothing to show" "row" "rows"
-  tk_note "AP is a project heuristic, not a certified standard implementation; RPN (S x O x D) is shown but does not rank. Unknown and no-access rows are never OK."
+  tk_note "AP follows the AIAG-VDA 2019 table; RPN (S x O x D) is shown but does not rank. \"no access\" rows are never counted as OK."
   # next commands for the HIGH / MEDIUM rows that have something wrong now or a risk
   awk -F'\t' 'BEGIN { OFS = "\t" } ($2 == "H" || $2 == "M") && ($12 == "fail" || $12 == "risk") && $15 != "" {
       print $1, ($2 == "H" ? "{r}CRITICAL" : "{y}WARNING"), $9, $7 " " $10 ": " $11, $15 }' "$num" > "$num.list"
@@ -12493,28 +12683,9 @@ fmea_access_render() {
 fmea_export() { # csv|tsv|json
   local f="$TOOLKIT_DIR/fmea-rows.tsv"
   case "$1" in
-    json) KDASH_FMEA_JSON_CONTEXT="${CTX_NAME:-}" KDASH_FMEA_JSON_NAMESPACE="${NS:-}" \
-          KDASH_FMEA_JSON_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)" KDASH_FMEA_JSON_SUMMARY="$(cat "$TOOLKIT_DIR/fmea.summary")" \
-      LC_ALL=C awk -F'\t' '
-        function j(s,   i, c, out, code) {
-          out = "\""
-          for (i = 1; i <= length(s); i++) {
-            c = substr(s, i, 1)
-            if (c == "\\") out = out "\\\\"
-            else if (c == "\"") out = out "\\\""
-            else if (c == "\b") out = out "\\b"
-            else if (c == "\f") out = out "\\f"
-            else if (c == "\n") out = out "\\n"
-            else if (c == "\r") out = out "\\r"
-            else if (c == "\t") out = out "\\t"
-            else if (c ~ /[[:cntrl:]]/) {
-              for (code = 0; code < 128; code++) if (c == sprintf("%c", code)) break
-              out = out sprintf("\\u%04x", code)
-            } else out = out c
-          }
-          return out "\""
-        }
-        BEGIN { split(ENVIRON["KDASH_FMEA_JSON_SUMMARY"], S, "\t"); printf "{\"context\":%s,\"namespace\":%s,\"generated\":%s,\"user\":%s,\"high\":%d,\"medium\":%d,\"low\":%d,\"visible_modes\":%d,\"modes\":%d,\"rows\":[", j(ENVIRON["KDASH_FMEA_JSON_CONTEXT"]), j(ENVIRON["KDASH_FMEA_JSON_NAMESPACE"]), j(ENVIRON["KDASH_FMEA_JSON_AT"]), j(S[6]), S[1], S[2], S[3], S[4], S[5] }
+    json) awk -F'\t' -v ctx="${CTX_NAME:-}" -v ns="${NS:-}" -v at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" -v sum="$(cat "$TOOLKIT_DIR/fmea.summary")" '
+        function j(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, " ", s); return "\"" s "\"" }
+        BEGIN { split(sum, S, "\t"); printf "{\"context\":%s,\"namespace\":%s,\"generated\":%s,\"user\":%s,\"high\":%d,\"medium\":%d,\"low\":%d,\"visible_modes\":%d,\"modes\":%d,\"rows\":[", j(ctx), j(ns), j(at), j(S[6]), S[1], S[2], S[3], S[4], S[5] }
         { printf "%s{\"ap\":%s,\"s\":%d,\"o\":%d,\"d\":%d,\"rpn\":%d,\"id\":%s,\"kind\":%s,\"object\":%s,\"mode\":%s,\"now\":%s,\"status\":%s,\"access\":%s,\"o_estimated\":%s,\"effect\":%s,\"cause\":%s,\"owner\":%s,\"missing\":%s}", \
             (NR > 1 ? "," : ""), j($1), $2, $3, $4, $5, j($6), j($7), j($8), j($9), j($10), j($11), j($12), ($13 == "1" ? "true" : "false"), j($15), j($16), j($17), j($18) }
         END { print "]}" }' "$f" ;;
@@ -12539,7 +12710,7 @@ table{border-collapse:collapse;width:100%;margin-top:16px}th,td{border-bottom:1p
 td.n{text-align:right;font-variant-numeric:tabular-nums}.H{color:var(--h);font-weight:700}.M{color:var(--m);font-weight:700}.L{color:var(--l)}.ok{color:var(--ok)}.na{color:var(--mu)}
 .b{display:inline-block;padding:2px 8px;border-radius:6px;margin-right:6px;font-weight:600}</style></head><body>
 HTML
-    printf '<h1>FMEA - %s / %s</h1><div class="mu">kdash %s, %s, user %s - read-only; project Action Priority heuristic; RPN shown, not ranked</div>\n' \
+    printf '<h1>FMEA - %s / %s</h1><div class="mu">kdash %s, %s, user %s - read-only; Action Priority per AIAG-VDA 2019; RPN shown, not ranked</div>\n' \
       "$(fmea__esc "$CTX_NAME")" "$(fmea__esc "$NS")" "$KDASH_VERSION" "$(date '+%Y-%m-%d %H:%M %Z')" "$(fmea__esc "${u:-?}")"
     printf '<p><span class="b H">%s HIGH</span><span class="b M">%s MEDIUM</span><span class="b L">%s LOW</span> %s of %s modes visible to this user</p>\n' "$h" "$m" "$l" "$v" "$t"
     printf '<table><tr><th>AP</th><th>S</th><th>O</th><th>D</th><th>RPN</th><th>ID</th><th>Object</th><th>Failure mode</th><th>Now</th><th>Effect</th><th>Access</th></tr>\n'
@@ -12564,6 +12735,623 @@ fmea_trend() { # since (e.g. 30d) -> one line per day: H M L visible
     tk_table "PER DAY" "the last run of each day, newest first" "no saved runs yet - every kdash --fmea run (and the M view) saves one" "day" "days"
 }
 
+# ---- SECRETS MAP: certificates and keys in Secrets, who uses them, where they live -----
+# (key Y, -v secrets, --secrets). Read-only, and only what your RBAC lets you read.
+# What reaches kdash: Secret names, types, key names and sizes, PEM header kinds, and
+# certificate blocks. kubectl's template drops every other value before kdash sees it:
+# private keys, passwords and tokens are never received, printed or written to disk.
+# (A value holding a certificate AND a key in one file is filtered in a pipe: only
+# its CERTIFICATE blocks are kept.)  KDASH_SECRETS_KEYCHECK=1 additionally compares
+# each tls.key with its certificate - the key is piped to openssl, never stored.
+# Files: sm-secrets.tsv  NS NAME TYPE CREATED MANAGER KEYS NCERT IMMUTABLE
+#        sm-certs.tsv    NS SECRET KEY IDX ROLE CN SANS ISSUER NOTBEFORE NOTAFTER ALG FP SELF KEYSTATE
+#        sm-uses.tsv     NS SECRET HOW WORKLOAD POD CONTAINER INPOD RELOAD NODE HOSTPATH PODSTART OPTIONAL LOCAL
+SM_KUBELET_DIR="${KDASH_KUBELET_DIR:-/var/lib/kubelet}"
+
+sm_age() { local at; at="$(cat "${TOOLKIT_DIR:-/nonexistent}/sm.at" 2>/dev/null)"; case "$at" in [0-9]*) printf '%s' "$(( $(date +%s) - at ))" ;; *) printf 999999 ;; esac; }
+
+# openssl text of one certificate -> NOTBEFORE NOTAFTER CN ISSUERCN FP SANS CA ALG SELF (TSV)
+SM_X509_AWK='
+function mon(m) { return (index("JanFebMarAprMayJunJulAugSepOctNovDec", m) + 2) / 3 }
+function when(s,   a, t) { gsub(/  +/, " ", s); split(s, a, " "); split(a[3], t, ":")
+  return epoch(sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", a[4], mon(a[1]), a[2], t[1], t[2], t[3])) }
+function cn(s,   t) { t = s; if (match(t, /CN=[^,]*/)) return substr(t, RSTART + 3, RLENGTH - 3); return substr(s, 1, 60) }
+/^notBefore=/ { nb = when(substr($0, 11)); next }
+/^notAfter=/ { na = when(substr($0, 10)); next }
+/^subject=/ { su = substr($0, 9); next }
+/^issuer=/ { is = substr($0, 8); next }
+/Fingerprint=/ { fp = $0; sub(/^.*=/, "", fp); gsub(/:/, "", fp); next }
+/Subject Alternative Name/ { want = "san"; next }
+/Basic Constraints/ { want = "bc"; next }
+want == "san" { s = $0; gsub(/^ +/, "", s); gsub(/DNS:/, "", s); gsub(/IP Address:/, "", s); gsub(/, /, ",", s); sans = s; want = ""; next }
+want == "bc" { ca = ($0 ~ /CA:TRUE/) ? "ca" : "leaf"; want = ""; next }
+/Public Key Algorithm:/ { alg = $NF; next }
+/Public-Key:/ { bits = $0; gsub(/[^0-9]/, "", bits); next }
+END { if (na == "") exit 1
+  a = (alg ~ /rsa/) ? "RSA" : (alg ~ /ec/) ? "EC" : (alg ~ /ED25519|ed25519/) ? "Ed25519" : alg
+  if (bits != "" && a != "Ed25519") a = a " " bits
+  printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nb, na, cn(su), cn(is), tolower(substr(fp, 1, 16)), (sans == "" ? "-" : sans), (ca == "" ? "leaf" : ca), (a == "" ? "-" : a), (su == is ? "self" : "") }'
+sm__x509() { # < one PEM certificate
+  local out
+  out="$(openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 -ext subjectAltName,basicConstraints \
+          -text -certopt no_header,no_version,no_serial,no_signame,no_validity,no_subject,no_issuer,no_sigdump,no_aux,no_extensions 2>/dev/null)" ||
+  out="$(openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 2>/dev/null)" || return 1
+  printf '%s\n' "$out" | LC_ALL=C awk "$TK_TIME_AWK$SM_X509_AWK"
+}
+
+sm__kind() { # first 24 base64 characters of a PEM value -> what it is
+  case "$1" in
+    LS0tLS1CRUdJTiBDRVJUSUZJ) printf cert ;;
+    LS0tLS1CRUdJTiBQUklWQVRF) printf 'private key (PKCS8)' ;;
+    LS0tLS1CRUdJTiBSU0EgUFJJ) printf 'private key (RSA)' ;;
+    LS0tLS1CRUdJTiBFQyBQUklW) printf 'private key (EC)' ;;
+    LS0tLS1CRUdJTiBEU0EgUFJJ) printf 'private key (DSA)' ;;
+    LS0tLS1CRUdJTiBPUEVOU1NI) printf 'private key (OpenSSH)' ;;
+    LS0tLS1CRUdJTiBFTkNSWVBU) printf 'private key (encrypted)' ;;
+    LS0tLS1CRUdJTiBQVUJMSUMg) printf 'public key' ;;
+    LS0tLS1CRUdJTiBUUlVTVEVE) printf cert ;;
+    LS0tLS1CRUdJ*) printf 'PEM' ;;
+    *) printf '' ;;
+  esac
+}
+sm__kind_by_name() { # type key
+  case "$1" in
+    kubernetes.io/dockerconfigjson|kubernetes.io/dockercfg) printf 'registry credentials' ;;
+    kubernetes.io/service-account-token) printf 'service-account token' ;;
+    kubernetes.io/basic-auth|kubernetes.io/ssh-auth) printf 'credentials' ;;
+    *) case "$2" in
+         *.jks|*.p12|*.pfx|*.keystore|*.truststore|*keystore*|*truststore*) printf 'keystore (binary, not parsed)' ;;
+         *) printf value ;;
+       esac ;;
+  esac
+}
+
+# ---- reads ---------------------------------------------------------------------------
+sm__read_secrets() {
+  local d="$TOOLKIT_DIR" w="$TOOLKIT_DIR/sm-work" err="$TOOLKIT_DIR/health-sm-secrets.err" rc n=0 max="${KDASH_SECRETS_MAX_CERTS:-600}"
+  local rec a b c e f g h cur="" keys="" ncert=0 kind i pem line ks
+  rm -rf "$w"; mkdir -p "$w"; : > "$d/sm-secrets.tsv"; : > "$d/sm-certs.tsv"
+  # values: only PEM certificate values pass the template; every other value is reduced to its length
+  # (a PEM value: its 18-byte header). Helm release payloads are left out at the API.
+  "${KC[@]}" get secrets "${SCOPE[@]}" --field-selector 'type!=helm.sh/release.v1' --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" -o 'go-template={{range .items}}{{$o := .}}S|{{.metadata.namespace}}|{{.metadata.name}}|{{.type}}|{{.metadata.creationTimestamp}}|{{.immutable}}|{{with .metadata.annotations}}{{index . "cert-manager.io/certificate-name"}}{{end}}|{{with .metadata.annotations}}{{index . "cert-manager.io/issuer-name"}}{{end}}|{{with .metadata.annotations}}{{index . "meta.helm.sh/release-name"}}{{end}}|{{with .metadata.labels}}{{index . "app.kubernetes.io/managed-by"}}{{end}}|{{range .metadata.ownerReferences}}{{.kind}}/{{.name}}{{end}}|{{with .metadata.annotations}}{{index . "kubernetes.io/service-account.name"}}{{end}}{{"\n"}}{{range $k, $v := .data}}K|{{$k}}|{{len $v}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 12) "LS0tLS1CRUdJ"}}{{slice $v 0 24}}{{end}}{{end}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 28) "LS0tLS1CRUdJTiBDRVJUSUZJQ0FU"}}{{$v}}{{end}}{{end}}{{"\n"}}{{end}}E|{{"\n"}}{{end}}' 2> "$err" |
+  { local sns="" sname="" stype="" screated="" simm="" mgr=""
+    while IFS='|' read -r rec a b c e f g h i line ks pem; do
+      case "$rec" in
+        S) sns="$a"; sname="$b"; stype="$c"; screated="$e"; simm="$f"; keys=""; ncert=0
+           # manager: cert-manager certificate, Helm release, an owner, or by hand
+           mgr="manual"
+           if [ -n "${g#<no value>}" ]; then mgr="cert-manager: ${g}${h:+ (issuer ${h#<no value>})}"; mgr="${mgr% (issuer )}"
+           elif [ -n "${i#<no value>}" ]; then mgr="helm: $i"
+           elif [ -n "${ks#<no value>}" ]; then mgr="owner: $ks"
+           elif [ -n "${pem#<no value>}" ]; then mgr="service account: $pem"
+           elif [ -n "${line#<no value>}" ]; then mgr="$line"; fi ;;
+        K) # a = key, b = base64 length, c = PEM header (24 chars), e = certificate value (base64) or empty
+           kind="$(sm__kind "$c")"; [ -n "$kind" ] || kind="$(sm__kind_by_name "$stype" "$a")"
+           if [ -n "$e" ] && [ "$n" -lt "$max" ]; then
+             # only CERTIFICATE blocks are kept: anything else in the value is dropped in the pipe
+             f="$w/$(( n + 1 ))"
+             printf '%s' "$e" | base64 -d 2>/dev/null | LC_ALL=C awk -v p="$f" '
+               /-----BEGIN (TRUSTED )?CERTIFICATE-----/ { c++; o = p "." c ".pem" }
+               /-----BEGIN .*PRIVATE KEY-----/ { pk = 1 }
+               o != "" { print > o }
+               /-----END (TRUSTED )?CERTIFICATE-----/ { if (o != "") close(o); o = "" }
+               END { print c + 0, pk + 0 }' > "$f.n"
+             read -r g h < "$f.n"; rm -f "$f.n"
+             [ "${h:-0}" = 1 ] && kind="cert + private key in one file"
+             i=1
+             while [ "$i" -le "${g:-0}" ]; do
+               if line="$(sm__x509 < "$f.$i.pem")"; then
+                 n=$(( n + 1 )); ncert=$(( ncert + 1 ))
+                 printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$a" "$i" "$line" "$([ "${h:-0}" = 1 ] && echo samefile)" >> "$d/sm-certs.raw"
+                 cp -f "$f.$i.pem" "$w/fp-$(printf '%s' "$line" | cut -f5).pem" 2>/dev/null
+               fi
+               rm -f "$f.$i.pem"; i=$(( i + 1 ))
+             done
+           fi
+           keys="$keys${keys:+; }$a [$kind, $(( b * 3 / 4 )) B]" ;;
+        E) [ -z "$sname" ] || printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$stype" "$screated" "$mgr" "${keys:-(no data)}" "$ncert" "$([ "$simm" = true ] && echo immutable)" >> "$d/sm-secrets.tsv"
+           sname="" ;;
+      esac
+    done; }
+  rc="${PIPESTATUS[0]}"
+  if [ "$rc" = 0 ]; then health__status sm-secrets ok 'successful API read'; else : > "$d/sm-secrets.tsv"; rm -f "$d/sm-certs.raw"; health__failure sm-secrets "$err"; fi
+  # per certificate: role in its file (first = the certificate, further ones = its chain) and the key beside it
+  if [ -s "$d/sm-certs.raw" ]; then
+    LC_ALL=C awk -F'\t' 'BEGIN { OFS = "\t" }
+      FILENAME ~ /sm-secrets/ { K[$1 "/" $2] = $6; T[$1 "/" $2] = $3; next }
+      { s = $1 "/" $2; role = ($4 > 1) ? ($11 == "ca" ? "chain CA" : "chain") : ($11 == "ca" ? "CA" : "certificate")
+        ks = ""
+        if ($4 > 1) ks = "-"
+        else if ($14 == "samefile") ks = "in the same file"
+        else if (T[s] == "kubernetes.io/tls" || $3 == "tls.crt") ks = (K[s] ~ /tls\.key \[private key/) ? "tls.key present" : "{r}tls.key MISSING"
+        else if (K[s] ~ /private key/) ks = "key in this secret"
+        else ks = (role == "CA") ? "none (CA only)" : "no key here"
+        print $1, $2, $3, $4, role, $7, $10, $8, $5, $6, $12, $9, $13, ks, "-" }' "$d/sm-secrets.tsv" "$d/sm-certs.raw" > "$d/sm-certs.tsv"
+    sm__chain
+  fi
+  rm -f "$d/sm-certs.raw"
+  # optional: does each tls.key belong to its certificate? (the key goes through a pipe only)
+  if [ "${KDASH_SECRETS_KEYCHECK:-0}" = 1 ] && [ "$rc" = 0 ] && [ -s "$d/sm-certs.tsv" ]; then
+    awk -F'\t' '$3 == "tls.crt" && $4 == 1 && $14 == "tls.key present" { print $1 "\t" $2 "\t" $12 }' "$d/sm-certs.tsv" | head -n "${KDASH_SECRETS_KEYCHECK_MAX:-100}" |
+    while IFS=$'\t' read -r a b c; do
+      e="$(openssl x509 -in "$w/fp-$c.pem" -noout -pubkey 2>/dev/null | openssl pkey -pubin -outform DER 2>/dev/null | openssl dgst -sha256 2>/dev/null | awk '{ print $NF }')"
+      f="$("${KC[@]}" get secret "$b" -n "$a" --request-timeout=8s -o 'go-template={{index .data "tls.key"}}' 2>/dev/null | base64 -d 2>/dev/null | openssl pkey -pubout -outform DER 2>/dev/null | openssl dgst -sha256 2>/dev/null | awk '{ print $NF }')"
+      [ -n "$e" ] && [ -n "$f" ] || continue
+      printf '%s\t%s\t%s\n' "$a" "$b" "$([ "$e" = "$f" ] && echo 'tls.key matches' || echo '{r}tls.key DOES NOT MATCH')"
+    done > "$d/sm-keycheck.tsv"
+    [ ! -s "$d/sm-keycheck.tsv" ] || { LC_ALL=C awk -F'\t' 'BEGIN { OFS = "\t" } FILENAME ~ /keycheck/ { R[$1 "/" $2] = $3; next }
+        { if ($3 == "tls.crt" && $4 == 1 && ($1 "/" $2) in R) $14 = R[$1 "/" $2]; print }' "$d/sm-keycheck.tsv" "$d/sm-certs.tsv" > "$d/sm-certs.new" && mv -f "$d/sm-certs.new" "$d/sm-certs.tsv"; }
+    rm -f "$d/sm-keycheck.tsv"
+  fi
+  return 0
+}
+
+# Is each certificate really signed by what is stored beside it? (signatures only: an
+# expired or weak certificate is reported elsewhere, not here) -> column 15 of sm-certs.tsv
+sm__verify() { # leaf cafile [untrusted] -> openssl's verdict text, exit 0 when the chain links
+  local out
+  out="$(openssl verify -no_check_time -auth_level 0 -partial_chain -CAfile "$2" ${3:+-untrusted "$3"} "$1" 2>&1)" && { printf '%s' "$out"; return 0; }
+  case "$out" in *[Uu]sage:*|*"nknown option"*|*"nrecognized"*|*"Invalid command"*)   # an older openssl: without the two newer switches
+    out="$(openssl verify -partial_chain -CAfile "$2" ${3:+-untrusted "$3"} "$1" 2>&1)" && { printf '%s' "$out"; return 0; } ;; esac
+  printf '%s' "$out"; return 1
+}
+sm__chain() {
+  local d="$TOOLKIT_DIR" w="$TOOLKIT_DIR/sm-work" ns sec key leaf self iss chain c2 cas f out st n=0
+  command -v openssl >/dev/null 2>&1 || return 0
+  LC_ALL=C awk -F'\t' 'BEGIN { OFS = "\t" }
+      { k = $1 SUBSEP $2 SUBSEP $3
+        if ($4 == 1) { ord[++n] = k; LF[k] = $12; SF[k] = ($13 == "" ? "-" : $13); IS[k] = $8; RO[k] = $5 }
+        else { CH[k] = CH[k] (CH[k] == "" ? "" : ",") $12; if (!(k in C2)) C2[k] = $6 }
+        if ($3 == "ca.crt") CA[$1 SUBSEP $2] = CA[$1 SUBSEP $2] (CA[$1 SUBSEP $2] == "" ? "" : ",") $12 }
+      END { for (i = 1; i <= n; i++) { k = ord[i]; split(k, a, SUBSEP); if (RO[k] != "certificate") continue
+          print a[1], a[2], a[3], LF[k], SF[k], (IS[k] == "" ? "-" : IS[k]), (CH[k] == "" ? "-" : CH[k]), (C2[k] == "" ? "-" : C2[k]), (a[3] != "ca.crt" && CA[a[1] SUBSEP a[2]] != "" ? CA[a[1] SUBSEP a[2]] : "-") } }' "$d/sm-certs.tsv" |
+  while IFS=$'\t' read -r ns sec key leaf self iss chain c2 cas; do
+    n=$(( n + 1 )); [ "$n" -le "${KDASH_SECRETS_CHAIN_MAX:-300}" ] || break
+    [ -f "$w/fp-$leaf.pem" ] || continue
+    : > "$w/ca.pem"; : > "$w/un.pem"
+    if [ "$chain" != - ]; then for f in ${chain//,/ }; do cat "$w/fp-$f.pem" 2>/dev/null; done > "$w/un.pem"; fi
+    if [ "$self" = self ]; then st="self-signed"
+    elif [ "$cas" != - ]; then
+      for f in ${cas//,/ }; do cat "$w/fp-$f.pem" 2>/dev/null; done > "$w/ca.pem"
+      if out="$(sm__verify "$w/fp-$leaf.pem" "$w/ca.pem" "$([ -s "$w/un.pem" ] && printf '%s' "$w/un.pem")")"; then st="{g}ok: signed by the ca.crt beside it"
+      else case "$out" in
+          *"signature failure"*|*"unable to get local issuer"*|*"unable to get issuer"*|*"unable to verify the first"*) st="{r}NOT signed by the ca.crt beside it" ;;
+          *) st="{d}not verified ($(printf '%s' "$out" | sed -n 's/^error [0-9]* at [0-9]* depth lookup: *//p' | head -1 | cut -c1-40))" ;; esac
+      fi
+    elif [ "$chain" != - ]; then
+      if out="$(sm__verify "$w/fp-$leaf.pem" "$w/un.pem")"; then
+        if [ "$c2" = "$iss" ]; then st="{g}ok: chain in the file (issuer $iss)"; else st="{y}chain in the file is out of order (issuer $iss is not next)"; fi
+      else case "$out" in
+          *"signature failure"*|*"unable to get local issuer"*|*"unable to get issuer"*|*"unable to verify the first"*) st="{y}the chain in the file does not sign it (issuer $iss is missing)" ;;
+          *) st="{d}not verified ($(printf '%s' "$out" | sed -n 's/^error [0-9]* at [0-9]* depth lookup: *//p' | head -1 | cut -c1-40))" ;; esac
+      fi
+    else st="issuer not in this Secret"; fi
+    printf '%s\t%s\t%s\t%s\n' "$ns" "$sec" "$key" "$st"
+  done > "$d/sm-chain.tsv"
+  if [ -s "$d/sm-chain.tsv" ]; then
+    LC_ALL=C awk -F'\t' 'BEGIN { OFS = "\t" } FILENAME ~ /sm-chain/ { C[$1, $2, $3] = $4; next }
+      { if ($4 == 1 && (($1, $2, $3) in C)) $15 = C[$1, $2, $3]; print }' "$d/sm-chain.tsv" "$d/sm-certs.tsv" > "$d/sm-certs.new" && mv -f "$d/sm-certs.new" "$d/sm-certs.tsv"
+  fi
+  rm -f "$d/sm-chain.tsv" "$w/ca.pem" "$w/un.pem"
+  return 0
+}
+
+sm__read_refs() { # pods and ingresses: who refers to which Secret (works without any right on Secrets)
+  local d="$TOOLKIT_DIR" tmp err
+  tmp="$d/health-sm-pods.new"; err="$d/health-sm-pods.err"
+  if "${KC[@]}" get pods "${SCOPE[@]}" --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" -o 'go-template={{range .items}}{{$o := .}}U|{{.metadata.namespace}}|{{.metadata.name}}|{{.metadata.uid}}|{{.spec.nodeName}}|{{.status.startTime}}|{{range .metadata.ownerReferences}}{{.kind}}/{{.name}}{{end}}|{{range $k, $v := .metadata.labels}}{{$k}}={{$v}},{{end}}{{"\n"}}{{range .spec.volumes}}{{$vn := .name}}{{with .secret}}V|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$vn}}|{{.secretName}}|{{.optional}}|volume|{{range .items}}{{.key}}>{{.path}},{{end}}{{"\n"}}{{end}}{{with .projected}}{{range .sources}}{{with .secret}}V|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$vn}}|{{.name}}|{{.optional}}|projected|{{range .items}}{{.key}}>{{.path}},{{end}}{{"\n"}}{{end}}{{end}}{{end}}{{end}}{{range .spec.imagePullSecrets}}I|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{.name}}{{"\n"}}{{end}}{{range .spec.initContainers}}{{$c := .}}{{range .volumeMounts}}M|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}} (init)|{{.name}}|{{.mountPath}}|{{.subPath}}{{"\n"}}{{end}}{{range .env}}{{$e := .}}{{with .valueFrom}}{{with .secretKeyRef}}E|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}} (init)|{{.name}}|{{.key}}|{{.optional}}|{{$e.name}}{{"\n"}}{{end}}{{end}}{{end}}{{range .envFrom}}{{with .secretRef}}F|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}} (init)|{{.name}}|{{.optional}}{{"\n"}}{{end}}{{end}}{{end}}{{range .spec.containers}}{{$c := .}}{{range .volumeMounts}}M|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}}|{{.name}}|{{.mountPath}}|{{.subPath}}{{"\n"}}{{end}}{{range .env}}{{$e := .}}{{with .valueFrom}}{{with .secretKeyRef}}E|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}}|{{.name}}|{{.key}}|{{.optional}}|{{$e.name}}{{"\n"}}{{end}}{{end}}{{end}}{{range .envFrom}}{{with .secretRef}}F|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{$c.name}}|{{.name}}|{{.optional}}{{"\n"}}{{end}}{{end}}{{end}}{{end}}' > "$tmp" 2> "$err"; then
+    mv -f "$tmp" "$d/health-sm-pods.raw"; health__status sm-pods ok 'successful API read'
+  else rm -f "$tmp"; : > "$d/health-sm-pods.raw"; health__failure sm-pods "$err"; fi
+  tmp="$d/health-sm-ing.new"; err="$d/health-sm-ing.err"
+  if "${KC[@]}" get ingresses.networking.k8s.io "${SCOPE[@]}" --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" -o 'go-template={{range .items}}{{$o := .}}{{range .spec.tls}}G|{{$o.metadata.namespace}}|{{$o.metadata.name}}|{{.secretName}}|{{range .hosts}}{{.}},{{end}}{{"\n"}}{{end}}{{end}}' > "$tmp" 2> "$err"; then
+    mv -f "$tmp" "$d/health-sm-ing.raw"; health__status sm-ing ok 'successful API read'
+  else rm -f "$tmp"; : > "$d/health-sm-ing.raw"; health__failure sm-ing "$err"; fi
+  return 0
+}
+
+# one row per (secret, pod, way of use); services of each workload in sm-svc.tsv
+sm__uses() {
+  local d="$TOOLKIT_DIR"
+  LC_ALL=C awk -v kd="$SM_KUBELET_DIR" -v svcf="$d/sm-svc.tsv" "$TK_TIME_AWK"'
+    function wl(owner, pod,   k, n) { if (owner == "") return "pod/" pod
+      k = owner; sub(/\/.*/, "", k); n = owner; sub(/^[^\/]*\//, "", n)
+      if (k == "ReplicaSet") { sub(/-[a-z0-9]+$/, "", n); return "deployment/" n }
+      if (k == "Job") return "job/" n
+      return tolower(k) "/" n }
+    function out(ns, sec, how, pod, ctr, inpod, reload, hp, opt,   p) { p = ns "/" pod
+      printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t\n", ns, sec, how, W[p], pod, ctr, inpod, reload, (N[p] == "" ? "-" : N[p]), hp, ST[p], opt }
+    function files(dir, sec, items,   n, a, i, q, o, c) { o = ""; c = 0
+      if (items != "") { n = split(items, a, ","); for (i = 1; i <= n; i++) if (a[i] != "") { q = index(a[i], ">"); o = o (o == "" ? "" : ",") substr(a[i], q + 1); c++ } }
+      else if (sec in KN) { o = KN[sec]; c = KC_[sec] }
+      if (c == 0) return dir "/"
+      return (c == 1) ? dir "/" o : dir "/{" o "}" }
+    BEGIN { FS = "|" }
+    FILENAME ~ /sm-secrets\.tsv$/ { split($0, t, "\t"); n = split(t[6], ka, "; "); o = ""; c = 0
+      for (i = 1; i <= n; i++) { k = ka[i]; sub(/ \[.*$/, "", k); if (k != "" && k != "(no data)") { o = o (o == "" ? "" : ",") k; c++ } }
+      KN[t[1] "/" t[2]] = o; KC_[t[1] "/" t[2]] = c; next }
+    index($0, "<no value>") { gsub(/<no value>/, "") }
+    $1 == "S" { if ($7 != "") { ns_ = $2; SV[++nsv] = $2 SUBSEP $3 SUBSEP $7 }; next }
+    $1 == "U" { p = $2 "/" $3; UID[p] = $4; N[p] = $5; ST[p] = ($6 == "" ? "" : epoch($6)); W[p] = wl($7, $3); L[p] = $8; PODS[++np] = p; PNS[p] = $2; next }
+    $1 == "V" { p = $2 "/" $3; nv++; VP[nv] = p; VN[nv] = $4; VS[nv] = $5; VO[nv] = $6; VK[nv] = $7; VI[nv] = $8; next }
+    $1 == "M" { p = $2 "/" $3; k = p SUBSEP $5; MC[k] = MC[k] (MC[k] == "" ? "" : "\n") $4 "|" $6 "|" $7; next }
+    $1 == "E" { p = $2 "/" $3; out($2, $5, "env", $3, $4, "$" $8 " <- " $6, "restart needed (env)", "-", $7); next }
+    $1 == "F" { p = $2 "/" $3; out($2, $5, "envFrom", $3, $4, "all keys as env variables", "restart needed (env)", "-", $6); next }
+    $1 == "I" { p = $2 "/" $3; out($2, $4, "imagePull", $3, "-", "(image pull credentials)", "next image pull", "-", ""); next }
+    $1 == "G" { printf "%s\t%s\tingress-tls\tingress/%s\t-\t-\thosts: %s\tcontroller reloads it\t-\t-\t\t\t\n", $2, $4, $3, ($5 == "" ? "(all)" : substr($5, 1, length($5) - 1)); next }
+    END {
+      for (i = 1; i <= nv; i++) { p = VP[i]; split(p, a, "/"); k = p SUBSEP VN[i]
+        hp = (N[p] == "" || UID[p] == "") ? "-" : kd "/pods/" UID[p] "/volumes/kubernetes.io~" (VK[i] == "projected" ? "projected" : "secret") "/" VN[i]
+        if (!(k in MC)) { out(a[1], VS[i], VK[i], a[2], "-", "(volume " VN[i] " is not mounted)", "-", hp, VO[i]); continue }
+        m = split(MC[k], ml, "\n")
+        for (j = 1; j <= m; j++) { split(ml[j], f, "|")
+          mp = f[2]; sub(/\/+$/, "", mp)
+          if (f[3] != "") out(a[1], VS[i], VK[i], a[2], f[1], f[2] "  (subPath " f[3] ")", "restart needed (subPath)", hp, VO[i])
+          else out(a[1], VS[i], VK[i], a[2], f[1], files(mp, a[1] "/" VS[i], VI[i]), "auto-sync by the kubelet", hp, VO[i]) } }
+      # Services whose selector matches the pods of a workload
+      for (i = 1; i <= np; i++) { p = PODS[i]; n = split(L[p], la, ","); for (x in LB) delete LB[x]
+        for (j = 1; j <= n; j++) { q = index(la[j], "="); if (q) LB[substr(la[j], 1, q - 1)] = substr(la[j], q + 1) }
+        for (s = 1; s <= nsv; s++) { split(SV[s], sv, SUBSEP); if (sv[1] != PNS[p]) continue
+          n2 = split(sv[3], sl, ","); ok = 0
+          for (j = 1; j <= n2; j++) { if (sl[j] == "") continue; q = index(sl[j], "="); if (LB[substr(sl[j], 1, q - 1)] != substr(sl[j], q + 1)) { ok = -1; break } ok = 1 }
+          if (ok == 1 && !((PNS[p], W[p], sv[2]) in seen)) { seen[PNS[p], W[p], sv[2]] = 1; printf "%s\t%s\t%s\n", PNS[p], W[p], sv[2] > svcf } } }
+    }' "$d/sm-secrets.tsv" "$d/health-services.raw" "$d/health-sm-pods.raw" "$d/health-sm-ing.raw" 2>/dev/null > "$d/sm-uses.tsv"
+  [ -f "$d/sm-svc.tsv" ] || : > "$d/sm-svc.tsv"
+  # on this host: is the file the kubelet wrote the certificate the Secret holds now?
+  if [ -d "$SM_KUBELET_DIR/pods" ] && [ -s "$d/sm-certs.tsv" ]; then
+    local ln ns sec hp f fp cur st
+    awk -F'\t' '$10 != "-" { print NR "\t" $1 "\t" $2 "\t" $10 }' "$d/sm-uses.tsv" | head -n "${KDASH_SECRETS_LOCAL_MAX:-300}" |
+    while IFS=$'\t' read -r ln ns sec hp; do
+      [ -d "$hp" ] || continue
+      st="present"
+      for f in "$hp"/*; do
+        [ -f "$f" ] && [ -r "$f" ] || continue
+        grep -q 'BEGIN CERTIFICATE' "$f" 2>/dev/null || continue
+        fp="$(openssl x509 -in "$f" -noout -fingerprint -sha256 2>/dev/null | sed 's/^.*=//; s/://g' | tr 'A-F' 'a-f' | cut -c1-16)"
+        [ -n "$fp" ] || continue
+        # the Secret's current certificate for that file name, else any of its certificates
+        cur="$(awk -F'\t' -v n="$ns" -v s="$sec" -v k="${f##*/}" -v x="$fp" '$1 == n && $2 == s && $4 == 1 && $3 == k { c = $12 } $1 == n && $2 == s && $12 == x { any = 1 } END { print (c != "" ? c : (any ? x : "none")) }' "$d/sm-certs.tsv")"
+        if [ "$cur" = "$fp" ]; then st="in sync"; else st="STALE (file differs from the Secret)"; break; fi
+      done
+      printf '%s\t%s\n' "$ln" "$st"
+    done > "$d/sm-local.tsv"
+    if [ -s "$d/sm-local.tsv" ]; then
+      awk -F'\t' 'BEGIN { OFS = "\t" } FILENAME ~ /sm-local/ { L[$1] = $2; next } { if (FNR in L) $13 = L[FNR]; print }' "$d/sm-local.tsv" "$d/sm-uses.tsv" > "$d/sm-uses.new" && mv -f "$d/sm-uses.new" "$d/sm-uses.tsv"
+    fi
+    rm -f "$d/sm-local.tsv"
+  fi
+  return 0
+}
+
+# findings -> sm-findings.tsv: SEVERITY OBJECT FINDING HINTKEY   (HINTKEY = key|ns|name|x1)
+sm__findings() {
+  local d="$TOOLKIT_DIR"
+  LC_ALL=C awk -F'\t' -v now="$(date +%s)" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" -v sec_ok="$([ "$(health__state sm-secrets)" = ok ] && echo 1 || echo 0)" '
+    function f(sev, obj, txt, key) { printf "%s\t%s\t%s\t%s\n", sev, obj, txt, key }
+    function days(e) { return int((e - now) / 86400) }
+    FILENAME ~ /sm-secrets/ { EX[$1 "/" $2] = 1; TY[$1 "/" $2] = $3; MG[$1 "/" $2] = $5; KS[$1 "/" $2] = $6; next }
+    FILENAME ~ /sm-certs/ { s = $1 "/" $2; dl = days($10); what = ($5 ~ /CA/ ? "CA " : ($5 == "chain" ? "chain " : "")) "certificate " $6 " (" $3 ")"
+      by = (MG[s] ~ /^cert-manager/) ? "; " MG[s] " should renew it" : "; managed by hand"
+      if ($10 < now) f("{r}CRITICAL", s, what " EXPIRED " (-dl) " d ago" by, "sm-expired|" $1 "|" $2 "|" $3)
+      else if (dl <= crit) f("{r}CRITICAL", s, what " expires in " dl " d" by, "sm-expiring|" $1 "|" $2 "|" $3)
+      else if (dl <= warn) f("{y}WARNING", s, what " expires in " dl " d" by, "sm-expiring|" $1 "|" $2 "|" $3)
+      if ($14 ~ /MISSING|NOT MATCH/) { t = $14; sub(/^\{r\}/, "", t); f("{r}CRITICAL", s, t " for " $6, "sm-key|" $1 "|" $2) }
+      if ($15 ~ /^\{r\}/) { t = $15; sub(/^\{r\}/, "", t); f("{r}CRITICAL", s, "certificate " $6 " (" $3 ") is " t ": clients that trust that CA will reject it", "sm-chain|" $1 "|" $2 "|" $3) }
+      else if ($15 ~ /^\{y\}/) { t = $15; sub(/^\{y\}/, "", t); f("{y}WARNING", s, "certificate " $6 " (" $3 "): " t, "sm-chain|" $1 "|" $2 "|" $3) }
+      if ($11 ~ /^RSA / && substr($11, 5) + 0 < 2048 && $4 == 1) f("{y}WARNING", s, "weak key: " $11 " in " $6, "sm-weak|" $1 "|" $2)
+      if ($4 == 1) NB[s] = ($9 > NB[s]) ? $9 : NB[s]
+      if ($4 == 1 && $5 != "CA") { if (!(($12) in FPS)) FPS[$12] = s; else if (FPS[$12] != s && !((s, $12) in dup)) { dup[s, $12] = 1; DUP[$12] = (DUP[$12] == "" ? FPS[$12] : DUP[$12]) ", " s } }
+      next }
+    FILENAME ~ /sm-uses/ { s = $1 "/" $2; U[s]++
+      if (sec_ok == "1" && !(s in EX) && $12 != "true" && !((s, $4) in miss)) { miss[s, $4] = 1; f("{r}CRITICAL", s, "Secret does not exist but " $4 " needs it (" $3 "): " ($3 == "ingress-tls" ? "that host is served with the controller default certificate" : ($3 == "imagePull" ? "private images cannot be pulled" : "its pods cannot start")), "sm-missing|" $1 "|" $2 "|" $4) }
+      if ($8 ~ /^restart/ && (s in NB) && $11 != "" && NB[s] > $11 && !((s, $4) in rs)) { rs[s, $4] = 1
+        f("{y}WARNING", s, $4 " started before the current certificate was issued and reads it via " ($3 == "env" || $3 == "envFrom" ? "env" : "subPath") ": it still runs the old one", "sm-restart|" $1 "|" $2 "|" $4) }
+      if ($13 ~ /^STALE/ && !((s, $5) in stl)) { stl[s, $5] = 1; f("{y}WARNING", s, "the file on this host for pod " $5 " is not the certificate the Secret holds now", "sm-restart|" $1 "|" $2 "|" $4) }
+      next }
+    END { for (x in DUP) f("{d}INFO", FPS[x], "the same certificate is stored in several Secrets: " DUP[x] " - rotate them together", "sm-dup|" substr(FPS[x], 1, index(FPS[x], "/") - 1) "|" substr(FPS[x], index(FPS[x], "/") + 1)) }
+  ' "$d/sm-secrets.tsv" "$d/sm-certs.tsv" "$d/sm-uses.tsv" 2>/dev/null |
+    LC_ALL=C awk -F'\t' '{ r = ($1 ~ /CRIT/) ? 1 : ($1 ~ /WARN/) ? 2 : 3; print r "\t" $0 }' | LC_ALL=C sort -t $'\t' -k1,1n -k3,3 | cut -f2- > "$d/sm-findings.tsv"
+}
+
+sm_collect() {
+  local d="$TOOLKIT_DIR" u
+  [ -s "$d/health-services.status" ] || health_collect
+  # who am I, and may I read Secrets here (auth can-i; nothing is asked beyond reads)
+  u="$("${KC[@]}" auth whoami --request-timeout=8s 2>/dev/null | awk '$1 == "Username" { $1 = ""; sub(/^ +/, ""); print; exit }')"
+  [ -n "$u" ] || u="$("${KC[@]}" config view --minify -o 'jsonpath={.contexts[0].context.user}' 2>/dev/null)"
+  sm__read_secrets; sm__read_refs; sm__uses; sm__findings
+  rm -rf "$d/sm-work"
+  awk -F'\t' -v now="$(date +%s)" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" -v u="${u:-unknown}" -v st="$(health__state sm-secrets)" '
+    FILENAME ~ /sm-secrets/ { ns++; next }
+    FILENAME ~ /sm-certs/ { nc++; dl = ($10 - now) / 86400; if ($10 < now) ex++; else if (dl <= crit) cr++; else if (dl <= warn) wa++; next }
+    FILENAME ~ /sm-findings/ { if ($1 ~ /CRIT/) fc++; else if ($1 ~ /WARN/) fw++; next }
+    END { printf "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s\n", ns, nc, ex, cr, wa, fc, fw, u, st }' "$d/sm-secrets.tsv" "$d/sm-certs.tsv" "$d/sm-findings.tsv" 2>/dev/null > "$d/sm.summary"
+  date +%s > "$d/sm.at"
+  return 0
+}
+
+sm_exit_code() { # 2 expired / critical findings, 1 warnings, 0 otherwise
+  awk -F'\t' '{ print ($6 > 0) ? 2 : ($7 > 0) ? 1 : 0 }' "$TOOLKIT_DIR/sm.summary" 2>/dev/null || echo 0
+}
+
+# ---- runbook lines (read = may run with Enter; CHANGE = printed only) -----------------
+sm_hints() { # key ns name x1
+  local key="$1" ns="${2:-}" name="${3:-}" x1="${4:-}" n; n="$(rb_q "$name")"
+  case "$key" in
+    sm-expired|sm-expiring|sm-weak|sm-key|sm-dup|sm-chain)
+      rb_line read "$(rb_k "$ns" describe secret "$n")" "type, key names and sizes (never the values)"
+      rb_line read "$(rb_k "$ns" get secret "$n" -o custom-columns=NAME:.metadata.name,TYPE:.type,OWNER:.metadata.ownerReferences[*].name,CREATED:.metadata.creationTimestamp)" "type, owner and age"
+      x1="${x1:-tls.crt}"; rb_line note "inspect the certificate: $(rb_k "$ns" get secret "$n" -o "jsonpath='{.data.${x1//./\\.}}'") | base64 -d | openssl x509 -noout -subject -issuer -dates"
+      case "$key" in sm-expired|sm-expiring)
+        rb_line note "cert-manager: cmctl renew <certificate> -n $ns (or delete the Secret: it is issued again). By hand: replace it with the next line"
+        rb_line CHANGE "$(rb_k "$ns" create secret tls "$n" --cert=NEW.crt --key=NEW.key --dry-run=client -o yaml) | kubectl apply -f -" "then restart the workloads marked \"restart needed\" in WHERE USED" ;; esac
+      [ "$key" != sm-chain ] || rb_line note "tls.crt must hold the certificate first, then its intermediates in order; ca.crt the CA that signed them. Check by hand: openssl verify -CAfile ca.crt -untrusted chain.pem cert.pem"
+      [ "$key" != sm-key ] || rb_line note "a kubernetes.io/tls Secret needs tls.crt and tls.key from the same key pair; KDASH_SECRETS_KEYCHECK=1 compares them" ;;
+    sm-missing)
+      rb_line read "$(rb_k "$ns" get secrets)" "the Secrets that do exist (a typo, another namespace?)"
+      rb_line read "$(rb_k "$ns" get events --field-selector reason=FailedMount)" "mount errors naming it"
+      rb_line note "create the Secret (chart value, cert-manager Certificate or kubectl create secret); $x1 starts once it exists" ;;
+    sm-restart)
+      rb_line read "$(rb_k "$ns" get pods -o wide)" "the pods and when they started"
+      rb_line CHANGE "$(rb_k "$ns" rollout restart "${x1:-deployment/NAME}")" "env and subPath mounts are read once, at container start" ;;
+    *) return 1 ;;
+  esac
+  return 0
+}
+
+# ---- screens: tables only ----------------------------------------------------------------
+sm__chip() { # label value colour(41;97)
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1;%sm %s %s ~[0m ' "$3" "$2" "$1"; else printf '%s %s   ' "$2" "$1"; fi
+}
+sm_render() {
+  local d="$TOOLKIT_DIR" ns nc ex cr wa fc fw u st now num="$TOOLKIT_DIR/sm-numbered.tsv" one=1
+  [ "${ALL_NS:-0}" != 1 ] || one=0     # one namespace: its name is in the header, not in every row
+  tk_title "SECRETS" "certificates and keys in Secrets: expiry, who manages them, who uses them and where the files are - values are never read"
+  if [ ! -s "$d/sm.summary" ]; then printf '\nReading Secrets (names, types, certificates) and every reference to them ...\n'; return 0; fi
+  IFS=$'\t' read -r ns nc ex cr wa fc fw u st < "$d/sm.summary"; now="$(date +%s)"
+  printf '\n '
+  if [ "$st" = ok ]; then
+    sm__chip EXPIRED "$ex" '41;97'; sm__chip "CRITICAL (<= ${CERT_CRIT_DAYS:-7} d)" "$cr" '41;97'; sm__chip "WARNING (<= ${CERT_WARN_DAYS:-30} d)" "$wa" '43;30'
+    sm__chip certificates "$nc" '47;30'; sm__chip secrets "$ns" '47;30'
+  else   # never zeros for something that could not be read
+    sm__chip "- Secrets read $st: certificates and expiry unknown" "NOT VISIBLE" '43;30'
+    sm__chip "references from pods / ingresses" "$(cut -f1,2 "$d/sm-uses.tsv" 2>/dev/null | sort -u | grep -c .)" '47;30'
+  fi
+  if [ "${TK_COLOR:-0}" = 1 ]; then printf ' ~[90muser %s - read %ss ago - r re-reads~[0m\n' "$u" "$(sm_age)"; else printf '  user %s - read %ss ago\n' "$u" "$(sm_age)"; fi
+  # access: one table row per source, so a refused read is never mistaken for "nothing there"
+  { printf 'SOURCE\tACCESS*\tUSED FOR~\n'
+    printf 'secrets\t%s\tnames, types, key names, certificates (private keys and other values are dropped by kubectl before kdash sees them)\n' "$st"
+    printf 'pods\t%s\tvolume mounts, env, envFrom, imagePullSecrets, node and pod UID (host path)\n' "$(health__state sm-pods)"
+    printf 'ingresses\t%s\tTLS secretName per host\n' "$(health__state sm-ing)"
+    printf 'services\t%s\twhich Services front the workloads that use a Secret\n' "$(health__state services)"; } |
+    TK_COUNT=0 tk_table "ACCESS" "user $u, scope $([ "${ALL_NS:-0}" = 1 ] && echo 'all namespaces' || echo "${NS:-?}") - only what your RBAC allows is read"
+  if [ "$st" != ok ]; then
+    tk_note "Secrets cannot be read here ($st): certificates and expiry are not visible to you. References from pods and ingresses are still shown below."
+    tk_note "To see them, ask for: verbs get, list on resource secrets in this namespace (read-only)."
+  fi
+  # 1. certificates: the list (what expires when, who uses it), then the details by the same #
+  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" -v one="$one" 'BEGIN { OFS = "\t" }
+      FILENAME ~ /sm-secrets/ { MG[$1 "/" $2] = $5; next }
+      FILENAME ~ /sm-uses/ { s = $1 "/" $2; if (!((s, $4) in seen)) { seen[s, $4] = 1; UB[s] = UB[s] (UB[s] == "" ? "" : ", ") $4 }; next }
+      { s = $1 "/" $2; dl = int(($10 - now) / 86400)
+        stt = ($10 < now) ? "{r}EXPIRED" : (dl <= crit) ? "{r}CRITICAL" : (dl <= warn) ? "{y}WARNING" : "{g}OK"
+        cmd = "date -u -d @" $10 " +%Y-%m-%d\\ %H:%M 2>/dev/null"; t = "-"; cmd | getline t; close(cmd)
+        san = $7; gsub(/,/, ", ", san)
+        print $10, stt, dl, t, (one ? $2 : s), $3 ($4 > 1 ? " #" $4 : ""), ($13 == "self" && $5 == "certificate" ? "self-signed" : $5), $6, ($13 == "self" ? "(self)" : $8),
+              ($4 > 1 ? "{d}(with the certificate above it)" : (UB[s] == "" ? (PODS_OK ? "{y}no pod or ingress" : "{d}not visible (pods)") : UB[s] (PODS_OK ? "" : " (+ pods not visible)"))), $11, $14, MG[s], $12, san, ($15 == "" ? "-" : $15) }' \
+      PODS_OK="$([ "$(health__state sm-pods)" = ok ] && echo 1 || echo 0)" "$d/sm-secrets.tsv" "$d/sm-uses.tsv" "$d/sm-certs.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1n -k5,5 -k6,6 | cut -f2- |
+    awk -F'\t' 'BEGIN { OFS = "\t" } { print NR, $0 }' > "$num.c"
+  { printf '>#\tSTATE\t>DAYS\tEXPIRES (UTC)\tSECRET\tKEY\tSUBJECT (CN)\tISSUER\tUSED BY\n'
+    awk -F'\t' 'BEGIN { OFS = "\t" } { print $1, $2, $3, $4, $5, $6, $8, $9, $10 }' "$num.c"; } |
+    tk_table "CERTIFICATES IN SECRETS" "soonest expiry first; \"#2\" after a key = further certificate in the same file (its chain)" \
+      "$([ "$st" = ok ] && echo 'no certificate in any Secret you can read' || echo "not visible: Secrets read $st")" certificate certificates
+  if [ -s "$num.c" ]; then
+    { printf '>#\tSECRET\tKEY\tROLE\tALGO\tPRIVATE KEY\tCHAIN (signatures)\tMANAGED BY\tSHA-256~\tSAN (names the certificate is valid for)\n'
+      awk -F'\t' 'BEGIN { OFS = "\t" } { print $1, $5, $6, $7, ($11 ~ /^RSA / && substr($11, 5) + 0 < 2048 ? "{y}" : "") $11, $12, $16, $13, $14, $15 }' "$num.c"; } |
+      TK_COUNT=0 tk_table "CERTIFICATE DETAILS" "same # as above; CHAIN = is it signed by the ca.crt or the intermediates stored with it; the private key is never read"
+  fi
+  rm -f "$num.c"
+  # 2. where used: in the container ...
+  { printf 'SECRET\tUSED BY\tSERVICE\tHOW\tCONTAINER\tFILES IN THE CONTAINER\t>PODS\tAFTER A ROTATION*\n'
+    awk -F'\t' 'BEGIN { OFS = "\t" }
+      FILENAME ~ /sm-svc/ { SV[$1, $2] = SV[$1, $2] (SV[$1, $2] == "" ? "" : ", ") $3; next }
+      FILENAME ~ /sm-secrets/ { EX[$1 "/" $2] = 1; next }
+      { k = $1 SUBSEP $2 SUBSEP $3 SUBSEP $4 SUBSEP $6 SUBSEP $7
+        if (!(k in C)) { ord[++n] = k; RL[k] = $8 }
+        if (!((k, $5) in P)) { P[k, $5] = 1; C[k]++ } }
+      END { for (i = 1; i <= n; i++) { k = ord[i]; split(k, a, SUBSEP); s = a[1] "/" a[2]; sn = (ONE ? a[2] : s)
+          rl = RL[k]; col = (rl ~ /^restart/) ? "{y}" : (rl ~ /^auto/) ? "{g}" : "{d}"
+          print (EXS && !(s in EX) ? "{r}" sn "  (does not exist)" : sn), a[4], (SV[a[1], a[4]] == "" ? "-" : SV[a[1], a[4]]), a[3], a[5], a[6], C[k], col rl } }' \
+        EXS="$([ "$st" = ok ] && echo 1 || echo 0)" ONE="$one" "$d/sm-svc.tsv" "$d/sm-secrets.tsv" "$d/sm-uses.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1 -k2,2 -k4,4; } |
+    tk_table "WHERE EACH SECRET IS USED" "one row per workload and way of use; volumes follow a rotation by themselves, env and subPath need a restart" \
+      "$([ "$(health__state sm-pods)" = ok ] && echo 'no pod or ingress in scope refers to a Secret' || echo "not visible: pods read $(health__state sm-pods)")" use uses
+  [ "$(health__state sm-pods)" = ok ] || tk_note "not visible: pods read $(health__state sm-pods) - volume, env and imagePull uses are missing above; only ingress TLS is shown. Ask for get, list on pods."
+  [ "$(health__state sm-ing)" = ok ] || tk_note "not visible: ingresses read $(health__state sm-ing) - ingress TLS uses are missing above."
+  # ... and on the nodes: the kubelet's copy of each Secret volume, per pod
+  { printf 'SECRET\tPOD\tNODE\tTHIS HOST*\tKUBELET PATH ON THE NODE\n'
+    awk -F'\t' -v one="$one" 'BEGIN { OFS = "\t" } $10 != "-" && !(($5, $10) in seen) { seen[$5, $10] = 1
+        print (one ? $2 : $1 "/" $2), $5, $9, ($13 == "" ? "{d}not this host" : ($13 ~ /STALE/ ? "{r}STALE: differs from the Secret" : "{g}" $13)), $10 }' "$d/sm-uses.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1 -k3,3 -k2,2; } |
+    tk_table "FILES ON THE NODES" "tmpfs under $SM_KUBELET_DIR, readable by root on that node; THIS HOST compares the file with the Secret when kdash runs there" \
+      "no pod with a Secret volume is scheduled on a node (env, imagePull and ingress uses have no file)" file files
+  # 3. inventory
+  { printf 'SECRET\tTYPE\t>AGE\tMANAGED BY\t>CERTS\t>USED BY\tNOTE~\tKEYS (name = kind, size) - never the value\n'
+    awk -F'\t' -v now="$now" -v one="$one" "$TK_TIME_AWK"'BEGIN { OFS = "\t" }
+      FILENAME ~ /sm-uses/ { s = $1 "/" $2; if (!((s, $4) in seen)) { seen[s, $4] = 1; U[s]++ }; next }
+      { s = $1 "/" $2; e = epoch($4); age = (e > 0) ? int((now - e) / 86400) "d" : "-"
+        note = $8; if (U[s] == 0 && $3 !~ /service-account-token|bootstrap/) note = note (note == "" ? "" : ", ") (PODS_OK ? "unused in scope" : "use not visible")
+        ks = $6; gsub(/ \[/, " = ", ks); gsub(/\]/, "", ks)
+        print (one ? $2 : s), $3, age, $5, $7, U[s] + 0, note, ks }' PODS_OK="$([ "$(health__state sm-pods)" = ok ] && echo 1 || echo 0)" "$d/sm-uses.tsv" "$d/sm-secrets.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1; } |
+    tk_table "ALL SECRETS" "what each Secret holds, by key name and kind; Helm release payloads are left out" \
+      "$([ "$st" = ok ] && echo 'no Secret in scope' || echo "not visible: Secrets read $st")" secret secrets
+  # 4. findings, with the next commands
+  awk -F'\t' 'BEGIN { OFS = "\t" } { print NR, $0 }' "$d/sm-findings.tsv" 2>/dev/null > "$num"
+  { printf '#\tSEVERITY\tSECRET\tFINDING\n'; awk -F'\t' -v one="$one" 'BEGIN { OFS = "\t" } { o = $3; if (one) sub(/^[^\/]*\//, "", o); print $1, $2, o, $4 }' "$num"; } |
+    tk_table "FINDINGS" "Enter runs the read commands of a row; CHANGE commands are only printed" "nothing to act on: no certificate inside the warning window, no missing Secret" finding findings
+  awk -F'\t' 'BEGIN { OFS = "\t" } $2 !~ /INFO/ { print $1, $2, $3, $4, $5 }' "$num" > "$num.list"
+  KDASH_HINT_MAX="${KDASH_SECRETS_HINT_MAX:-20}" rb_next_list "$num.list"
+  rm -f "$num.list"
+  return 0
+}
+
+# ---- exports (the full data, nothing cut to the screen width) -------------------------------
+sm__flat() { # one row per secret x certificate x use; blanks where there is no certificate / no use
+  local d="$TOOLKIT_DIR"
+  awk -F'\t' -v now="$(date +%s)" 'BEGIN { OFS = "\t" }
+    function use(s, i) { return (i ? UW[s, i] OFS UO[s, i] OFS SV[UNS[s, i], UW[s, i]] OFS UH[s, i] OFS UC[s, i] OFS UP[s, i] OFS UN[s, i] OFS UX[s, i] OFS UR[s, i] OFS UL[s, i] : "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "") }
+    FILENAME ~ /sm-svc/ { SV[$1, $2] = SV[$1, $2] (SV[$1, $2] == "" ? "" : ";") $3; next }
+    FILENAME ~ /sm-secrets/ { s = $1 "/" $2; if (!(s in SEEN)) { SEEN[s] = 1; ORD[++no] = s }; MG[s] = $5; TY[s] = $3; next }
+    FILENAME ~ /sm-uses/ { s = $1 "/" $2; if (!(s in SEEN)) { SEEN[s] = 1; ORD[++no] = s; TY[s] = "(not readable or missing)" }
+      n = ++NU[s]; UW[s, n] = $4; UH[s, n] = $3; UC[s, n] = $6; UP[s, n] = $7; UR[s, n] = $8; UN[s, n] = $9; UX[s, n] = $10; UO[s, n] = $5; UL[s, n] = $13; UNS[s, n] = $1; next }
+    { s = $1 "/" $2; dl = int(($10 - now) / 86400); ks = $14; sub(/^\{[a-z]\}/, "", ks); n = ++NC[s]
+      ch = ($15 == "" ? "-" : $15); sub(/^\{[a-z]\}/, "", ch)
+      CE[s, n] = $3 OFS $4 OFS $5 OFS $6 OFS $7 OFS $8 OFS $9 OFS $10 OFS dl OFS ($10 < now ? "expired" : "valid") OFS $11 OFS $12 OFS ks OFS ch }
+    END { for (x = 1; x <= no; x++) { s = ORD[x]; ns_ = substr(s, 1, index(s, "/") - 1); nm = substr(s, index(s, "/") + 1)
+        nc = (NC[s] > 0) ? NC[s] : 1; nu = (NU[s] > 0) ? NU[s] : 1
+        for (c = 1; c <= nc; c++) for (u = 1; u <= nu; u++)
+          print ns_, nm, TY[s], (NC[s] > 0 ? CE[s, c] : "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS "" OFS ""), MG[s], use(s, (NU[s] > 0 ? u : 0)) } }' \
+    "$d/sm-svc.tsv" "$d/sm-secrets.tsv" "$d/sm-uses.tsv" "$d/sm-certs.tsv" 2>/dev/null
+}
+sm_export() { # csv|tsv|json
+  local d="$TOOLKIT_DIR"
+  case "$1" in
+    json) awk -F'\t' -v ctx="${CTX_NAME:-}" -v ns="${NS:-}" -v at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" -v sum="$(cat "$d/sm.summary")" -v now="$(date +%s)" '
+        function j(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, " ", s); sub(/^\{[a-z]\}/, "", s); return "\"" s "\"" }
+        FILENAME ~ /sm-svc/ { SV[$1, $2] = SV[$1, $2] (SV[$1, $2] == "" ? "" : ",") j($3); next }
+        FILENAME ~ /sm-certs/ { s = $1 "/" $2; C[s] = C[s] (C[s] == "" ? "" : ",") sprintf("{\"key\":%s,\"index\":%d,\"role\":%s,\"subject\":%s,\"san\":%s,\"issuer\":%s,\"not_before\":%d,\"not_after\":%d,\"days_left\":%d,\"algorithm\":%s,\"sha256_prefix\":%s,\"self_signed\":%s,\"private_key\":%s,\"chain\":%s}", j($3), $4, j($5), j($6), j($7), j($8), $9, $10, int(($10 - now) / 86400), j($11), j($12), ($13 == "self" ? "true" : "false"), j($14), j($15 == "" ? "-" : $15)); next }
+        FILENAME ~ /sm-uses/ { s = $1 "/" $2; U[s] = U[s] (U[s] == "" ? "" : ",") sprintf("{\"workload\":%s,\"pod\":%s,\"services\":[%s],\"how\":%s,\"container\":%s,\"path_in_container\":%s,\"node\":%s,\"host_path\":%s,\"after_rotation\":%s,\"this_host\":%s}", j($4), j($5), SV[$1, $4], j($3), j($6), j($7), j($9), j($10), j($8), j($13)); if (!(s in ORD)) { ORD[s] = 1; UO[++nu] = s }; next }
+        FILENAME ~ /sm-findings/ { F = F (F == "" ? "" : ",") sprintf("{\"severity\":%s,\"secret\":%s,\"finding\":%s}", j($1), j($2), j($3)); next }
+        { s = $1 "/" $2; HAVE[s] = 1; S = S (S == "" ? "" : ",") sprintf("{\"namespace\":%s,\"name\":%s,\"type\":%s,\"created\":%s,\"managed_by\":%s,\"keys\":%s,\"immutable\":%s,\"certificates\":[%s],\"used_by\":[%s]}", j($1), j($2), j($3), j($4), j($5), j($6), ($8 == "immutable" ? "true" : "false"), C[s], U[s]) }
+        END { split(sum, M, "\t")
+          for (i = 1; i <= nu; i++) if (!(UO[i] in HAVE)) { split(UO[i], a, "/"); X = X (X == "" ? "" : ",") sprintf("{\"namespace\":%s,\"name\":%s,\"used_by\":[%s]}", j(a[1]), j(a[2]), U[UO[i]]) }
+          printf "{\"context\":%s,\"namespace\":%s,\"generated\":%s,\"user\":%s,\"secrets_access\":%s,\"counts\":{\"secrets\":%d,\"certificates\":%d,\"expired\":%d,\"critical\":%d,\"warning\":%d},\"secrets\":[%s],\"referenced_but_not_readable_or_missing\":[%s],\"findings\":[%s]}\n", j(ctx), j(ns), j(at), j(M[8]), j(M[9]), M[1], M[2], M[3], M[4], M[5], S, X, F }' \
+        "$d/sm-svc.tsv" "$d/sm-certs.tsv" "$d/sm-uses.tsv" "$d/sm-findings.tsv" "$d/sm-secrets.tsv" 2>/dev/null ;;
+    *) { printf 'NAMESPACE\tSECRET\tTYPE\tKEY\tINDEX\tROLE\tSUBJECT\tSAN\tISSUER\tNOT_BEFORE\tNOT_AFTER\tDAYS_LEFT\tVALIDITY\tALGORITHM\tSHA256_PREFIX\tPRIVATE_KEY\tCHAIN\tMANAGED_BY\tUSED_BY\tPOD\tSERVICES\tHOW\tCONTAINER\tPATH_IN_CONTAINER\tNODE\tHOST_PATH\tAFTER_ROTATION\tTHIS_HOST\n'
+         sm__flat | awk -F'\t' 'BEGIN { OFS = "\t" } { for (i = 10; i <= 11; i++) if ($i != "") { cmd = "date -u -d @" $i " +%Y-%m-%dT%H:%M:%SZ 2>/dev/null"; cmd | getline t; close(cmd); $i = t } print }'; } |
+       if [ "$1" = csv ]; then awk -F'\t' '{ for (i = 1; i <= NF; i++) { v = $i; if (v ~ /[",]/) { gsub(/"/, "\"\"", v); v = "\"" v "\"" } printf "%s%s", v, (i < NF ? "," : "\n") } }'; else cat; fi ;;
+  esac
+  audit SECRETS_EXPORT "format=$1"
+}
+sm_html() { # [file] -> path   (the same tables as the screen, full width)
+  local out="${1:-}" d="$TOOLKIT_DIR" ns nc ex cr wa fc fw u st
+  [ -n "$out" ] || { mkdir -p "${REPORT_DIR:-$HOME/kdash_reports}/secrets"; out="${REPORT_DIR:-$HOME/kdash_reports}/secrets/secrets_$(safe_name "${CTX_NAME:-ctx}")_$(safe_name "${NS:-ns}")_$(date +%Y%m%d_%H%M%S).html"; }
+  IFS=$'\t' read -r ns nc ex cr wa fc fw u st < "$d/sm.summary"
+  { cat <<'HTML'
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>kdash secrets map</title>
+<style>:root{--bg:#fff;--fg:#1d1d1f;--mu:#6b6b70;--li:#e3e3e8;--h:#c62828;--m:#a35f00;--ok:#2e7d32;--card:#f5f5f7}
+@media (prefers-color-scheme:dark){:root{--bg:#121214;--fg:#ececf1;--mu:#a0a0aa;--li:#2c2c33;--h:#ff6b6b;--m:#ffb74d;--ok:#81c784;--card:#1b1b1f}}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif;margin:24px}h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:28px 0 6px}.mu{color:var(--mu)}
+.w{overflow-x:auto}table{border-collapse:collapse;min-width:100%}th,td{border-bottom:1px solid var(--li);padding:6px 9px;text-align:left;vertical-align:top;white-space:nowrap}
+td.x{white-space:normal;min-width:220px}th{font-weight:600;position:sticky;top:0;background:var(--bg)}td.n{text-align:right;font-variant-numeric:tabular-nums}
+.r{color:var(--h);font-weight:700}.y{color:var(--m);font-weight:700}.g{color:var(--ok)}.d{color:var(--mu)}
+.b{display:inline-block;padding:3px 10px;border-radius:6px;margin:0 6px 6px 0;font-weight:600;background:var(--card)}code{font:12px ui-monospace,Menlo,monospace}</style></head><body>
+HTML
+    printf '<h1>Secrets map - %s / %s</h1><div class="mu">kdash %s, %s, user %s - read-only; private keys and other values are never fetched</div>\n' \
+      "$(fmea__esc "$CTX_NAME")" "$(fmea__esc "$([ "${ALL_NS:-0}" = 1 ] && echo 'all namespaces' || echo "$NS")")" "$KDASH_VERSION" "$(date '+%Y-%m-%d %H:%M %Z')" "$(fmea__esc "${u:-?}")"
+    if [ "$st" = ok ]; then printf '<p><span class="b r">%s expired</span><span class="b r">%s critical</span><span class="b y">%s warning</span><span class="b">%s certificates</span><span class="b">%s secrets</span></p>\n' "$ex" "$cr" "$wa" "$nc" "$ns"
+    else printf '<p><span class="b y">NOT VISIBLE - Secrets read %s: certificates and expiry unknown for this user</span></p>\n' "$st"; fi
+    # the screen tables again, as HTML: TSV with a header line, {r}{y}{g}{d} cell colours
+    TK_COLOR=0 TK_COLS=0 SM_HTML=1 sm__tables_tsv | awk -F'\t' '
+      function e(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); return s }
+      /^@@/ { if (open) print "</table></div>"; split(substr($0, 3), tt, "|"); print "<h2>" e(tt[1]) "</h2>" (tt[2] != "" ? "<div class=mu>" e(tt[2]) "</div>" : "") "<div class=w><table>"; open = 1; hdr = 1; next }
+      hdr { printf "<tr>"; for (i = 1; i <= NF; i++) { h = $i; RA[i] = (h ~ /^>/); gsub(/^>|[*~]$/, "", h); printf "<th>%s</th>", e(h) } print "</tr>"; hdr = 0; next }
+      { printf "<tr>"; for (i = 1; i <= NF; i++) { v = $i; c = ""; if (v ~ /^\{[rygbd]\}/) { c = substr(v, 2, 1); v = substr(v, 4) }
+          printf "<td class=\"%s%s%s\">%s</td>", c, (RA[i] ? " n" : ""), (length(v) > 60 ? " x" : ""), e(v == "" ? "-" : v) } print "</tr>" }
+      END { if (open) print "</table></div>" }'
+    printf '<p class="mu">Paths: "in the container" is the mountPath; "on the node" is the kubelet copy under %s on that node. After a rotation, env and subPath consumers need a restart.</p></body></html>\n' "$SM_KUBELET_DIR"
+  } > "$out" || return 1
+  audit SECRETS_EXPORT "format=html file=$out"
+  printf '%s\n' "$out"
+}
+# ---- FMEA and the secrets map inside the namespace report and the report bundle -------
+fmea__tables_tsv() {
+  printf '@@FMEA worksheet|every failure mode on every object this user can read, ranked by Action Priority (AIAG-VDA 2019); RPN = S x O x D is shown, not ranked; * = O estimated\n'
+  printf 'AP\t>S\t>O\t>D\t>RPN\tID\tKIND\tOBJECT\tFAILURE MODE\tNOW\tACCESS\tEFFECT\n'
+  awk -F'\t' 'BEGIN { OFS = "\t" } { now_ = $10; c = ($11 == "ok") ? "{g}" : ($11 == "fail") ? "{r}" : ($11 == "risk") ? "{y}" : "{d}"
+      print ($1 == "H" ? "{r}HIGH" : $1 == "M" ? "{y}MEDIUM" : "{d}LOW"), $2, $3 ($13 == "1" ? "*" : ""), $4, $5, $6, $7, $8, $9, c now_, $12, $15 }' "$TOOLKIT_DIR/fmea-rows.tsv" 2>/dev/null
+}
+# stdin: "@@Title|subtitle", a header line, rows (TSV; {r}{y}{g}{d} = cell colour, ">" = right-aligned column)
+# -> panels in the report's own style: sortable, searchable, CSV per table
+report__html_tables() { # id-prefix
+  awk -F'\t' -v pre="$1" '
+    function e(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); gsub(/"/, "\\&quot;", s); return s }
+    function shut() { if (open) { if (rows == 0) printf "<tr><td class=\"l na\" colspan=\"%d\">nothing to show</td></tr>\n", nc; print "</tbody></table></div></section>" } open = 0 }
+    /^@@/ { shut(); n++; split(substr($0, 3), t, "|"); id = pre n; nm = tolower(t[1]); gsub(/[^a-z0-9]+/, "_", nm)
+      printf "<section class=\"panel\"><div class=\"ph\"><h2>%s</h2><p>%s</p><div class=\"tools\"><span class=\"count\" data-count=\"%s\"></span><button class=\"btn\" onclick=\"kdCSV(&quot;%s&quot;,&quot;%s&quot;)\">CSV</button></div></div>\n<div class=\"scroll\"><table class=\"cli\" id=\"%s\"><thead>", e(t[1]), e(t[2]), id, id, nm, id
+      open = 1; hdr = 1; rows = 0; next }
+    hdr { printf "<tr>"; nc = NF; for (i = 1; i <= NF; i++) { h = $i; RA[i] = (h ~ /^>/); gsub(/^>|[*~]$/, "", h); printf "<th%s onclick=\"kdSort(this)\">%s</th>", (RA[i] ? "" : " class=\"l\""), e(h) }
+      print "</tr></thead><tbody>"; hdr = 0; next }
+    { all = $0; gsub(/\{[rygbd]\}/, "", all); gsub(/\t/, " ", all); printf "<tr data-s=\"%s\">", e(all)
+      for (i = 1; i <= nc; i++) { v = $i; st = ""
+        if (v ~ /^\{[rygbd]\}/) { k = substr(v, 2, 1); v = substr(v, 4); st = (k == "r") ? "color:var(--h4);font-weight:700" : (k == "y") ? "color:var(--h3);font-weight:700" : (k == "g") ? "color:var(--h1)" : "color:var(--dim)" }
+        printf "<td class=\"%s%s\"%s>%s</td>", (RA[i] ? "" : "l"), (length(v) > 70 ? " wrap" : ""), (st != "" ? " style=\"" st "\"" : ""), e(v == "" ? "-" : v) }
+      print "</tr>"; rows++ }
+    END { shut() }'
+}
+report__lead() { # title text  -> one summary panel
+  printf '<section class="panel"><div class="ph"><h2>%s</h2><p>%s</p></div></section>\n' "$(fmea__esc "$1")" "$(fmea__esc "$2")"
+}
+# report_extras [session]: writes $TMPD/nsr_fmea.html and $TMPD/nsr_secrets.html (empty = no tab).
+# Read-only like everything else, and only what this user's RBAC allows; data newer than 5 minutes is reused.
+report_extras() {
+  local h m l v t u ns nc ex cr wa fc fw st
+  : > "$TMPD/nsr_fmea.html"; : > "$TMPD/nsr_secrets.html"
+  [ "${KDASH_REPORT_EXTRAS:-1}" = 1 ] && [ "${NSR_OFFLINE:-0}" != 1 ] || return 0
+  [ -n "${TOOLKIT_DIR:-}" ] && [ -d "$TOOLKIT_DIR" ] || return 0
+  ( trap - EXIT INT TERM HUP
+    [ -s "$TOOLKIT_DIR/health-services.status" ] || { events_collect; health_collect; }
+    [ "$(check_age)" -lt 300 ] || check_collect
+    [ "$(fmea_age)" -lt 300 ] || fmea_collect view
+    [ "$(sm_age)" -lt 300 ] || [ "${KDASH_SECRETS_IN_CHECK:-1}" != 1 ] || sm_collect ) > /dev/null 2>&1
+  if [ -s "$TOOLKIT_DIR/fmea-rows.tsv" ] && [ -s "$TOOLKIT_DIR/fmea.summary" ]; then
+    IFS=$'\t' read -r h m l v t u < "$TOOLKIT_DIR/fmea.summary"
+    { report__lead "FMEA - $h high, $m medium, $l low" "$v of $t failure modes visible to ${u:-this user} - a check this user cannot run is listed as \"no access\", never as OK. In kdash: key M, or kdash --fmea"
+      fmea__tables_tsv | report__html_tables fmea_; } > "$TMPD/nsr_fmea.html"
+  fi
+  if [ -s "$TOOLKIT_DIR/sm.summary" ]; then
+    IFS=$'\t' read -r ns nc ex cr wa fc fw u st < "$TOOLKIT_DIR/sm.summary"
+    { if [ "$st" = ok ]; then report__lead "Secrets map - $ex expired, $cr critical, $wa warning" "$nc certificates in $ns Secrets, read as ${u:-this user} - private keys and other values are never fetched. In kdash: key Y, or kdash --secrets"
+      else report__lead "Secrets map - NOT VISIBLE" "Secrets read $st for ${u:-this user}: certificates and expiry are unknown; references from pods and ingresses are still listed"; fi
+      sm__tables_tsv | report__html_tables sm_; } > "$TMPD/nsr_secrets.html"
+  fi
+  audit REPORT_EXTRAS "fmea=$([ -s "$TMPD/nsr_fmea.html" ] && echo yes || echo no) secrets=$([ -s "$TMPD/nsr_secrets.html" ] && echo yes || echo no)"
+  return 0
+}
+report_bundle_extras() { # dir: the same data as files in the report bundle
+  local dir="$1"
+  [ -d "$dir" ] && [ "${KDASH_REPORT_EXTRAS:-1}" = 1 ] || return 0
+  ( trap - EXIT INT TERM HUP
+    [ "$(check_age)" -lt 300 ] || check_collect
+    [ "$(fmea_age)" -lt 300 ] || fmea_collect view
+    [ "$(sm_age)" -lt 300 ] || [ "${KDASH_SECRETS_IN_CHECK:-1}" != 1 ] || sm_collect ) > /dev/null 2>&1
+  if [ -s "$TOOLKIT_DIR/fmea-rows.tsv" ]; then
+    TK_COLOR=0 TK_COLS=0 fmea_render 2>/dev/null | toolkit_clean > "$dir/fmea.txt"; fmea_export csv > "$dir/fmea.csv" 2>/dev/null
+  fi
+  if [ -s "$TOOLKIT_DIR/sm.summary" ]; then
+    TK_COLOR=0 TK_COLS=0 sm_render 2>/dev/null | toolkit_clean > "$dir/secrets.txt"; sm_export csv > "$dir/secrets.csv" 2>/dev/null; sm_export json > "$dir/secrets.json" 2>/dev/null
+  fi
+  return 0
+}
+
+sm__tables_tsv() { # the four tables as "@@TITLE" + TSV (for the HTML report)
+  local d="$TOOLKIT_DIR" now; now="$(date +%s)"
+  printf '@@Certificates in Secrets|soonest expiry first; CHAIN = is it signed by the ca.crt or the intermediates stored with it\n'
+  printf 'STATE\t>DAYS\tEXPIRES (UTC)\tSECRET\tKEY\tROLE\tSUBJECT\tSAN\tISSUER\tALGO\tPRIVATE KEY\tCHAIN (signatures)\tMANAGED BY\tSHA-256 (prefix)\n'
+  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" 'BEGIN { OFS = "\t" }
+    FILENAME ~ /sm-secrets/ { MG[$1 "/" $2] = $5; next }
+    { s = $1 "/" $2; dl = int(($10 - now) / 86400); stt = ($10 < now) ? "{r}EXPIRED" : (dl <= crit) ? "{r}CRITICAL" : (dl <= warn) ? "{y}WARNING" : "{g}OK"
+      cmd = "date -u -d @" $10 " +%Y-%m-%d\\ %H:%M 2>/dev/null"; cmd | getline t; close(cmd)
+      print $10, stt, dl, t, s, $3 ($4 > 1 ? " #" $4 : ""), $5 ($13 == "self" && $5 != "CA" ? ", self-signed" : ""), $6, $7, ($13 == "self" ? "(self)" : $8), $11, $14, ($15 == "" ? "-" : $15), MG[s], $12 }' "$d/sm-secrets.tsv" "$d/sm-certs.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1n | cut -f2-
+  printf '@@Where each Secret is used|one row per pod and way of use; volumes follow a rotation by themselves, env and subPath need a restart\n'
+  printf 'SECRET\tUSED BY\tPOD\tSERVICE\tHOW\tCONTAINER\tPATH IN THE CONTAINER\tNODE\tPATH ON THE NODE (kubelet)\tAFTER A ROTATION\tTHIS HOST\n'
+  awk -F'\t' 'BEGIN { OFS = "\t" } FILENAME ~ /sm-svc/ { SV[$1, $2] = SV[$1, $2] (SV[$1, $2] == "" ? "" : ", ") $3; next }
+    { print $1 "/" $2, $4, $5, SV[$1, $4], $3, $6, $7, $9, $10, ($8 ~ /^restart/ ? "{y}" : "") $8, $13 }' "$d/sm-svc.tsv" "$d/sm-uses.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1 -k2,2
+  printf '@@All Secrets|key names, kinds and sizes only\n'
+  printf 'SECRET\tTYPE\tKEYS [kind, size]\tCREATED\tMANAGED BY\t>CERTS\tNOTE\n'
+  awk -F'\t' 'BEGIN { OFS = "\t" } { print $1 "/" $2, $3, $6, $4, $5, $7, $8 }' "$d/sm-secrets.tsv" 2>/dev/null | LC_ALL=C sort
+  printf '@@Findings|what to act on\n'
+  printf 'SEVERITY\tSECRET\tFINDING\n'
+  cut -f1-3 "$d/sm-findings.tsv" 2>/dev/null
+}
+
 # END KDASH MODULES
 #-- main ------------------------------------------------------------------------
 toolkit_init
@@ -12572,7 +13360,7 @@ toolkit_init
 if [ "$DO_DOCTOR" = 1 ]; then doctor_run; exit $?; fi
 if [ "$DO_EVENTS" = 1 ] || [ "$DO_EXPLAIN" = 1 ]; then
     events_collect
-    if [ "$DO_EVENTS" = 1 ]; then toolkit_once events; else toolkit_once explain "${NS/\(all namespaces\)/}" "$EXPLAIN_POD"; fi
+    if [ "$DO_EVENTS" = 1 ]; then events_render; else explain_render "${NS/\(all namespaces\)/}" "$EXPLAIN_POD"; fi
     [ "$(cat "$TOOLKIT_DIR/events.status" 2>/dev/null)" = ok ]; exit $?
 fi
 if [ "${DO_CHECK:-0}" = 1 ] || { [ "$VIEW" = check ] && [ "$ONCE" = 1 ]; }; then
@@ -12590,9 +13378,29 @@ if [ "${DO_CHECK:-0}" = 1 ] || { [ "$VIEW" = check ] && [ "$ONCE" = 1 ]; }; then
     if grep -q $'\t{r}CRITICAL' "$TOOLKIT_DIR/check-findings.tsv"; then exit 2; elif grep -q $'\t{y}WARNING' "$TOOLKIT_DIR/check-findings.tsv"; then exit 1; fi
     exit 0
 fi
+if [ "${DO_SECRETS:-0}" = 1 ] || { [ "$VIEW" = secrets ] && [ "$ONCE" = 1 ]; }; then
+    health_collect
+    RB_CAPTURE="$TOOLKIT_DIR/run-secrets.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="kdash --secrets --run N runs the read commands of finding N"
+    sm_collect
+    audit SECRETS "cli $(awk -F'\t' '{ printf "secrets=%s certificates=%s expired=%s critical=%s warning=%s access=%s", $1, $2, $3, $4, $5, $9 }' "$TOOLKIT_DIR/sm.summary")"
+    TK_COLOR="${COLOR:-1}"; [ -t 1 ] || TK_COLOR=0; TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}"; [ -t 1 ] || [ -n "${KDASH_COLUMNS:-}" ] || TK_COLS=0; TK_GLYPH="${BARCHR:-unicode}"; export TK_COLOR TK_COLS TK_GLYPH
+    if [ -n "${CHECK_RUN_N:-}" ]; then
+      sm_render > /dev/null; check_run "${CHECK_RUN_N#\#}" "$RB_CAPTURE" "$TMPD/check-run.out"; rc=$?; cat "$TMPD/check-run.out"; exit "$rc"
+    fi
+    case "$OUTFMT" in
+      csv|tsv|json) sm_export "$OUTFMT" ;;
+      html) sm_html || exit 1 ;;
+      *) sm_render | toolkit_clean | tk_colorize ;;
+    esac
+    case "${FMEA_FAIL_ON:-}" in
+      high) [ "$(sm_exit_code)" != 2 ] || exit 2 ;;
+      medium|low) rc="$(sm_exit_code)"; [ "$rc" = 0 ] || exit "$rc" ;;
+    esac
+    exit 0
+fi
 if [ "${DO_FMEA:-0}" = 1 ] || { { [ "$VIEW" = fmea ] || [ "$VIEW" = access ]; } && [ "$ONCE" = 1 ]; }; then
     if [ -n "${FMEA_SINCE:-}" ]; then fmea_trend "$FMEA_SINCE" | toolkit_clean | tk_colorize; exit 0; fi
-    refresh_spec; refresh_top; build_model 2>/dev/null
+    refresh_spec; build_model 2>/dev/null
     [ "$SPEC_OK" = 1 ] || SPEC_REASON="$(doctor_classify "$TMPD/spec.err") - $(head -n 1 "$TMPD/spec.err" 2>/dev/null | LC_ALL=C tr -d '\000-\037' | cut -c1-110)"
     events_collect; health_collect; check_collect
     RB_CAPTURE="$TOOLKIT_DIR/run-fmea.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="kdash --fmea --run N runs the read commands of row N"
@@ -12623,8 +13431,7 @@ if [ "${DO_RUNBOOK:-0}" = 1 ] || { [ "$VIEW" = runbook ] && [ "$ONCE" = 1 ]; }; 
     exit 0
 fi
 if [ "${DO_CERTS:-0}" = 1 ] || { [ "$VIEW" = certs ] && [ "$ONCE" = 1 ]; }; then
-    events_collect; certs_collect full
-    toolkit_once certs
+    events_collect; certs_collect full; certs_render
     audit CERTS "$(cat "$TOOLKIT_DIR/certs.summary" 2>/dev/null)"
     certs_exit_code; exit $?
 fi
@@ -12635,7 +13442,7 @@ fi
 case "$VIEW" in services|storage|events|explain)
     if [ "$ONCE" = 1 ]; then
         events_collect; health_collect
-        toolkit_once "$VIEW"
+        case "$VIEW" in services) health_render_services ;; storage) health_render_storage ;; events) events_render ;; explain) explain_render ;; esac
         exit 0
     fi ;;
 esac
@@ -12741,7 +13548,7 @@ exec 3>&2 2>"$ERRLOG"
 [ "$ALTSCR" = 1 ] && printf '\033[?1049h'
 printf '\033[?25l\033[2J'
 LAST=$(date +%s); check_alerts
-case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access) TOOLKIT_REQUESTED=1 ;; esac
+case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access|secrets) TOOLKIT_REQUESTED=1 ;; esac
 if [ "${SHELL_PICKER:-0}" = 1 ]; then      # kdsh [FILTER]: pod list in shell mode, one match opens it
   case "$FILTER" in
     ''|'.*') ;;
@@ -12750,12 +13557,20 @@ if [ "${SHELL_PICKER:-0}" = 1 ]; then      # kdsh [FILTER]: pod list in shell mo
   esac
   PK_AUTO=1; KDASH_ATTACH_ACTION=S; inspector_open; KDASH_ATTACH_ACTION=""; printf '\033[2J'
 fi
+DASH_FAST=0; DASH_FL=1
 while :; do
-  now=$(date +%s)
-  if [ "$PAUSED" = 0 ] && [ $((now - LAST)) -ge "${INTERVAL%.*}" ]; then fetch; LAST=$now; check_alerts; fi
-  fetch_adopt; toolkit_filters_changed; toolkit_tick
-  login_auto_maybe || true
-  render; paint
+  printf -v now '%(%s)T' -1 2>/dev/null || now=$(date +%s)
+  if [ "$DASH_FAST" = 1 ]; then
+    # the last key only scrolled: the rendered view is still valid - paint the new slice now;
+    # polling and rendering go on with the next tick (at most 0.4 s later)
+    DASH_FAST=0; DASH_FL=0; paint
+  else
+    if [ "$PAUSED" = 0 ] && [ $((now - LAST)) -ge "${INTERVAL%.*}" ]; then fetch; LAST=$now; check_alerts; fi
+    fetch_adopt; toolkit_filters_changed; toolkit_tick
+    [ -n "${key-x}" ] || DASH_FL=0        # a clock tick (no key): the screen is still ours
+    ! login_auto_maybe || DASH_FL=1       # ... unless the login screen was just shown
+    render; paint
+  fi
   if [ "${BASH_VERSINFO[0]:-3}" -lt 4 ]; then sleep "$INTERVAL"; continue; fi
   if IFS= read -rsn1 -t 0.4 key; then [ -n "$key" ] || key=$'\n'; else key=""; fi
   out=""; AK_NS="$NS"
@@ -12774,10 +13589,11 @@ while :; do
          if [ "$key" = ']' ]; then _c=$(( (_c + 1) % ${#_a[@]} )); else _c=$(( (_c + ${#_a[@]} - 1) % ${#_a[@]} )); fi
          RB_TOPIC="${_a[_c]}"; SCROLL=0; HSCROLL=0
        fi ;;
-    $'\n') case "$VIEW" in check|services|storage|certs|explain|fmea) check_run_prompt ;; *) inspector_open; printf '\033[2J' ;; esac ;;
+    $'\n') case "$VIEW" in check|services|storage|certs|explain|fmea|secrets) check_run_prompt ;; *) inspector_open; printf '\033[2J' ;; esac ;;
     i) inspector_open; printf '\033[2J' ;;
     L) login_interactive session ;;
     K) VIEW=check; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(check_age)" -lt 30 ] || TOOLKIT_NEXT=0 ;;
+    Y) VIEW=secrets; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(sm_age)" -lt 60 ] || TOOLKIT_NEXT=0; audit SECRETS_VIEW "from=key" ;;
     M) VIEW=fmea; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(fmea_age)" -lt 60 ] || TOOLKIT_NEXT=0; audit FMEA_VIEW "view=fmea from=key" ;;
     t) if [ "$VIEW" = fmea ]; then
          _k=""; _c=0; for _t in "" Pod Deployment StatefulSet DaemonSet Job CronJob PersistentVolume StorageClass Service Ingress NetworkPolicy CoreDNS ConfigMap Secret HorizontalPodAutoscaler PodDisruptionBudget ResourceQuota Node "API server" etcd Cluster Admission Operator RBAC Namespace; do
@@ -12792,22 +13608,23 @@ while :; do
     X) interactive_toggle; flash "$INTERACTIVE_MSG" 6; printf '\033[2J' ;;
     F) inspector_filter_prompt; SPEC_AT=0; FETCH_NEXT=0; toolkit_cancel; build_model; LAST=0; printf '\033[2J' ;;
     $'\t'|v) next_view; SCROLL=0; HSCROLL=0 ;;
-    j) SCROLL=$((SCROLL+1)) ;;
-    k) SCROLL=$((SCROLL-1)) ;;
-    ' '|f) SCROLL=$((SCROLL+10)) ;;
-    b) SCROLL=$((SCROLL-10)) ;;
-    g) SCROLL=0 ;;
-    G) SCROLL=999999 ;;
-    h) HSCROLL=$((HSCROLL-20)) ;;
-    l) HSCROLL=$((HSCROLL+20)) ;;
-    0) HSCROLL=0 ;;
+    j) SCROLL=$((SCROLL+1)); DASH_FAST=1 ;;
+    k) SCROLL=$((SCROLL-1)); DASH_FAST=1 ;;
+    ' '|f) SCROLL=$((SCROLL+10)); DASH_FAST=1 ;;
+    b) SCROLL=$((SCROLL-10)); DASH_FAST=1 ;;
+    g) SCROLL=0; DASH_FAST=1 ;;
+    G) SCROLL=999999; DASH_FAST=1 ;;
+    h) HSCROLL=$((HSCROLL-20)); DASH_FAST=1 ;;
+    l) HSCROLL=$((HSCROLL+20)); DASH_FAST=1 ;;
+    0) HSCROLL=0; DASH_FAST=1 ;;
     p) PODS_ONLY=$((1-PODS_ONLY)); SCROLL=0 ;;
     d) DETAIL=$((1-DETAIL)); SCROLL=0 ;;
     s) if [ "$VIEW" = fmea ]; then case "${FMEA_SORT:-ap}" in ap) FMEA_SORT=rpn ;; rpn) FMEA_SORT=s ;; *) FMEA_SORT=ap ;; esac; SCROLL=0; flash "FMEA sort: $FMEA_SORT (ap = Action Priority, then S and RPN)" 4
        else cycle_sort; SCROLL=0; flash "sort: $SORT ($([ "$SORT_REV" = 1 ] && echo 'reversed' || echo 'highest first / A-Z')) - o reverses" 4; fi ;;
     o) SORT_REV=$((1 - SORT_REV)); SCROLL=0; flash "sort order: $([ "$SORT_REV" = 1 ] && echo 'lowest first / Z-A' || echo 'highest first / A-Z')" 4 ;;
     w) GROUP=$((1 - GROUP)); SCROLL=0; flash "PODS: $([ "$GROUP" = 1 ] && echo 'grouped by workload' || echo 'flat list')" 4 ;;
-    r) SPEC_AT=0; LAST=0; [ "$VIEW" != check ] || { rm -f "$TOOLKIT_DIR/check.at"; TOOLKIT_NEXT=0; flash "re-checking everything now ..." 5; }
+    r) SPEC_AT=0; LAST=0; [ "$VIEW" != check ] || { rm -f "$TOOLKIT_DIR/check.at" "$TOOLKIT_DIR/sm.at"; TOOLKIT_NEXT=0; flash "re-checking everything now ..." 5; }
+       [ "$VIEW" != secrets ] || { rm -f "$TOOLKIT_DIR/sm.at"; TOOLKIT_NEXT=0; flash "re-reading Secrets and every reference to them ..." 5; }
        case "$VIEW" in fmea|access) rm -f "$TOOLKIT_DIR/fmea.at" "$TOOLKIT_DIR/check.at"; [ "$VIEW" != access ] || rm -f "$TOOLKIT_DIR/fmea-access.tsv"; TOOLKIT_NEXT=0; flash "re-scoring every failure mode now ..." 5 ;; esac ;;
     x) flash "writing namespace report (all tabs + history) ..." 30; paint
        if out="$(namespace_report "$SDIR" 2>&1)"; then flash "report: $(printf '%s\n' "$out" | tail -1)" 12
@@ -12861,10 +13678,13 @@ while :; do
     '?') show_help ;;
     q) audit QUIT "key q"; cleanup; exit 0 ;;
     Q) kdash_quit dashboard ;;
-    $'\033') IFS= read -rsn2 -t 0.05 seq || seq=""
-             case "$seq" in '[A') SCROLL=$((SCROLL-1)) ;; '[B') SCROLL=$((SCROLL+1)) ;;
-                            '[C') HSCROLL=$((HSCROLL+20)) ;; '[D') HSCROLL=$((HSCROLL-20)) ;;
-                            '[5') SCROLL=$((SCROLL-10)) ;; '[6') SCROLL=$((SCROLL+10)) ;; esac ;;
+    $'\033') # arrow / page keys; read byte by byte so a slow link that splits the sequence still works
+             IFS= read -rsn1 -t 0.15 seq || seq=""
+             case "$seq" in '['|O) IFS= read -rsn1 -t 0.15 _k2 || _k2=""; seq="[$_k2" ;; esac
+             case "$seq" in '[5'|'[6') IFS= read -rsn1 -t 0.15 _k2 || true ;; esac      # the closing ~
+             case "$seq" in '[A') SCROLL=$((SCROLL-1)); DASH_FAST=1 ;; '[B') SCROLL=$((SCROLL+1)); DASH_FAST=1 ;;
+                            '[C') HSCROLL=$((HSCROLL+20)); DASH_FAST=1 ;; '[D') HSCROLL=$((HSCROLL-20)); DASH_FAST=1 ;;
+                            '[5') SCROLL=$((SCROLL-10)); DASH_FAST=1 ;; '[6') SCROLL=$((SCROLL+10)); DASH_FAST=1 ;; esac ;;
   esac
   [ -n "$key" ] && audit_key "$key"
 done
@@ -12982,6 +13802,16 @@ KDASH_NS_MAP="example-cluster-1=demo-namespace-0001 example-cluster-2=demo-names
 #   id kind mode effect cause signal requires S D owner status [O]   (tab-separated; a known id
 #   overrides its non-empty fields, a new id adds a manual row)
 #   criticality <TAB> NAMESPACE[/KIND/NAME] <TAB> low|normal|critical   (also the label kdash.io/criticality)
+#KDASH_SECRETS_TTL=60            # secrets map (key Y): re-read at most every N s while the view is open
+#KDASH_SECRETS_IN_CHECK=1        # 0 = K check, FMEA and the report do not read Secrets (the Y view still does)
+#KDASH_SECRETS_CHECK_TTL=300     # K check / FMEA reuse the secrets map for N s (r re-reads at once)
+#KDASH_REPORT_EXTRAS=1           # 0 = the namespace report (x) has no FMEA and SECRETS tabs
+#KDASH_SHELL_HEADER=scroll      # pinned = keep the shell header fixed at the top (in the shell: kdpin toggles, kdheader prints it)
+#KDASH_HEADER=panel             # compact = one-line status header instead of the framed cards (saves 2 rows)
+#KDASH_KEYS=panel               # compact = pod detail key hints as wrapped rows instead of the framed panel
+#KDASH_SECRETS_KEYCHECK=0        # 1 = also compare each tls.key with its certificate (the key is piped to openssl, never stored)
+#KDASH_SECRETS_MAX_CERTS=600     # stop parsing after this many certificates
+#KDASH_KUBELET_DIR=/var/lib/kubelet   # where the kubelet keeps pod volumes on a node (for the node path column)
 #KDASH_FMEA_TTL=60               # re-score at most every N s while the view is open
 #KDASH_FMEA_ACCESS_TTL=300       # re-check your RBAC (auth can-i) every N s, and after every login
 #KDASH_FMEA_SAVE=1               # 0 = do not keep runs (Occurrence and --since use them)
@@ -13084,6 +13914,7 @@ _kd_free kdip      && function kdip       { _kdash_run -v ip "\$@"; }           
 _kd_free kdmemlive && function kdmemlive  { _kdash_run -v mem "\$@"; }                # 5 live memory dashboard
 _kd_free kdio      && function kdio       { _kdash_run -v io "\$@"; }                 # 6 network / disk IO per node and pod
 _kd_free kdfmea    && function kdfmea     { _kdash_run --fmea "\$@"; }               # FMEA worksheet (read-only), --access for RBAC
+_kd_free kdsecrets && function kdsecrets  { _kdash_run --secrets "\$@"; }            # secrets map: certificates, expiry, users, paths
 _kd_free kdreport  && function kdreport   { _kdash_run --report "\$@"; }              # HTML + TSV/CSV bundle
 _kd_free kdsnap    && function kdsnap     { _kdash_run --snapshot \${1:+"\$1"} "\${@:2}"; }   # one HTML, all tabs; all | 25 | nodes,mem = separate files
 _kd_free kdhist    && function kdhist     { _kdash_run --session-report "\${1:-latest}"; }   # all tabs + history of the last live run
@@ -13142,13 +13973,14 @@ KDASH_SHELL_EOF
 fi
 
 #-- 7. verify -----------------------------------------------------------------
+box_close
 say ""
-say "--- verification ---"
+box_open "VERIFICATION"
 "$BIN" --version >/dev/null 2>&1 && say "[OK]   $("$BIN" --version)  ($BIN)"
 defs="$(find_kdash_defs)"
 if [ -n "$defs" ]; then
   say "[INFO] kdash-related definitions in your start-up files (none are removed):"
-  printf '%s\n' "$defs" | sed 's/^/         /'
+  printf '%s\n' "$defs" | sed "s/^/$SAY_PRE         /"
   say "       kdash() functions are replaced by v4 at login; aliases and other names are kept as they are."
 fi
 if [ -n "$NEED_SUDO" ]; then
@@ -13190,6 +14022,7 @@ fi
 [ "${BASH_VERSINFO[0]:-0}" -ge 4 ] && say "[OK]   bash ${BASH_VERSION%%(*}" || say "[WARN] bash 4+ needed for interactive keys"
 PROBE_RC=0
 if [ "$DO_SHELL" = 1 ]; then report_probe; PROBE_RC=$?; fi
+box_close
 say ""
 on_path() { case ":$PATH:" in *":$PREFIX:"*) return 0 ;; *) return 1 ;; esac; }
 if [ "$PROBE_RC" = 0 ] || [ "$PROBE_RC" = 2 ]; then
@@ -13226,6 +14059,7 @@ say "  kdip               4 namespace IP pool"
 say "  kdmemlive          5 live memory dashboard"
 say "  kdio               6 network in / out and disk IO per worker node and pod"
 say "  kdfmea             FMEA: failure modes of every object you can read, by Action Priority"
+say "  kdsecrets          secrets map: certificates in Secrets, expiry, who uses them, where the files are"
 say "  kdsnap [sel]       one HTML with every tab (+ live history); sel all | 25 | nodes,mem = separate files"
 say "  kdns               pick a namespace from a list (also key n while running)"
 say "  kdx                kdash in interactive mode: S shell, U upload, D download (or press X)"
@@ -13238,6 +14072,6 @@ say "author: Dheeraj V    audit: kdash --about | --audit | --audit-verify | --au
 say "DISCLAIMER: provided as is. The person running kdash is solely responsible for its use and"
 say "for having authorisation to read the clusters / namespaces. Every run, user action, report and"
 say "kubectl call is audited (~/kdash_reports/audit, /var/log/kdash when present, syslog)."
-say "keys: K check now  L login  1-9/Tab view (7 ALERTS, 8 SERVICES, 9 STORAGE)  E events  ! explain  C certificates  R runbooks  M fmea  Enter/i inspect  : palette  F filters"
+say "keys: K check now  L login  1-9/Tab view (7 ALERTS, 8 SERVICES, 9 STORAGE)  E events  ! explain  C certificates  R runbooks  M fmea  Y secrets  Enter/i inspect  : palette  F filters"
 say "      ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / filter  h/l pan  j/k scroll  q quit"
 exit "$PROBE_RC"

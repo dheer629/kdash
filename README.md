@@ -1,4 +1,4 @@
-# kdash 4.28.1
+# kdash 4.32.0
 
 [![ci](https://github.com/dheer629/kdash/actions/workflows/ci.yml/badge.svg)](https://github.com/dheer629/kdash/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -42,6 +42,7 @@ Press `?` in any view for an explanation of what is on screen.
 | `K` | **CHECK NOW** | What needs attention now? Numbered findings include confirming read commands; Enter or `--check --run N` runs those guarded reads. |
 | `M` | **FMEA** | Which catalogue failure modes need attention across the objects you can read? Severity, occurrence and detection scores produce HIGH / MEDIUM / LOW Action Priority, with access gaps and confirming read commands. |
 | `: access` | **ACCESS** | Which permissions do the FMEA checks need, and which can this user exercise? Missing access remains visible; suggested read-only RBAC is printed for an administrator to review. |
+| `Y` | **SECRETS MAP** | Every certificate in every Secret you can read: subject, SAN, issuer, expiry, key algorithm, who manages and uses it, the container and kubelet paths, and what needs a restart after a rotation. Never reads key/password/token values. |
 | `L` | **LOGIN** | Has this context's login expired? Show its helper's sign-in URL, then resume reads after successful authentication. |
 
 The dashboard is live, with pinned header/footer and a scrolling body. Views 1-6
@@ -51,22 +52,22 @@ with `--report`. A live run
 records its model history, and `x` writes **one HTML file with the six detailed
 resource tabs plus the history since kdash started**.
 FMEA also exports CSV, TSV and JSON to stdout; `--fmea -o html` writes a separate
-self-contained worksheet and prints its path.
+self-contained worksheet and prints its path. The secrets map does the same with
+`--secrets [-o csv|tsv|json|html] [--fail-on high|medium] [--run N]`.
 
 ## Releases and downloads
 
-The current source version is **4.28.1**. It adds an **FMEA worksheet** (`M`,
-`--fmea`) and **access review** (`: access`, `--access`). The worksheet assesses
-built-in Kubernetes failure modes, shows S/O/D scores and Action Priority, and
-keeps unavailable signals and missing permissions visible. It supports local
-history, site overrides, pipeline gates and CSV/TSV/JSON/HTML exports.
-OIDC login cleanup targets owned helpers
-tagged for this run and preserves the active attempt while checking completion.
-Choosing `c` to continue without login pauses background reads and automatic
-retries until `L`; issuer discovery failures show a DNS, TLS or network hint.
-kdash reads helper metadata and cache expiry without exporting cached tokens or
-private keys. Cleanup is best effort on Linux procfs; helpers that discard the
-inherited tag can remain running. It retains
+The current source version is **4.32.0**. It adds a **secrets map** (`Y`,
+`--secrets`) - every certificate in every Secret you can read, with subject, SAN,
+issuer, expiry, key algorithm, where it is used (workload, Service, volume,
+env, ingress TLS), the container and kubelet paths and what needs a restart
+after a rotation. Keys, passwords and tokens are never read. Findings list
+expired / expiring certificates, missing Secrets, weak keys and repeated
+certificates, with pipeline gates and CSV/TSV/JSON/HTML exports. It retains the
+**FMEA worksheet** (`M`, `--fmea`) and **access review** (`: access`,
+`--access`) with S/O/D scores, Action Priority, local history, site overrides,
+pipeline gates and structured exports, plus certificate badges on the status
+strip. It retains
 **runbooks** (`R`, `-v runbook`,
 `--runbook [NAME]`): etcd-restore, cert-rotate, node-notready, api-unreachable and
 oidc-login steps printed with this cluster's own node, namespace and pod names
@@ -91,20 +92,21 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                                    # kdash 4.28.1
+kdash --version                                    # kdash 4.32.0
 ```
 
 Versioned releases retain their own downloads, documentation and screenshots.
 Older releases remain available alongside the current source.
 [All releases](https://github.com/dheer629/kdash/releases) |
 [how they are built](RELEASES.md).
-The **4.28.1** download links below target its pending release publication.
-The published **4.27.4** release remains available. Versions 4.23.2, 4.24.1 and
+The **4.32.0** download links below target its pending release publication.
+The published **4.28.1** release remains available. Versions 4.23.2, 4.24.1 and
 4.27.3 are retained as exact source commits and downloadable source archives.
 
 | Version | Date | Highlights | Download |
 |---|---|---|---|
-| **4.28.1** | 2026-11-09 | FMEA worksheet, RBAC access review, S/O/D Action Priority, history, site overrides and structured exports | [kdash](https://github.com/dheer629/kdash/releases/download/v4.28.1/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.28.1/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.28.1/kdash-4.28.1.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.28.1/SHA256SUMS) |
+| **4.32.0** | 2026-11-13 | secrets map (`Y`, `--secrets`): certificates, keys, expiry, usage and rotation restart paths, never reads secrets | [release (pending publication)](https://github.com/dheer629/kdash/releases/tag/v4.32.0) |
+| **4.28.1** | 2026-11-09 | FMEA worksheet, RBAC access review, S/O/D Action Priority, history, site overrides and structured exports | [release](https://github.com/dheer629/kdash/releases/tag/v4.28.1) |
 | **4.27.4** | 2026-11-07 | scoped OIDC helper cleanup, protected active login, persistent continue-without-login pause, issuer discovery hints | [kdash](https://github.com/dheer629/kdash/releases/download/v4.27.4/kdash) · [bundle](https://github.com/dheer629/kdash/releases/download/v4.27.4/kdash-bundle.sh) · [tar.gz](https://github.com/dheer629/kdash/releases/download/v4.27.4/kdash-4.27.4.tar.gz) · [SHA256SUMS](https://github.com/dheer629/kdash/releases/download/v4.27.4/SHA256SUMS) |
 | **4.27.3** | 2026-11-07 | source snapshot: runbooks (`R`, `--runbook`), instant check (`K`, `--check [--run N]`), OIDC login handling (`L`, exit 4), certificate and login expiry (`C`, `--certs`) | [commit](https://github.com/dheer629/kdash/tree/2834ee72eb431f3cebaf6d10f2196e86c234c3a3) · [source tar.gz](https://github.com/dheer629/kdash/archive/2834ee72eb431f3cebaf6d10f2196e86c234c3a3.tar.gz) |
 | **4.24.1** | 2026-11-06 | source snapshot: certificate and login expiry (`C`, `-v certs`, `--certs`), header badge, scriptable exit codes | [commit](https://github.com/dheer629/kdash/tree/04767faef0946e3b06ddec3574162bb2f6cfda4c) · [source tar.gz](https://github.com/dheer629/kdash/archive/04767faef0946e3b06ddec3574162bb2f6cfda4c.tar.gz) |

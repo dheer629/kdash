@@ -5,6 +5,32 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [4.32.0] - 2026-11-13
+
+### Added
+- **SECRETS MAP** (`Y`, `--secrets`, `kdfsecrets`): every certificate in every
+  Secret you can read - subject, SAN, issuer, days left, expiry, key algorithm,
+  and whether the matching private key sits beside it. Private keys, passwords
+  and tokens are never read: kubectl templates drop every value that is not a
+  PEM certificate before kdash ever receives it.
+- **WHERE USED** mapping: the workload, the Services in front of it, how each
+  certificate is consumed (volume, projected, env, envFrom, imagePull, ingress
+  TLS), the container path, the kubelet path on the node, and what needs a
+  restart after a rotation.
+- **THIS HOST** comparison on nodes: the kubelet's on-disk certificate file is
+  compared with the Secret and reported in sync or STALE.
+- **FINDINGS**: expired / expiring certificates, Secrets that do not exist but
+  are needed, a missing `tls.key`, weak keys, pods still running the previous
+  certificate, and the same certificate repeated across several Secrets.
+  `Enter` runs a finding's read commands.
+- CSV, TSV, JSON and self-contained HTML secret-map worksheets with
+  `--fail-on high|medium` pipeline gates; `KDASH_SECRETS_KEYCHECK=1` also
+  verifies that `tls.key` belongs to `tls.crt`.
+- FMEA and certificate badges on the status strip make findings visible from
+  every view, not just the dedicated screens.
+- Completion and installed shell integration include the new secrets view,
+  flags, export formats and `kdfsecrets` shortcut.
+
 ## [4.28.1] - 2026-11-09
 
 ### Added

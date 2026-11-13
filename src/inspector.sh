@@ -149,13 +149,15 @@ inspector_size() {
 # a bare Esc still means "back".
 inspector_decode_escape() {
   local seq="" extra=""
-  IFS= read -rsn2 -t 0.05 seq </dev/tty || true
+  # byte by byte: a slow link may deliver ESC and the rest of an arrow key apart
+  IFS= read -rsn1 -t 0.15 seq </dev/tty || seq=""
+  case "$seq" in '['|O) IFS= read -rsn1 -t 0.15 extra </dev/tty || extra=""; seq="[$extra"; extra="" ;; esac
   case "$seq" in
     '[A') INSPECTOR_KEY=k ;; '[B') INSPECTOR_KEY=j ;;
     '[C') INSPECTOR_KEY='<RIGHT>' ;; '[D') INSPECTOR_KEY='<LEFT>' ;;
     '[H') INSPECTOR_KEY=g ;; '[F') INSPECTOR_KEY=G ;;
     '[5'|'[6'|'[1'|'[4')
-      IFS= read -rsn1 -t 0.05 extra </dev/tty || true
+      IFS= read -rsn1 -t 0.15 extra </dev/tty || true
       case "$seq$extra" in '[5~') INSPECTOR_KEY=b ;; '[6~') INSPECTOR_KEY=' ' ;; '[1~') INSPECTOR_KEY=g ;; '[4~') INSPECTOR_KEY=G ;; esac ;;
   esac
 }
@@ -462,8 +464,9 @@ inspector_container_picker() { # ns pod dir
         "q / Esc|back|1" "Q|quit kdash|1" "||0" "||0"
     fi
     buf+="$BX_PANEL"
-    printf '%s\033[J' "$buf"
+    ui_flush "$buf" "ctrpick:$PK_COLS:$PK_ROWS" "${CTP_FL:-1}"; CTP_FL=1
     picker_key 60 || continue
+    case "$PK_KEY_IN" in j|k|g|G|'<UP>'|'<DN>'|'<HOME>'|'<END>') CTP_FL=0 ;; esac
     msg=""
     # a digit picks that row; Enter / i the highlighted one
     case "$PK_KEY_IN" in [1-9]) i=$((PK_KEY_IN - 1)); [ "$i" -lt "$n" ] || continue; chosen=$i; PK_KEY_IN='<ENTER>' ;; esac
@@ -550,11 +553,26 @@ inspector_pane_title() { # pane -> title shown in the bar
 # The pod detail key rows: three groups (PANES, READ, MOVE) of whole "<key> label"
 # pairs; a group that does not fit the width continues on the next row -> IK_LINES
 inspector_keylines() {
+  local s_w=off s_j=off s_f=off
+  [ "${INSPECTOR_WRAP:-1}" != 1 ] || s_w=on; [ "${INSPECTOR_JSON:-0}" != 1 ] || s_j=on; [ "${follow:-0}" != 1 ] || s_f=on
   IK_LINES=()
-  _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download \
-    X "interactive $([ "${KDASH_ALLOW_INTERACTIVE:-0}" = 1 ] && printf on || printf off)"
-  _ik_group READ W "wrap $([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo on || echo off)" J "JSON $([ "${INSPECTOR_JSON:-0}" = 1 ] && echo on || echo off)" \
-    "+" "4x lines" A "all lines" "left/right" pan f "follow $([ "${follow:-0}" = 1 ] && printf on || printf off)" L "level ${INSPECTOR_LEVEL_NAME:-all}" w export
+  # wide, tall screens: one framed panel, seven aligned columns; otherwise the wrapped rows
+  if [ "${INSPECTOR_COLS:-100}" -ge 128 ] && [ "${INSPECTOR_ROWS:-24}" -ge 30 ] && [ "${KDASH_KEYS:-panel}" != compact ]; then
+    local ln
+    bx_panel "$INSPECTOR_COLS" 7 "PANES" "LOGS" "ATTACH" "READ" "MOVE" "FIND" "LEAVE" \
+      "s|summary|1" "d|describe|1" "e|events|1" "!|why|1" \
+      "l|logs|1" "p|prev logs|1" "c|container|1" "f|follow $s_f|1" \
+      "S|shell|1" "U|upload|1" "D|download|1" "w|export|1" \
+      "W|wrap $s_w|1" "J|JSON $s_j|1" "L|level ${INSPECTOR_LEVEL_NAME:-all}|1" "+|4x lines|1" \
+      "j/k|scroll|1" "g/G|top / end|1" "left/right|pan|1" "A|all lines|1" \
+      "/|find|1" "&|only matches|1" "n/N|next / prev|1" "r|reload|1" \
+      "?|keys|1" "q|back|1" "Q|quit|1" "||1"
+    while IFS= read -r ln; do IK_LINES+=("${ln%$'\033[K'}"); done <<< "$BX_PANEL"
+    return 0
+  fi
+  _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download
+  _ik_group READ W "wrap $s_w" J "JSON $s_j" \
+    "+" "4x lines" A "all lines" "left/right" pan f "follow $s_f" L "level ${INSPECTOR_LEVEL_NAME:-all}" w export
   _ik_group MOVE / find "&" "only matches" "n/N" "next / prev" "j/k" scroll g/G "top / end" r reload "?" keys q back Q quit
 }
 _ik_group() { # title pairs...
@@ -574,6 +592,9 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   local offset=0 count=0 total=0 matches=0 msg="" rows pid rc keep_offset=0 follow=0 atbottom=0 vcols=0 hoff=0
   INSPECTOR_JUMPED=""
   local container file="" target=0 idx=0 cline="" pinfo=""
+  # speed: one frame per key through ui_flush (only changed lines are sent, no screen clear),
+  # and what a scroll key cannot change is not looked up again
+  local ifl=1 ptitle="" ptitle_for="" crow="" crow_key="" rgen=0 frame btxt nb t_
   container="$(inspect_container_for "$ns" "$pod")"     # never a container of another pod
   local INSPECTOR_REFRESH_EVENTS=0
   INSPECTOR_PANE=""
@@ -606,16 +627,13 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       ) & pid=$!
       while kill -0 "$pid" 2>/dev/null; do
         INSPECTOR_KEY=""; IFS= read -rsn1 -t 0.1 INSPECTOR_KEY </dev/tty || true
-        case "$INSPECTOR_KEY" in
-          Q) kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; kdash_quit "pod detail loading" ;;
-          X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
-          q|b|$'\033')
+        case "$INSPECTOR_KEY" in q|b|$'\033')
           kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
           return 0 ;;
         esac
       done
       wait "$pid" 2>/dev/null || true
-      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; viewdirty=1
+      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; viewdirty=1; ifl=1; rgen=$((rgen + 1))
       [ "$pane" != summary ] || rows_stale=1      # the summary pane shows per-container state
       if [ -z "$container" ]; then container="$(awk -F '\t' 'NF >= 2 {print $2; exit}' "$d/rows" 2>/dev/null)"; fi
       [ "$keep_offset" = 1 ] || offset=0
@@ -639,14 +657,16 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     picker_colors
     # title bar, pod, container, then a rule that says where in the pane we are
     local c_n="" c_rd="" c_rs="" c_st="" c_lx="" c_im="" stc hdr
-    IFS=$'\t' read -r _ c_n c_rd c_rs c_st c_lx c_im < <(awk -F '\t' -v want="$container" '$2 == want { print; exit }' "$d/rows" 2>/dev/null) || true
-    ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $(inspector_pane_title "$pane") "
+    if [ "$crow_key" != "$container:$rgen" ]; then
+      crow="$(awk -F '\t' -v want="$container" '$2 == want { print; exit }' "$d/rows" 2>/dev/null)"; crow_key="$container:$rgen"
+    fi
+    IFS=$'\t' read -r _ c_n c_rd c_rs c_st c_lx c_im <<< "$crow" || true
+    [ "$ptitle_for" = "$pane" ] || { ptitle="$(inspector_pane_title "$pane")"; ptitle_for="$pane"; }
+    ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " $ptitle "
     hdr="${UI_BAR}"$'\033[K\n'
     bx_init
-    local IW=$((INSPECTOR_COLS - 1)) rinfo="READ-ONLY"
-    interactive_enabled && rinfo="INTERACTIVE"
-    rinfo+=" / audited"; [ "$follow" = 1 ] && rinfo+=" / follow ${INSPECTOR_FOLLOW_SECS:-5}s"
-    bx_top "$IW" "$(inspector_pane_title "$pane")" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
+    local IW=$((INSPECTOR_COLS - 1)) rinfo="audited"; [ "$follow" = 1 ] && rinfo="follow ${INSPECTOR_FOLLOW_SECS:-5}s"
+    bx_top "$IW" "$ptitle" "${PC_D}${rinfo}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     bx_row "$IW" "${PC_D}POD      ${PC_R}  ${PC_B}${pod}${PC_R}"; hdr+="$BX_LINE"$'\033[K\n'
     if [ -n "$c_n" ]; then
       case "$c_st" in Running) stc="$PC_OK" ;; Completed) stc="$PC_D" ;; *CrashLoop*|*Error*|*OOMKilled*|*ImagePull*|*ErrImage*) stc="$PC_BAD" ;; *) stc="$PC_WARN" ;; esac
@@ -661,7 +681,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     # what was read (log panes: lines, size, complete or not); wrap and JSON state is on the READ key line
     [ "${INSPECTOR_VIEW_LOGICAL:-$total}" = "$total" ] || pinfo="$pinfo ${PC_MID} ${INSPECTOR_VIEW_LOGICAL} shown"
     case "$pane" in
-      current|previous) if [ -s "$body.info" ]; then pinfo="$pinfo ${PC_MID} $(cat "$body.info")"; else pinfo="$pinfo ${PC_MID} $total lines"; fi ;;
+      current|previous) if [ -s "$body.info" ]; then pinfo="$pinfo ${PC_MID} $(< "$body.info")"; else pinfo="$pinfo ${PC_MID} $total lines"; fi ;;
       *) pinfo="$pinfo ${PC_MID} $total lines" ;;
     esac
     [ -z "${INSPECTOR_SEARCH:-}" ] || {
@@ -671,18 +691,17 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     case "${INSPECTOR_LEVEL_NAME:-all}" in all) ;; *) pinfo="$pinfo ${PC_MID} level $INSPECTOR_LEVEL_NAME" ;; esac
     ui_vlen "$pinfo"; [ "$UI_VL" -le $((INSPECTOR_COLS - 12)) ] || { pinfo="${pinfo:0:$((INSPECTOR_COLS - 14))}~"; }
     bx_bot "$IW" "${PC_B}${pinfo}${PC_R}" ""
-    printf '\033[H\033[2J%s%s\033[K\n' "$hdr" "$BX_LINE"
-    inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$([ "${INSPECTOR_WRAP:-1}" = 1 ] && echo 0 || echo "$hoff")"
-    # k9s-style hints: panes, reading tools, moving / leaving (wrapped on narrow screens)
-    inspector_keylines
-    local kr=$((INSPECTOR_ROWS - ${#IK_LINES[@]})) kl   # the message row stays last
-    printf '\033[%s;1H\033[J' "$kr"
-    for kl in "${IK_LINES[@]}"; do printf '\033[%s;1H%s\033[K' "$kr" "$kl"; kr=$((kr + 1)); done
-    if [ -n "$msg" ]; then
-      printf '\033[%s;1H\033[1;33m %s\033[0m\033[K' "$INSPECTOR_ROWS" "${msg:0:$((INSPECTOR_COLS - 2))}"
-    else
-      printf '\033[%s;1H\033[K' "$INSPECTOR_ROWS"
-    fi
+    frame=$'\033[H'"${hdr}${BX_LINE}"$'\033[K\n'
+    if [ "${INSPECTOR_WRAP:-1}" = 1 ]; then t_=0; else t_=$hoff; fi
+    btxt="$(inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$t_"; printf x)"; btxt="${btxt%x}"
+    t_="${btxt//[!$'\n']/}"; nb=${#t_}
+    frame+="${btxt//$'\n'/$'\033[K\n'}"
+    for ((; nb < rows; nb++)); do frame+=$'\033[K\n'; done
+    # k9s-style hints: panes, reading tools, moving / leaving (framed panel, or wrapped rows on small screens)
+    local kl
+    for kl in "${IK_LINES[@]}"; do frame+="${kl}"$'\033[K\n'; done
+    if [ -n "$msg" ]; then frame+=$'\033[1;33m'" ${msg:0:$((INSPECTOR_COLS - 2))}"$'\033[0m\033[K'; else frame+=$'\033[K'; fi
+    ui_flush "$frame" "detail:$INSPECTOR_COLS:$INSPECTOR_ROWS" "$ifl"; ifl=1
     if [ "$follow" = 1 ] && { [ "$pane" = current ] || [ "$pane" = previous ]; }; then
       [ "$offset" -lt "$((count > rows ? count - rows : 0))" ] && atbottom=0 || atbottom=1
       if ! inspector_key "${INSPECTOR_FOLLOW_SECS:-5}"; then
@@ -694,12 +713,12 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       fi
     elif inspector_key; then :; else return 0; fi
     msg=""
+    case "$INSPECTOR_KEY" in j|k|' '|b|g|G|n|N|L|W|J|'<LEFT>'|'<RIGHT>') ifl=0 ;; esac   # the screen stays ours: send the difference
     case "$INSPECTOR_KEY" in
       q|$'\033') return 0 ;;
       Q) kdash_quit inspector ;;
       s) pane=summary ;; d) pane=describe ;; e) pane=events ;; '!') pane=explain ;; l) pane=current ;; p) pane=previous ;;
       # Interactive attachments (opt-in): the pod and container you are looking at.
-      X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
       S|U|D)
          if ! interactive_enabled; then msg="$(interactive_hint)"
          else
@@ -831,15 +850,12 @@ picker_colors() {
     PC_R=""; PC_B=""; PC_D=""; PC_INV=""; PC_OK=""; PC_BAD=""; PC_WARN=""; PC_INFO=""; PC_TITLE=""; PC_ACT=""
   fi
   if [ "${BARCHR:-unicode}" = ascii ]; then PC_PTR=">"; PC_UP="^"; PC_DN="v"; PC_CARET="_"; PC_SEP="|"; PC_HR="-"; PC_DOT="*"; PC_MID="-"
-  else PC_PTR=$'\342\226\266'; PC_UP=$'\342\206\221'; PC_DN=$'\342\206\223'; PC_CARET=$'\342\226\217'
+  else PC_PTR=$'\342\226\272'; PC_UP=$'\342\206\221'; PC_DN=$'\342\206\223'; PC_CARET=$'\342\226\214'
        PC_SEP=$'\342\224\202'; PC_HR=$'\342\224\200'; PC_DOT=$'\342\227\217'; PC_MID=$'\302\267'; fi
   # header row of a table: bold + underlined (reads on light and dark backgrounds)
   if [ "${COLOR:-1}" = 1 ]; then PC_HDR=$'\033[1;4m'; else PC_HDR=""; fi
   # a glyph is 1 character in a UTF-8 locale but 3 bytes in the C locale
-  # Detect the locale independently of the chosen border set: file names and
-  # log text may contain UTF-8 even when --ascii chooses plain border glyphs.
-  local utf8_probe=$'\342\224\202'
-  UI_BYTES=0; [ "${#utf8_probe}" -le 1 ] || UI_BYTES=1
+  UI_BYTES=0; [ "${#PC_SEP}" -le 1 ] || UI_BYTES=1
 }
 
 # ---- shared screen chrome: title bar, rules and key hints look the same on every
@@ -851,6 +867,47 @@ ui_vlen() { # text -> UI_VL (visible characters; no escape codes in the text)
 }
 # full-width reverse title bar: left text, an optional action chip, right text;
 # the right part is dropped, then the left cut, when the window is too narrow
+# Write one frame. A frame is a buffer that starts at the top-left corner, one screen
+# line per text line. When the previous frame of the same screen (same key) is still
+# what the terminal shows, only the lines that differ are sent - a cursor move repaints
+# two rows instead of the whole screen, which is what makes scrolling quick over SSH.
+# full=1 (or another key, or KDASH_REDRAW=full) sends everything.
+UI_FL_KEY=""; UI_FL_PREV=()
+ui_flush() { # buffer key [full]
+  local key="$2" i n pn out=""
+  local -a L
+  mapfile -t L <<< "$1"
+  n=${#L[@]}; [ "$n" = 0 ] || [ -n "${L[n-1]}" ] || { unset 'L[n-1]'; n=$((n - 1)); }
+  pn=${#UI_FL_PREV[@]}
+  if [ "${3:-0}" = 1 ] || [ "$key" != "$UI_FL_KEY" ] || [ "${KDASH_REDRAW:-diff}" = full ] || [ "$pn" = 0 ]; then
+    printf '%s\033[J' "$1"
+  else
+    # a list that moved by one row: let the terminal scroll that band, then only the
+    # rows that really differ (the cursor row, the new row) are sent
+    if [ "${KDASH_REDRAW:-diff}" != noscroll ] && [ "$n" = "$pn" ]; then
+      local a=-1 b=-1 up=0 dn=0
+      for ((i = 1; i < n - 1; i++)); do
+        [ "${L[i]}" != "${UI_FL_PREV[i]}" ] || continue
+        [ "${L[i]}" != "${UI_FL_PREV[i+1]}" ] || up=$((up + 1)); [ "${L[i]}" != "${UI_FL_PREV[i-1]}" ] || dn=$((dn + 1))
+      done
+      if [ "$up" -ge 6 ] && [ "$up" -gt "$dn" ]; then
+        for ((i = 1; i < n - 1; i++)); do [ "${L[i]}" = "${UI_FL_PREV[i]}" ] || [ "${L[i]}" != "${UI_FL_PREV[i+1]}" ] || { [ "$a" -ge 0 ] || a=$i; b=$i; }; done
+        out+=$'\033['"$((a + 1));$((b + 2))"$'r\033['"$((b + 2))"$';1H\n\033[r'
+        for ((i = a; i <= b; i++)); do UI_FL_PREV[i]="${UI_FL_PREV[i+1]}"; done; UI_FL_PREV[b+1]=""
+      elif [ "$dn" -ge 6 ] && [ "$dn" -gt "$up" ]; then
+        for ((i = 1; i < n - 1; i++)); do [ "${L[i]}" = "${UI_FL_PREV[i]}" ] || [ "${L[i]}" != "${UI_FL_PREV[i-1]}" ] || { [ "$a" -ge 0 ] || a=$i; b=$i; }; done
+        out+=$'\033['"$((a));$((b + 1))"$'r\033['"$((a))"$';1H\033M\033[r'
+        for ((i = b; i >= a; i--)); do UI_FL_PREV[i]="${UI_FL_PREV[i-1]}"; done; UI_FL_PREV[a-1]=""
+      fi
+    fi
+    for ((i = 0; i < n; i++)); do
+      [ "${L[i]}" = "${UI_FL_PREV[i]-}" ] || out+=$'\033['"$((i + 1))"';1H'"${L[i]#$'\033[H'}"
+    done
+    out+=$'\033['"$((n + 1))"';1H'; [ "$n" -ge "$pn" ] || out+=$'\033[J'
+    printf '%s' "$out"
+  fi
+  UI_FL_KEY="$key"; UI_FL_PREV=("${L[@]}")
+}
 ui_bar() { # width left right [chip] -> UI_BAR
   local w="$1" l="$2" r="$3" chip="${4:-}" lv rv cv gap sp
   ui_vlen "$l"; lv=$UI_VL; ui_vlen "$r"; rv=$UI_VL; cv=0
@@ -910,7 +967,7 @@ ui_keys() { # width pairs... -> UI_KEYS
 # Cut a coloured line to the visible width (escape sequences are copied, not counted).
 # A line that wraps would scroll the whole picker and push its title off the screen.
 pk_fit() { # string width -> PK_FIT
-  local str="$1" w="$2" out="" i=0 n=${#1} vis=0 ch j step
+  local str="$1" w="$2" out="" i=0 n=${#1} vis=0 ch j
   if [ "$n" -le "$w" ]; then PK_FIT="$str"; return 0; fi
   while [ "$i" -lt "$n" ]; do
     ch="${str:i:1}"
@@ -919,20 +976,18 @@ pk_fit() { # string width -> PK_FIT
       out+="${str:i:$((j - i + 1))}"; i=$((j + 1)); continue
     fi
     [ "$vis" -lt "$w" ] || break
-    # In the C locale Bash slices bytes. Keep each UTF-8 glyph intact and count
-    # its leading byte once, so clipping a framed row cannot split its border.
-    step=1
-    if [ "${UI_BYTES:-0}" = 1 ]; then
-      case "$ch" in [$'\302'-$'\337']) step=2 ;; [$'\340'-$'\357']) step=3 ;; [$'\360'-$'\364']) step=4 ;; esac
-    fi
-    out+="${str:i:step}"; vis=$((vis + 1)); i=$((i + step))
+    out+="$ch"; vis=$((vis + 1)); i=$((i + 1))
   done
   PK_FIT="$out${PC_R:-}"
 }
 
+PK_SZ_AT=""; PK_SZ=""
 picker_size() {
+  # asked on every key press: the terminal is queried at most once a second (and at
+  # once after a resize signal), so moving the cursor starts no process
   local s
-  s="$(stty size </dev/tty 2>/dev/null)" || s=""
+  if [ -n "$PK_SZ" ] && [ "$PK_SZ_AT" = "$SECONDS" ] && [ "${PK_RESIZED:-0}" != 1 ]; then s="$PK_SZ"
+  else s="$(stty size </dev/tty 2>/dev/null)" || s=""; PK_SZ="$s"; PK_SZ_AT="$SECONDS"; fi
   PK_ROWS="${KDASH_LINES:-${s% *}}"; PK_COLS="${KDASH_COLUMNS:-${s#* }}"
   case "$PK_ROWS" in ''|*[!0-9]*) PK_ROWS=24 ;; esac
   case "$PK_COLS" in ''|*[!0-9]*) PK_COLS=100 ;; esac
@@ -1013,11 +1068,9 @@ picker_draw() {
   case "${KDASH_ATTACH_ACTION:-}" in
     S) banner=" ${PC_PTR} Enter opens a SHELL " ;; U) banner=" ${PC_PTR} Enter UPLOADS into the pod " ;; D) banner=" ${PC_PTR} Enter DOWNLOADS from the pod " ;; *) banner="" ;;
   esac
+  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
   if interactive_enabled; then mode="INTERACTIVE"; else mode="READ-ONLY"; fi
-  # Keep the permission state in the left title: optional right-hand chips are
-  # hidden on narrow terminals, which must never hide whether writes are enabled.
-  title=" KDASH ${PC_SEP} SELECT POD ${PC_SEP} ${mode} ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace ${NS:-default} "
-  right=" ${#PK_V[@]} of ${#PK_KEY[@]} pods "
+  right=" ${mode} ${PC_SEP} ${#PK_V[@]} of ${#PK_KEY[@]} pods "
   ui_bar "$PK_COLS" "$title" "$right" "$banner"
   buf=$'\033[H'"${UI_BAR}"$'\033[K\n'
   # status counts, worst first; a status that does not fit is left out whole
@@ -1143,7 +1196,7 @@ picker_draw() {
       "q|back|1" "Q|quit kdash|1" "r|refresh now|1" "?|all keys|1"
   fi
   buf+="$BX_PANEL"
-  printf '%s\033[J' "$buf"
+  ui_flush "$buf" "podpick:$PK_COLS:$PK_ROWS" "${PK_FL:-1}"; PK_FL=1
 }
 
 # One key; arrows and page keys become tokens. Returns 1 on timeout (live refresh).
@@ -1152,12 +1205,13 @@ picker_key() { # timeout
   PK_KEY_IN=""
   IFS= read -rsn1 -t "$1" PK_KEY_IN </dev/tty || { PK_KEY_IN=""; return 1; }
   if [ "$PK_KEY_IN" = $'\033' ]; then
-    IFS= read -rsn2 -t 0.03 seq </dev/tty || true
+    IFS= read -rsn1 -t 0.15 seq </dev/tty || seq=""
+    case "$seq" in '['|O) IFS= read -rsn1 -t 0.15 extra </dev/tty || extra=""; seq+="$extra"; extra="" ;; esac
     case "$seq" in
       '[A'|'OA') PK_KEY_IN='<UP>' ;; '[B'|'OB') PK_KEY_IN='<DN>' ;; '[H'|'OH') PK_KEY_IN='<HOME>' ;; '[F'|'OF') PK_KEY_IN='<END>' ;;
       '[C'|'OC') PK_KEY_IN='<RIGHT>' ;; '[D'|'OD') PK_KEY_IN='<LEFT>' ;;
       '[5'|'[6'|'[1'|'[4'|'[7'|'[8')
-        IFS= read -rsn1 -t 0.03 extra </dev/tty || true
+        IFS= read -rsn1 -t 0.15 extra </dev/tty || true
         case "$seq$extra" in '[5~') PK_KEY_IN='<PGUP>' ;; '[6~') PK_KEY_IN='<PGDN>' ;; '[1~'|'[7~') PK_KEY_IN='<HOME>' ;; '[4~'|'[8~') PK_KEY_IN='<END>' ;; esac ;;
       '') PK_KEY_IN='<ESC>' ;;
       *) PK_KEY_IN='<ESC>' ;;
@@ -1268,9 +1322,11 @@ inspector_open() { # optional explicit ns/pod; otherwise the pod picker
         ! login_auto_maybe || { PK_RESIZED=1; continue; }
       fi
       [ -z "$PK_NUM" ] || [ $((SECONDS - PK_NUM_AT)) -lt 2 ] || PK_NUM=""
-      continue
+      PK_FL=0; continue
     fi
     k="$PK_KEY_IN"; PK_MSG=""
+    # keys that only move, sort or filter leave the screen ours: the next frame sends the difference
+    if [ "$PK_TYPING" = 1 ]; then PK_FL=0; else case "$k" in j|k|g|G|b|' '|/|'<UP>'|'<DN>'|'<PGUP>'|'<PGDN>'|'<HOME>'|'<END>'|'<LEFT>'|'<RIGHT>'|[0-9]|u|s) PK_FL=0 ;; esac; fi
     if [ "$PK_TYPING" = 1 ]; then            # live filter input
       case "$k" in
         '<ENTER>') PK_TYPING=0 ;;
@@ -1393,7 +1449,7 @@ inspector_filter_prompt() {
 inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
-  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n secrets                 Certificates and keys in Secrets: expiry, users, paths (also Y)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
   IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
   case "$command" in *$'\e'*) return 0 ;; esac
   case "$command" in
@@ -1405,6 +1461,7 @@ inspector_palette() {
       KDASH_ATTACH_ACTION=S; inspector_open; KDASH_ATTACH_ACTION="" ;;
     pods|nodes|workloads|ip|mem|io|alerts) VIEW="$command"; SCROLL=0; HSCROLL=0 ;;
     services|storage|events|explain|doctor|certs|runbook|check) VIEW="$command"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    secrets|secret|Y|secret-map|tls) VIEW=secrets; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(sm_age)" -lt 60 ] || TOOLKIT_NEXT=0; audit SECRETS_VIEW "from=palette" ;;
     fmea|M|access|rbac) VIEW="$(norm_view "$command")"; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(fmea_age)" -lt 60 ] || TOOLKIT_NEXT=0; audit FMEA_VIEW "view=$VIEW from=palette" ;;
     runbook\ *) RB_TOPIC="${command#runbook }"; VIEW=runbook; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     help|'?') if declare -F show_help >/dev/null; then show_help; else printf '\n Use ? on the dashboard for help.\n'; fi ;;
