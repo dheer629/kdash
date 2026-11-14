@@ -861,7 +861,8 @@ picker_colors() {
   # header row of a table: bold + underlined (reads on light and dark backgrounds)
   if [ "${COLOR:-1}" = 1 ]; then PC_HDR=$'\033[1;4m'; else PC_HDR=""; fi
   # a glyph is 1 character in a UTF-8 locale but 3 bytes in the C locale
-  UI_BYTES=0; [ "${#PC_SEP}" -le 1 ] || UI_BYTES=1
+  local utf8_probe=$'\342\224\202'
+  UI_BYTES=0; [ "${#utf8_probe}" -le 1 ] || UI_BYTES=1
 }
 
 # ---- shared screen chrome: title bar, rules and key hints look the same on every
@@ -983,6 +984,11 @@ pk_fit() { # string width -> PK_FIT
     fi
     [ "$vis" -lt "$w" ] || break
     out+="$ch"; vis=$((vis + 1)); i=$((i + 1))
+    if [ "${UI_BYTES:-0}" = 1 ]; then
+      while [ "$i" -lt "$n" ]; do
+        case "${str:i:1}" in [$'\200'-$'\277']) out+="${str:i:1}"; i=$((i + 1)) ;; *) break ;; esac
+      done
+    fi
   done
   PK_FIT="$out${PC_R:-}"
 }

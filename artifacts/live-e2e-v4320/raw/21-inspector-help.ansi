@@ -22,7 +22,7 @@
  n and N wrap around and put the match at the top of the pane.
  c lists every container with readiness, restarts, state and last exit: pick one
  and l/p read that container. Search and level stay active across panes.
- w writes the filtered pane to /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/reports/inspector/ (review it before sharing).
+ w writes the filtered pane to /workspace/kdash/artifacts/live-e2e-v4320/reports/inspector/ (review it before sharing).
 
  any key returns
 

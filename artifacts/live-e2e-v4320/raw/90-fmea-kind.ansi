@@ -1,38 +1,40 @@
 [1;7m KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 01:56:08[0m[90m IST[39m
-[90m┌─ [1m[39mSCOPE[0m[90m ──────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ────────┐
-│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                     [90m│[39m [1m[31m! pods 3/5 ready[0m[90m   restarts [35m120[39m             [90m│[39m [90mcpu [39m     6m [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mworkloads [39m4                 [90m│
-│[39m [90mpoll 2s  spec 8s/30s   session [39m01:55:29[90m up [39m39s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [32m0[39m       [90m│[39m [90mmem [39m    2Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [35m^ 1[39m         [90m│
-└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
-[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m8s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs  [1mM[0m fmea (5 high, 100% visible) [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
-[1;7m FMEA [0m  [90mfailure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection[39m
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [90m 9 STOR [39m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 22:33:09[0m[90m IST[39m
+[90m┌─ [1m[39mSCOPE[0m[90m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ───────┐
+│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                      [90m│[39m [1m[31m! pods 13/17 ready[0m[90m   restarts [35m371[39m           [90m│[39m [90mcpu [39m    61m [32m░░░░░░░░[39m [32m  4%[90m lim[39m       [90m│[39m [90mworkloads [39m13               [90m│
+│[39m [90mpoll 2s  spec 16s/30s   session [39m22:32:23[90m up [39m46s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [35m1[39m       [90m│[39m [90mmem [39m    5Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [32m^ 0[39m        [90m│
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m16s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs (1 expiring)  [1mM[0m fmea (11 high, 96% visible) [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explai[2m›
+[0;1;7m FMEA [0m  [90mfailure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection[39m
 
- [1m[97m[41m 5 HIGH [0m [1m[30m[43m 5 MEDIUM [0m [1m[30m[47m 40 LOW [0m  [1m50 of 50 modes visible to kubernetes-super-admin[0m  [90mscored 10s ago - r re-scores, : access shows your rights[39m
+ [1m[97m[41m 11 HIGH [0m [1m[30m[43m 7 MEDIUM [0m [1m[30m[47m 40 LOW [0m  [1m48 of 50 modes visible to kubernetes-super-admin[0m  [90mscored 11s ago - r re-scores, : access shows your rights[39m
   [90mshowing kind: Pod (t cycles, empty = all)[39m
 
-[1mWORKSHEET[0m  [90m13 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind[39m
-[90m┌────┬──────┬───┬────┬───┬─────┬────────┬─────────────────────────────────┬──────────────────────────────────────┬─────────────────────────────────────────────┐[39m
-[90m│[39m [1m# [0m [90m│[39m [1mAP  [0m [90m│[39m [1mS[0m [90m│[39m [1m O[0m [90m│[39m [1mD[0m [90m│[39m [1mRPN[0m [90m│[39m [1mID    [0m [90m│[39m [1mOBJECT                         [0m [90m│[39m [1mFAILURE MODE                        [0m [90m│[39m [1mNOW                                        [0m [90m│[39m
-[90m├────┼──────┼───┼────┼───┼─────┼────────┼─────────────────────────────────┼──────────────────────────────────────┼─────────────────────────────────────────────┤[39m
-[90m│[39m 1  [90m│[39m [1m[31mHIGH[0m [90m│[39m 7 [90m│[39m 10 [90m│[39m 4 [90m│[39m 280 [90m│[39m POD-01 [90m│[39m kdash-e2e/z-crash               [90m│[39m CrashLoopBackOff                     [90m│[39m [1m[31mCrashLoopBackOff, 91 restarts (last: Error)[0m [90m│[39m
-[90m│[39m 2  [90m│[39m [1m[31mHIGH[0m [90m│[39m 7 [90m│[39m 10 [90m│[39m 4 [90m│[39m 280 [90m│[39m POD-03 [90m│[39m kdash-e2e/z-pending             [90m│[39m Pending, unschedulable               [90m│[39m [1m[31mPending                                    [0m [90m│[39m
-[90m│[39m 3  [90m│[39m [90mLOW [39m [90m│[39m 6 [90m│[39m 2* [90m│[39m 5 [90m│[39m  60 [90m│[39m POD-05 [90m│[39m -                               [90m│[39m Readiness probe failing              [90m│[39m [32mall 5 pods ok                              [39m [90m│[39m
-[90m│[39m 4  [90m│[39m [90mLOW [39m [90m│[39m 6 [90m│[39m 2* [90m│[39m 4 [90m│[39m  48 [90m│[39m HPA-01 [90m│[39m -                               [90m│[39m Cannot read metrics                  [90m│[39m [32mno hpas in scope                           [39m [90m│[39m
-[90m│[39m 5  [90m│[39m [90mLOW [39m [90m│[39m 6 [90m│[39m 2* [90m│[39m 4 [90m│[39m  48 [90m│[39m POD-02 [90m│[39m -                               [90m│[39m OOMKilled                            [90m│[39m [32mall 5 pods ok                              [39m [90m│[39m
-[90m│[39m 6  [90m│[39m [90mLOW [39m [90m│[39m 6 [90m│[39m 2* [90m│[39m 4 [90m│[39m  48 [90m│[39m POD-04 [90m│[39m -                               [90m│[39m ImagePullBackOff                     [90m│[39m [32mall 5 pods ok                              [39m [90m│[39m
-[90m│[39m 7  [90m│[39m [90mLOW [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 6 [90m│[39m  60 [90m│[39m POD-06 [90m│[39m -                               [90m│[39m Liveness probe kills a healthy pod   [90m│[39m [32mall 5 pods ok                              [39m [90m│[39m
-[90m│[39m 8  [90m│[39m [90mLOW [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 5 [90m│[39m  50 [90m│[39m HPA-02 [90m│[39m -                               [90m│[39m Pinned at maxReplicas                [90m│[39m [32mno hpas in scope                           [39m [90m│[39m
-[90m│[39m 9  [90m│[39m [90mLOW [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 5 [90m│[39m  50 [90m│[39m POD-07 [90m│[39m -                               [90m│[39m Evicted                              [90m│[39m [32mall 5 pods ok                              [39m [90m│[39m
-[90m│[39m 10 [90m│[39m [90mLOW [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 5 [90m│[39m  50 [90m│[39m POD-09 [90m│[39m -                               [90m│[39m Stuck Terminating                    [90m│[39m [32mall 5 pods ok                              [39m [90m│[39m
-[90m│[39m 11 [90m│[39m [90mLOW [39m [90m│[39m 5 [90m│[39m  4 [90m│[39m 2 [90m│[39m  40 [90m│[39m PDB-02 [90m│[39m kdash-e2e/deployment/app-server [90m│[39m Missing for a multi-replica workload [90m│[39m [35m2 replicas, no PodDisruptionBudget         [39m [90m│[39m
-[90m│[39m 12 [90m│[39m [90mLOW [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 2 [90m│[39m  20 [90m│[39m PDB-01 [90m│[39m -                               [90m│[39m Allows 0 disruptions                 [90m│[39m [32mno pdbs in scope                           [39m [90m│[39m
-[90m│[39m 13 [90m│[39m [90mLOW [39m [90m│[39m 4 [90m│[39m 2* [90m│[39m 6 [90m│[39m  48 [90m│[39m POD-08 [90m│[39m -                               [90m│[39m CPU throttled                        [90m│[39m [32mall 5 pods ok                              [39m [90m│[39m
-[90m└────┴──────┴───┴────┴───┴─────┴────────┴─────────────────────────────────┴──────────────────────────────────────┴─────────────────────────────────────────────┘[39m
+[1mWORKSHEET[0m  [90m15 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind[39m
+[90m┌────┬────────┬───┬────┬───┬─────┬────────┬───────────────────────────────────┬──────────────────────────────────────┬────────────────────────────────────────────────┐[39m
+[90m│[39m [1m# [0m [90m│[39m [1mAP    [0m [90m│[39m [1mS[0m [90m│[39m [1m O[0m [90m│[39m [1mD[0m [90m│[39m [1mRPN[0m [90m│[39m [1mID    [0m [90m│[39m [1mOBJECT                           [0m [90m│[39m [1mFAILURE MODE                        [0m [90m│[39m [1mNOW                                           [0m [90m│[39m
+[90m├────┼────────┼───┼────┼───┼─────┼────────┼───────────────────────────────────┼──────────────────────────────────────┼────────────────────────────────────────────────┤[39m
+[90m│[39m 1  [90m│[39m [1m[31mHIGH  [0m [90m│[39m 7 [90m│[39m 10 [90m│[39m 4 [90m│[39m 280 [90m│[39m POD-01 [90m│[39m kdash-e2e/z-crash                 [90m│[39m CrashLoopBackOff                     [90m│[39m [1m[31mCrashLoopBackOff, 331 restarts (last: Error)  [0m [90m│[39m
+[90m│[39m 2  [90m│[39m [1m[31mHIGH  [0m [90m│[39m 7 [90m│[39m 10 [90m│[39m 4 [90m│[39m 280 [90m│[39m POD-03 [90m│[39m kdash-e2e/z-pending               [90m│[39m Pending, unschedulable               [90m│[39m [1m[31mPending                                       [0m [90m│[39m
+[90m│[39m 3  [90m│[39m [1m[31mHIGH  [0m [90m│[39m 7 [90m│[39m 10 [90m│[39m 4 [90m│[39m 280 [90m│[39m POD-03 [90m│[39m kdash-e2e/z-unschedulable         [90m│[39m Pending, unschedulable               [90m│[39m [1m[31mPending                                       [0m [90m│[39m
+[90m│[39m 4  [90m│[39m [1m[31mHIGH  [0m [90m│[39m 5 [90m│[39m 10 [90m│[39m 5 [90m│[39m 250 [90m│[39m HPA-02 [90m│[39m kdash-e2e/functionality-legacy    [90m│[39m Pinned at maxReplicas                [90m│[39m [1m[31mat maxReplicas 1                              [0m [90m│[39m
+[90m│[39m 5  [90m│[39m [35mMEDIUM[39m [90m│[39m 6 [90m│[39m 10 [90m│[39m 4 [90m│[39m 240 [90m│[39m POD-04 [90m│[39m kdash-e2e/z-imagepull             [90m│[39m ImagePullBackOff                     [90m│[39m [1m[31mImagePullBackOff - the image cannot be pulled [0m [90m│[39m
+[90m│[39m 6  [90m│[39m [90mLOW   [39m [90m│[39m 6 [90m│[39m 2* [90m│[39m 5 [90m│[39m  60 [90m│[39m POD-05 [90m│[39m -                                 [90m│[39m Readiness probe failing              [90m│[39m [32mall 17 pods ok                                [39m [90m│[39m
+[90m│[39m 7  [90m│[39m [90mLOW   [39m [90m│[39m 6 [90m│[39m 2* [90m│[39m 4 [90m│[39m  48 [90m│[39m HPA-01 [90m│[39m -                                 [90m│[39m Cannot read metrics                  [90m│[39m [32mall 2 hpas ok                                 [39m [90m│[39m
+[90m│[39m 8  [90m│[39m [90mLOW   [39m [90m│[39m 6 [90m│[39m 2* [90m│[39m 4 [90m│[39m  48 [90m│[39m POD-02 [90m│[39m -                                 [90m│[39m OOMKilled                            [90m│[39m [32mall 17 pods ok                                [39m [90m│[39m
+[90m│[39m 9  [90m│[39m [90mLOW   [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 6 [90m│[39m  60 [90m│[39m POD-06 [90m│[39m -                                 [90m│[39m Liveness probe kills a healthy pod   [90m│[39m [32mall 17 pods ok                                [39m [90m│[39m
+[90m│[39m 10 [90m│[39m [90mLOW   [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 5 [90m│[39m  50 [90m│[39m POD-07 [90m│[39m -                                 [90m│[39m Evicted                              [90m│[39m [32mall 17 pods ok                                [39m [90m│[39m
+[90m│[39m 11 [90m│[39m [90mLOW   [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 5 [90m│[39m  50 [90m│[39m POD-09 [90m│[39m -                                 [90m│[39m Stuck Terminating                    [90m│[39m [32mall 17 pods ok                                [39m [90m│[39m
+[90m│[39m 12 [90m│[39m [90mLOW   [39m [90m│[39m 5 [90m│[39m  4 [90m│[39m 2 [90m│[39m  40 [90m│[39m PDB-02 [90m│[39m kdash-e2e/deployment/app-server   [90m│[39m Missing for a multi-replica workload [90m│[39m [35m2 replicas, no PodDisruptionBudget            [39m [90m│[39m
+[90m│[39m 13 [90m│[39m [90mLOW   [39m [90m│[39m 5 [90m│[39m  4 [90m│[39m 2 [90m│[39m  40 [90m│[39m PDB-02 [90m│[39m kdash-e2e/statefulset/db-stateful [90m│[39m Missing for a multi-replica workload [90m│[39m [35m2 replicas, no PodDisruptionBudget            [39m [90m│[39m
+[90m│[39m 14 [90m│[39m [90mLOW   [39m [90m│[39m 5 [90m│[39m 2* [90m│[39m 2 [90m│[39m  20 [90m│[39m PDB-01 [90m│[39m -                                 [90m│[39m Allows 0 disruptions                 [90m│[39m [32mall 2 pdbs ok                                 [39m [90m│[39m
+[90m│[39m 15 [90m│[39m [90mLOW   [39m [90m│[39m 4 [90m│[39m  4 [90m│[39m 6 [90m│[39m  96 [90m│[39m POD-08 [90m│[39m kdash-e2e/z-oom                   [90m│[39m CPU near its limit                   [90m│[39m [35mcpu 51m of 50m limit (throttling not measured)[39m [90m│[39m
+[90m└────┴────────┴───┴────┴───┴─────┴────────┴───────────────────────────────────┴──────────────────────────────────────┴────────────────────────────────────────────────┘[39m
   [90mAP follows the AIAG-VDA 2019 table; RPN (S x O x D) is shown but does not rank. "no access" rows are never counted as OK.[39m
 
 [1mNEXT COMMANDS[0m  [90mread = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now[39m
 
-  [1m#1[0m  CRITICAL  [1mkdash-e2e/z-crash[0m  [90mPOD-01 CrashLoopBackOff: CrashLoopBackOff, 91 restarts (last: Error)[39m
+  [1m#1[0m  CRITICAL  [1mkdash-e2e/z-crash[0m  [90mPOD-01 CrashLoopBackOff: CrashLoopBackOff, 331 restarts (last: Error)[39m
       [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100  [90m# why the last run ended[39m
       [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-crash  [90m# exit codes, reasons and events[39m
 
@@ -40,11 +42,9 @@
       [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-pending  [90m# the scheduler's message is in the events[39m
       [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e get pvc  [90m# an unbound claim also keeps a pod Pending[39m
 
+  [1m#3[0m  CRITICAL  [1mkdash-e2e/z-unschedulable[0m  [90mPOD-03 Pending, unschedulable: Pending[39m
+      [32mread  [39m kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-unschedulable  [90m# the scheduler's message is in the events[39m
 
-
-
-
-
-
+  [1m#4[0m  CRITICAL  [1mkdash-e2e/functionality-legacy[0m  [90mHPA-02 Pinned at maxReplicas: at maxReplicas 1[39m
 M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
-[7m FMEA kind: Pod | ● LIVE 01:56:08  next 1s  data 1s old  spec 8/30s  fetch 0.0s  poll 2s  AUDITED | fmea | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html
+[7m FMEA kind: Pod | ○ LIVE 22:33:09  next 1s  data 1s old  spec 16/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/49 | ? help  1-9 view  n ns  s sort(cpu)  / filter [0m

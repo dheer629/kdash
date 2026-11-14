@@ -1,0 +1,1 @@
+PASS: progress reaches 100% only after success; verification is cancellable and all nested workers stop

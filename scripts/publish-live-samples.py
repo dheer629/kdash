@@ -26,6 +26,10 @@ passed = sum(c['status']=='PASS' for c in results['checks'])
 browser = json.loads((run / 'browser-results.json').read_text(encoding='utf8'))
 assert browser['status'] == 'PASS'
 browser_passed = sum(c['status']=='PASS' for c in browser['checks'])
+secret_results_path = run / 'secrets' / 'results.json'
+secret_results = json.loads(secret_results_path.read_text(encoding='utf8')) if secret_results_path.is_file() else {}
+secret_captures = secret_results.get('captures', [])
+image_description = f'**{len(rows) + len(secret_captures)} CLI terminal screenshots**'
 version = results['version'].removeprefix('kdash ')
 if not re.fullmatch(r'\d+\.\d+\.\d+', version):
     raise SystemExit(f'Invalid release version: {version}')
@@ -59,7 +63,7 @@ def previous_galleries(pattern, current):
         links.append(f'[{label}](../{readme.parent.name}/README.md)')
     return ', '.join(links)
 
-summary = f'Run `{run_name}` records **{passed} passed live checks**, **{browser_passed} passed browser checks** and **{len(rows)} native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash {version} in namespace `{results["namespace"]}`.'
+summary = f'Run `{run_name}` records **{passed} passed live checks**, **{browser_passed} passed browser checks** and {image_description}, with companion ANSI replays, from the installed kdash {version} in namespace `{results["namespace"]}`.'
 src = '../../artifacts/' + run_name
 
 t = f'''# kdash {version} live WSL terminal captures
@@ -70,16 +74,18 @@ The original [results]({src}/results.json), [checks]({src}/checks.tsv),
 retain the evidence behind each image. Context: `{results['context']}`.
 The [browser results]({src}/browser-results.json) cover the generated report controls.
 
-The `native/` images are actual xterm window screenshots taken while this installed
-CLI runs in WSL on a private local Xvfb display. Companion images replay the saved
-ANSI screen cell by cell. `results.json` records both image provenance and raw
-capture hashes. Actual local namespace names and measurements are unchanged.
+The published PNGs are faithful ANSI replays of live terminal captures. Native
+xterm screenshots remain in the private validation workspace.
+The operator identity, host and context are redacted for publication. Test workload
+names and measured values are preserved.
+The published audit-log bytes are redacted, so their original hash chain cannot
+be verified from this public copy.
 
 The companion replay PNGs render actual `tmux capture-pane -e -p` screens with
 [`capture-terminal.py`](../../scripts/capture-terminal.py), using the dimensions in
 the manifest. The dashboard supplied every value and character. These are faithful
-terminal renders, separate from the native window screenshots. Text/ANSI sources remain linked
-below so the visible result can be inspected and reproduced.
+terminal renders, separate from any private native screenshots. Text/ANSI sources
+remain linked below so the visible result can be inspected and reproduced.
 
 The dedicated local `kdash-e2e` namespace contains real workload and diagnostic
 cases. The run exercises views, filters, pickers, inspector and logs, interactive
@@ -101,6 +107,17 @@ for row in rows:
     # The native xterm grab is best-effort; link it only when the file exists.
     native_link = f'[native]({native}) / ' if (gallery / native).exists() else ''
     t += f'| {native_link}[ANSI replay]({png}) | {row["title"].replace("|", "/")} | {row["columns"]} x {row["rows"]} | [capture]({src}/{row["file"]}) |\n'
+if secret_captures:
+    t += '\n## Secrets map\n\n| Screenshot | Live screen | Geometry | ANSI source |\n|---|---|---|---|\n'
+    for capture in secret_captures:
+        image = Path(capture['png'])
+        if image.is_absolute():
+            image = image.relative_to(root)
+        relative_image = image.relative_to(Path(gallery_path)).as_posix()
+        assert (root / capture['png']).exists(), capture['png']
+        t += (f'| [ANSI replay]({relative_image}) | {capture["title"].replace("|", "/")} | '
+              f'{capture["columns"]} x {capture["rows"]} | '
+              f'[capture]({src}/secrets/{capture["file"]}) |\n')
 t += f'''
 Verify the image bytes with `sha256sum -c SHA256SUMS` in this directory.
 See the [generated HTML reports](../{html.name}/README.md), [sample index](../README.md)
@@ -118,6 +135,14 @@ if (run / 'logs/fmea-json.log').is_file():
                            ('fmea-json.log', 'worksheet.json')]:
         shutil.copy2(run / 'logs' / source, html / 'fmea' / target)
     fmea_note = '\nFMEA has a separate static HTML worksheet and CSV, TSV and JSON exports in\n`fmea/`; it is separate from the namespace report tabs. The browser checks\ninclude its real worksheet rows and screenshot.\n'
+secrets_note = ''
+secrets_reports = run / 'secrets' / 'reports'
+if secrets_reports.is_dir():
+    shutil.copytree(secrets_reports, html / 'secrets', dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('sessions', 'inspector', '*.lock'))
+    secrets_note = '\nThe Secrets map is a separate static HTML report under `secrets/`. Its live\n' \
+                   'fixture and browser checks verify certificate metadata and workload usage;\n' \
+                   'secret values and private-key material are not included.\n'
 for screenshot in browser.get('screenshots', []):
     source = root / screenshot['file']
     target = html / 'screenshots' / source.name
@@ -131,12 +156,14 @@ The files in this directory come from the generated reports of
 Kubernetes. The [results]({src}/results.json) and [checks]({src}/checks.tsv)
 record export validation; the [terminal gallery](../{gallery.name}/README.md) records
 the corresponding live interface.
+The operator identity, host and context are redacted; measured workload data is preserved.
 
 The namespace report includes Overview, six resource tabs and recorded History.
 CLI Alerts appear in the Overview; Services, Storage, Events and explanations are
 preserved in the evidence bundle's diagnostic text/tables rather than extra
 namespace HTML tabs. Missing metrics remain unavailable instead of becoming zero.
 {fmea_note}
+{secrets_note}
 Reports are self-contained for local viewing and include table search/sort,
 CSV/JSON export, themes, timezone selection and chart controls where data exists.
 

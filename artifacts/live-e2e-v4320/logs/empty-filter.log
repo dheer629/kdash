@@ -1,10 +1,14 @@
- KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:46:34 IST
- match ^no-pod-can-match-this$   sort cpu ▼ high first
- DATA ● pods fresh 1s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                        audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 22:23:18 IST
+┌─ SCOPE ─────────────────────────┬─ POD HEALTH ──────────────────────────────┬─ USAGE vs LIMITS ──────┬─ WORKLOADS ───┐
+│ match ^no-pod-can-match-this$   │ pods 0   (none read yet, or none match)   │ cpu      0m    - lim   │ workloads 0   │
+│ sort cpu ▼ high first           │ OOM risk 0   OOMKilled 0                  │ mem     0Mi    - lim   │               │
+│ poll 2s  spec 0s/30s            │ no-limit 0                                │                        │               │
+└─────────────────────────────────┴───────────────────────────────────────────┴────────────────────────┴───────────────┘
+ DATA ● pods fresh 0s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
-                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
-WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
-────────────────────────────────────────────────────────────────────────────────
+                                         │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER       RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  no pods match "^no-pod-can-match-this$" in namespace kdash-e2e
-════════════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════

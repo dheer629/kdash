@@ -4,17 +4,18 @@ DATA SOURCES   context vcluster-docker_dev
 ┌────────┬───────┬────────┬───────────┬────────────────┐
 │ SOURCE │ STATE │   READ │ SCOPE     │ DETAIL         │
 ├────────┼───────┼────────┼───────────┼────────────────┤
-│ events │ ● ok  │ 0s ago │ kdash-e2e │ read succeeded │
+│ events │ ● ok  │ 1s ago │ kdash-e2e │ read succeeded │
 └────────┴───────┴────────┴───────────┴────────────────┘
 
-WARNING EVIDENCE  3 items   one row per object and category, newest first, up to 20
-┌───┬───────────┬─────────────────────────────────┬────────────────────┬───────┬────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ # │ LAST SEEN │ OBJECT                          │ REASON             │ COUNT │ CATEGORY   │ MESSAGE                                                                                                                                                     │
-├───┼───────────┼─────────────────────────────────┼────────────────────┼───────┼────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1 │ 1m        │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │   901 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                     │
-│ 2 │ 2m        │ Pod/z-crash                     │ BackOff            │  1032 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)                                                   │
-│ 3 │ 21m       │ Pod/z-pending                   │ FailedScheduling   │    42 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
-└───┴───────────┴─────────────────────────────────┴────────────────────┴───────┴────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+WARNING EVIDENCE  4 items   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────────────────────────┬────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT                          │ REASON             │ COUNT │ CATEGORY   │ MESSAGE                                                                                                                                                        │
+├───┼───────────┼─────────────────────────────────┼────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 4m        │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │  5841 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                        │
+│ 2 │ 5m        │ Pod/z-crash                     │ BackOff            │  6654 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)                                                      │
+│ 3 │ 26m       │ Pod/z-unschedulable             │ FailedScheduling   │   141 │ scheduling │ 0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
+│ 4 │ 27m       │ Pod/z-pending                   │ FailedScheduling   │   295 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.    │
+└───┴───────────┴─────────────────────────────────┴────────────────────┴───────┴────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 POSSIBLE EXPLANATIONS  3 categories   hypotheses to check, not conclusions
 ┌────────────┬──────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -22,7 +23,7 @@ POSSIBLE EXPLANATIONS  3 categories   hypotheses to check, not conclusions
 ├────────────┼──────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ storage    │ #1       │ volume binding, provisioning, attachment or mounting may block startup - not evidence of a full volume │
 │ restart    │ #2       │ a container may be exiting repeatedly - the event alone does not say why                               │
-│ scheduling │ #3       │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
+│ scheduling │ #3, #4   │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
 └────────────┴──────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
@@ -36,6 +37,9 @@ NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANG
       read   kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100
 
   #3    evidence #3  (WARNING EVIDENCE above)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-unschedulable
+
+  #4    evidence #4  (WARNING EVIDENCE above)
       read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-pending
 
   >   storage  volume problems  see key 9 STORAGE: its findings carry their own next commands

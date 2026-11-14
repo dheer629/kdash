@@ -1,0 +1,11 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1794675273	info	SESSION	kdash-e2e	kdash 4.32.0 started on Dheeraj by root - filter .*
+1794675303	info	POD_ADDED	nightly-report-29911255-qgzhp	added on dev (CronJob/nightly-report, Running)
+1794675303	bad	STATUS	z-imagepull	ImagePullBackOff -> ErrImagePull on dev
+1794675334	ok	STATUS	nightly-report-29911255-qgzhp	Running -> Succeeded on dev
+1794675334	bad	STATUS	z-imagepull	ErrImagePull -> ImagePullBackOff on dev
+1794675334	warn	POD_REMOVED	nightly-report-29911240-kvv2n	gone (was on dev, Succeeded)
+1794675422	warn	RESTART	z-crash	restarts +1 (now 330), last exit Error
+1794675428	info	FILTER	kdash-e2e	pod filter changed to app-server
+1794675433	info	FILTER	kdash-e2e	pod filter changed to .*
+1794675476	info	SESSION	kdash-e2e	kdash stopped after 203s

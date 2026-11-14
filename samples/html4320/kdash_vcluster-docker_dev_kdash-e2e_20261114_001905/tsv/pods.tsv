@@ -1,6 +1,0 @@
-KEY	NAMESPACE	POD	STATUS	READY	RESTARTS	NODE	POOL	POD_IP	HOST_IP	QOS	KIND	WORKLOAD	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	CONTAINERS	HOST_NETWORK
-app-server-8fb4699bc-cx5vz	kdash-e2e	app-server-8fb4699bc-cx5vz	Running	2/2	14	dev	role:control-plane,master	10.244.0.135	172.18.0.2	Burstable	Deployment	app-server	3	25	250	2	12	96	3	2	Unknown	2	false
-app-server-8fb4699bc-t7zxj	kdash-e2e	app-server-8fb4699bc-t7zxj	Running	2/2	14	dev	role:control-plane,master	10.244.0.138	172.18.0.2	Burstable	Deployment	app-server	3	25	250	0	12	96	3	0	Unknown	2	false
-completed-check-m9swm	kdash-e2e	completed-check-m9swm	Succeeded	0/1	0	dev	role:control-plane,master	-	172.18.0.2	Burstable	Job	completed-check	-	5	50	-	4	32	-	-	-	1	false
-z-crash	kdash-e2e	z-crash	CrashLoopBackOff	0/1	73	dev	role:control-plane,master	10.244.0.133	172.18.0.2	Burstable	Pod	z-crash	-	5	50	-	4	32	-	-	Error	1	false
-z-pending	kdash-e2e	z-pending	Pending	0/1	0	(unscheduled)	(none)	-	-	Burstable	Pod	z-pending	-	5	50	-	4	32	-	-	-	1	false

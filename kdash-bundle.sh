@@ -1281,17 +1281,20 @@ elif [ -n "$CTX" ]; then
   KC+=(--context "$CTX")
 fi
 if [ -z "$NS" ] && [ "$ALL_NS" = 0 ] && [ "$DO_SREP" = 0 ]; then
-  if [ -n "$CTX" ]; then
-    NS="$("${KC[@]}" config view -o jsonpath="{.contexts[?(@.name==\"$CTX\")].context.namespace}" 2>/dev/null)"
-  else
-    NS="$("${KC[@]}" config view --minify -o jsonpath='{..namespace}' 2>/dev/null)"
-  fi
-  if [ -z "$NS" ] && [ -n "${KDASH_NS_MAP:-}" ]; then
+  # An explicit -n wins; a choice saved with d wins over the kubeconfig default.
+  if [ -n "${KDASH_NS_MAP:-}" ]; then
     _cur="${CTX:-$("${KC[@]}" config current-context 2>/dev/null)}"
     for _pair in $KDASH_NS_MAP; do
       case "$_pair" in "$_cur="*) NS="${_pair#*=}"; break ;; esac
     done
     unset _pair _cur
+  fi
+  if [ -z "$NS" ]; then
+    if [ -n "$CTX" ]; then
+      NS="$("${KC[@]}" config view -o jsonpath="{.contexts[?(@.name==\"$CTX\")].context.namespace}" 2>/dev/null)"
+    else
+      NS="$("${KC[@]}" config view --minify -o jsonpath='{..namespace}' 2>/dev/null)"
+    fi
   fi
   if [ -z "$NS" ]; then
     if [ "$INTERACTIVE" = 1 ]; then PICK_NS=1          # ask instead of guessing "default"
@@ -3765,6 +3768,9 @@ _io_get() {               # fetch federate text from the detected source -> stdo
 
 io_detect() {
   [ "$IO" = 1 ] || { IO_STATE="off"; return 0; }
+  # The first inventory is asynchronous. Do not cache an unavailable source before
+  # it can supply a hosting node or a discoverable service to probe.
+  if [ -z "$PROM_URL" ] && [ -z "$PROM_SVC" ] && [ ! -s "$SVC" ] && [ ! -s "$MODEL/nodes.tsv" ]; then return 0; fi
   local cand p tried="" path err="$TMPD/io.err" nd
   IO_DETECT_AT=$(date +%s); IO_REASON=""
   if [ -n "$PROM_URL" ]; then
@@ -6046,7 +6052,10 @@ ns_save_default() { # namespace ("" removes the entry)
   [ -z "$1" ] || map="${map:+$map }$CTX_NAME=$1"
   mkdir -p "$(dirname "$f")" 2>/dev/null || return 1
   { [ -r "$f" ] && grep -v '^[[:space:]]*KDASH_NS_MAP=' "$f"
-    printf 'KDASH_NS_MAP="%s"\n' "$map"; } > "$f.tmp.$$" 2>/dev/null && mv -f "$f.tmp.$$" "$f" || { rm -f "$f.tmp.$$"; return 1; }
+    # Context names come from kubeconfig and may contain quotes, dollar signs or
+    # backticks. Quote the complete value for the next config read instead of
+    # allowing those bytes to become shell syntax.
+    printf 'KDASH_NS_MAP=%q\n' "$map"; } > "$f.tmp.$$" 2>/dev/null && mv -f "$f.tmp.$$" "$f" || { rm -f "$f.tmp.$$"; return 1; }
   KDASH_NS_MAP="$map"
   audit NS_DEFAULT "context=$CTX_NAME namespace=${1:-<removed>}"
   return 0
@@ -8233,7 +8242,8 @@ picker_colors() {
   # header row of a table: bold + underlined (reads on light and dark backgrounds)
   if [ "${COLOR:-1}" = 1 ]; then PC_HDR=$'\033[1;4m'; else PC_HDR=""; fi
   # a glyph is 1 character in a UTF-8 locale but 3 bytes in the C locale
-  UI_BYTES=0; [ "${#PC_SEP}" -le 1 ] || UI_BYTES=1
+  local utf8_probe=$'\342\224\202'
+  UI_BYTES=0; [ "${#utf8_probe}" -le 1 ] || UI_BYTES=1
 }
 
 # ---- shared screen chrome: title bar, rules and key hints look the same on every
@@ -8355,6 +8365,11 @@ pk_fit() { # string width -> PK_FIT
     fi
     [ "$vis" -lt "$w" ] || break
     out+="$ch"; vis=$((vis + 1)); i=$((i + 1))
+    if [ "${UI_BYTES:-0}" = 1 ]; then
+      while [ "$i" -lt "$n" ]; do
+        case "${str:i:1}" in [$'\200'-$'\277']) out+="${str:i:1}"; i=$((i + 1)) ;; *) break ;; esac
+      done
+    fi
   done
   PK_FIT="$out${PC_R:-}"
 }
@@ -9354,6 +9369,10 @@ bx_vis() { # text (may hold colour escapes) -> BX_VL visible width
 }
 bx_rep() { local s; printf -v s '%*s' "$2" ''; printf '%s' "${s// /$1}"; }   # glyph count (printing)
 bx_repv() { local s; printf -v s '%*s' "$2" ''; BX_REP="${s// /$1}"; }       # same, into BX_REP
+bx_joint() { # replace one border cell in the caller's mid string (also in C locale)
+  local pos=$(($1 * ${#BX_H})) span=${#BX_H}
+  mid="${mid:0:pos}$2${mid:pos+span}"
+}
 bx_cut() { # text width -> BX_CUT (clipped with ~, colour kept)
   bx_vis "$1"
   if [ "$BX_VL" -le "$2" ]; then BX_CUT="$1"; return; fi
@@ -9374,7 +9393,7 @@ bx_top() { # width title right [joint positions...]
   bx_repv "$BX_H" "$fill"; mid="$BX_REP"
   if [ $# -gt 0 ]; then   # put ┬ where the columns start (offsets from the left border)
     local off=$((tv ? tv + 3 : 0)) p
-    for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && mid="${mid:0:i}${BX_TT}${mid:i+1}"; done
+    for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && bx_joint "$i" "$BX_TT"; done
   fi
   line="${BX_C}${BX_TL}${BX_R}"
   [ "$tv" = 0 ] || line+="${BX_C}${BX_H}${BX_R} ${PC_B}${t}${PC_R} "
@@ -9390,7 +9409,7 @@ bx_bot() { # width left-text right-text [joint positions...]
   [ "$fill" -ge 1 ] || { t=""; tv=0; fill=$((w - 2 - (rv ? rv + 3 : 0))); }
   bx_repv "$BX_H" "$fill"; mid="$BX_REP"
   local off=$((tv ? tv + 3 : 0))
-  for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && mid="${mid:0:i}${BX_BT}${mid:i+1}"; done
+  for p in "$@"; do i=$((p - 1 - off)); [ "$i" -ge 0 ] && [ "$i" -lt "$fill" ] && bx_joint "$i" "$BX_BT"; done
   BX_LINE="${BX_C}${BX_BL}${BX_R}"
   [ "$tv" = 0 ] || BX_LINE+="${BX_C}${BX_H}${BX_R} ${t} "
   BX_LINE+="${BX_C}${mid}${BX_R}"
@@ -9402,7 +9421,7 @@ bx_sep() { # width kind joint-positions...
   local w="$1" k="$2" mid i p g; shift 2
   case "$k" in t) g="$BX_TT" ;; b) g="$BX_BT" ;; *) g="$BX_X" ;; esac
   bx_repv "$BX_H" $((w - 2)); mid="$BX_REP"
-  for p in "$@"; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && mid="${mid:0:i}${g}${mid:i+1}"; done
+  for p in "$@"; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && bx_joint "$i" "$g"; done
   BX_LINE="${BX_C}${BX_LT}${mid}${BX_RT}${BX_R}"
 }
 bx_row() { # width content  -> │ content │ (full width)
@@ -9412,9 +9431,9 @@ bx_row() { # width content  -> │ content │ (full width)
 # ┬ where only the lower one has, ┼ where both have
 bx_sep_mix() { # width "upper joints" "lower joints"
   local w="$1" mid i p; bx_repv "$BX_H" $((w - 2)); mid="$BX_REP"
-  for p in $2; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && mid="${mid:0:i}${BX_BT}${mid:i+1}"; done
+  for p in $2; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] && bx_joint "$i" "$BX_BT"; done
   for p in $3; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $((w - 2)) ] || continue
-    if [ "${mid:i:1}" = "$BX_BT" ]; then mid="${mid:0:i}${BX_X}${mid:i+1}"; else mid="${mid:0:i}${BX_TT}${mid:i+1}"; fi; done
+    if [ "${mid:$((i * ${#BX_H})):${#BX_H}}" = "$BX_BT" ]; then bx_joint "$i" "$BX_X"; else bx_joint "$i" "$BX_TT"; fi; done
   BX_LINE="${BX_C}${BX_LT}${mid}${BX_RT}${BX_R}"
 }
 # A whole table inside a frame that is already open: separator from the previous
@@ -9448,7 +9467,7 @@ bx_full() { # width content -> a full-width row after any section
 }
 bx_close() { # width
   local mid i p; bx_repv "$BX_H" $(($1 - 2)); mid="$BX_REP"
-  for p in ${BX_PREV:-}; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $(($1 - 2)) ] && mid="${mid:0:i}${BX_BT}${mid:i+1}"; done
+  for p in ${BX_PREV:-}; do i=$((p - 1)); [ "$i" -ge 0 ] && [ "$i" -lt $(($1 - 2)) ] && bx_joint "$i" "$BX_BT"; done
   BX_OUT+="${BX_C}${BX_BL}${mid}${BX_BR}${BX_R}"$'\033[K\n'; BX_PREV=""
 }
 # Column layout: BX_W[] widths from natural sizes; the column marked flexible takes the
@@ -9914,6 +9933,15 @@ xfer_kv() { printf ' %s%-11s%s %s\n' "$PC_D" "$1" "$PC_R" "$2"; }
 xfer_table() { TK_COLOR="${COLOR:-1}" TK_COLS="$PK_COLS" TK_GLYPH="${BARCHR:-unicode}" tk_table "$@" | tk_colorize; }
 
 # A transfer in the background: poll every 0.3 s, show bytes and rate, q cancels.
+xfer_stop_tree() { # freeze parents before finding children so they cannot reparent
+  local pid="$1" child children
+  kill -STOP "$pid" 2>/dev/null || return 0
+  if command -v pgrep >/dev/null 2>&1; then children=$(pgrep -P "$pid" 2>/dev/null) || true
+  else children=$(ps -eo pid=,ppid= 2>/dev/null | awk -v p="$pid" '$2 == p {print $1}'); fi
+  for child in $children; do xfer_stop_tree "$child"; done
+  kill -TERM "$pid" 2>/dev/null || true
+  kill -CONT "$pid" 2>/dev/null || true
+}
 xfer_run_bg() { # label count-file -- cmd... (runs "$@" in a subshell) -> rc, 130 = cancelled
   local label="$1" cnt="$2" pid rc t0=$SECONDS b el rate key k left w bw total="${XFER_EXPECT:-0}"; shift 2; [ "$1" = -- ] && shift
   bx_init; picker_size; w=$((PK_COLS - 1)); bw=$((w - 62)); [ "$bw" -ge 10 ] || bw=10
@@ -9922,7 +9950,9 @@ xfer_run_bg() { # label count-file -- cmd... (runs "$@" in a subshell) -> rc, 13
   while kill -0 "$pid" 2>/dev/null; do
     b=0; [ -z "$cnt" ] || b=$(stat -c %s -- "$cnt" 2>/dev/null || wc -c < "$cnt" 2>/dev/null || echo 0)
     el=$((SECONDS - t0)); rate=$(( el > 0 ? b / el : b ))
-    if [ "$total" -gt 0 ]; then
+    if [ -z "$cnt" ]; then
+      bx_row "$w" "${PC_B}checking files${PC_R}  ${PC_D}${PC_MID}${PC_R}  ${el}s"
+    elif [ "$total" -gt 0 ]; then
       bx_bar "$b" "$total" "$bw"
       left="-"; [ "$rate" -gt 0 ] && [ "$b" -lt "$total" ] && left="$(( (total - b) / rate ))s"
       bx_row "$w" "${BX_BAR} ${PC_B}$(printf '%3s' "$BX_PCT")%${PC_R}  $(xfer_hsize "$b") / $(xfer_hsize "$total")  ${PC_D}${PC_MID}${PC_R}  $(xfer_hsize "$rate")/s  ${PC_D}${PC_MID}${PC_R}  ${el}s  ${PC_D}left${PC_R} ${left}"
@@ -9932,15 +9962,18 @@ xfer_run_bg() { # label count-file -- cmd... (runs "$@" in a subshell) -> rc, 13
     printf '\r%s' "$BX_LINE"
     key=""; IFS= read -rsn1 -t 0.3 key </dev/tty || true
     if [ "$key" = q ] || [ "$key" = Q ]; then
-      local kids=""; command -v pgrep >/dev/null 2>&1 && kids="$(pgrep -P "$pid" 2>/dev/null | tr '\n' ' ')"
-      kill "$pid" 2>/dev/null; [ -z "$kids" ] || kill $kids 2>/dev/null
-      for k in $kids; do pkill -TERM -P "$k" 2>/dev/null; done          # kubectl under the guard
+      xfer_stop_tree "$pid"
       wait "$pid" 2>/dev/null
       bx_bot "$w" "${PC_WARN}cancelled${PC_R}" ""; printf '\n%s\n' "$BX_LINE"; return 130
     fi
   done
   wait "$pid"; rc=$?
-  bx_bot "$w" "$([ "$rc" = 0 ] && printf '%sdone%s - verifying' "$PC_OK" "$PC_R" || printf '%sfailed%s' "$PC_BAD" "$PC_R")" ""; printf '\n%s\n' "$BX_LINE"
+  if [ "$rc" = 0 ] && [ -n "$cnt" ]; then
+    b=$(stat -c %s -- "$cnt" 2>/dev/null || wc -c < "$cnt" 2>/dev/null || echo 0)
+    bx_bar 1 1 "$bw"; bx_row "$w" "${BX_BAR} ${PC_B}100%${PC_R}  $(xfer_hsize "$b") transferred"
+    printf '\r%s' "$BX_LINE"
+  fi
+  bx_bot "$w" "$([ "$rc" = 0 ] && printf '%sdone%s' "$PC_OK" "$PC_R" || printf '%sfailed%s' "$PC_BAD" "$PC_R")" ""; printf '\n%s\n' "$BX_LINE"
   return "$rc"
 }
 
@@ -9954,6 +9987,7 @@ xfer_up_pipe() {
     "${KC[@]}" -n "$ns" exec -i "$pod" ${c:+-c "$c"} -- sh -c 'cd -- "$1" && tar xf -' kdash "$dst" > /dev/null 2>> "$d/err"
   st=("${PIPESTATUS[@]}")
   [ "${st[0]}" = 0 ] || return "${st[0]}"
+  [ "${st[1]}" = 0 ] || return "${st[1]}"
   return "${st[2]}"
 }
 xfer_stamp() { date +%Y%m%d_%H%M%S; }
@@ -9962,8 +9996,9 @@ xfer_zip_tool() { if command -v zip >/dev/null 2>&1; then echo zip; elif command
 
 # Fingerprints of the transferred items, computed the same way in the container and
 # on this host (POSIX sh, no awk): file = size + hash; directory = number of files,
-# total bytes and one hash over "hash path" of every file in sorted order; symlink =
-# hash of its target text. ALG sha256 (preferred), md5 or none (sizes only).
+# total bytes and a sorted manifest of files, directories and link targets. Never
+# follow links on this host. Cache content by device/inode/size: BusyBox images can
+# have hundreds of hardlinks to one binary. ALG sha256, md5 or none (sizes only).
 XFER_SUM_SH='alg=$1; d=$2; shift 2
 cd -- "$d" 2>/dev/null || exit 3
 if [ "$alg" = auto ]; then
@@ -9971,22 +10006,76 @@ if [ "$alg" = auto ]; then
 fi
 [ "${KDASH_XFER_HASH:-1}" = 0 ] && alg=none
 case "$alg" in sha256) H=sha256sum ;; md5) H=md5sum ;; *) H="" ;; esac
-hs() { if [ -n "$H" ]; then $H | cut -d " " -f 1; else cat > /dev/null; echo -; fi; }
+hs() { if [ -n "$H" ]; then v=$($H) || return 4; printf "%s\n" "${v%% *}"; else cat > /dev/null || return 4; echo -; fi; }
+file_sum() {
+  key=${2:-}; [ -n "$key" ] || key=$(stat -c "%d:%i:%s" -- "$1" 2>/dev/null) || key=
+  case "$key" in ""|*[!0-9:]*) s=$(wc -c < "$1") || return 4; r=$(hs < "$1") || return 4 ;;
+    *) s=${key##*:}
+       case "$cache" in *"|$key "*) r=${cache#*"|$key "}; r=${r%%|*} ;;
+         *) r=$(hs < "$1") || return 4; cache="$cache$key $r|" ;; esac ;;
+  esac
+}
 printf "ALG\t%s\n" "$alg"
 for n do
-  if [ -L "$n" ]; then t=l; f=0; b=$(readlink -- "$n" | wc -c); h=$(readlink -- "$n" | hs)
-  elif [ -f "$n" ]; then t=f; f=1; b=$(wc -c < "$n"); h=$(hs < "$n")
-  elif [ -d "$n" ]; then t=d
-    l=$(find "$n" -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r x; do printf "%s %s %s\n" "$(wc -c < "$x" | tr -d " ")" "$(hs < "$x")" "$x"; done)
+  cache="|"; p=./$n
+  if [ -L "$p" ]; then t=l; f=0; target=$(readlink -- "$p") || exit 4
+    b=$(printf "%s\n" "$target" | wc -c); h=$(printf "%s\n" "$target" | hs) || exit 4
+  elif [ -f "$p" ]; then t=f; f=1; file_sum "$p" || exit 4; b=$s; h=$r
+  elif [ -d "$p" ]; then t=d
+    tab=$(printf "\t")
+    # One stat process for many entries matters in CPU-limited containers. Its
+    # inode keys are used only for caching; the compared manifest contains paths.
+    if command -v stat >/dev/null 2>&1 && paths=$(find "$p" -exec stat -c "%d:%i:%s${tab}%n" -- {} + 2>/dev/null); then :
+    else
+      paths=$(find "$p" 2>/dev/null) || exit 4
+      paths=$(printf "%s\n" "$paths" | while IFS= read -r x; do printf "%s\t%s\n" - "$x"; done) || exit 4
+    fi
+    paths=$(printf "%s\n" "$paths" | LC_ALL=C sort -t "$tab" -k2) || exit 4
+    l=$(while IFS="$tab" read -r key x; do
+      if [ -L "$x" ]; then target=$(readlink -- "$x") || exit 4
+        s=$(printf "%s\n" "$target" | wc -c); r=$(printf "%s\n" "$target" | hs) || exit 4; kind=l
+      elif [ -f "$x" ]; then file_sum "$x" "$key" || exit 4; kind=f
+      elif [ -d "$x" ]; then kind=d; s=0; r=-
+      else exit 4; fi
+      printf "%s %s %s %s\n" "$kind" "$s" "$r" "$x"
+    done <<EOT
+$paths
+EOT
+    ) || exit 4
     f=0; b=0
-    while read -r s r; do [ -n "$s" ] || continue; f=$((f + 1)); b=$((b + s)); done <<EOT
+    while read -r kind s rest; do [ "$kind" = f ] || continue; f=$((f + 1)); b=$((b + s)); done <<EOT
 $l
 EOT
-    h=$(printf "%s\n" "$l" | hs)
-  else t=o; f=0; b=0; h=-; fi
+    h=$(printf "%s\n" "$l" | hs) || exit 4
+  else exit 4; fi
   printf "I\t%s\t%s\t%s\t%s\t%s\n" "$t" "$f" "$(echo $b)" "$h" "$n"
 done
 exit 0'
+
+# Run these through the same cancellable background UI as the copy. Command
+# failures must survive even if a disconnected exec returned a partial manifest.
+xfer_download_sums() {
+  "${KC[@]}" -n "$ns" exec "$pod" ${c:+-c "$c"} -- sh -c "$XFER_SUM_SH" kdash auto "$src" "${items[@]}" > "$d/rsum" 2>> "$d/err" </dev/null || return 1
+  xfer_sum_parse "$d/rsum" ST
+  case "$STALG" in sha256|md5|none) ;; *) return 1 ;; esac
+  sh -c "$XFER_SUM_SH" kdash "$STALG" "$stage" "${items[@]}" > "$d/lsum" 2>> "$d/err"
+}
+xfer_upload_sums() {
+  local alg=none
+  [[ "$XP_TOOLS" == *" sha256sum "* ]] && alg=sha256
+  [ "$alg" != none ] || [[ "$XP_TOOLS" != *" md5sum "* ]] || alg=md5
+  sh -c "$XFER_SUM_SH" kdash "$alg" "$lsrc" "${items[@]}" > "$d/lsum" 2>> "$d/err" || return 1
+  "${KC[@]}" -n "$ns" exec "$pod" ${c:+-c "$c"} -- sh -c "$XFER_SUM_SH" kdash "$alg" "$dst" "${items[@]}" > "$d/rsum" 2>> "$d/err" </dev/null
+}
+xfer_archive_test() { # format file: preserve the integrity check exit status
+  case "$1" in
+    tgz) gzip -t -- "$2" ;;
+    zip) if command -v unzip >/dev/null 2>&1; then unzip -tq "$2"
+         elif command -v python3 >/dev/null 2>&1; then python3 -c 'import sys,zipfile; sys.exit(zipfile.ZipFile(sys.argv[1]).testzip() is not None)' "$2"
+         else return 1; fi ;;
+    *) return 1 ;;
+  esac >/dev/null 2>&1
+}
 # Pre-flight facts about one directory: tools, writable, free KiB, du of items.
 XFER_PRE_SH='d=$1; shift; cd -- "$d" 2>/dev/null || { printf "ERR\tcannot open %s\n" "$d"; exit 3; }
 for t in tar sha256sum md5sum; do command -v $t >/dev/null 2>&1 && printf "TOOL\t%s\n" $t; done
@@ -10072,6 +10161,7 @@ xfer_verify_table() { # rows-file names...   (uses ST_* = source, DT_* = destina
   printf 'ITEM\tTYPE\t>FILES\t>%s\t>%s\t%s\tCHECK\n' "$XV_SRC" "$XV_DST" "$(case "${STALG:-none}" in sha256) echo SHA-256 ;; md5) echo MD5 ;; *) echo CHECKSUM ;; esac)" > "$f"
   for n in "$@"; do
     ok=1
+    case "${STALG:-}" in sha256|md5|none) [ "$STALG" = "${DTALG:-}" ] || ok=0 ;; *) ok=0 ;; esac
     [ "${STT[$n]:-?}" = "${DTT[$n]:-!}" ] || ok=0
     [ "${STB[$n]:-?}" = "${DTB[$n]:-!}" ] || ok=0
     [ "${STF[$n]:-?}" = "${DTF[$n]:-!}" ] || ok=0
@@ -10271,19 +10361,22 @@ xfer_download_once() { # ns pod container
   printf '\n'
   : > "$d/err"; local t0=$SECONDS
   XFER_EXPECT="$tb" xfer_run_bg "DOWNLOADING ${PC_MID} $(xfer_n "${#items[@]}" item) from ${pod}" "$part" -- xfer_down_pipe; rc=$?
-  local out="" count=0 asum="" atest="" saved=()
+  local out="" count=0 asum="" atest="" saved=() verified=0
   if [ "$rc" = 0 ] && [ -s "$part" ]; then
     rm -rf "$stage"; mkdir -p "$stage" && tar xf "$part" -C "$stage" 2>> "$d/err" || rc=1
     count="$(tar tf "$part" 2>/dev/null | wc -l | tr -d ' ')"
   elif [ "$rc" = 0 ]; then rc=1; fi
   rm -f "$part"
   if [ "$rc" = 0 ]; then
-    printf ' %sverifying: checksums in the container and here ...%s' "$PC_D" "$PC_R"
-    "${KC[@]}" -n "$ns" exec "$pod" ${c:+-c "$c"} -- sh -c "$XFER_SUM_SH" kdash auto "$src" "${items[@]}" > "$d/rsum" 2>/dev/null </dev/null || true
+    XFER_EXPECT=0 xfer_run_bg "VERIFYING ${PC_MID} checksums in the container and here" "" -- xfer_download_sums; rc=$?
+  fi
+  if [ "$rc" = 0 ]; then
     xfer_sum_parse "$d/rsum" ST
-    sh -c "$XFER_SUM_SH" kdash "${STALG:-none}" "$stage" "${items[@]}" > "$d/lsum" 2>/dev/null || true
     xfer_sum_parse "$d/lsum" DT
     XV_SRC="IN CONTAINER"; XV_DST="HERE"; xfer_verify_table "$d/verify" "${items[@]}"
+    verified=1; [ "$XV_BAD" = 0 ] || rc=1
+  fi
+  if [ "$rc" = 0 ]; then
     # put the result in place under the names chosen on the summary
     case "$fmt" in
       files)
@@ -10299,7 +10392,9 @@ xfer_download_once() { # ns pod container
         [ "$XFER_CONFLICT" = keep ] && name="$(xfer_free_name "$outdir" "$name")"
         out="$outdir/$name"
         ( cd "$stage" && tar czf "$out.part" -- "${items[@]}" ) 2>> "$d/err" && mv -f "$out.part" "$out" || rc=1
-        [ "$rc" = 0 ] && { gzip -t "$out" 2>/dev/null && atest="$XG_OK gzip -t passed" || atest="$XG_BAD gzip -t failed"; } ;;
+        if [ "$rc" = 0 ]; then
+          if xfer_archive_test tgz "$out"; then atest="$XG_OK gzip -t passed"; else atest="$XG_BAD gzip -t failed"; rc=1; fi
+        fi ;;
       zip)
         [ "$XFER_CONFLICT" = keep ] && name="$(xfer_free_name "$outdir" "$name")"
         out="$outdir/$name"; rm -f "$out"
@@ -10332,8 +10427,7 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
 PY
           ) 2>> "$d/err" || rc=1; fi
         if [ "$rc" = 0 ]; then
-          if command -v unzip >/dev/null 2>&1; then unzip -tq "$out" >/dev/null 2>&1 && atest="$XG_OK unzip -t passed" || atest="$XG_BAD unzip -t failed"
-          elif command -v python3 >/dev/null 2>&1; then python3 -c 'import sys,zipfile; sys.exit(zipfile.ZipFile(sys.argv[1]).testzip() is not None)' "$out" 2>/dev/null && atest="$XG_OK zip test passed" || atest="$XG_BAD zip test failed"; fi
+          if xfer_archive_test zip "$out"; then atest="$XG_OK zip test passed"; else atest="$XG_BAD zip test failed"; rc=1; fi
         fi ;;
     esac
     [ "$fmt" = files ] || { [ "$rc" = 0 ] && command -v sha256sum >/dev/null && asum="$(sha256sum -- "$out" | cut -c1-64)"; }
@@ -10342,10 +10436,13 @@ PY
   picker_size
   ui_bar "$PK_COLS" " KDASH ${PC_SEP} DOWNLOAD ${PC_SEP} RESULT ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " audited "
   printf '\033[H\033[2J%s\n\n' "$UI_BAR"
-  if [ "$rc" = 0 ]; then
-    audit CP_END "pod=$ns/$pod dir=down rc=0 entries=$count identical=$XV_OK differ=$XV_BAD alg=${STALG:-none} local=$(interactive_audit_path "$out")"
+  if [ "$rc" = 0 ] || { [ "$verified" = 1 ] && [ "$XV_BAD" -gt 0 ]; }; then
+    audit CP_END "pod=$ns/$pod dir=down rc=$rc entries=$count identical=$XV_OK differ=$XV_BAD alg=${STALG:-none} local=$(interactive_audit_path "$out")"
     XR_SECS=$((SECONDS - t0))
-    if [ "$fmt" = files ]; then
+    if [ "$rc" != 0 ]; then
+      xfer_result_box DOWNLOAD "$d/verify" STATUS "Verification failed; no files saved. Existing files were kept." \
+        FROM "${pod} ${PC_D}${PC_PTR}${PC_R} ${c:-default} ${PC_D}${PC_PTR}${PC_R} ${src}"
+    elif [ "$fmt" = files ]; then
       local sv=""; for nm in "${saved[@]}"; do sv+="${sv:+  $PC_MID  }$nm"; done
       xfer_result_box DOWNLOAD "$d/verify" SAVED "${PC_B}${outdir%/}/${PC_R}   ${sv:0:200}" \
         FROM "${pod} ${PC_D}${PC_PTR}${PC_R} ${c:-default} ${PC_D}${PC_PTR}${PC_R} ${src}"
@@ -10457,23 +10554,22 @@ xfer_upload_once() { # ns pod container
   done
   audit CP_UP "pod=$ns/$pod container=${c:--} remote=$(interactive_audit_path "$dst") items=${#items[@]} local=$(interactive_audit_path "$lsrc")"
   printf '\n'
-  : > "$d/sent"; : > "$d/err"; local t0=$SECONDS
+  : > "$d/sent"; : > "$d/err"; local t0=$SECONDS verified=0
   XFER_EXPECT="$tb" xfer_run_bg "UPLOADING ${PC_MID} $(xfer_n "${#items[@]}" item) to ${pod}" "$d/sent" -- xfer_up_pipe; rc=$?
   if [ "$rc" = 0 ]; then
-    # verify with the algorithm the container has: this host first, then the container
-    printf ' %sverifying: checksums here and in the container ...%s' "$PC_D" "$PC_R"
-    local alg=none; [[ "$XP_TOOLS" == *" sha256sum "* ]] && alg=sha256; [ "$alg" != none ] || [[ "$XP_TOOLS" != *" md5sum "* ]] || alg=md5
-    sh -c "$XFER_SUM_SH" kdash "$alg" "$lsrc" "${items[@]}" > "$d/lsum" 2>/dev/null || true
+    XFER_EXPECT=0 xfer_run_bg "VERIFYING ${PC_MID} checksums here and in the container" "" -- xfer_upload_sums; rc=$?
+  fi
+  if [ "$rc" = 0 ]; then
     xfer_sum_parse "$d/lsum" ST
-    "${KC[@]}" -n "$ns" exec "$pod" ${c:+-c "$c"} -- sh -c "$XFER_SUM_SH" kdash "${STALG:-none}" "$dst" "${items[@]}" > "$d/rsum" 2>/dev/null </dev/null || true
     xfer_sum_parse "$d/rsum" DT
     XV_SRC="HERE"; XV_DST="IN CONTAINER"; xfer_verify_table "$d/verify" "${items[@]}"
+    verified=1; [ "$XV_BAD" = 0 ] || rc=1
   fi
   picker_size
   ui_bar "$PK_COLS" " KDASH ${PC_SEP} UPLOAD ${PC_SEP} RESULT ${PC_SEP} ${CTX_NAME:-current} ${PC_SEP} $ns " " audited "
   printf '\033[H\033[2J%s\n\n' "$UI_BAR"
-  if [ "$rc" = 0 ]; then
-    audit CP_END "pod=$ns/$pod dir=up rc=0 identical=$XV_OK differ=$XV_BAD alg=${STALG:-none}"
+  if [ "$verified" = 1 ]; then
+    audit CP_END "pod=$ns/$pod dir=up rc=$rc identical=$XV_OK differ=$XV_BAD alg=${STALG:-none}"
     XR_SECS=$((SECONDS - t0))
     local sv=""; for nm in "${items[@]}"; do sv+="${sv:+  $PC_MID  }$nm"; done
     xfer_result_box UPLOAD "$d/verify" SAVED "${PC_B}${pod}${PC_R} ${PC_D}${PC_PTR}${PC_R} ${c:-default} ${PC_D}${PC_PTR}${PC_R} ${PC_B}${dst%/}/${PC_R}   ${sv:0:160}" \
@@ -11200,7 +11296,7 @@ rb_findings() { # title subtitle empty-text
 rb_next_list() { # numbered rows: N SEVERITY OBJECT FINDING HINTKEY
   local tmp="$1" n sev obj text hk key ns name x1 x2 x3 shown=0 max="${KDASH_HINT_MAX:-15}"
   awk -F'\t' '$5 != "" && $2 !~ /INFO/ { f = 1 } END { exit !f }' "$tmp" || return 0
-  RB_K="$(events_kubectl_prefix)"; RB_SEEN_FILE="$tmp.seen"; : > "$RB_SEEN_FILE"
+  RB_K="$(events_kubectl_prefix)"; RB_SEEN_FILE="$tmp.seen"; : > "$RB_SEEN_FILE"; : > "$tmp.keys"
   printf '\n'
   if [ "${TK_COLOR:-0}" = 1 ]; then printf '~[1mNEXT COMMANDS~[0m  ~[90mread = only reads, CHANGE = modifies the cluster or a node (printed only)%s~[0m\n' "${RB_RUN_HINT:+  -  $RB_RUN_HINT}"
   else printf 'NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)%s\n' "${RB_RUN_HINT:+  -  $RB_RUN_HINT}"; fi
@@ -11853,34 +11949,83 @@ login__issuer() { # the issuer URL and client id the context logs in with (from 
   printf '%s\t%s' "$iss" "$cid"
 }
 
-# kill login helpers left behind by background reads (they hold the callback port 8000)
-login__kill_stale() { # [keep-pid]: every login helper started by this kdash (tagged), except keep-pid's tree
-  local p keep="${1:-}" pids="" sig
-  if [ -n "${KDASH_LOGIN_TAG:-}" ] && [ -d /proc/self ]; then
-    for p in /proc/[0-9]*; do
-      p="${p#/proc/}"; [ "$p" != "$$" ] || continue
-      [ -r "/proc/$p/environ" ] || continue
-      # (a process can end while this looks: every read is silent)
-      { tr '\0' '\n' < "/proc/$p/environ"; } 2>/dev/null | grep -qxF "KDASH_LOGIN_TAG=$KDASH_LOGIN_TAG" || continue
-      { tr '\0' ' ' < "/proc/$p/cmdline"; } 2>/dev/null | grep -qE 'oidc[-_]login|kubelogin|get-token|credential' || continue
-      if [ -n "$keep" ] && login__is_descendant "$p" "$keep"; then continue; fi
-      pids="$pids $p"
-    done
-  else
-    pids="$(ps -o pid=,args= -s "$(ps -o sid= $$ 2>/dev/null | tr -d ' ')" 2>/dev/null | grep -E 'oidc[-_]login get-token|kubelogin get-token' | grep -v grep | awk '{print $1}')"
-  fi
-  [ -n "${pids// /}" ] || return 0
-  kill $pids 2>/dev/null; sleep 0.3
-  for p in $pids; do kill -0 "$p" 2>/dev/null && kill -9 "$p" 2>/dev/null; done
-  return 0
+# /proc comm may contain spaces and parentheses. Fields after its final ') '
+# start with state (field 3); starttime is field 22 and identifies a PID's birth.
+login__process_start() { # pid -> Linux process start ticks
+  local line rest; local -a fields=()
+  { IFS= read -r line < "/proc/$1/stat"; } 2>/dev/null || return 1
+  rest="${line##*) }"; IFS=' ' read -r -a fields <<< "$rest"
+  case "${fields[19]:-}" in ''|*[!0-9]*) return 1 ;; esac
+  printf '%s' "${fields[19]}"
 }
-login__is_descendant() { # pid ancestor
-  local p="$1" i=0
-  while [ -n "$p" ] && [ "$p" -gt 1 ] && [ "$i" -lt 30 ]; do
+login__is_descendant() { # pid ancestor (including ancestor itself)
+  local p="$1" i=0 line rest; local -a fields=()
+  while [[ "$p" =~ ^[0-9]+$ ]] && [ "$p" -gt 1 ] && [ "$i" -lt 128 ]; do
     [ "$p" != "$2" ] || return 0
-    p="$( { awk '{print $4}' "/proc/$p/stat"; } 2>/dev/null)"; i=$((i + 1))
+    { IFS= read -r line < "/proc/$p/stat"; } 2>/dev/null || return 1
+    rest="${line##*) }"; IFS=' ' read -r -a fields <<< "$rest"
+    p="${fields[1]:-}"; i=$((i + 1))
   done
   return 1
+}
+login__has_tag() { # pid: exact tag, never a partial match or a session-wide guess
+  local entry
+  [ -n "${KDASH_LOGIN_TAG:-}" ] || return 1
+  [ -r "/proc/$1/environ" ] || return 1
+  { while IFS= read -r -d '' entry; do
+      [ "$entry" != "KDASH_LOGIN_TAG=$KDASH_LOGIN_TAG" ] || return 0
+    done < "/proc/$1/environ"; } 2>/dev/null
+  return 1
+}
+login__is_helper() { # pid: executable or interpreted script, never a URL/argument
+  local arg command configured="${LOGIN_HELPER_COMMAND:-}" i=1
+  local -a argv=()
+  configured="${configured##*/}"
+  [ -r "/proc/$1/cmdline" ] || return 1
+  { while IFS= read -r -d '' arg; do argv+=("$arg"); done < "/proc/$1/cmdline"; } 2>/dev/null
+  [ "${#argv[@]}" -gt 0 ] || return 1
+  command="${argv[0]##*/}"
+  case "$command" in
+    python|python[0-9]*|pypy*|bash|sh|dash|zsh|ksh|perl|ruby|node|nodejs)
+      while [ "$i" -lt "${#argv[@]}" ]; do
+        case "${argv[i]}" in -c|-m|-e) return 1 ;; --) i=$((i + 1)); break ;; -*) i=$((i + 1)) ;; *) break ;; esac
+      done
+      [ "$i" -lt "${#argv[@]}" ] || return 1
+      command="${argv[i]##*/}" ;;
+  esac
+  case "$command" in kubelogin|kubectl-oidc_login|kubectl-oidc-login|oidc-login|oidc_login) return 0 ;; esac
+  [ -n "$configured" ] && [ "$command" = "$configured" ]
+}
+# Stop only helpers tagged by this kdash. Recheck birth identity immediately
+# before each signal so a process that exits cannot expose a reused PID.
+login__kill_stale() { # [keep-pid]: exclude this process and all its descendants
+  local p start i keep="${1:-}" signaled=0
+  local LOGIN_HELPER_COMMAND="${LOGIN_HELPER_COMMAND:-}"
+  local -a pids=() starts=() terminated=()
+  [ -n "${KDASH_LOGIN_TAG:-}" ] && [ -d /proc/self ] || return 0
+  [ -n "$LOGIN_HELPER_COMMAND" ] || LOGIN_HELPER_COMMAND="$(certs__kcfg '{.users[0].user.exec.command}' 2>/dev/null)"
+  for p in /proc/[0-9]*; do
+    p="${p#/proc/}"; [ "$p" != "$$" ] && [ "$p" != "$BASHPID" ] || continue
+    login__has_tag "$p" && login__is_helper "$p" || continue
+    if [ -n "$keep" ] && login__is_descendant "$p" "$keep"; then continue; fi
+    start="$(login__process_start "$p")" || continue
+    pids+=("$p"); starts+=("$start")
+  done
+  for ((i = 0; i < ${#pids[@]}; i++)); do
+    p="${pids[i]}"
+    [ "$(login__process_start "$p" 2>/dev/null)" = "${starts[i]}" ] || continue
+    login__has_tag "$p" && login__is_helper "$p" || continue
+    if kill -TERM "$p" 2>/dev/null; then terminated+=("$i"); signaled=1; fi
+  done
+  [ "$signaled" = 1 ] || return 0
+  sleep 0.3
+  for i in "${terminated[@]}"; do
+    p="${pids[i]}"
+    [ "$(login__process_start "$p" 2>/dev/null)" = "${starts[i]}" ] || continue
+    login__has_tag "$p" && login__is_helper "$p" || continue
+    kill -KILL "$p" 2>/dev/null || true
+  done
+  return 0
 }
 
 # A short look with no terminal: 0 = the API answers, 1 = a login is needed, 2 = another error.
@@ -11979,7 +12124,9 @@ login_interactive() { # start | session [auto]
         sleep 0.2; i=$((i + 1)); done ) & w=$!
     trap ':' INT
     elsewhere=0; n=0
-    login__env "$bdir" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami < /dev/tty > "$out" 2> >(tee -a "$f" > /dev/tty) & hp=$!
+    LOGIN_ATTEMPT_SEQ=$(( ${LOGIN_ATTEMPT_SEQ:-0} + 1 ))
+    LOGIN_ACTIVE_TAG="${KDASH_LOGIN_TAG:-kdash-$BASHPID}-login-$BASHPID-$LOGIN_ATTEMPT_SEQ"
+    KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__env "$bdir" "$LOGIN_KUBECTL" "${LOGIN_ARGS[@]}" auth whoami < /dev/tty > "$out" 2> >(tee -a "$f" > /dev/tty) & hp=$!
     LOGIN_HP="$hp"
     # meanwhile, every KDASH_LOGIN_POLL s once the URL is out: a login completed in another
     # terminal (or a helper that never returns) must not keep kdash waiting
@@ -11990,7 +12137,9 @@ login_interactive() { # start | session [auto]
       if login__poll_ok; then elsewhere=1; login__kill_tree "$hp"; break; fi
     done
     wait "$hp" 2>/dev/null; rc=$?
-    LOGIN_HP=""; login__kill_stale        # nothing of this attempt keeps running (port 8000, provider polling)
+    LOGIN_HP=""
+    KDASH_LOGIN_TAG="$LOGIN_ACTIVE_TAG" login__kill_stale
+    LOGIN_ACTIVE_TAG=""                 # only this attempt's helpers are cleaned
     [ "$elsewhere" = 0 ] || rc=0
     trap 'AUDIT_SIG=INT; cleanup; exit 0' INT
     kill "$w" 2>/dev/null; wait "$w" 2>/dev/null
@@ -12095,7 +12244,7 @@ POD-04	Pod	ImagePullBackOff	Rollouts and scale-up stall	Registry down, wrong tag
 POD-05	Pod	Readiness probe failing	Pod removed from Service endpoints	Slow start, dependency down, strict probe	Ready=False, Unhealthy events	list:pods	6	5	pods	spec
 POD-06	Pod	Liveness probe kills a healthy pod	Restart loop under load	Timeout too short for peak latency	Killing / Unhealthy (liveness) events	list:pods list:events	5	6	pods	spec events
 POD-07	Pod	Evicted	Pod lost, rescheduled elsewhere	Node pressure, ephemeral storage over limit	status.reason=Evicted	list:pods	5	5	pods	spec
-POD-08	Pod	CPU throttled	Latency up, timeouts	CPU limit too low	live CPU vs limit (metrics-server)	list:pods get:pods.metrics.k8s.io	4	6	pods	spec
+POD-08	Pod	CPU near its limit	Latency up, timeouts	CPU limit too low	live CPU vs limit; throttling requires counter evidence	list:pods get:pods.metrics.k8s.io	4	6	pods	spec pod-metrics
 POD-09	Pod	Stuck Terminating	Replacement and volume release blocked	Finalizer, lost node, preStop hang	deletionTimestamp older than the grace period	list:pods	5	5	pods	pods
 WRK-01	Deployment	All replicas unavailable	Service outage	Bad rollout, dependency down	availableReplicas=0	list:deployments.apps	9	4	deployments	fm-deploy
 WRK-02	Deployment	Rollout stuck	Mixed versions, less capacity	New pods failing, no room to surge	Progressing=False (ProgressDeadlineExceeded)	list:deployments.apps	6	4	deployments	fm-deploy
@@ -12107,7 +12256,7 @@ WRK-07	Any workload	All replicas on one node	One node loss takes every replica	N
 JOB-01	Job	Failed after backoffLimit	Batch work not done	App error, missing input	Failed condition	list:jobs.batch	6	5	jobs	fm-jobs
 JOB-02	CronJob	Not running on schedule	Missed backups, stale data	suspend, missed deadline, concurrency Forbid	lastSuccessfulTime vs lastScheduleTime	list:cronjobs.batch	7	4	cronjobs	fm-cron
 PVC-01	PersistentVolumeClaim	Pending	Pod cannot start	No StorageClass, provisioner down, quota	phase=Pending, ProvisioningFailed events	list:persistentvolumeclaims	8	4	pvcs	pvcs
-PVC-02	PersistentVolumeClaim	Volume full	Write errors, database stops	Growth without expansion	kubelet volume stats (Prometheus), used vs capacity	list:persistentvolumeclaims	8	3	pvcs	pvcs volume-metrics?
+PVC-02	PersistentVolumeClaim	Volume full	Write errors, database stops	Growth without expansion	kubelet volume stats (Prometheus), used vs capacity	list:persistentvolumeclaims	8	3	pvcs	pvcs volume-metrics
 PVC-03	PVC / PersistentVolume	Attach or mount failure	Pod stuck ContainerCreating	RWO multi-attach, CSI down, lost node	FailedAttachVolume / FailedMount events, lost claims	list:persistentvolumeclaims list:events	7	5	pvcs	pvcs events
 PVC-04	PersistentVolume	Reclaim policy Delete on stateful data	Data deleted with the claim	StorageClass default	persistentVolumeReclaimPolicy	list:persistentvolumes@	7	2	storageclasses	pvs
 PVC-05	StorageClass	Expansion not allowed	A full volume cannot grow online	allowVolumeExpansion false	StorageClass field	list:storageclasses.storage.k8s.io@	4	2	storageclasses	storageclasses
@@ -12343,7 +12492,7 @@ fmea_evaluate() {
       wk = tolower(P[12]); wl = P[13]; node = P[7]
       PN[ns "/" pod] = 1; PWK[ns "/" pod] = wk "/" wl
       if (P[11] == "BestEffort" && wk != "job") { if (wl != "" && wl != "-") { be[ns "|" wk "/" wl]++ } else be[ns "|pod/" pod]++ }
-      if (P[16] + 0 > 0 && P[14] != "" && P[14] != "-" && P[14] + 0 >= 0.9 * P[16]) hit("POD-08", ns "/" pod, "fail", "cpu " P[14] "m of " P[16] "m limit", "pod-oom|" ns "|" pod, ns, "")
+      if (P[16] + 0 > 0 && P[14] != "" && P[14] != "-" && P[14] + 0 >= 0.9 * P[16]) hit("POD-08", ns "/" pod, "risk", "cpu " P[14] "m of " P[16] "m limit (throttling not measured)", "fm-POD-08|" ns "|" pod, ns, "")
       if (wl != "" && wl != "-" && wk ~ /^(deployment|statefulset|replicaset)$/ && P[4] == "Running") { g = ns "|" wk "/" wl; gp[g]++; if (!((g, node) in gn)) { gn[g, node] = 1; gnc[g]++; gnode[g] = node } }
       next }
     FILENAME ~ /nodes\.tsv$/ { if (FNR == 1) next; split($0, N, "\t"); if (N[16] + 0 > 0 && N[28] + 0 > N[16] * ovc / 100)
@@ -12434,12 +12583,13 @@ fmea_evaluate() {
 # source states per catalogue source name -> "name state"
 fmea__source_states() {
   local s st
-  for s in spec events pods services endpoints ingresses pvcs pvs storageclasses volume-metrics rb-nodes rb-snapshots readyz certs cert-manager sm-secrets login \
+  for s in spec events pods pod-metrics services endpoints ingresses pvcs pvs storageclasses volume-metrics rb-nodes rb-snapshots readyz certs cert-manager sm-secrets login \
            fm-deploy fm-sts fm-ds fm-jobs fm-cron fm-hpa fm-pdb fm-quota fm-netpol fm-svclb fm-nodes fm-ns fm-dns fm-webhooks hpods; do
     case "$s" in
       spec) [ "${SPEC_OK:-0}" = 1 ] && st=ok || st="$(printf '%s' "${SPEC_REASON:-error}" | grep -qiE 'forbidden|403' && echo forbidden || echo error)" ;;
       events) st="$(cat "$TOOLKIT_DIR/events.status" 2>/dev/null)"; case "$st" in ok*) st=ok ;; *forbid*) st=forbidden ;; '') st=unknown ;; *) st=error ;; esac ;;
       hpods) st="$(health__state pods)" ;;
+      pod-metrics) if [ "${TOP_OK:-0}" = 1 ] && [ "${TOP_AT:-0}" -gt 0 ] 2>/dev/null; then st=ok; else st=unknown; fi ;;
       certs) if [ -d "$TOOLKIT_DIR/check-certs/certs" ] || [ -d "$TOOLKIT_DIR/certs" ]; then st=ok; else st=no-data; fi ;;
       cert-manager) st="$( [ -f "$TOOLKIT_DIR/health-cert-manager.status" ] && health__state cert-manager || ( TOOLKIT_DIR="$TOOLKIT_DIR/check-certs"; health__state cert-manager ) )"; [ -n "$st" ] || st=no-data ;;
       login) st=ok ;;
@@ -12501,8 +12651,8 @@ fmea_score() {
         acc = (np == 0 || yes == np) ? "full" : (yes == 0 ? (er == np ? "unknown" : "none") : "partial")
         ns_ = split(SR[id], sr, " "); nosig = 0; part = 0; fs = 0; req = 0
         for (i = 1; i <= ns_; i++) { s = sr[i]; opt = (s ~ /\?$/); if (opt) sub(/\?$/, "", s); st = SS[s]; if (!opt) req++
-          if (st == "forbidden") { fs++; if (acc == "full") acc = "partial"; miss = miss (miss == "" ? "" : " ") "read:" s }
-          else if (st != "ok" && st != "") { if (opt) part = 1; else nosig = 1 } }
+          if (st == "forbidden") { if (!opt) { fs++; nosig = 1 }; if (acc == "full") acc = "partial"; miss = miss (miss == "" ? "" : " ") "read:" s }
+          else if (st != "ok") { if (opt) part = 1; else nosig = 1 } }
         # every read this mode needs was refused: no access, whatever can-i said
         if (req > 0 && fs >= req) acc = "none"
         if (part && acc == "full") { acc = "partial"; miss = miss (miss == "" ? "" : " ") "source:volume-metrics" }
@@ -12513,7 +12663,7 @@ fmea_score() {
           now_ = (acc == "none" ? "no access for " USER ": needs " hum(miss) : acc == "unknown" ? "not checked: the API did not answer the access check" : "not visible on this cluster: " SG[id])
           out(id, s0, o, dx, ID[k], (CK[id] == "cluster" ? "cluster" : "-"), now_, stt, acc, e, "", miss)
           continue }
-        if (MAN[id] != "") { out(id, s0, MAN[id] + 0, d0, id, "site", "manual row from the site file", "risk", acc, 0, "", miss); continue }
+        if (MAN[id] != "") { out(id, s0, clamp(MAN[id] + 0), d0, id, "site", "manual row from the site file", "risk", acc, 0, "", miss); continue }
         if (has[id]) {
           for (h = 1; h <= nh; h++) { if (HID[h] != id) continue
             s1 = clamp(s0 + critadj(HNS[h], HOB[h], HCR[h]))
@@ -12533,7 +12683,7 @@ fmea_score() {
     LC_ALL=C sort -t $'\t' -k1,1n -k2,2n -k3,3n -k9,9 -k11,11 | cut -f4- > "$d/fmea-rows.tsv"
   # summary: H M L visible total user
   awk -F'\t' -v u="$(awk -F'\t' '$1 == "U" { print $2; exit }' "$d/fmea-access.tsv")" '
-    { c[$1]++; if (!($6 in seen)) { seen[$6] = 1; tot++; if ($11 != "noaccess") vis++ } }
+    { c[$1]++; if (!($6 in seen)) { seen[$6] = 1; tot++; if ($11 != "noaccess" && $11 != "nosignal") vis++ } }
     END { printf "%d\t%d\t%d\t%d\t%d\t%s\n", c["H"], c["M"], c["L"], vis, tot, u }' "$d/fmea-rows.tsv" > "$d/fmea.summary"
   date +%s > "$d/fmea.at"
 }
@@ -12616,6 +12766,10 @@ fmea_hints() { # key ns name x1 ...
     fm-POD-06)
       rb_line read "$(rb_k "$ns" describe pod "$n")" "the probe, its timeout and the kill events"
       rb_line note "raise timeoutSeconds / failureThreshold, or add a startupProbe for slow starts" ;;
+    fm-POD-08)
+      rb_line read "$(rb_k "$ns" top pod "$n" --containers)" "current CPU usage per container"
+      rb_line read "$(rb_k "$ns" describe pod "$n")" "CPU requests and limits"
+      rb_line note "usage near a limit indicates risk; confirm throttling with CPU throttled-period counters before changing limits" ;;
     fm-POD-09)
       rb_line read "$(rb_k "$ns" get pod "$n" -o "jsonpath='{.metadata.finalizers}{\" \"}{.spec.nodeName}{\"\\n\"}'")" "finalizers and the node"
       rb_line read "$(rb_k "$ns" describe pod "$n")" "what it waits for"
@@ -12761,9 +12915,17 @@ fmea_access_render() {
 fmea_export() { # csv|tsv|json
   local f="$TOOLKIT_DIR/fmea-rows.tsv"
   case "$1" in
-    json) awk -F'\t' -v ctx="${CTX_NAME:-}" -v ns="${NS:-}" -v at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" -v sum="$(cat "$TOOLKIT_DIR/fmea.summary")" '
-        function j(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, " ", s); return "\"" s "\"" }
-        BEGIN { split(sum, S, "\t"); printf "{\"context\":%s,\"namespace\":%s,\"generated\":%s,\"user\":%s,\"high\":%d,\"medium\":%d,\"low\":%d,\"visible_modes\":%d,\"modes\":%d,\"rows\":[", j(ctx), j(ns), j(at), j(S[6]), S[1], S[2], S[3], S[4], S[5] }
+    json) FMEA_JSON_CONTEXT="${CTX_NAME:-}" FMEA_JSON_NAMESPACE="${NS:-}" \
+        FMEA_JSON_GENERATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)" FMEA_JSON_SUMMARY="$(cat "$TOOLKIT_DIR/fmea.summary")" awk -F'\t' '
+        function j(s,   i, c, out) { out = "\""
+          for (i = 1; i <= length(s); i++) { c = substr(s, i, 1)
+            if (c == "\\") out = out "\\\\"
+            else if (c == "\"") out = out "\\\""
+            else if (c in JC) out = out sprintf("\\u%04x", JC[c])
+            else out = out c }
+          return out "\"" }
+        BEGIN { for (i = 0; i < 32; i++) JC[sprintf("%c", i)] = i
+          split(ENVIRON["FMEA_JSON_SUMMARY"], S, "\t"); printf "{\"context\":%s,\"namespace\":%s,\"generated\":%s,\"user\":%s,\"high\":%d,\"medium\":%d,\"low\":%d,\"visible_modes\":%d,\"modes\":%d,\"rows\":[", j(ENVIRON["FMEA_JSON_CONTEXT"]), j(ENVIRON["FMEA_JSON_NAMESPACE"]), j(ENVIRON["FMEA_JSON_GENERATED"]), j(S[6]), S[1], S[2], S[3], S[4], S[5] }
         { printf "%s{\"ap\":%s,\"s\":%d,\"o\":%d,\"d\":%d,\"rpn\":%d,\"id\":%s,\"kind\":%s,\"object\":%s,\"mode\":%s,\"now\":%s,\"status\":%s,\"access\":%s,\"o_estimated\":%s,\"effect\":%s,\"cause\":%s,\"owner\":%s,\"missing\":%s}", \
             (NR > 1 ? "," : ""), j($1), $2, $3, $4, $5, j($6), j($7), j($8), j($9), j($10), j($11), j($12), ($13 == "1" ? "true" : "false"), j($15), j($16), j($17), j($18) }
         END { print "]}" }' "$f" ;;
@@ -13438,7 +13600,7 @@ toolkit_init
 if [ "$DO_DOCTOR" = 1 ]; then doctor_run; exit $?; fi
 if [ "$DO_EVENTS" = 1 ] || [ "$DO_EXPLAIN" = 1 ]; then
     events_collect
-    if [ "$DO_EVENTS" = 1 ]; then events_render; else explain_render "${NS/\(all namespaces\)/}" "$EXPLAIN_POD"; fi
+    if [ "$DO_EVENTS" = 1 ]; then toolkit_once events; else toolkit_once explain "${NS/\(all namespaces\)/}" "$EXPLAIN_POD"; fi
     [ "$(cat "$TOOLKIT_DIR/events.status" 2>/dev/null)" = ok ]; exit $?
 fi
 if [ "${DO_CHECK:-0}" = 1 ] || { [ "$VIEW" = check ] && [ "$ONCE" = 1 ]; }; then
@@ -13478,7 +13640,7 @@ if [ "${DO_SECRETS:-0}" = 1 ] || { [ "$VIEW" = secrets ] && [ "$ONCE" = 1 ]; }; 
 fi
 if [ "${DO_FMEA:-0}" = 1 ] || { { [ "$VIEW" = fmea ] || [ "$VIEW" = access ]; } && [ "$ONCE" = 1 ]; }; then
     if [ -n "${FMEA_SINCE:-}" ]; then fmea_trend "$FMEA_SINCE" | toolkit_clean | tk_colorize; exit 0; fi
-    refresh_spec; build_model 2>/dev/null
+    refresh_spec; refresh_top; build_model 2>/dev/null
     [ "$SPEC_OK" = 1 ] || SPEC_REASON="$(doctor_classify "$TMPD/spec.err") - $(head -n 1 "$TMPD/spec.err" 2>/dev/null | LC_ALL=C tr -d '\000-\037' | cut -c1-110)"
     events_collect; health_collect; check_collect
     RB_CAPTURE="$TOOLKIT_DIR/run-fmea.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="kdash --fmea --run N runs the read commands of row N"

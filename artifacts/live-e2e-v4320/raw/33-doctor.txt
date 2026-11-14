@@ -1,10 +1,10 @@
  KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:50:23 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 22:27:07 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 3/5 ready   restarts 118             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                │
-│ poll 2s  spec 9s/30s   session 01:47:52 up 2m31s      │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 370           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 7s/30s   session 22:24:33 up 2m34s      │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 2  ^ 2        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
- DATA ● pods fresh 9s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 7s old  metrics available │ C certs (1 expiring) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  KDASH 4.32.0 DOCTOR   read-only capability checks - no cluster changes are made
 
 CONNECTION
@@ -15,23 +15,23 @@ CONNECTION
 │ namespace    │ kdash-e2e                                                                                             │
 │ kubeconfig   │ /home/user/.kube/config                                                                              │
 │ API endpoint │ https://localhost:10093                                                                               │
-│ audit log    │ /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/audit/audit_202611.log │
+│ audit log    │ /workspace/kdash/artifacts/live-e2e-v4320/audit/audit_202611.log │
 └──────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 CHECKS  9 checks   all required checks passed
-┌─────────────────────────────────┬────────┬──────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┐
-│ CHECK                           │ RESULT │ DETAIL                                                   │ NEXT STEP                                                   │
-├─────────────────────────────────┼────────┼──────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ pods                            │ ● PASS │ readable (an empty namespace is valid)                   │ -                                                           │
-│ nodes                           │ ● PASS │ readable                                                 │ -                                                           │
-│ services                        │ ● PASS │ readable                                                 │ -                                                           │
-│ endpointslices.discovery.k8s.io │ ● PASS │ readable                                                 │ -                                                           │
-│ persistentvolumeclaims          │ ● PASS │ readable                                                 │ -                                                           │
-│ events                          │ ● PASS │ readable                                                 │ -                                                           │
-│ metrics                         │ ● PASS │ pod CPU / memory readable                                │ -                                                           │
-│ certificates                    │ ● PASS │ nothing expires within 30 days (API endpoint, kubeconfi~ │ kdash --certs also probes nodes, kubelets and ingress hosts │
-│ local reports                   │ ● PASS │ writable: /mnt/c/Users/user/OneDrive/Desktop/AI Projec~ │ -                                                           │
-└─────────────────────────────────┴────────┴──────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────┬───────────┬──────────────────────────────────────────────────────────┬───────────────────────────┐
+│ CHECK                           │ RESULT    │ DETAIL                                                   │ NEXT STEP                 │
+├─────────────────────────────────┼───────────┼──────────────────────────────────────────────────────────┼───────────────────────────┤
+│ pods                            │ ● PASS    │ readable (an empty namespace is valid)                   │ -                         │
+│ nodes                           │ ● PASS    │ readable                                                 │ -                         │
+│ services                        │ ● PASS    │ readable                                                 │ -                         │
+│ endpointslices.discovery.k8s.io │ ● PASS    │ readable                                                 │ -                         │
+│ persistentvolumeclaims          │ ● PASS    │ readable                                                 │ -                         │
+│ events                          │ ● PASS    │ readable                                                 │ -                         │
+│ metrics                         │ ● PASS    │ pod CPU / memory readable                                │ -                         │
+│ certificates                    │ ● WARNING │ 1 expiring - soonest: cert-manager certificate (kdash-e~ │ kdash --certs  (or key C) │
+│ local reports                   │ ● PASS    │ writable: /mnt/c/Users/user/OneDrive/Desktop/AI Projec~ │ -                         │
+└─────────────────────────────────┴───────────┴──────────────────────────────────────────────────────────┴───────────────────────────┘
 
   Read-only checks complete; no cluster changes made.
 
@@ -47,4 +47,4 @@ CHECKS  9 checks   all required checks passed
 
 
 K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c›
- ○ LIVE 01:50:23  next 1s  data 1s old  spec 9/30s  fetch 0.0s  poll 2s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit
+ ○ LIVE 22:27:07  next 1s  data 1s old  spec 7/30s  fetch 0.0s  poll 2s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html  q/Q quit

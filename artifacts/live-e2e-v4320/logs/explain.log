@@ -11,7 +11,7 @@ WARNING EVIDENCE  1 item   one row per object and category, newest first, up to 
 ┌───┬───────────┬─────────────┬─────────┬───────┬──────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ # │ LAST SEEN │ OBJECT      │ REASON  │ COUNT │ CATEGORY │ MESSAGE                                                                                                   │
 ├───┼───────────┼─────────────┼─────────┼───────┼──────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1 │ 2m        │ Pod/z-crash │ BackOff │  1032 │ restart  │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3) │
+│ 1 │ 33s       │ Pod/z-crash │ BackOff │  6677 │ restart  │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3) │
 └───┴───────────┴─────────────┴─────────┴───────┴──────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 POSSIBLE EXPLANATIONS  1 category   hypotheses to check, not conclusions

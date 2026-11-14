@@ -2,58 +2,58 @@ check	status	detail
 installed-source-identical	PASS	installed binary and repository CLI have the same SHA-256
 fixture-apply	PASS	isolated namespace, healthy and failing workloads, services, ingress, bound/unbound PVC
 fixture-ready	PASS	deployment "app-server" successfully rolled out
-real-cluster-inventory	PASS	12 Kubernetes objects; pod app-server-8fb4699bc-cx5vz
-view-workloads	PASS	exit 0; 3361 bytes
-view-pods	PASS	exit 0; 4528 bytes
-view-nodes	PASS	exit 0; 6664 bytes
-view-mem	PASS	exit 0; 4809 bytes
-view-ip	PASS	exit 0; 3681 bytes
-view-services	PASS	exit 0; 6552 bytes
-view-alerts	PASS	exit 0; 3916 bytes
-view-events	PASS	exit 0; 4548 bytes
-view-storage	PASS	exit 0; 12938 bytes
-view-explain	PASS	exit 0; 7578 bytes
-tsv-pods	PASS	exit 0; 1803 bytes
-tsv-nodes	PASS	exit 0; 1884 bytes
-tsv-workloads	PASS	exit 0; 987 bytes
-tsv-ip	PASS	exit 0; 976 bytes
-tsv-mem	PASS	exit 0; 1278 bytes
-tsv-storage	PASS	exit 0; 2415 bytes
-tsv-services	PASS	exit 0; 1463 bytes
-tsv-events	PASS	exit 0; 764 bytes
-tsv-explain	PASS	exit 0; 2458 bytes
-csv-nodes	PASS	exit 0; 1864 bytes
-csv-pods	PASS	exit 0; 1773 bytes
-csv-ip	PASS	exit 0; 976 bytes
-csv-workloads	PASS	exit 0; 956 bytes
-csv-services	PASS	exit 0; 1609 bytes
-csv-mem	PASS	exit 0; 1256 bytes
-view-io	PASS	exit 0; 3974 bytes
-csv-events	PASS	exit 0; 858 bytes
-csv-storage	PASS	exit 0; 2685 bytes
-csv-explain	PASS	exit 0; 2560 bytes
-events	PASS	exit 0; 4548 bytes
-all-views	PASS	exit 0; 28118 bytes
+real-cluster-inventory	PASS	38 Kubernetes objects; pod app-server-8fb4699bc-cx5vz
+view-pods	PASS	exit 0; 12355 bytes
+view-nodes	PASS	exit 0; 8514 bytes
+view-workloads	PASS	exit 0; 7876 bytes
+view-ip	PASS	exit 0; 8285 bytes
+view-mem	PASS	exit 0; 9507 bytes
+view-io	PASS	exit 0; 7569 bytes
+view-alerts	PASS	exit 0; 7073 bytes
+view-services	PASS	exit 0; 10809 bytes
+view-storage	PASS	exit 0; 14933 bytes
+view-events	PASS	exit 0; 26411 bytes
+view-explain	PASS	exit 0; 8028 bytes
+tsv-pods	PASS	exit 0; 4745 bytes
+tsv-nodes	PASS	exit 0; 2015 bytes
+tsv-workloads	PASS	exit 0; 2554 bytes
+tsv-ip	PASS	exit 0; 2741 bytes
+tsv-mem	PASS	exit 0; 2394 bytes
+tsv-services	PASS	exit 0; 3514 bytes
+tsv-storage	PASS	exit 0; 2960 bytes
+tsv-events	PASS	exit 0; 8681 bytes
+tsv-explain	PASS	exit 0; 2822 bytes
+csv-pods	PASS	exit 0; 4635 bytes
+csv-nodes	PASS	exit 0; 1995 bytes
+csv-workloads	PASS	exit 0; 2468 bytes
+csv-ip	PASS	exit 0; 2730 bytes
+csv-mem	PASS	exit 0; 2347 bytes
+csv-services	PASS	exit 0; 3852 bytes
+csv-storage	PASS	exit 0; 3322 bytes
+csv-events	PASS	exit 0; 9880 bytes
+csv-explain	PASS	exit 0; 2938 bytes
+all-views	PASS	exit 0; 56204 bytes
+doctor	PASS	exit 0; 5478 bytes
+events	PASS	exit 0; 26411 bytes
 explain	PASS	exit 0; 4886 bytes
 inspect-summary	PASS	exit 0; 903 bytes
-doctor	PASS	exit 0; 6067 bytes
-inspect-logs	PASS	exit 0; 557587 bytes
-inspect-previous	PASS	exit 0; 144 bytes
-filter-label	PASS	exit 0; 2802 bytes
-filter-status	PASS	exit 0; 2799 bytes
-filter-workload	PASS	exit 0; 2804 bytes
-filter-unhealthy	PASS	exit 0; 2659 bytes
-filter-regex	PASS	exit 0; 2792 bytes
-ascii-no-color	PASS	exit 0; 4001 bytes
-flat-pods	PASS	exit 0; 3101 bytes
-no-cluster-metrics-io	PASS	exit 0; 4528 bytes
-compare	PASS	exit 0; 5163 bytes
+inspect-logs	PASS	exit 0; 141837 bytes
+filter-label	PASS	exit 0; 4006 bytes
+filter-status	PASS	exit 0; 7415 bytes
+filter-workload	PASS	exit 0; 4006 bytes
+filter-unhealthy	PASS	exit 0; 5152 bytes
+filter-regex	PASS	exit 0; 4006 bytes
+ascii-no-color	PASS	exit 0; 10930 bytes
+flat-pods	PASS	exit 0; 8820 bytes
+no-cluster-metrics-io	PASS	exit 0; 12355 bytes
+compare	PASS	exit 0; 6795 bytes
+inspect-previous	PASS	exit 0; 144 bytes; previous-log retries=0
 snapshot-combined	PASS	exit 0; 329 bytes
 snapshot-all	PASS	exit 0; 1165 bytes
 snapshot-selection	PASS	exit 0; 497 bytes
 report-bundle	PASS	exit 0; 374 bytes
-all-namespaces	PASS	exit 0; 4556 bytes
-empty-filter	PASS	exit 3; 1269 bytes
+all-namespaces	PASS	exit 0; 9014 bytes
+empty-filter	PASS	exit 3; 2532 bytes
 invalid-option	PASS	exit 2; 58 bytes
 version	PASS	exit 0; 13 bytes
 help	PASS	exit 0; 16391 bytes
@@ -62,10 +62,10 @@ about	PASS	exit 0; 2456 bytes
 real-data-pods	PASS	observed app-server in installed CLI output
 real-data-services	PASS	observed missing-backend in installed CLI output
 real-data-storage	PASS	observed z-unbound in installed CLI output
-certs	PASS	exit 0; 7315 bytes
-check-summary	PASS	exit 2; 6142 bytes
+certs	PASS	exit 1; 10306 bytes
+check-summary	PASS	exit 2; 13203 bytes
 check-real-finding-selected	PASS	selected a numbered unhealthy fixture finding from actual --check output
-check-run-finding	PASS	exit 0; 2866 bytes
+check-run-finding	PASS	exit 0; 2742 bytes
 check-run-read-commands-only	PASS	captured finding executed only guarded kubectl reads
 runbook-etcd-restore	PASS	exit 0; 4831 bytes
 runbook-cert-rotate	PASS	exit 0; 1461 bytes
@@ -73,17 +73,17 @@ runbook-node-notready	PASS	exit 0; 2348 bytes
 runbook-api-unreachable	PASS	exit 0; 1727 bytes
 runbook-oidc-login	PASS	exit 0; 1002 bytes
 runbook-real-node-inventory	PASS	node runbook includes the actual cluster node inventory
-fmea-summary	PASS	exit 0; 11405 bytes
-csv-fmea	PASS	exit 0; 7675 bytes
-tsv-fmea	PASS	exit 0; 7579 bytes
-fmea-json	PASS	exit 0; 15331 bytes
+fmea-summary	PASS	exit 0; 15777 bytes
+csv-fmea	PASS	exit 0; 9745 bytes
+tsv-fmea	PASS	exit 0; 9631 bytes
+fmea-json	PASS	exit 0; 18624 bytes
 fmea-json-real-rows	PASS	real worksheet rows retain numeric scores, AP, access and namespace
 fmea-html	PASS	exit 0; 148 bytes
-fmea-access	PASS	exit 0; 5309 bytes
-fmea-fail-on-high	PASS	exit 2; 11405 bytes
+fmea-access	PASS	exit 0; 6557 bytes
+fmea-fail-on-high	PASS	exit 2; 15777 bytes
 fmea-trend	PASS	exit 0; 782 bytes
 fmea-real-finding-selected	PASS	selected a real failing pod row's numbered read commands
-fmea-run-finding	PASS	exit 0; 2866 bytes
+fmea-run-finding	PASS	exit 0; 2748 bytes
 fmea-run-read-commands-only	PASS	FMEA row execution ran only the captured guarded reads
 capture-01-pods	PASS	PODS live requests, limits and measured usage
 capture-02-nodes	PASS	NODE POOLS real allocatable capacity and namespace share
@@ -146,6 +146,7 @@ capture-23-interactive-blocked	PASS	Shell refused while interactive mode is disa
 capture-24-interactive-confirmation	PASS	Explicit interactive-mode confirmation
 capture-25-shell-picker	PASS	Shell-mode pod picker and action panel
 capture-26-shell-inside	PASS	Actual shell inside the live app container
+transfer-destination-reset	PASS	private fixture upload destination starts empty for the real copy and result capture
 capture-27-upload-browser	PASS	Local framed file browser with enabled upload actions
 capture-28-upload-destination	PASS	Remote destination browser before any transfer
 capture-29-upload-review	PASS	Upload preflight checks and explicit review
@@ -191,7 +192,7 @@ capture-90-fmea-kind	PASS	FMEA kind filter on actual worksheet rows
 capture-91-fmea-sort	PASS	FMEA worksheet sorted by risk priority number
 session-report	PASS	exit 0; 359 bytes
 audit-events	PASS	exit 0; 75093 bytes
-audit-grep	PASS	exit 0; 6663 bytes
+audit-grep	PASS	exit 0; 7357 bytes
 audit-verify	PASS	exit 0; 138 bytes
 audit-export	PASS	exit 0; 274 bytes
 export-artifacts	PASS	14 HTML reports, 18 CSV files, 306 TSV files

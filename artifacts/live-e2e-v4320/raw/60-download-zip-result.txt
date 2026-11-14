@@ -1,14 +1,14 @@
  KDASH │ DOWNLOAD │ RESULT │ vcluster-docker_dev │ kdash-e2e                                                                                                      audited
 
 ┌─ DOWNLOAD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── result ─┐
-│  VERIFIED   1 item identical  ·  SHA-256  ·  under 1s                                                                                                                 │
-│ SAVED  /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/work/upload-tree.zip   742 B                                                    │
-│ TEST   ● unzip -t passed   sha256 a458eb469a66a9821092106ed58d114ca3e675240f8112cf70ecfd59f1e48dd2                                                                    │
+│  VERIFIED   1 item identical  ·  SHA-256  ·  1s                                                                                                                       │
+│ SAVED  /workspace/kdash/artifacts/live-e2e-v4320/work/upload-tree.zip   742 B                                                    │
+│ TEST   ● zip test passed   sha256 5ed5796a5a55aa89e6af919daff352259f4df0c3d625cbcc31a85692d5c44bf3                                                                    │
 │ FROM   app-server-8fb4699bc-cx5vz ► app ► /tmp/kdash-transfer                                                                                                         │
 ├──────────────────────────────────────────────────────────────────────────────────┬───────┬───────┬──────────────┬──────────────┬─────────────────────┬────────────────┤
 │ ITEM                                                                             │ TYPE  │ FILES │ IN CONTAINER │         HERE │ SHA-256             │ CHECK          │
 ├──────────────────────────────────────────────────────────────────────────────────┼───────┼───────┼──────────────┼──────────────┼─────────────────────┼────────────────┤
-│ upload-tree/                                                                     │ dir   │     3 │        142 B │        142 B │ 6e9523b950…47b564   │ ● identical    │
+│ upload-tree/                                                                     │ dir   │     3 │        142 B │        142 B │ 13e00dbad3…af82b6   │ ● identical    │
 └──────────────────────────────────────────────────────────────────────────────────┴───────┴───────┴──────────────┴──────────────┴─────────────────────┴────────────────┘
 
  <any key> back to kdash

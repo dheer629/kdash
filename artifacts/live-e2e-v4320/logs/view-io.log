@@ -1,33 +1,47 @@
- KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:46:01 IST
- match .*   sort cpu ▼ high first
- ! pods 3/5 ready rst 118 oom 0 oomk 0 nolim 0 cpu 6m 1% lim mem 2Mi 1% lim wl 4
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                        audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 22:22:01 IST
+┌─ SCOPE ───────────────────────────┬─ POD HEALTH ───────────────────────────┬─ USAGE vs LIMITS ──────┬─ WORKLOADS ────┐
+│ match .*   sort cpu ▼ high first  │ ! pods 13/17 ready   restarts 369      │ cpu     60m   4% lim   │ workloads 13   │
+│ poll 2s  spec 17s/30s             │ OOM risk 0   OOMKilled 0   no-limit 1  │ mem     5Mi   1% lim   │                │
+└───────────────────────────────────┴────────────────────────────────────────┴────────────────────────┴────────────────┘
  DATA ● pods fresh 17s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod
  source kubelet cAdvisor of the worker nodes (API node proxy)   sampled every 15s, last 0s ago, rates between the last two samples
- namespace  in 344B/s  out 441B/s   disk read 0B/s  write 0B/s   IOPS read 0  write 0   ░
-────────────────────────────────────────────────────────────────────────────────
-► TIMELINE  01:46:00 -> 01:46:01 IST  (all since kdash started, host clock, z cycles) 
-  NETWORK in (ingress) - namespace                                              
-         one sample so far - the chart starts with the 2nd (run kdash live)     
-  NETWORK out (egress) - namespace                                              
-         one sample so far - the chart starts with the 2nd (run kdash live)     
-  DISK read - namespace                                                         
-         one sample so far - the chart starts with the 2nd (run kdash live)     
-  DISK write - namespace                                                        
-         one sample so far - the chart starts with the 2nd (run kdash live)     
+ namespace  in 511B/s  out 646B/s   disk read 0B/s  write 0B/s   IOPS read 0  write 0   ░
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► TIMELINE  22:22:00 -> 22:22:01 IST  (all since kdash started, host clock, z cycles) ─────────────────────────────────
+  NETWORK in (ingress) - namespace                                                                              
+         one sample so far - the chart starts with the 2nd (run kdash live)                                     
+  NETWORK out (egress) - namespace                                                                              
+         one sample so far - the chart starts with the 2nd (run kdash live)                                     
+  DISK read - namespace                                                                                         
+         one sample so far - the chart starts with the 2nd (run kdash live)                                     
+  DISK write - namespace                                                                                        
+         one sample so far - the chart starts with the 2nd (run kdash live)                                     
 
 ► WORKER NODES   whole node (all namespaces) and this namespace on it, bytes per second
   NODE                     POOL           PODS │  node in node out  disk rd  disk wr r-IOPS w-IOPS │    ns in   ns out    ns% │ ns share of node traffic
-  dev                      role:control-~    4 │    47.2K   269.1K     1.8K   156.4K      0     15 │     344B     441B    0.2 │ █▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  (unscheduled)            (none)            1 │        -        -        -        -      -      - │        -        -      - │ n/a                     
+  dev                      role:control-~   15 │    20.4K   145.1K       0B    10.8K      0      7 │     511B     646B    0.7 │ █▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  (unscheduled)            (none)            2 │        -        -        -        -      -      - │        -        -      - │ n/a                     
 
 ► PODS   bytes per second   (sort cpu ▼ high first - s cycles: cpu = network, mem = disk, cpupct = in, mempct = out, restarts = IOPS)
   POD                      NODE                             in      out  disk rd  disk wr r-IOPS w-IOPS │ share of namespace traffic
-  app-server-8fb4699bc-t7~ dev                            175B     224B       0B       0B      0      0 │ ████████████░░░░░░░░░░░░
-  app-server-8fb4699bc-cx~ dev                            169B     216B       0B       0B      0      0 │ ████████████░░░░░░░░░░░░
+  app-server-8fb4699bc-cx~ dev                            186B     238B       0B       0B      0      0 │ █████████░░░░░░░░░░░░░░░
+  functionality-legacy-67~ dev                            161B     207B        -        -      -      - │ ████████░░░░░░░░░░░░░░░░
+  app-server-8fb4699bc-t7~ dev                            164B     201B       0B       0B      0      0 │ ████████░░░░░░░░░░░░░░░░
+  db-stateful-0            dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  db-stateful-1            dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  test-sts-0               dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   z-crash                  dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  z-imagepull              dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  z-oom                    dev                              0B       0B       0B       0B      0      0 │ ░░░░░░░░░░░░░░░░░░░░░░░░
   completed-check-m9swm    dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  nightly-report-29911240~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  nightly-report-29911245~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  nightly-report-29911250~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  node-agent-ctvg6         dev                               -        -       0B       0B      0      0 │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  sync-pod                 dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   z-pending                (unscheduled)                     -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
-────────────────────────────────────────────────────────────────────────────────
+  z-unschedulable          (unscheduled)                     -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  legend in = received (ingress), out = sent (egress), per second.  disk = container filesystem reads / writes.  IOPS = operations per second.  ns% = this namespace share of the node.

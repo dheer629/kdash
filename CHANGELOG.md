@@ -5,6 +5,34 @@ All notable changes to kdash are recorded here. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), and the README keeps
 the detailed per-release notes.
 
+## [Unreleased]
+
+### Fixed
+- Downloads of BusyBox directories reuse checksums for hardlinked files and batch
+  metadata reads, avoiding repeated hashing in CPU-limited containers.
+- Completed copies show 100%; checksum verification has its own cancellable view.
+- Download and upload verification includes nested symlinks and empty directories,
+  rejects missing checksums and command errors, and returns failure on mismatches.
+  Failed download verification preserves existing destinations.
+- Uploads propagate errors from every stage of the tar stream, including `tee`.
+- Saving a namespace default shell-quotes the context mapping, so unusual context
+  names cannot inject syntax into `kdash.conf` or change its other settings. A
+  saved default again takes precedence over the kubeconfig context's namespace.
+- Login cleanup matches the exact helper and login-attempt tag, rechecks process
+  identity before stopping it, and preserves active sign-in process trees.
+- FMEA keeps missing usage measurements and incomplete read coverage unknown,
+  bounds manual scores, and safely escapes JSON context text.
+- Direct Events/explanation CSV and TSV options use the diagnostic exporter;
+  asynchronous I/O discovery retries when the first inventory becomes available.
+- Health runbook rendering initializes its command list, and terminal frames
+  preserve UTF-8 glyph widths in both C and UTF-8 locales.
+
+### Validation
+- All 18 fixture suites pass. A fresh WSL cluster run passes 199 live checks,
+  96 published CLI replay screenshots (91 dashboard flows plus 5 Secrets-map
+  screens) and all 23 browser report checks. Native xterm grabs remain in the
+  private workspace; the public screenshots are re-rendered from redacted ANSI.
+
 ## [4.32.0] - 2026-11-13
 
 ### Added

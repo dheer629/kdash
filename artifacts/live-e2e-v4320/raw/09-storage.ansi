@@ -1,10 +1,10 @@
 [1;7m KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [1;7m 9 STOR [0m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 01:48:28[0m[90m IST[39m
+[0m [90m 1 PODS [39m [90m 2 NODE POOLS [39m [90m 3 WORKLOADS [39m [90m 4 IP POOL [39m [90m 5 MEMORY [39m [90m 6 NET & DISK IO [39m [90m 7 ALERTS [39m [90m 8 SVCS [39m [1;7m 9 STOR [0m [90m E EVENTS [39m [90m ! WHY [39m  [1m2026-11-14 22:25:10[0m[90m IST[39m
 [90m┌─ [1m[39mSCOPE[0m[90m ──────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[90m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[90m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[90m ────────┐
-│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                     [90m│[39m [1m[31m! pods 3/5 ready[0m[90m   restarts [35m118[39m             [90m│[39m [90mcpu [39m     6m [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mworkloads [39m4                 [90m│
-│[39m [90mpoll 2s  spec 6s/30s   session [39m01:47:52[90m up [39m36s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [32m0[39m       [90m│[39m [90mmem [39m    2Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [32m! 0[39m  [32m^ 0[39m         [90m│
+│[39m [90mmatch [39m.*   [1m[94msort cpu ▼ high first[0m                     [90m│[39m [1m[31m! pods 14/18 ready[0m[90m   restarts [35m369[39m           [90m│[39m [90mcpu [39m    60m [32m░░░░░░░░[39m [32m  4%[90m lim[39m       [90m│[39m [90mworkloads [39m13                [90m│
+│[39m [90mpoll 2s  spec 7s/30s   session [39m22:24:33[90m up [39m37s       [90m│[39m [90mOOM risk [32m0[90m   OOMKilled [32m0[90m   no-limit [35m1[39m       [90m│[39m [90mmem [39m    5Mi [32m░░░░░░░░[39m [32m  1%[90m lim[39m       [90m│[39m [90mevents 15m [1m[31m! 1[0m  [32m^ 0[39m         [90m│
 └──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
-[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m6s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
+[39m [1mDATA[0m [32m●[39m pods [1mfresh[0m [90m7s old[39m  metrics [1mavailable[0m [90m│[39m [1mC[0m certs (1 expiring) [90m│[39m [1mK[0m check now [90m│[39m [1mi[0m inspect [90m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [90m│[39m [1m:[0m commands
 [1;7m PERSISTENT STORAGE [0m  [90mclaims, volumes and classes - capacity is allocation; usage only from kubelet volume samples[39m
 
 [1mDATA SOURCES[0m
@@ -13,18 +13,20 @@
 [90m├────────────────┼───────────┼────────┼─────────────────────────────────────────────────────────────────────────┤[39m
 [90m│[39m pvcs           [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
 [90m│[39m pods           [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
-[90m│[39m pvs            [90m│[39m [32m● ok     [39m [90m│[39m 6s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
-[90m│[39m storageclasses [90m│[39m [32m● ok     [39m [90m│[39m 6s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
-[90m│[39m volume-metrics [90m│[39m [35m● unknown[39m [90m│[39m 6s ago [90m│[39m [90mno configured or existing Prometheus source; measured PVC usage unknown[39m [90m│[39m
+[90m│[39m pvs            [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
+[90m│[39m storageclasses [90m│[39m [32m● ok     [39m [90m│[39m 7s ago [90m│[39m [90mread succeeded                                                         [39m [90m│[39m
+[90m│[39m volume-metrics [90m│[39m [35m● unknown[39m [90m│[39m 7s ago [90m│[39m [90mno configured or existing Prometheus source; measured PVC usage unknown[39m [90m│[39m
 [90m└────────────────┴───────────┴────────┴─────────────────────────────────────────────────────────────────────────┘[39m
 
-[1mPERSISTENT VOLUME CLAIMS[0m  [90m2 claims   USED / USE% need kubelet volume samples (Prometheus) - none here[39m
-[90m┌───────────┬───────────┬─────────┬──────────┬──────┬──────┬────────┬─────────────────────────────────┬─────────────────────────────────────────────────┬────────────────┐
-│[39m [1mCLAIM    [0m [90m│[39m [1mSTATUS   [0m [90m│[39m [1mREQUEST[0m [90m│[39m [1mCAPACITY[0m [90m│[39m [1mUSED[0m [90m│[39m [1mUSE%[0m [90m│[39m [1mACCESS[0m [90m│[39m [1mCLASS                          [0m [90m│[39m [1mPODS                                           [0m [90m│[39m [1mVOLUME        [0m [90m│
-├───────────┼───────────┼─────────┼──────────┼──────┼──────┼────────┼─────────────────────────────────┼─────────────────────────────────────────────────┼────────────────┤
-│[39m app-data  [90m│[39m [32m● Bound  [39m [90m│[39m    64Mi [90m│[39m     64Mi [90m│[39m    - [90m│[39m    - [90m│[39m RWX    [90m│[39m -                               [90m│[39m app-server-8fb4699bc-cx5vz, app-server-8fb4699~ [90m│[39m [90mkdash-e2e-data[39m [90m│
-│[39m z-unbound [90m│[39m [35m● Pending[39m [90m│[39m    32Mi [90m│[39m        - [90m│[39m    - [90m│[39m    - [90m│[39m RWO    [90m│[39m kdash-e2e-intentionally-missing [90m│[39m z-pending                                       [90m│[39m [35munbound       [39m [90m│
-└───────────┴───────────┴─────────┴──────────┴──────┴──────┴────────┴─────────────────────────────────┴─────────────────────────────────────────────────┴────────────────┘
+[1mPERSISTENT VOLUME CLAIMS[0m  [90m4 claims   USED / USE% need kubelet volume samples (Prometheus) - none here[39m
+[90m┌────────────────────┬───────────┬─────────┬──────────┬──────┬──────┬────────┬───────────────────────────────┬────────────────────────────────┬──────────────────────────┐
+│[39m [1mCLAIM             [0m [90m│[39m [1mSTATUS   [0m [90m│[39m [1mREQUEST[0m [90m│[39m [1mCAPACITY[0m [90m│[39m [1mUSED[0m [90m│[39m [1mUSE%[0m [90m│[39m [1mACCESS[0m [90m│[39m [1mCLASS                        [0m [90m│[39m [1mPODS                          [0m [90m│[39m [1mVOLUME                  [0m [90m│
+├────────────────────┼───────────┼─────────┼──────────┼──────┼──────┼────────┼───────────────────────────────┼────────────────────────────────┼──────────────────────────┤
+│[39m app-data           [90m│[39m [32m● Bound  [39m [90m│[39m    64Mi [90m│[39m     64Mi [90m│[39m    - [90m│[39m    - [90m│[39m RWX    [90m│[39m -                             [90m│[39m app-server-8fb4699bc-cx5vz, a~ [90m│[39m [90mkdash-e2e-data          [39m [90m│
+│[39m data-db-stateful-0 [90m│[39m [32m● Bound  [39m [90m│[39m    32Mi [90m│[39m     32Mi [90m│[39m    - [90m│[39m    - [90m│[39m RWO    [90m│[39m local-path                    [90m│[39m db-stateful-0                  [90m│[39m [90mpvc-9f357ae4-cb0e-4141-~[39m [90m│
+│[39m data-db-stateful-1 [90m│[39m [32m● Bound  [39m [90m│[39m    32Mi [90m│[39m     32Mi [90m│[39m    - [90m│[39m    - [90m│[39m RWO    [90m│[39m local-path                    [90m│[39m db-stateful-1                  [90m│[39m [90mpvc-e84a7d5a-2de6-43e1-~[39m [90m│
+│[39m z-unbound          [90m│[39m [35m● Pending[39m [90m│[39m    32Mi [90m│[39m        - [90m│[39m    - [90m│[39m    - [90m│[39m RWO    [90m│[39m kdash-e2e-intentionally-miss~ [90m│[39m z-pending                      [90m│[39m [35munbound                 [39m [90m│
+└────────────────────┴───────────┴─────────┴──────────┴──────┴──────┴────────┴───────────────────────────────┴────────────────────────────────┴──────────────────────────┘
 
 [1m[39mFINDINGS[0m  [90m2 findings   critical first - the next commands for each are listed below the table[39m
 [90m┌───┬────────────┬───────────┬──────────────────────────────────────────────────────────────┐[39m
@@ -44,7 +46,5 @@
       [32mread  [39m kubectl --context vcluster-docker_dev get storageclass  [90m# classes that exist[39m
       [90mnote  [39m [90mstorageClassName cannot be changed on an existing claim: create the class kdash-e2e-intentionally-missing, or recreate the claim with an existing class[39m
 
-
-[1mMOUNTS[0m  [90m3 mounts   declared in pod specs - a declaration does not prove the mount succeeded[39m
 K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c[2m›
-[0;7m ● LIVE 01:48:28  next 2s  data 2s old  spec 6/30s  fetch 0.0s  poll 2s  AUDITED | storage | rows 1-41/72 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause      [0m
+[0;1m[97m[41m ALERT 22:25:03 STATUS z-imagepull  - 5 MEMORY / x report | ● LIVE 22:25:10  next 1s  data 1s old  spec 7/30s  fetch 0.0s  poll 2s  AUDITED | storage | rows 1-41/78    [0m

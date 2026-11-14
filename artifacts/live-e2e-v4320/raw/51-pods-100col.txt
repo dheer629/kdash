@@ -1,40 +1,40 @@
  KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e    audited
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 01:54:57 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 22:31:51 IST
  match .*   sort cpu ▼ high first
- ! pods 3/5 ready rst 119 oom 0 oomk 0 nolim 0 cpu 8m 1% lim mem 2Mi 1% lim wl 4 ev15m ! 0 ^ 0
- DATA ● pods fresh 4s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 st›
+ ! pods 13/17 ready rst 371 oom 0 oomk 0 nolim 1 cpu 61m 4% lim mem 6Mi 1% lim wl 13 ev15m ! 0 ^ 0
+ DATA ● pods fresh 5s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 st›
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat lis›
                                        │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILI›
 WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ›
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-► TIMELINE  01:54:53 -> 01:54:57 IST  (all since kdash started, z window, c hides graphs) ─────────
+► TIMELINE  22:31:46 -> 22:31:51 IST  (all since kdash started, z window, c hides graphs) ─────────
   CPU used - namespace
-         one sample so far - the chart starts with the 2nd (run kdash live)
+     70m┤                     ·              ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        │                     ·              ███████████████████████████████████████████████████████
+     35m┤                     ·              ███████████████████████████████████████████████████████
+        │                     ·              ███████████████████████████████████████████████████████
+      0m└┴────────────────────┴───────────────────────┴─────────────────────┴──────────────────────┴
+         22:31:46                                 22:31:48                                  22:31:51
+  events
+  now 61m  min 61m  avg 61m  max 61m @ 22:31:51
+  request 265m (above)  limit 1550m (above)  4% of limit
   MEMORY used - namespace
-         one sample so far - the chart starts with the 2nd (run kdash live)
+     7Mi┤                     ·              ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        │                     ·              ███████████████████████████████████████████████████████
+     3Mi┤                     ·              ███████████████████████████████████████████████████████
+        │                     ·              ███████████████████████████████████████████████████████
+     0Mi└┴────────────────────┴───────────────────────┴─────────────────────┴──────────────────────┴
+         22:31:46                                 22:31:48                                  22:31:51
+  events
+  now 6Mi  min 6Mi  avg 6Mi  max 6Mi @ 22:31:51
+  request 244Mi (above)  limit 848Mi (above)  1% of limit
 
 ► PODS ────────────────────────────────────────────────────────────────────────────────────────────
-► Deployment app-server  (2 p~ 2/2  28 │      8 ·       2 · │     50    500      24     192 │  16.0›
-  app-server-8fb4699bc-cx5vz   2/2  14 │      5 ·       2 · │     25    250      12      96 │  20.0›
-      cpu ░░                mem ░░                pk 2Mi    node dev   pool role:control-plane,mast›
-    ├─ app                     Y     7 │      4 ·       2 · │     20    200       8      64 │  20.0›
-        last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0›
-        last-exit Unknown
-  app-server-8fb4699bc-t7zxj   2/2  14 │      3 ·       0 · │     25    250      12      96 │  12.0›
-      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,mast›
-    ├─ app                     Y     7 │      2 ·       0 · │     20    200       8      64 │  10.0›
-        last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0›
-        last-exit Unknown
-....................................................................................................
-► Job completed-check  (1 pod) 0/1   0 │      - ·       - · │      5     50       4      32 │     -›
-  completed-check-m9swm        0/1   0 │      - ·       - · │      5     50       4      32 │     -›
-      cpu                   mem                             node dev   pool role:control-plane,mast›
-    └─ check                   N     0 │      - ·       - · │      5     50       4      32 │     -›
-....................................................................................................
-► Pod z-crash  (1 pod)         0/1  91 │      - ·       - · │      5     50       4      32 │     -›
+► Pod z-oom  (1 pod)           1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0›
+  z-oom                        1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0›
+      cpu ░░                mem ░░                pk 1Mi    node dev   pool role:control-plane,mast›
+    └─ hog                     Y     0 │     51 ·       1 · │     10     50       8      16 │ 510.0›
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-TOTAL (5 pods, 4 workloads)        119 │      8 ·       2 · │     65    650      36     288 │  12.3›
+TOTAL (17 pods, 13 workloads)      371 │     61 ·       6 · │    265   1550     244     848 │  23.0›
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / O›
- AUDITED session 20261114-015453-31874 - every action is logged; use is your responsibility (kdash >
+ AUDITED session 20261114-223146-18667 - every action is logged; use is your responsibility (kdash >

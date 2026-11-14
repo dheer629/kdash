@@ -1,30 +1,30 @@
 [1;7m KDASH │ SELECT NAMESPACE │ context vcluster-docker_dev
-[0m [90mnamespaces[39m from the API   [32m●[39m 12 you can open   [1m[31m●[0m 0 no access
+[0m [90mnamespaces[39m from the API   [32m●[39m 13 you can open   [1m[31m●[0m 0 no access
  [90m/ filters by name   recent namespaces are listed first[39m
-[90m┌─────┬──────────────────────┬─────────────┬───────┬──────────────────────────┐[39m
-[90m│[1m[39m   # [0m[90m│[1m[39m NAMESPACE            [0m[90m│[1m[39m ACCESS      [0m[90m│[1m[39m  PODS [0m[90m│[1m[39m NOTE                     [0m[90m│[39m
-[90m├─────┼──────────────────────┼─────────────┼───────┼──────────────────────────┤[39m
-[90m│[1;7m[39m   1 │ kdash-e2e            │ open        │     4 │ current, recent          [0m[90m│[39m
-[90m│   2 │[39m algorithm-learn      [90m│[32m open        [90m│[39m     4 [90m│                          │[39m
-[90m│   3 │[39m cert-manager         [90m│[32m open        [90m│[39m     3 [90m│                          │[39m
-[90m│   4 │[39m default              [90m│[32m open        [90m│[39m     3 [90m│                          │[39m
-[90m│   5 │[39m flux-system          [90m│[32m open        [90m│[39m     4 [90m│                          │[39m
-[90m│   6 │[39m kube-flannel         [90m│[32m open        [90m│[39m     1 [90m│                          │[39m
-[90m│   7 │[39m kube-node-lease      [90m│[32m open        [90m│[39m     - [90m│                          │[39m
-[90m│   8 │[39m kube-public          [90m│[32m open        [90m│[39m     - [90m│                          │[39m
-[90m│   9 │[39m kube-system          [90m│[32m open        [90m│[39m     3 [90m│                          │[39m
-[90m│  10 │[39m learnalgorithm       [90m│[32m open        [90m│[39m     4 [90m│                          │[39m
-[90m│  11 │[39m local-path-storage   [90m│[32m open        [90m│[39m     1 [90m│                          │[39m
-[90m│  12 │[39m podinfo-demo         [90m│[32m open        [90m│[39m     2 [90m│                          │[39m
-[90m└─────┴──────────────────────┴─────────────┴───────┴──────────────────────────┘[39m
+[90m┌─────┬────────────────────────────┬─────────────┬───────┬────────────────────┐[39m
+[90m│[1m[39m   # [0m[90m│[1m[39m NAMESPACE                  [0m[90m│[1m[39m ACCESS      [0m[90m│[1m[39m  PODS [0m[90m│[1m[39m NOTE               [0m[90m│[39m
+[90m├─────┼────────────────────────────┼─────────────┼───────┼────────────────────┤[39m
+[90m│[1;7m[39m   1 │ kdash-e2e                  │ open        │    12 │ current, recent    [0m[90m│[39m
+[90m│   2 │[39m algorithm-learn            [90m│[32m open        [90m│[39m     4 [90m│                    │[39m
+[90m│   3 │[39m cert-manager               [90m│[32m open        [90m│[39m     3 [90m│                    │[39m
+[90m│   4 │[39m default                    [90m│[32m open        [90m│[39m     7 [90m│                    │[39m
+[90m│   5 │[39m flux-system                [90m│[32m open        [90m│[39m     4 [90m│                    │[39m
+[90m│   6 │[39m kdash-e2e-qa-20261114-fast [90m│[32m open        [90m│[39m     4 [90m│                    │[39m
+[90m│   7 │[39m kube-flannel               [90m│[32m open        [90m│[39m     1 [90m│                    │[39m
+[90m│   8 │[39m kube-node-lease            [90m│[32m open        [90m│[39m     - [90m│                    │[39m
+[90m│   9 │[39m kube-public                [90m│[32m open        [90m│[39m     - [90m│                    │[39m
+[90m│  10 │[39m kube-system                [90m│[32m open        [90m│[39m     3 [90m│                    │[39m
+[90m│  11 │[39m learnalgorithm             [90m│[32m open        [90m│[39m     4 [90m│                    │[39m
+[90m│  12 │[39m local-path-storage         [90m│[32m open        [90m│[39m     1 [90m│                    │[39m
+[90m│  13 │[39m podinfo-demo               [90m│[32m open        [90m│[39m     2 [90m│                    │[39m
+[90m└─────┴────────────────────────────┴─────────────┴───────┴────────────────────┘[39m
 
 
-
-[90m──[39m [90mchoose a namespace[39m [90m─────────────────────────────────────[39m [90m1 / 12 · audited[39m [90m──[39m
+[90m──[39m [90mchoose a namespace[39m [90m─────────────────────────────────────[39m [90m1 / 13 · audited[39m [90m──[39m
 [90m┌─[39m [1mMOVE[0m [90m───────────┬─[39m [1mFIND[0m [90m───────────┬─[39m [1mLEAVE[0m [90m───────────┬─[39m [1mCHOOSE[0m [90m──────────┐[39m
 [90m│[39m [1mj/k ↑↓[0m   move    [90m│[39m [1m/[0m  filter by na~ [90m│[39m [1mq / Esc[0m  cancel,~ [90m│[39m [1mEnter[0m  open kdas~ [90m│[39m
 [90m│[39m [1mPgUp/PgDn[0m page   [90m│[39m [1mt[0m  type a name ~ [90m│[39m [1mQ[0m        quit kd~ [90m│[39m [1mA[0m      all names~ [90m│[39m
 [90m│[39m [1mg / G[0m    first ~ [90m│[39m [1mr[0m  re-check acc~ [90m│[39m [90m         n reope~[39m [90m│[39m [1md[0m      open kdas~ [90m│[39m
-[90m│[39m [1m12[0m       go to ~ [90m│[39m [90m   12 namespaces[39m [90m│[39m [90m         from th~[39m [90m│[39m [90mx      forget th~[39m [90m│[39m
+[90m│[39m [1m12[0m       go to ~ [90m│[39m [90m   13 namespaces[39m [90m│[39m [90m         from th~[39m [90m│[39m [90mx      forget th~[39m [90m│[39m
 [90m└──────────────────┴──────────────────┴───────────────────┴───────────────────┘[39m
 

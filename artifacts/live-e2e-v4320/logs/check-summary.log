@@ -1,6 +1,6 @@
 CHECK NOW  -  everything kdash can see that is wrong right now - most severe first, with the commands to check and fix it
 
- 3 CRITICAL  2 WARNING  (checked 0s ago - r re-checks now)
+ 6 CRITICAL  6 WARNING  (checked 0s ago - r re-checks now)
 
 AREAS  8 areas
 ┌──────────────┬───────────────┬──────────┬──────────────────────────────────────────────────────────────────┐
@@ -8,45 +8,84 @@ AREAS  8 areas
 ├──────────────┼───────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
 │ api          │ ● OK          │        0 │ pods read 3s ago                                                 │
 │ nodes        │ ● OK          │        0 │ 1 of 1 Ready                                                     │
-│ pods         │ ● CRITICAL    │        2 │ 5 pods in the dashboard scope                                    │
-│ services     │ ● CRITICAL    │        1 │ services ok, endpoints ok, ingresses ok                          │
+│ pods         │ ● CRITICAL    │        4 │ 17 pods in the dashboard scope                                   │
+│ services     │ ● CRITICAL    │        3 │ services ok, endpoints ok, ingresses ok                          │
 │ storage      │ ● CRITICAL    │        2 │ claims ok, volumes ok                                            │
-│ certificates │ ● OK          │        0 │ quick check (C for nodes, kubelets, ingress)                     │
-│ secrets      │ ● OK          │        0 │ 0 certificates in 0 Secrets - Y shows who uses them and where    │
+│ certificates │ ● WARNING     │        1 │ quick check (C for nodes, kubelets, ingress)                     │
+│ secrets      │ ● WARNING     │        2 │ 3 certificates in 3 Secrets - Y shows who uses them and where    │
 │ etcd         │ ● not visible │        0 │ snapshots: unavailable - on a server: sudo rke2 etcd-snapshot ls │
 └──────────────┴───────────────┴──────────┴──────────────────────────────────────────────────────────────────┘
 
-FINDINGS  5 findings   critical first - Enter runs the read commands of one now (CHANGE commands are never run)
-┌───┬────────────┬──────────┬─────────────────┬──────────────────────────────────────────────────────────────┐
-│ # │ SEVERITY   │ AREA     │ OBJECT          │ FINDING                                                      │
-├───┼────────────┼──────────┼─────────────────┼──────────────────────────────────────────────────────────────┤
-│ 1 │ ● CRITICAL │ pods     │ z-crash         │ CrashLoopBackOff, 90 restarts (last: Error)                  │
-│ 2 │ ● CRITICAL │ services │ missing-backend │ selector app=does-not-exist matches no pod in this scope     │
-│ 3 │ ● CRITICAL │ storage  │ z-unbound       │ claim is Pending - not bound to a volume                     │
-│ 4 │ ● WARNING  │ pods     │ z-pending       │ Pending                                                      │
-│ 5 │ ● WARNING  │ storage  │ z-unbound       │ storage class kdash-e2e-intentionally-missing does not exist │
-└───┴────────────┴──────────┴─────────────────┴──────────────────────────────────────────────────────────────┘
+FINDINGS  12 findings   critical first - Enter runs the read commands of one now (CHANGE commands are never run)
+┌────┬────────────┬──────────────┬─────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ #  │ SEVERITY   │ AREA         │ OBJECT                              │ FINDING                                                                                                                                                   │
+├────┼────────────┼──────────────┼─────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1  │ ● CRITICAL │ pods         │ z-crash                             │ CrashLoopBackOff, 329 restarts (last: Error)                                                                                                              │
+│ 2  │ ● CRITICAL │ pods         │ z-imagepull                         │ ImagePullBackOff - the image cannot be pulled                                                                                                             │
+│ 3  │ ● CRITICAL │ services     │ missing-backend                     │ selector app=does-not-exist matches no pod in this scope                                                                                                  │
+│ 4  │ ● CRITICAL │ services     │ web-loadbalancer                    │ selector app=app-server matches no pod in this scope                                                                                                      │
+│ 5  │ ● CRITICAL │ services     │ web-nodeport                        │ selector app=app-server matches no pod in this scope                                                                                                      │
+│ 6  │ ● CRITICAL │ storage      │ z-unbound                           │ claim is Pending - not bound to a volume                                                                                                                  │
+│ 7  │ ● WARNING  │ pods         │ z-pending                           │ Pending                                                                                                                                                   │
+│ 8  │ ● WARNING  │ pods         │ z-unschedulable                     │ Pending                                                                                                                                                   │
+│ 9  │ ● WARNING  │ storage      │ z-unbound                           │ storage class kdash-e2e-intentionally-missing does not exist                                                                                              │
+│ 10 │ ● WARNING  │ certificates │ kdash-e2e/functionality-certificate │ cert-manager certificate expires in 29 d (2026-12-14 09:16 UTC)                                                                                           │
+│ 11 │ ● WARNING  │ secrets      │ functionality-tls                   │ certificate functionality.local.test (ca.crt) expires in 29 d; cert-manager: functionality-certificate (issuer functionality-selfsigned) should renew it  │
+│ 12 │ ● WARNING  │ secrets      │ functionality-tls                   │ certificate functionality.local.test (tls.crt) expires in 29 d; cert-manager: functionality-certificate (issuer functionality-selfsigned) should renew it │
+└────┴────────────┴──────────────┴─────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  kdash --check --run N runs the read commands of finding N
 
-  #1  CRITICAL  z-crash  CrashLoopBackOff, 90 restarts (last: Error)
+  #1  CRITICAL  z-crash  CrashLoopBackOff, 329 restarts (last: Error)
       read   kubectl --context vcluster-docker_dev -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
       read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
 
-  #2  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
+  #2  CRITICAL  z-imagepull  ImagePullBackOff - the image cannot be pulled
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-imagepull  # the pull error is in the events
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get pod z-imagepull -o jsonpath='{range .spec.containers[*]}{.name}: {.image}{"\n"}{end}pullSecrets: {.spec.imagePullSecrets[*].name}{"\n"}'  # image references and pull secrets
+      note   check the tag exists in the registry and the pull secret is valid; the registry must be reachable from the node
+
+  #3  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
       read   kubectl --context vcluster-docker_dev -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
       read   kubectl --context vcluster-docker_dev -n kdash-e2e get pods --show-labels  # labels the pods really have
       CHANGE kubectl --context vcluster-docker_dev -n kdash-e2e edit service missing-backend  # make spec.selector match the pod labels (or fix the labels on the workload)
 
-  #3  CRITICAL  z-unbound  claim is Pending - not bound to a volume
+  #4  CRITICAL  web-loadbalancer  selector app=app-server matches no pod in this scope
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get service web-loadbalancer -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      CHANGE kubectl --context vcluster-docker_dev -n kdash-e2e edit service web-loadbalancer  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+  #5  CRITICAL  web-nodeport  selector app=app-server matches no pod in this scope
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get service web-nodeport -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      CHANGE kubectl --context vcluster-docker_dev -n kdash-e2e edit service web-nodeport  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+  #6  CRITICAL  z-unbound  claim is Pending - not bound to a volume
       read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pvc z-unbound  # the provisioner's reason is in the events
       read   kubectl --context vcluster-docker_dev get storageclass kdash-e2e-intentionally-missing -o wide  # provisioner and binding mode
 
-  #4  WARNING  z-pending  Pending
+  #7  WARNING  z-pending  Pending
       read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-pending  # the scheduler's message is in the events
       read   kubectl --context vcluster-docker_dev -n kdash-e2e get pvc  # an unbound claim also keeps a pod Pending
 
-  #5  WARNING  z-unbound  storage class kdash-e2e-intentionally-missing does not exist
+  #8  WARNING  z-unschedulable  Pending
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe pod z-unschedulable  # the scheduler's message is in the events
+
+  #9  WARNING  z-unbound  storage class kdash-e2e-intentionally-missing does not exist
       read   kubectl --context vcluster-docker_dev get storageclass  # classes that exist
       note   storageClassName cannot be changed on an existing claim: create the class kdash-e2e-intentionally-missing, or recreate the claim with an existing class
+
+  #10  WARNING  kdash-e2e/functionality-certificate  cert-manager certificate expires in 29 d (2026-12-14 09:16 UTC)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe certificate functionality-certificate  # status, conditions and the last failure
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get certificaterequests,orders.acme.cert-manager.io,challenges.acme.cert-manager.io 2>/dev/null  # where issuance is stuck
+      read   kubectl --context vcluster-docker_dev get clusterissuers,issuers -A -o wide  # is the issuer Ready?
+      CHANGE cmctl renew -n kdash-e2e functionality-certificate  # trigger a renewal once the issuer works (or: kubectl cert-manager renew)
+
+  #11  WARNING  functionality-tls  certificate functionality.local.test (ca.crt) expires in 29 d; cert-manager: functionality
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe secret functionality-tls  # type, key names and sizes (never the values)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get secret functionality-tls -o custom-columns=NAME:.metadata.name,TYPE:.type,OWNER:.metadata.ownerReferences[*].name,CREATED:.metadata.creationTimestamp  # type, owner and age
+      note   inspect the certificate: kubectl --context vcluster-docker_dev -n kdash-e2e get secret functionality-tls -o jsonpath='{.data.ca\.crt}' | base64 -d | openssl x509 -noout -subject -issuer -dates
+      note   cert-manager: cmctl renew <certificate> -n kdash-e2e (or delete the Secret: it is issued again). By hand: replace it with the next line
+      CHANGE kubectl --context vcluster-docker_dev -n kdash-e2e create secret tls functionality-tls --cert=NEW.crt --key=NEW.key --dry-run=client -o yaml | kubectl apply -f -  # then restart the workloads marked "restart needed" in WHERE USED
+
+  #12  WARNING  functionality-tls  certificate functionality.local.test (tls.crt) expires in 29 d; cert-manager: functionalit
+      note   same object as #11 - the commands listed there apply
 

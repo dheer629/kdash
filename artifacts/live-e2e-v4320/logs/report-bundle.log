@@ -1,3 +1,3 @@
 kdash report
-  html    /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/reports/kdash_vcluster-docker_dev_kdash-e2e_20261114_014624.html
-  bundle  /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/reports/kdash_vcluster-docker_dev_kdash-e2e_20261114_014624  (text views, fmea + secrets map, tsv/, csv/, SHA256SUMS)
+  html    /workspace/kdash/artifacts/live-e2e-v4320/reports/kdash_vcluster-docker_dev_kdash-e2e_20261114_222309.html
+  bundle  /workspace/kdash/artifacts/live-e2e-v4320/reports/kdash_vcluster-docker_dev_kdash-e2e_20261114_222309  (text views, fmea + secrets map, tsv/, csv/, SHA256SUMS)

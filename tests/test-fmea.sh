@@ -147,6 +147,20 @@ health__status fm-deploy forbidden denied
 check fmea_score
 check row_is NOSOURCE '$11 == "noaccess" && $12 == "none" && $4 == 10'
 
+# Missing required source names and partial failed reads cannot become healthy.
+# A denied optional read must not erase an available required source.
+score_setup
+catrow EMPTY 7 4 list:pods missing-source > "$TEST_ROOT/catalogue"
+catrow MIXED 7 4 list:pods 'spec fm-deploy' >> "$TEST_ROOT/catalogue"
+catrow OPTIONAL 7 4 list:pods 'spec volume-metrics?' >> "$TEST_ROOT/catalogue"
+health__status fm-deploy forbidden denied
+health__status volume-metrics forbidden denied
+check fmea_score
+check row_is EMPTY '$11 == "nosignal" && $4 == 10'
+check row_is MIXED '$11 == "nosignal" && $12 == "partial" && $4 == 10'
+check row_is OPTIONAL '$11 == "ok" && $12 == "partial"'
+check awk -F'\t' '$4 != 1 || $5 != 3 { exit 1 }' "$TOOLKIT_DIR/fmea.summary"
+
 # Rank AP before RPN: M (S10,O4,D1,RPN40) precedes L (S6,O4,D6,RPN144).
 score_setup
 catrow MEDIUM 10 1 list:pods spec > "$TEST_ROOT/catalogue"
@@ -207,6 +221,28 @@ check fmea_evaluate
 check awk -F'\t' '$1=="POD-08" { found=1; if($3!="risk" || $5~/pod-oom/) bad=1 } END { exit !found || bad }' "$TOOLKIT_DIR/fmea-hits.tsv"
 check fmea_score
 check row_is PVC-02 '$11 == "nosignal" && $10 !~ /all .* ok/'
+python3 - <<'PY'
+from pathlib import Path
+import os
+r=Path(os.environ['TEST_ROOT'])
+p=(r/'model/pods.tsv').read_text().splitlines()[1].split('\t')
+p[13]='-'
+(r/'model/pods.tsv').write_text('header\n'+'\t'.join(p)+'\n')
+PY
+TOP_OK=0
+check fmea_evaluate
+check fmea_score
+check row_is POD-08 '$11 == "nosignal" && $10 !~ /all .* ok/'
+TOP_OK=1; TOP_AT=0
+check fmea_score
+check row_is POD-08 '$11 == "nosignal" && $10 !~ /all .* ok/'
+TOP_AT=invalid
+check fmea_score
+check row_is POD-08 '$11 == "nosignal" && $10 !~ /all .* ok/'
+TOP_AT=123
+check grep -Fxq $'pod-metrics\tok' <(fmea__source_states)
+TOP_OK=0
+check grep -Fxq $'pod-metrics\tunknown' <(fmea__source_states)
 
 # Independently parse exports and ensure external text cannot become HTML markup.
 export TEST_ROOT
@@ -285,13 +321,20 @@ cat > "$TEST_ROOT/fmea-cli-harness.sh" <<'HARNESS'
 set -uo pipefail
 DO_FMEA=1; VIEW=fmea; ONCE=1; OUTFMT=tsv; COLOR=0; KDASH_COLUMNS=120
 TOOLKIT_DIR="$FIXTURE_ROOT/data"; TMPD="$FIXTURE_ROOT"
+SPEC_OK=0; TOP_OK=1; TOP_AT=0; MODEL_BUILT=0
 refresh_spec() { SPEC_OK=1; }
-build_model() { :; }
+refresh_top() { TOP_OK=1; TOP_AT=123; }
+build_model() {
+  if [ "$SPEC_OK" != 1 ] || [ "$TOP_AT" != 123 ]; then
+    printf 'FMEA built its model before collecting pod metrics\n' >&2; exit 95
+  fi
+  MODEL_BUILT=1
+}
 events_collect() { :; }
 health_collect() { :; }
 check_collect() { :; }
 audit() { :; }
-fmea_collect() { cp "$FIXTURE_ROOT/cli-row.tsv" "$TOOLKIT_DIR/fmea-rows.tsv"; printf '0\t0\t0\t1\t1\tfixture-user\n' > "$TOOLKIT_DIR/fmea.summary"; }
+fmea_collect() { [ "$MODEL_BUILT" = 1 ] || exit 95; cp "$FIXTURE_ROOT/cli-row.tsv" "$TOOLKIT_DIR/fmea-rows.tsv"; printf '0\t0\t0\t1\t1\tfixture-user\n' > "$TOOLKIT_DIR/fmea.summary"; }
 fmea_export() { cat "$TOOLKIT_DIR/fmea-rows.tsv"; }
 . "$FIXTURE_ROOT/fmea-cli-branch.sh"
 HARNESS

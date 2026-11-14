@@ -13,6 +13,8 @@ for (const name of ['--run', '--module', '--browser']) {
 const run = path.resolve(option('--run'));
 const root = path.dirname(path.dirname(run));
 const evidence = JSON.parse(await fs.readFile(path.join(run, 'results.json'), 'utf8'));
+const secretsReport = process.argv.includes('--secrets-report')
+  ? path.resolve(option('--secrets-report')) : null;
 const releaseVersion = evidence.version.replace(/^kdash /, '');
 const [major, minor, patch] = releaseVersion.split('.').map(Number);
 const hasFmea = major > 4 || (major === 4 && (minor > 28 || (minor === 28 && patch >= 1)));
@@ -112,6 +114,25 @@ try {
     additionalReports.push({ report: path.relative(run, worksheet).replaceAll('\\', '/'),
       sha256: crypto.createHash('sha256').update(await fs.readFile(worksheet)).digest('hex') });
     await fmeaPage.close();
+  }
+  if (secretsReport) {
+    const secretsPage = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
+    secretsPage.on('pageerror', error => errors.push(error.message));
+    await secretsPage.goto(pathToFileURL(secretsReport).href, { waitUntil: 'load' });
+    const text = await secretsPage.locator('body').textContent();
+    check('html-secrets-real-data', text.includes('kdash-secrets-live-valid') &&
+      text.includes('kdash-secrets-live-consumer') && text.includes('/fixture/tls/{tls.crt,tls.key}'));
+    check('html-secrets-no-values', !text.includes('KDASH_SYNTHETIC_VALUE_DO_NOT_EXPORT_4f9e2') &&
+      !text.includes('-----BEGIN PRIVATE KEY-----') && !text.includes('-----BEGIN EC PRIVATE KEY-----'));
+    check('html-secrets-tables', await secretsPage.locator('table').count() >= 4);
+    check('html-secrets-no-script-errors', errors.length === 0, errors.join('; '));
+    const png = path.join(output, 'secrets.png');
+    await secretsPage.screenshot({ path: png, animations: 'disabled' });
+    screenshots.push({ file: path.relative(root, png).replaceAll('\\', '/'),
+      sha256: crypto.createHash('sha256').update(await fs.readFile(png)).digest('hex'), tab: 'secrets' });
+    additionalReports.push({ report: path.relative(run, secretsReport).replaceAll('\\', '/'),
+      sha256: crypto.createHash('sha256').update(await fs.readFile(secretsReport)).digest('hex') });
+    await secretsPage.close();
   }
 } catch (error) {
   if (!checks.some(c => c.status === 'FAIL')) checks.push({ name: 'browser-exception', status: 'FAIL', detail: error.message });

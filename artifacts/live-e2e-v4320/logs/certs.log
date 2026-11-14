@@ -4,34 +4,49 @@ DATA SOURCES
 ┌──────────────────┬───────┬────────┬─────────────────────────────────────────────────────────────────────────────┐
 │ SOURCE           │ STATE │   READ │ DETAIL                                                                      │
 ├──────────────────┼───────┼────────┼─────────────────────────────────────────────────────────────────────────────┤
-│ cert-kubeconfig  │ ● ok  │ 1s ago │ context vcluster-docker_dev read locally (tokens are never shown or stored) │
-│ cert-tls         │ ● ok  │ 0s ago │ 2 of 3 TLS endpoints answered from this host                                │
-│ cert-webhooks    │ ● ok  │ 1s ago │ read succeeded                                                              │
-│ cert-apiservices │ ● ok  │ 0s ago │ read succeeded                                                              │
-│ cert-manager     │ ● ok  │ 0s ago │ read succeeded                                                              │
-│ cert-nodes       │ ● ok  │ 0s ago │ read succeeded                                                              │
-│ cert-ingress     │ ● ok  │ 0s ago │ read succeeded                                                              │
+│ cert-kubeconfig  │ ● ok  │ 4s ago │ context vcluster-docker_dev read locally (tokens are never shown or stored) │
+│ cert-tls         │ ● ok  │ 0s ago │ 2 of 4 TLS endpoints answered from this host                                │
+│ cert-webhooks    │ ● ok  │ 4s ago │ read succeeded                                                              │
+│ cert-apiservices │ ● ok  │ 4s ago │ read succeeded                                                              │
+│ cert-manager     │ ● ok  │ 4s ago │ read succeeded                                                              │
+│ cert-nodes       │ ● ok  │ 4s ago │ read succeeded                                                              │
+│ cert-ingress     │ ● ok  │ 3s ago │ read succeeded                                                              │
 └──────────────────┴───────┴────────┴─────────────────────────────────────────────────────────────────────────────┘
 
-EXPIRY  5 items   soonest first - warning under 30 days, critical under 7 days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)
-┌────────┬───────┬──────────────────┬─────────────────────────┬────────────────────────┬───────────────────────────────────┬────────────────────────────────────────────────────────────────┐
-│ STATUS │  LEFT │ EXPIRES UTC      │ WHAT                    │ OBJECT                 │ WHERE                             │ NOTE                                                           │
-├────────┼───────┼──────────────────┼─────────────────────────┼────────────────────────┼───────────────────────────────────┼────────────────────────────────────────────────────────────────┤
-│ ● OK   │ 197 d │ 2027-05-30 02:59 │ kubelet                 │ dev                    │ 172.18.0.2:10250                  │ logs, exec and metrics go through it; issuer kubernetes        │
-│ ● OK   │ 197 d │ 2027-05-30 03:03 │ client certificate      │ kubernetes-super-admin │ vcluster-docker_dev               │ issued by kubernetes - kubectl stops working when it expires   │
-│ ● OK   │ 324 d │ 2027-10-04 06:06 │ webhook CA (mutating)   │ cert-manager-webhook   │ cert-manager/cert-manager-webhook │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
-│ ● OK   │ 324 d │ 2027-10-04 06:06 │ webhook CA (validating) │ cert-manager-webhook   │ cert-manager/cert-manager-webhook │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
-│ ● OK   │ 364 d │ 2027-11-13 16:31 │ API endpoint            │ vcluster-docker_dev    │ localhost:10093                   │ what kubectl connects to; issuer kubernetes                    │
-└────────┴───────┴──────────────────┴─────────────────────────┴────────────────────────┴───────────────────────────────────┴────────────────────────────────────────────────────────────────┘
+EXPIRY  6 items   soonest first - warning under 30 days, critical under 7 days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)
+┌───────────┬───────┬──────────────────┬──────────────────────────┬─────────────────────────────────────┬───────────────────────────────────┬────────────────────────────────────────────────────────────────┐
+│ STATUS    │  LEFT │ EXPIRES UTC      │ WHAT                     │ OBJECT                              │ WHERE                             │ NOTE                                                           │
+├───────────┼───────┼──────────────────┼──────────────────────────┼─────────────────────────────────────┼───────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ ● WARNING │  29 d │ 2026-12-14 09:16 │ cert-manager certificate │ kdash-e2e/functionality-certificate │ secret functionality-tls          │ Ready True Ready; renews 2026-12-07                            │
+│ ● OK      │ 196 d │ 2027-05-30 02:59 │ kubelet                  │ dev                                 │ 172.18.0.2:10250                  │ logs, exec and metrics go through it; issuer kubernetes        │
+│ ● OK      │ 196 d │ 2027-05-30 03:03 │ client certificate       │ kubernetes-super-admin              │ vcluster-docker_dev               │ issued by kubernetes - kubectl stops working when it expires   │
+│ ● OK      │ 323 d │ 2027-10-04 06:06 │ webhook CA (mutating)    │ cert-manager-webhook                │ cert-manager/cert-manager-webhook │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
+│ ● OK      │ 323 d │ 2027-10-04 06:06 │ webhook CA (validating)  │ cert-manager-webhook                │ cert-manager/cert-manager-webhook │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
+│ ● OK      │ 363 d │ 2027-11-13 16:31 │ API endpoint             │ vcluster-docker_dev                 │ localhost:10093                   │ what kubectl connects to; issuer kubernetes                    │
+└───────────┴───────┴──────────────────┴──────────────────────────┴─────────────────────────────────────┴───────────────────────────────────┴────────────────────────────────────────────────────────────────┘
 
-FINDINGS   critical first; includes x509 errors in Kubernetes events - next commands below
-  nothing expires within 30 days
+FINDINGS  1 finding   critical first; includes x509 errors in Kubernetes events - next commands below
+┌───┬───────────┬─────────────────────────────────────┬─────────────────────────────────────────────────────────────────┐
+│ # │ SEVERITY  │ OBJECT                              │ FINDING                                                         │
+├───┼───────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────┤
+│ 1 │ ● WARNING │ kdash-e2e/functionality-certificate │ cert-manager certificate expires in 29 d (2026-12-14 09:16 UTC) │
+└───┴───────────┴─────────────────────────────────────┴─────────────────────────────────────────────────────────────────┘
 
-NOT CHECKED  2 items   no expiry date could be read for these from this host
-┌───────────────┬────────────────┬────────────────────────┬────────────────────────────┬──────────────────────────────────────────────────────────┐
-│ STATE         │ WHAT           │ OBJECT                 │ WHERE                      │ WHY                                                      │
-├───────────────┼────────────────┼────────────────────────┼────────────────────────────┼──────────────────────────────────────────────────────────┤
-│ ● skip verify │ API service CA │ v1beta1.metrics.k8s.io │ kube-system/metrics-server │ insecureSkipTLSVerify - no expiry to check (True Passed) │
-│ ● unreachable │ kube-apiserver │ dev                    │ 172.18.0.2:6443            │ Connection refused from this host                        │
-└───────────────┴────────────────┴────────────────────────┴────────────────────────────┴──────────────────────────────────────────────────────────┘
+NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)
+
+  #1  WARNING  kdash-e2e/functionality-certificate  cert-manager certificate expires in 29 d (2026-12-14 09:16 UTC)
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e describe certificate functionality-certificate  # status, conditions and the last failure
+      read   kubectl --context vcluster-docker_dev -n kdash-e2e get certificaterequests,orders.acme.cert-manager.io,challenges.acme.cert-manager.io 2>/dev/null  # where issuance is stuck
+      read   kubectl --context vcluster-docker_dev get clusterissuers,issuers -A -o wide  # is the issuer Ready?
+      CHANGE cmctl renew -n kdash-e2e functionality-certificate  # trigger a renewal once the issuer works (or: kubectl cert-manager renew)
+
+
+NOT CHECKED  3 items   no expiry date could be read for these from this host
+┌───────────────┬────────────────────────────────┬────────────────────────┬────────────────────────────┬──────────────────────────────────────────────────────────┐
+│ STATE         │ WHAT                           │ OBJECT                 │ WHERE                      │ WHY                                                      │
+├───────────────┼────────────────────────────────┼────────────────────────┼────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ ● skip verify │ API service CA                 │ v1beta1.metrics.k8s.io │ kube-system/metrics-server │ insecureSkipTLSVerify - no expiry to check (True Passed) │
+│ ● unreachable │ ingress TLS (demo.kdash.local) │ kdash-e2e/web-ingress  │ demo.kdash.local:443       │ Name or service not known from this host                 │
+│ ● unreachable │ kube-apiserver                 │ dev                    │ 172.18.0.2:6443            │ Connection refused from this host                        │
+└───────────────┴────────────────────────────────┴────────────────────────┴────────────────────────────┴──────────────────────────────────────────────────────────┘
 

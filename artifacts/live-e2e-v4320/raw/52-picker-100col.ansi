@@ -1,14 +1,26 @@
-[1;7m KDASH │ SELECT POD │ READ-ONLY │ context vcluster-docker_dev │ namespace kdash-e2e     5 of 5 pods
-[0m [90mpods[39m    [1m[31m●[0m CrashLoopBackOff [1m1[0m  [35m●[39m Pending [1m1[0m  [32m●[39m Running [1m2[0m  [90m●[39m Succeeded [1m1[0m
+[1;7m KDASH │ SELECT POD │ READ-ONLY │ context vcluster-docker_dev │ namespace kdash-e2e   17 of 17 pods
+[0m [90mpods[39m    [1m[31m●[0m CrashLoopBackOff [1m1[0m  [1m[31m●[0m ImagePullBackOff [1m1[0m  [35m●[39m Pending [1m2[0m  [32m●[39m Running [1m8[0m  [90m●[39m Succeeded [1m5[0m
  [90m/ search[39m   [90mview[39m all (u)   [90mX[39m enables shell / upload / download   [90msort[39m name
 [90m┌─────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┐[39m
 [90m│[1m[39m POD                                 [0m[90m│[1m[39m STATUS           [0m[90m│[1m[39m READY [0m[90m│[1m[39m RST [0m[90m│[1m[39m    CPU [0m[90m│[1m[39m     MEM [0m[90m│[1m[39m  %LIM [0m[90m│[39m
 [90m├─────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┤[39m
-[90m│[1;7m[39m app-server-8fb4699bc-cx5vz          │ Running          │ 2/2   │  14 │     5m │     2Mi │    2% [0m[90m│[39m
-[90m│[39m app-server-8fb4699bc-t7zxj          [90m│[32m Running          [90m│[39m 2/2   [90m│[35m  14 [90m│[39m     3m [90m│[39m     0Mi [90m│[39m    0% [90m│[39m
+[90m│[1;7m[39m app-server-8fb4699bc-cx5vz          │ Running          │ 2/2   │  14 │     4m │     4Mi │    4% [0m[90m│[39m
+[90m│[39m app-server-8fb4699bc-t7zxj          [90m│[32m Running          [90m│[39m 2/2   [90m│[35m  14 [90m│[39m     2m [90m│[39m     0Mi [90m│[39m    0% [90m│[39m
 [90m│ completed-check-m9swm               │ Succeeded        │ 0/1   │   0 │      - │       - │     - │[39m
-[90m│[39m z-crash                             [90m│[1m[31m CrashLoopBackOff [0m[90m│[39m 0/1   [90m│[35m  91 [90m│[39m      - [90m│[39m       - [90m│[39m     - [90m│[39m
+[90m│[39m db-stateful-0                       [90m│[32m Running          [90m│[39m 1/1   [90m│[39m   0 [90m│[39m     1m [90m│[39m     0Mi [90m│[39m    0% [90m│[39m
+[90m│[39m db-stateful-1                       [90m│[32m Running          [90m│[39m 1/1   [90m│[39m   0 [90m│[39m     1m [90m│[39m     0Mi [90m│[39m    0% [90m│[39m
+[90m│[39m functionality-legacy-67ks7          [90m│[32m Running          [90m│[39m 1/1   [90m│[39m   0 [90m│[39m     1m [90m│[39m     0Mi [90m│[39m    0% [90m│[39m
+[90m│ nightly-report-29911250-rbgfv       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │[39m
+[90m│ nightly-report-29911255-qgzhp       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │[39m
+[90m│ nightly-report-29911260-7tv68       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │[39m
+[90m│[39m node-agent-ctvg6                    [90m│[32m Running          [90m│[39m 1/1   [90m│[39m   0 [90m│[39m     1m [90m│[39m     1Mi [90m│[39m    3% [90m│[39m
+[90m│ sync-pod                            │ Succeeded        │ 0/1   │   0 │      - │       - │     - │[39m
+[90m│[39m test-sts-0                          [90m│[32m Running          [90m│[39m 1/1   [90m│[35m  12 [90m│[39m     0m [90m│[39m     0Mi [90m│[39m     - [90m│[39m
+[90m│[39m z-crash                             [90m│[1m[31m CrashLoopBackOff [0m[90m│[39m 0/1   [90m│[35m 331 [90m│[39m      - [90m│[39m       - [90m│[39m     - [90m│[39m
+[90m│[39m z-imagepull                         [90m│[1m[31m ImagePullBackOff [0m[90m│[39m 0/1   [90m│[39m   0 [90m│[39m      - [90m│[39m       - [90m│[39m     - [90m│[39m
+[90m│[39m z-oom                               [90m│[32m Running          [90m│[39m 1/1   [90m│[39m   0 [90m│[39m    51m [90m│[39m     1Mi [90m│[39m    6% [90m│[39m
 [90m│[39m z-pending                           [90m│[35m Pending          [90m│[39m 0/1   [90m│[39m   0 [90m│[39m      - [90m│[39m       - [90m│[39m     - [90m│[39m
+[90m│[39m z-unschedulable                     [90m│[35m Pending          [90m│[39m 0/1   [90m│[39m   0 [90m│[39m      - [90m│[39m       - [90m│[39m     - [90m│[39m
 [90m└─────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┘[39m
 
 
@@ -19,19 +31,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-[90m──[39m [1m1[0m[90m / 5[1m[31m   1 failing[0m[35m   1 pending / starting[39m [90m──────────────────────────────────[39m [90mlive · refresh 2s[39m [90m──[39m
+[90m──[39m [1m1[0m[90m / 17[1m[31m   2 failing[0m[35m   2 pending / starting[39m [90m─────────────────────────────────[39m [90mlive · refresh 2s[39m [90m──[39m
 [90m┌─[39m [1mMOVE[0m [90m────────────┬─[39m [1mFIND[0m [90m────────────┬─[39m [1mINSPECT[0m [90m─────────┬─[39m [1mSHELL · FILES[0m [90m────┬─[39m [1mLEAVE[0m [90m────────┐[39m
 [90m│[39m [1mj/k ↑↓[0m    move    [90m│[39m [1m/[0m  search         [90m│[39m [1mEnter[0m  summary    [90m│[39m [90mS  shell          [39m [90m│[39m [1mq[0m  back        [90m│[39m
 [90m│[39m [1mPgUp/PgDn[0m page    [90m│[39m [1mu[0m  needs attenti~ [90m│[39m [1ml / p[0m  logs / pr~ [90m│[39m [90mU  upload         [39m [90m│[39m [1mQ[0m  quit kdash  [90m│[39m

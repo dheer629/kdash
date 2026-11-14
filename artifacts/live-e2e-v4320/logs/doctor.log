@@ -8,22 +8,22 @@ CONNECTION
 │ namespace    │ kdash-e2e                                                                                             │
 │ kubeconfig   │ /home/user/.kube/config                                                                              │
 │ API endpoint │ https://localhost:10093                                                                               │
-│ audit log    │ /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/audit/audit_202611.log │
+│ audit log    │ /workspace/kdash/artifacts/live-e2e-v4320/audit/audit_202611.log │
 └──────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 CHECKS  9 checks   all required checks passed
-┌─────────────────────────────────┬────────┬──────────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────────┐
-│ CHECK                           │ RESULT │ DETAIL                                                                                           │ NEXT STEP                                                   │
-├─────────────────────────────────┼────────┼──────────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ pods                            │ ● PASS │ readable (an empty namespace is valid)                                                           │ -                                                           │
-│ nodes                           │ ● PASS │ readable                                                                                         │ -                                                           │
-│ services                        │ ● PASS │ readable                                                                                         │ -                                                           │
-│ endpointslices.discovery.k8s.io │ ● PASS │ readable                                                                                         │ -                                                           │
-│ persistentvolumeclaims          │ ● PASS │ readable                                                                                         │ -                                                           │
-│ events                          │ ● PASS │ readable                                                                                         │ -                                                           │
-│ metrics                         │ ● PASS │ pod CPU / memory readable                                                                        │ -                                                           │
-│ certificates                    │ ● PASS │ nothing expires within 30 days (API endpoint, kubeconfig, login, CA bundles)                     │ kdash --certs also probes nodes, kubelets and ingress hosts │
-│ local reports                   │ ● PASS │ writable: /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/reports │ -                                                           │
-└─────────────────────────────────┴────────┴──────────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────┬───────────┬──────────────────────────────────────────────────────────────────────────────────────────────────┬───────────────────────────┐
+│ CHECK                           │ RESULT    │ DETAIL                                                                                           │ NEXT STEP                 │
+├─────────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────┤
+│ pods                            │ ● PASS    │ readable (an empty namespace is valid)                                                           │ -                         │
+│ nodes                           │ ● PASS    │ readable                                                                                         │ -                         │
+│ services                        │ ● PASS    │ readable                                                                                         │ -                         │
+│ endpointslices.discovery.k8s.io │ ● PASS    │ readable                                                                                         │ -                         │
+│ persistentvolumeclaims          │ ● PASS    │ readable                                                                                         │ -                         │
+│ events                          │ ● PASS    │ readable                                                                                         │ -                         │
+│ metrics                         │ ● PASS    │ pod CPU / memory readable                                                                        │ -                         │
+│ certificates                    │ ● WARNING │ 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) in 29 d     │ kdash --certs  (or key C) │
+│ local reports                   │ ● PASS    │ writable: /workspace/kdash/artifacts/live-e2e-v4320/reports │ -                         │
+└─────────────────────────────────┴───────────┴──────────────────────────────────────────────────────────────────────────────────────────────────┴───────────────────────────┘
 
   Read-only checks complete; no cluster changes made.

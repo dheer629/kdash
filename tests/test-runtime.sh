@@ -118,8 +118,13 @@ for diagnostic in services storage events explain; do
   run_cli --once -n default -v "$diagnostic" -o tsv > "$TEST_ROOT/$diagnostic.tsv"
   assert_has "$TEST_ROOT/$diagnostic.tsv" $'SOURCE\tSTATE'
 done
-run_cli -n default --events -o csv > "$TEST_ROOT/events-option.csv"
-assert_has "$TEST_ROOT/events-option.csv" '"SOURCE","STATE"'
+for diagnostic in events explain; do
+  run_cli -n default "--$diagnostic" -o csv > "$TEST_ROOT/$diagnostic-option.csv"
+  assert_has "$TEST_ROOT/$diagnostic-option.csv" '"SOURCE","STATE"'
+  assert_absent "$TEST_ROOT/$diagnostic-option.csv" '│'
+  run_cli -n default "--$diagnostic" -o tsv > "$TEST_ROOT/$diagnostic-option.tsv"
+  assert_has "$TEST_ROOT/$diagnostic-option.tsv" $'SOURCE\tSTATE'
+done
 if SCENARIO=tls run_cli --doctor -n default > "$TEST_ROOT/tls" 2>&1; then fail 'doctor TLS failure returned success'; fi
 sed -i 's/│/ /g; s/|/ /g' "$TEST_ROOT/tls"
 grep -Eq 'pods[[:space:]]+.*FAIL[[:space:]]+TLS certificate validation failed' "$TEST_ROOT/tls" || fail 'doctor lost TLS classification'
@@ -232,6 +237,11 @@ extract_function() {
   set -uo pipefail
   source "$REPO/src/runtime.sh"
   source "$REPO/src/events.sh"
+  # The dashboard composes its login watcher from the interactive module. Keep
+  # that real hook in the async fixture too; certificate polling is a separate
+  # collector and must not issue requests from this worker-adoption test.
+  source "$REPO/src/interactive.sh"
+  LOGIN_NEEDED=0; KDASH_CERT_CHECK=0
   TMPD="$TEST_ROOT/async"; MODEL="$TMPD/model"; mkdir -p "$MODEL"
   for file in spec top topprev nodes topnode svc cluster workloads; do printf 'old\n' > "$TMPD/$file"; done
   SPEC="$TMPD/spec"; TOPC="$TMPD/top"; TOPP="$TMPD/topprev"; NODES="$TMPD/nodes"

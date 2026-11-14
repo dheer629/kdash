@@ -7,7 +7,7 @@ NODES  1 node
 ┌──────┬────────┬─────────┬──────────────┬───────┬────────────┐
 │ NODE │ ROLE   │ READY   │ REASON       │ SINCE │ SCHEDULING │
 ├──────┼────────┼─────────┼──────────────┼───────┼────────────┤
-│ dev  │ server │ ● Ready │ KubeletReady │ 6d05h │ -          │
+│ dev  │ server │ ● Ready │ KubeletReady │ 7d01h │ -          │
 └──────┴────────┴─────────┴──────────────┴───────┴────────────┘
 
   STEP 1  what the API knows

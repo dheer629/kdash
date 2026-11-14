@@ -238,6 +238,37 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
     if tuple(int(n) for n in version.split('.')) >= (4, 28, 1):
         require('html-fmea-real-rows' in {c['name'] for c in browser['checks']} and browser.get('additional_reports'),
                 'FMEA HTML browser coverage is missing')
+    if tuple(int(n) for n in version.split('.')) >= (4, 32, 0):
+        secret_dir = run / 'secrets'
+        require(utf8(secret_dir / 'status.txt').strip() == 'DONE',
+                'Secrets live validation did not finish successfully')
+        secret_evidence = json.loads(utf8(secret_dir / 'results.json'))
+        require(secret_evidence.get('status') == 'PASS' and secret_evidence.get('sha256') == source_sha and
+                secret_evidence.get('installed_sha256') == source_sha,
+                'Secrets live evidence failed or tested another CLI')
+        secret_checks = {c['name'] for c in secret_evidence.get('checks', []) if c.get('status') == 'PASS'}
+        require({'secrets-json-schema-and-inventory',
+                 'secrets-exports-exclude-value-canary-and-private-pem',
+                 'secrets-fixture-public-certificate-and-consumer'}.issubset(secret_checks),
+                'Secrets live data, safety or fixture-mapping check is missing')
+        secret_captures = {Path(c['file']).stem for c in secret_evidence.get('captures', [])}
+        require({'92-secrets', '93-secrets-pan', '94-secrets-help',
+                 '95-secrets-run-prompt', '96-secrets-export'}.issubset(secret_captures),
+                'Secrets terminal screenshots are incomplete')
+        for capture in secret_evidence['captures']:
+            ansi = within(secret_dir, capture['file'])
+            require(ansi.is_file() and hashlib.sha256(ansi.read_bytes()).hexdigest() == capture.get('sha256'),
+                    f"Secrets raw capture SHA-256 differs: {capture['file']}")
+            require(bool(utf8(ansi.with_suffix('.txt')).strip()),
+                    f"Secrets plain-text capture is empty: {capture['file']}")
+            png = within(repo, capture['png'])
+            require(png.is_relative_to(repo / 'samples'), 'Secrets screenshot is outside samples')
+            validate_png(png)
+        browser_checks = {c['name'] for c in browser['checks'] if c.get('status') == 'PASS'}
+        require({'html-secrets-real-data', 'html-secrets-no-values',
+                 'html-secrets-tables', 'html-secrets-no-script-errors'}.issubset(browser_checks) and
+                any(c.get('tab') == 'secrets' for c in browser.get('screenshots', [])),
+                'Secrets HTML browser coverage or screenshot is missing')
     for shot in browser["screenshots"]:
         file = within(repo, shot["file"])
         validate_png(file)

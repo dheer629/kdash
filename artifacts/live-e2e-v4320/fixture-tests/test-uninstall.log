@@ -1,0 +1,13 @@
+PASS test_installer_roundtrip
+PASS test_dry_run
+PASS test_binary_only
+PASS test_other_prefix_integration
+PASS test_default_prefix
+PASS test_malformed_markers
+PASS test_symlink_and_text_preservation
+PASS test_permission_failure
+PASS test_binary_symlinks
+PASS test_cli_validation
+PASS test_bundle_compatibility
+PASS test_shortcut_preservation
+Passed 12 uninstall integration tests.

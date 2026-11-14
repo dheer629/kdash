@@ -2,7 +2,7 @@
 
 ┌─ DOWNLOAD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── review ─┐
 │ FROM   app-server-8fb4699bc-cx5vz ► app ► /tmp/kdash-transfer                                                                                                         │
-│ TO     /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/work/   same names as in the container                                          │
+│ TO     /workspace/kdash/artifacts/live-e2e-v4320/work/   same names as in the container                                          │
 ├────────────────────────────────┬────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ ITEM                           │       SIZE │ NOTE                                                                                                                    │
 ├────────────────────────────────┼────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
@@ -16,7 +16,7 @@
 │ checksum in the container  │ ● pass    │ sha256sum - every file is verified after the copy                                                                            │
 │ readable in the container  │ ● pass    │ 1 of 1 item(s)                                                                                                               │
 │ local directory            │ ● pass    │ writable                                                                                                                     │
-│ local free space           │ ● pass    │ 476.7 GiB free, about 1.0 KiB needed                                                                                         │
+│ local free space           │ ● pass    │ 478.2 GiB free, about 1.0 KiB needed                                                                                         │
 │ names                      │ ● check   │ 1 item already here - Enter asks: replace or keep both                                                                       │
 └────────────────────────────┴───────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 

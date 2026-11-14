@@ -34,6 +34,36 @@ BACKGROUND = "#0d1117"
 FOREGROUND = "#e6edf3"
 
 
+class CaptureScreen(pyte.Screen):
+    """Keep bright ANSI colors consistent across old and current pyte versions."""
+
+    def select_graphic_rendition(self, *attrs):
+        # Older distro pyte represents SGR 90 as black+bold rather than bright
+        # black. Translate explicit bright colors to our RGB palette before the
+        # parser sees them; bold and background brightness remain independent.
+        normalized = []
+        index = 0
+        names = ("black", "red", "green", "brown", "blue", "magenta", "cyan", "white")
+        while index < len(attrs):
+            attr = attrs[index]
+            if 90 <= attr <= 97 or 100 <= attr <= 107:
+                base = 90 if attr < 100 else 100
+                value = PALETTE["bright" + names[attr - base]].lstrip("#")
+                normalized.extend([38 if base == 90 else 48, 2,
+                                   *(int(value[pos:pos + 2], 16) for pos in (0, 2, 4))])
+                index += 1
+            elif attr in (38, 48) and index + 1 < len(attrs):
+                # RGB components and indexed color numbers are payload values,
+                # not SGR codes, even when their numeric value happens to be 90.
+                count = 5 if attrs[index + 1] == 2 else 3 if attrs[index + 1] == 5 else 2
+                normalized.extend(attrs[index:index + count])
+                index += count
+            else:
+                normalized.append(attr)
+                index += 1
+        super().select_graphic_rendition(*normalized)
+
+
 def color(value: str, default: str) -> str:
     if value == "default":
         return default
@@ -171,7 +201,7 @@ def main() -> None:
     captured_text = captured_text.removesuffix("\n").replace("\n", "\r\n")
     if captured_text.count("\n") + 1 > args.rows:
         parser.error("capture contains more rows than --rows; use the original tmux pane height")
-    screen = pyte.Screen(args.columns, args.rows)
+    screen = CaptureScreen(args.columns, args.rows)
     pyte.Stream(screen).feed(captured_text)
     fonts = font_variants(find_font(args.font), args.font_size)
     render_png(screen, args.output, args.title, source_hash, fonts, args.font_size)

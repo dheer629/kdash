@@ -1,22 +1,23 @@
- KDASH │ SELECT NAMESPACE │ context vcluster-docker_dev                   12 of 12 │ now: kdash-e2e
- namespaces from the API   ● 12 you can open   ● 0 no access
+ KDASH │ SELECT NAMESPACE │ context vcluster-docker_dev                   13 of 13 │ now: kdash-e2e
+ namespaces from the API   ● 13 you can open   ● 0 no access
  / filters by name   recent namespaces are listed first
-┌─────┬──────────────────────┬─────────────┬───────┬──────────────────────────────────────────────┐
-│   # │ NAMESPACE            │ ACCESS      │  PODS │ NOTE                                         │
-├─────┼──────────────────────┼─────────────┼───────┼──────────────────────────────────────────────┤
-│   1 │ kdash-e2e            │ open        │     4 │ current, recent                              │
-│   2 │ algorithm-learn      │ open        │     4 │                                              │
-│   3 │ cert-manager         │ open        │     3 │                                              │
-│   4 │ default              │ open        │     3 │                                              │
-│   5 │ flux-system          │ open        │     4 │                                              │
-│   6 │ kube-flannel         │ open        │     1 │                                              │
-│   7 │ kube-node-lease      │ open        │     - │                                              │
-│   8 │ kube-public          │ open        │     - │                                              │
-│   9 │ kube-system          │ open        │     3 │                                              │
-│  10 │ learnalgorithm       │ open        │     4 │                                              │
-│  11 │ local-path-storage   │ open        │     1 │                                              │
-│  12 │ podinfo-demo         │ open        │     2 │                                              │
-└─────┴──────────────────────┴─────────────┴───────┴──────────────────────────────────────────────┘
+┌─────┬────────────────────────────┬─────────────┬───────┬────────────────────────────────────────┐
+│   # │ NAMESPACE                  │ ACCESS      │  PODS │ NOTE                                   │
+├─────┼────────────────────────────┼─────────────┼───────┼────────────────────────────────────────┤
+│   1 │ kdash-e2e                  │ open        │    12 │ current, recent                        │
+│   2 │ algorithm-learn            │ open        │     4 │                                        │
+│   3 │ cert-manager               │ open        │     3 │                                        │
+│   4 │ default                    │ open        │     7 │                                        │
+│   5 │ flux-system                │ open        │     4 │                                        │
+│   6 │ kdash-e2e-qa-20261114-fast │ open        │     4 │                                        │
+│   7 │ kube-flannel               │ open        │     1 │                                        │
+│   8 │ kube-node-lease            │ open        │     - │                                        │
+│   9 │ kube-public                │ open        │     - │                                        │
+│  10 │ kube-system                │ open        │     3 │                                        │
+│  11 │ learnalgorithm             │ open        │     4 │                                        │
+│  12 │ local-path-storage         │ open        │     1 │                                        │
+│  13 │ podinfo-demo               │ open        │     2 │                                        │
+└─────┴────────────────────────────┴─────────────┴───────┴────────────────────────────────────────┘
 
 
 
@@ -29,12 +30,11 @@
 
 
 
-
-── choose a namespace ───────────────────────────────────────────────────────── 1 / 12 · audited ──
+── choose a namespace ───────────────────────────────────────────────────────── 1 / 13 · audited ──
 ┌─ MOVE ────────────────┬─ FIND ────────────────┬─ LEAVE ────────────────┬─ CHOOSE ───────────────┐
 │ j/k ↑↓     move       │ /  filter by name     │ q / Esc  cancel, stay~ │ Enter  open kdash-e2e  │
 │ PgUp/PgDn  page       │ t  type a name not l~ │ Q        quit kdash    │ A      all namespaces~ │
 │ g / G      first / l~ │ r  re-check access    │          n reopens th~ │ d      open kdash-e2e~ │
-│ 12         go to row~ │    12 namespaces      │          from the das~ │ x      forget the def~ │
+│ 12         go to row~ │    13 namespaces      │          from the das~ │ x      forget the def~ │
 └───────────────────────┴───────────────────────┴────────────────────────┴────────────────────────┘
 

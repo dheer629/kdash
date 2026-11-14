@@ -1,47 +1,10 @@
 # kdash validation artifacts
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4320` records **198 passed live checks**, **19 passed browser checks** and **91 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
+Run `live-e2e-v4320` records **199 passed live checks**, **23 passed browser checks** and **96 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
 [Inspect the recorded checks](live-e2e-v4320/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-The current **4.32.0** live validation is named by
+\nThe current **4.32.0** live validation is named by
 [`latest-e2e.txt`](latest-e2e.txt), pointing to `live-e2e-<timestamp>/`.
 That run records the installed utility against the local WSL Kubernetes cluster,
 using the dedicated `kdash-e2e` namespace. Its files include:
@@ -54,15 +17,20 @@ using the dedicated `kdash-e2e` namespace. Its files include:
 | `raw/*.ansi`, `raw/*.txt` | saved live terminal screens with colours/plain text |
 | `logs/` | command output and verification logs |
 | `reports/` | generated reports, tables, audit output and session history |
+| `fixture-tests/`, `fixture-tests.json`, `regression-tests.log` | every fixture suite, exit status, log and source hash before/after |
+| `secrets/` | separate live Secrets-map checks, five captures, exports and safety trace |
+| `transfer-live/` | real upload/download, corruption detection and `/bin` hardlink fingerprints |
+| `REDACTION.md`, `audit-verify-before-redaction.txt` | publication substitutions and the audit-chain result recorded before redaction |
 
-The current screenshots and companion renders are in
+The current screenshots are in
 [`../samples/cli_4320/`](../samples/cli_4320/README.md) and report samples in
-[`../samples/html4320/`](../samples/html4320/README.md). Terminal images replay
-actual captures. `native/` contains real xterm window screenshots captured in WSL;
-the other PNGs are labelled ANSI replays. Their SHA-256 hashes and the installed
-CLI hash are recorded in `results.json`. The current run keeps actual local
-namespace names and metrics, with no substitutions or audit-chain rewriting.
-Missing metrics or denied reads remain visible as unavailable.
+[`../samples/html4320/`](../samples/html4320/README.md). Every published terminal
+image is a faithful ANSI replay of a captured live screen; actual xterm grabs stay
+in the private workspace because their pixels cannot be redacted. Their SHA-256
+hashes and the installed CLI hash are recorded in `results.json`. Workstation
+home and repository paths were redacted before rendering; workload names, metrics,
+addresses and timestamps are actual. Missing metrics or denied reads remain
+visible as unavailable.
 
 Version 4.32.0 adds the SECRETS MAP (`Y`, `--secrets`) and restores the
 interactive-mode toggle (`X`) in the dashboard and pod detail, the pod-detail

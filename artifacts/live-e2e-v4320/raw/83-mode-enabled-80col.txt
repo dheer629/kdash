@@ -1,30 +1,30 @@
  KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:55:12 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   22:32:06 IST
  match .*   sort cpu ▼ high first
- ! pods 3/5 ready rst 119 oom 0 oomk 0 nolim 0 cpu 7m 1% lim mem 2Mi 1% lim wl 4
-     ev15m ! 0 ^ 0
- DATA ● pods fresh 7s old  metrics available │ C certs │ K check now │ i inspec›
+ ! pods 13/17 ready rst 371 oom 0 oomk 0 nolim 1 cpu 61m 4% lim mem 5Mi 1% lim
+     wl 13 ev15m ! 0 ^ 0
+ DATA ● pods fresh 7s old  metrics available │ C certs (1 expiring) │ K check n›
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo›
                                        │   ACTUAL (live)    │    ASSIGNED (req ›
 WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  ME›
 ────────────────────────────────────────────────────────────────────────────────
-► TIMELINE  01:55:05 -> 01:55:12 IST  (all since kdash started, z window, c hid›
+► TIMELINE  22:31:59 -> 22:32:06 IST  (all since kdash started, z window, c hid›
   CPU used - namespace
          one sample so far - the chart starts with the 2nd (run kdash live)
   MEMORY used - namespace
          one sample so far - the chart starts with the 2nd (run kdash live)
 
 ► PODS ────────────────────────────────────────────────────────────────────────
-► Deployment app-server  (2 p~ 2/2  28 │      7 ·       2 · │     50    500    ›
-  app-server-8fb4699bc-cx5vz   2/2  14 │      4 ·       2 · │     25    250    ›
-      cpu ░░                mem ░░                pk 2Mi    node dev   pool rol›
-    ├─ app                     Y     7 │      3 ·       2 · │     20    200    ›
-        last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50    ›
-        last-exit Unknown
-  app-server-8fb4699bc-t7zxj   2/2  14 │      3 ·       0 · │     25    250    ›
-      cpu ░░                mem ░░                pk 0Mi    node dev   pool rol›
+► Pod z-oom  (1 pod)           1/1   0 │     51 ·       1 · │     10     50    ›
+  z-oom                        1/1   0 │     51 ·       1 · │     10     50    ›
+      cpu ░░                mem ░░                pk 1Mi    node dev   pool rol›
+    └─ hog                     Y     0 │     51 ·       1 · │     10     50    ›
+................................................................................
+► Deployment app-server  (2 p~ 2/2  28 │      6 ·       3 · │     50    500    ›
+  app-server-8fb4699bc-cx5vz   2/2  14 │      3 ·       3 · │     25    250    ›
+      cpu ░░                mem ░░                pk 3Mi    node dev   pool rol›
+    ├─ app                     Y     7 │      2 ·       3 · │     20    200    ›
 ────────────────────────────────────────────────────────────────────────────────
-TOTAL (5 pods, 4 workloads)        119 │      7 ·       2 · │     65    650    ›
+TOTAL (17 pods, 13 workloads)      371 │     61 ·       5 · │    265   1550    ›
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9›
  interactive mode ON - S shell, U upload, D download (X turns it off) | ● LIVE >

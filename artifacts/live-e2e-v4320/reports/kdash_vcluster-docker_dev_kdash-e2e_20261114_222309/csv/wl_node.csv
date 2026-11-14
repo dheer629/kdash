@@ -1,0 +1,14 @@
+NODE,POOL,KIND,WORKLOAD,PODS,PODS_READY,RESTARTS,CPU_USED_m,MEM_USED_Mi,MEM_REQ_Mi,POD_NAMES
+dev,"role:control-plane,master",CronJob,nightly-report,3,3,0,,,48,"nightly-report-29911240-kvv2n,nightly-report-29911245-4tq7z,nightly-report-29911250-rbgfv"
+dev,"role:control-plane,master",DaemonSet,node-agent,1,1,0,1,1,16,node-agent-ctvg6
+dev,"role:control-plane,master",Deployment,app-server,2,2,28,4,3,24,"app-server-8fb4699bc-cx5vz,app-server-8fb4699bc-t7zxj"
+dev,"role:control-plane,master",Job,completed-check,1,1,0,,,4,completed-check-m9swm
+dev,"role:control-plane,master",Pod,sync-pod,1,1,0,,,,sync-pod
+dev,"role:control-plane,master",Pod,z-crash,1,0,329,,,4,z-crash
+dev,"role:control-plane,master",Pod,z-imagepull,1,0,0,,,32,z-imagepull
+dev,"role:control-plane,master",Pod,z-oom,1,1,0,51,1,8,z-oom
+dev,"role:control-plane,master",ReplicationController,functionality-legacy,1,1,0,1,0,8,functionality-legacy-67ks7
+dev,"role:control-plane,master",StatefulSet,db-stateful,2,2,0,2,0,64,"db-stateful-0,db-stateful-1"
+dev,"role:control-plane,master",StatefulSet,test-sts,1,1,12,0,0,,test-sts-0
+(unscheduled),(none),Pod,z-pending,1,0,0,,,4,z-pending
+(unscheduled),(none),Pod,z-unschedulable,1,0,0,,,32,z-unschedulable

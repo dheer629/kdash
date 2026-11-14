@@ -1,27 +1,27 @@
  KDASH │ SELECT POD │ READ-ONLY │ context vcluster-docker_dev │ namespace kdash~
- pods    ● CrashLoopBackOff 1  ● Pending 1  ● Running 2  ● Succeeded 1
+ pods    ● CrashLoopBackOff 1  ● ImagePullBackOff 1  ● Pending 2  ● Running 8
  / search   view all (u)   X enables shell / upload / download   sort name
 ┌──────────────────────────┬─────────┬───────┬─────┬────────┬─────────┬───────┐
 │ POD                      │ STATUS  │ READY │ RST │    CPU │     MEM │  %LIM │
 ├──────────────────────────┼─────────┼───────┼─────┼────────┼─────────┼───────┤
-│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  14 │     4m │     2Mi │    2% │
+│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  14 │     3m │     3Mi │    3% │
 │ app-server-8~699bc-t7zxj │ Running │ 2/2   │  14 │     3m │     0Mi │    0% │
 │ completed-check-m9swm    │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ z-crash                  │ CrashLo │ 0/1   │  91 │      - │       - │     - │
+│ db-stateful-0            │ Running │ 1/1   │   0 │     1m │     0Mi │    0% │
+│ db-stateful-1            │ Running │ 1/1   │   0 │     1m │     0Mi │    0% │
+│ functionalit~egacy-67ks7 │ Running │ 1/1   │   0 │     1m │     0Mi │    0% │
+│ nightly-repo~11250-rbgfv │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~11255-qgzhp │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~11260-7tv68 │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ node-agent-ctvg6         │ Running │ 1/1   │   0 │     1m │     1Mi │    3% │
+│ sync-pod                 │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ test-sts-0               │ Running │ 1/1   │  12 │     0m │     0Mi │     - │
+│ z-crash                  │ CrashLo │ 0/1   │ 331 │      - │       - │     - │
+│ z-imagepull              │ ImagePu │ 0/1   │   0 │      - │       - │     - │
+│ z-oom                    │ Running │ 1/1   │   0 │    51m │     1Mi │    6% │
 │ z-pending                │ Pending │ 0/1   │   0 │      - │       - │     - │
 └──────────────────────────┴─────────┴───────┴─────┴────────┴─────────┴───────┘
-
-
-
-
-
-
-
-
-
-
-
-── 1 / 5   1 failing   1 pending / starting ────────────── live · refresh 2s ──
+── 1 / 17   ↓ 1 below   2 failing ──────────────────────── live · refresh 2s ──
 ┌─ MOVE ───────┬─ FIND ───────┬─ INSPECT ─────┬─ SHELL ───────┬─ LEAVE ───────┐
 │ j/k ↑↓ move  │ /  search    │ Enter summary │ S  shell      │ q  back       │
 │ PgUp/PgDn p~ │ u  needs at~ │ l / p logs /~ │ U  upload     │ Q  quit kdash │

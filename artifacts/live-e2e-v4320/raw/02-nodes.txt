@@ -1,50 +1,50 @@
  KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:48:02 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 22:24:44 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 3/5 ready   restarts 118             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                │
-│ poll 2s  spec 10s/30s   session 01:47:52 up 10s       │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 369           │ cpu     59m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 11s/30s   session 22:24:33 up 11s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
- DATA ● pods fresh 10s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 11s old  metrics available │ C certs (1 expiring) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  NODE POOLS   this namespace vs the whole cluster, per pool and worker node
 ┌─ NAMESPACE vs CLUSTER ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ namespace  5 pods on 1 of 1 nodes   mem used 2Mi  req 36Mi  lim 288Mi   cpu used 6m  req 65m  lim 650m                                                                 │
-│ cluster    1 nodes  2 pools   alloc mem 7524Mi  cpu 24.0c   used mem 2084Mi (27.7%)  cpu 227m (0.9%)                                                                   │
-│ requests   29 pods in 10 namespaces   requested mem 2266Mi (30.1% of cluster)  cpu 1530m (6.4%)   used mem 1129Mi  cpu 59m (pod metrics)                               │
-│            namespace share of cluster   mem used 0.0%  req 0.5%   cpu used 0.0%  req 0.3%   pool label node-role                                                       │
+│ namespace  17 pods on 1 of 1 nodes   mem used 5Mi  req 244Mi  lim 848Mi   cpu used 59m  req 265m  lim 1550m                                                            │
+│ cluster    1 nodes  2 pools   alloc mem 7524Mi  cpu 24.0c   used mem 2596Mi (34.5%)  cpu 305m (1.3%)                                                                   │
+│ requests   45 pods in 11 namespaces   requested mem 2546Mi (33.8% of cluster)  cpu 1880m (7.8%)   used mem 1287Mi  cpu 188m (pod metrics)                              │
+│            namespace share of cluster   mem used 0.1%  req 3.2%   cpu used 0.2%  req 1.1%   pool label node-role                                                       │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-► NAMESPACE vs CLUSTER  share of pool allocatable:   █ used   ▒ requested, not used   ░ free    zoom x100  left bars magnified, % values true - Z: true scale
+► NAMESPACE vs CLUSTER  share of pool allocatable:   █ used   ▒ requested, not used   ░ free    zoom x20  left bars magnified, % values true - Z: true scale
 POOL [ns nodes/all]                    ALLOC │ THIS NAMESPACE  kdash-e2e                        used / req  │ WHOLE CLUSTER  all namespaces                    used / req
-role:control-plane,master [1/~ mem    7524Mi │ █▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░   0.0% /  0.4% │ ████████████▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  27.7% / 30.1%
-                               cpu     24.0c │ █▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.0% /  0.2% │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.9% /  6.4%
+role:control-plane,master [1/~ mem    7524Mi │ █▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░   0.1% /  2.8% │ ███████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  34.5% / 32.9%
+                               cpu     24.0c │ ██▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.2% /  0.9% │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   1.3% /  7.4%
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-CLUSTER TOTAL                  mem    7524Mi │ █▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░   0.0% /  0.5% │ ████████████▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  27.7% / 30.1%
-                               cpu     24.0c │ █▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.0% /  0.3% │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.9% /  6.4%
+CLUSTER TOTAL                  mem    7524Mi │ █▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░   0.1% /  3.2% │ ███████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  34.5% / 33.8%
+                               cpu     24.0c │ ██▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0.2% /  1.1% │ █▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   1.3% /  7.8%
 
 ► WORKER NODES RUNNING THIS NAMESPACE  grouped by pool
                                                         │       CPU millicores       │                   MEMORY GiB                   │         node memory
 POOL [ns nodes/all] / NODE        STATUS    PODS ns/all │ nsUsed  nsReq  alloc   %al │  nsUsed   nsReq   nsLim   alloc   %al node% clReq% │ █ ns ▓ other ns used ░ free
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-► role:control-plane,master [1/1]                  4/28 │      6     60  24000   0.0 │     0.0     0.0     0.2     7.3   0.0  27.7   30.1 │ █▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░
-  dev                             Ready            4/28 │      6     60  24000   0.0 │     0.0     0.0     0.2     7.3   0.0  27.7   30.1 │ █▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░
-      ip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 3/4   ns-restarts 118   namespaces 10   cluster-req mem 2262Mi cpu 1525m   node-cpu 2›
+► role:control-plane,master [1/1]                 15/41 │     59    210  24000   0.2 │     0.0     0.2     0.7     7.3   0.1  34.5   32.9 │ █▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░
+  dev                             Ready           15/41 │     59    210  24000   0.2 │     0.0     0.2     0.7     7.3   0.1  34.5   32.9 │ █▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░
+      ip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 13/15   ns-restarts 369   namespaces 11   cluster-req mem 2474Mi cpu 1770m   node-cpu›
 
-► unscheduled pods                                  1/1 │      -      5      -     - │       -     0.0     0.0       -     -     -      - │ n/a
-  (unscheduled)                   -                 1/1 │      -      5      -     - │       -     0.0     0.0       -     -     -      - │ n/a
-      ip -   podCIDR -   roles -   ns-ready 0/1   ns-restarts 0   namespaces 1   cluster-req mem 4Mi cpu 5m
+► unscheduled pods                                  2/4 │      -     55      -     - │       -     0.0     0.2       -     -     -      - │ n/a
+  (unscheduled)                   -                 2/4 │      -     55      -     - │       -     0.0     0.2       -     -     -      - │ n/a
+      ip -   podCIDR -   roles -   ns-ready 0/2   ns-restarts 0   namespaces 3   cluster-req mem 72Mi cpu 110m
 
 ► NAMESPACES  usage and requests of each namespace in the cluster (top 20 by sort key) - bar: share of the memory used by all of them
   NAMESPACE                           PODS rdy  WKLD NODES  CPU used   CPU req  MEM used   MEM req   MEM lim   %used  %clMem │ share of memory used
-  learnalgorithm                           4/4     4     1       11m      400m     186Mi     768Mi    2048Mi    16.5    10.2 │ █████░░░░░░░░░░░░░░░░░░░░░░░░░
-  algorithm-learn                          4/4     4     1        9m        0m     237Mi       0Mi       0Mi    21.0     0.0 │ ██████░░░░░░░░░░░░░░░░░░░░░░░░
-  default                                  3/3     3     1        9m      300m     456Mi     768Mi    2560Mi    40.4    10.2 │ ████████████░░░░░░░░░░░░░░░░░░
-  flux-system                              4/4     4     1        7m      350m      82Mi     256Mi    4096Mi     7.3     3.4 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  kube-system                              3/3     3     1        6m      120m      57Mi     264Mi     170Mi     5.0     3.5 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  kube-flannel                             1/1     1     1        5m      100m      13Mi      50Mi       0Mi     1.2     0.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  ► kdash-e2e                              2/4     3     1        4m       60m       2Mi      32Mi     256Mi     0.2     0.4 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  podinfo-demo                             2/2     1     1        4m      200m      40Mi     128Mi    1024Mi     3.5     1.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  cert-manager                             3/3     3     1        3m        0m      48Mi       0Mi       0Mi     4.3     0.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  local-path-storage                       1/1     1     1        1m        0m       8Mi       0Mi       0Mi     0.7     0.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  default                                  5/7     7     1       58m      420m     477Mi     856Mi    2864Mi    37.1    11.4 │ ███████████░░░░░░░░░░░░░░░░░░░
+  ► kdash-e2e                             8/12    10     1       58m      230m       7Mi     192Mi     720Mi     0.5     2.5 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  flux-system                              4/4     4     1       31m      350m     126Mi     256Mi    4096Mi     9.8     3.4 │ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  learnalgorithm                           4/4     4     1       10m      400m     197Mi     768Mi    2048Mi    15.3    10.2 │ █████░░░░░░░░░░░░░░░░░░░░░░░░░
+  algorithm-learn                          4/4     4     1        8m        0m     244Mi       0Mi       0Mi    19.0     0.0 │ ██████░░░░░░░░░░░░░░░░░░░░░░░░
+  kube-system                              3/3     3     1        7m      120m      84Mi     264Mi     170Mi     6.5     3.5 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  cert-manager                             3/3     3     1        4m        0m      75Mi       0Mi       0Mi     5.8     0.0 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  kdash-e2e-qa-20261114-fast               2/4     3     1        4m       60m       1Mi      32Mi     256Mi     0.1     0.4 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  podinfo-demo                             2/2     1     1        4m      200m      43Mi     128Mi    1024Mi     3.3     1.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  kube-flannel                             1/1     1     1        3m      100m      18Mi      50Mi       0Mi     1.4     0.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-NAMESPACE (1 nodes)                                   5 │      6     65  24000   0.0 │     0.0     0.0     0.3     7.3   0.0  27.7      - │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░
+NAMESPACE (1 nodes)                                  17 │     59    265  24000   0.2 │     0.0     0.2     0.8     7.3   0.1  34.5      - │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░
  legend nsUsed/nsReq/nsLim = this namespace.  alloc = allocatable.  %al = namespace share.  node% = whole node used.  clReq% = requested by all namespaces.
- AUDITED session 20261114-014751-73323 - every action is logged; use is your responsibility (kdash --about) | ● LIVE 01:48:02  next 2s  data 2s old  fetch 0.0s  AUDITED
+ certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ● LIVE 22:24:44  next 1s  data 1s old  fetch >

@@ -1,10 +1,10 @@
  KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:48:24 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 22:25:06 IST
 ┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
-│ match .*   sort cpu ▼ high first                     │ ! pods 3/5 ready   restarts 118             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                 │
-│ poll 2s  spec 2s/30s   session 01:47:52 up 32s       │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0         │
+│ match .*   sort cpu ▼ high first                     │ ! pods 14/18 ready   restarts 369           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13                │
+│ poll 2s  spec 3s/30s   session 22:24:33 up 33s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 1  ^ 0         │
 └──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
- DATA ● pods fresh 2s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 3s old  metrics available │ C certs (1 expiring) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  SERVICES AND BACKENDS   observed configuration and readiness - reachability is not tested
 
 DATA SOURCES
@@ -17,34 +17,34 @@ DATA SOURCES
 │ ingresses │ ● ok  │ 3s ago │ read succeeded │
 └───────────┴───────┴────────┴────────────────┘
 
-SERVICES  2 services
-┌─────────────────┬────────────┬───────────┬──────────┬───────┬───────────┬────────────────┬──────────────────────────┐
-│ SERVICE         │ STATUS     │ TYPE      │ SELECTED │ READY │ ENDPOINTS │ CLUSTER-IP     │ PORTS (name:port→target) │
-├─────────────────┼────────────┼───────────┼──────────┼───────┼───────────┼────────────────┼──────────────────────────┤
-│ app-server      │ ● OK       │ ClusterIP │        2 │     2 │ 2/2 ready │ 10.111.83.216  │ 80→8080                  │
-│ missing-backend │ ● NO MATCH │ ClusterIP │        0 │     0 │ 0/0 ready │ 10.104.104.128 │ 80→8080                  │
-└─────────────────┴────────────┴───────────┴──────────┴───────┴───────────┴────────────────┴──────────────────────────┘
+SERVICES  10 services
+┌────────────────────────────┬────────────┬──────────────┬──────────┬───────┬───────────┬────────────────────────────────────────┬──────────────────────────┐
+│ SERVICE                    │ STATUS     │ TYPE         │ SELECTED │ READY │ ENDPOINTS │ CLUSTER-IP                             │ PORTS (name:port→target) │
+├────────────────────────────┼────────────┼──────────────┼──────────┼───────┼───────────┼────────────────────────────────────────┼──────────────────────────┤
+│ app-server                 │ ● OK       │ ClusterIP    │        2 │     2 │ 2/2 ready │ 10.111.83.216                          │ 80→8080                  │
+│ db-headless                │ ● OK       │ Headless     │        2 │     2 │ 2/2 ready │ -                                      │ db:5432                  │
+│ external-api               │ ● EXTERNAL │ ExternalName │        - │     - │ -         │ → api.example.com                      │ -                        │
+│ functionality-external     │ ● EXTERNAL │ ExternalName │        - │     - │ -         │ → kubernetes.default.svc.cluster.local │ -                        │
+│ functionality-headless     │ ● OK       │ Headless     │        1 │     1 │ 1/1 ready │ -                                      │ http:8080→http           │
+│ functionality-loadbalancer │ ● OK       │ LoadBalancer │        1 │     1 │ 1/1 ready │ 10.109.199.192                         │ http:8080→http           │
+│ functionality-nodeport     │ ● OK       │ NodePort     │        1 │     1 │ 1/1 ready │ 10.102.33.174                          │ http:8080→http           │
+│ missing-backend            │ ● NO MATCH │ ClusterIP    │        0 │     0 │ 0/0 ready │ 10.104.104.128                         │ 80→8080                  │
+│ web-loadbalancer           │ ● NO MATCH │ LoadBalancer │        0 │     0 │ 0/0 ready │ 10.101.152.223                         │ http:80→8080             │
+│ web-nodeport               │ ● NO MATCH │ NodePort     │        0 │     0 │ 0/0 ready │ 10.107.100.32                          │ http:80→8080             │
+└────────────────────────────┴────────────┴──────────────┴──────────┴───────┴───────────┴────────────────────────────────────────┴──────────────────────────┘
 
-FINDINGS  1 finding   critical first - the next commands for each are listed below the table
-┌───┬────────────┬─────────────────┬──────────────────────────────────────────────────────────┐
-│ # │ SEVERITY   │ OBJECT          │ FINDING                                                  │
-├───┼────────────┼─────────────────┼──────────────────────────────────────────────────────────┤
-│ 1 │ ● CRITICAL │ missing-backend │ selector app=does-not-exist matches no pod in this scope │
-└───┴────────────┴─────────────────┴──────────────────────────────────────────────────────────┘
+FINDINGS  3 findings   critical first - the next commands for each are listed below the table
+┌───┬────────────┬──────────────────┬──────────────────────────────────────────────────────────┐
+│ # │ SEVERITY   │ OBJECT           │ FINDING                                                  │
+├───┼────────────┼──────────────────┼──────────────────────────────────────────────────────────┤
+│ 1 │ ● CRITICAL │ missing-backend  │ selector app=does-not-exist matches no pod in this scope │
+│ 2 │ ● CRITICAL │ web-loadbalancer │ selector app=app-server matches no pod in this scope     │
+│ 3 │ ● CRITICAL │ web-nodeport     │ selector app=app-server matches no pod in this scope     │
+└───┴────────────┴──────────────────┴──────────────────────────────────────────────────────────┘
 
 NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now
 
   #1  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
       read   kubectl --context vcluster-docker_dev -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
-      read   kubectl --context vcluster-docker_dev -n kdash-e2e get pods --show-labels  # labels the pods really have
-      CHANGE kubectl --context vcluster-docker_dev -n kdash-e2e edit service missing-backend  # make spec.selector match the pod labels (or fix the labels on the workloa›
-
-
-BACKENDS  2 services   selector and the Ready pods it selects (first 3)
-┌─────────────────┬────────────────────────────────────────────────────────┬───────────────────────────┐
-│ SERVICE         │ READY BACKEND PODS                                     │ SELECTOR                  │
-├─────────────────┼────────────────────────────────────────────────────────┼───────────────────────────┤
-│ app-server      │ app-server-8fb4699bc-cx5vz, app-server-8fb4699bc-t7zxj │ app=kdash-e2e,role=server │
-│ missing-backend │ none ready                                             │ app=does-not-exist        │
 K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : c›
- ● LIVE 01:48:24  next 2s  data 1s old  spec 2/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-41/51 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause
+ ALERT 22:25:03 STATUS z-imagepull  - 5 MEMORY / x report | ● LIVE 22:25:06  next 1s  data 1s old  spec 3/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-41/76

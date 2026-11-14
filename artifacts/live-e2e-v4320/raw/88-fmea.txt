@@ -1,50 +1,50 @@
  KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:56:01 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 22:33:02 IST
 ┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
-│ match .*   sort cpu ▼ high first                     │ ! pods 3/5 ready   restarts 120             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                 │
-│ poll 2s  spec 1s/30s   session 01:55:29 up 32s       │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 1         │
+│ match .*   sort cpu ▼ high first                     │ ! pods 13/17 ready   restarts 371           │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13                │
+│ poll 2s  spec 9s/30s   session 22:32:23 up 39s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0         │
 └──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
- DATA ● pods fresh 1s old  metrics available │ C certs  M fmea (5 high, 100% visible) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 9s old  metrics available │ C certs (1 expiring)  M fmea (11 high, 96% visible) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain›
  FMEA   failure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection
 
-  5 HIGH   5 MEDIUM   40 LOW   50 of 50 modes visible to kubernetes-super-admin  scored 3s ago - r re-scores, : access shows your rights
+  11 HIGH   7 MEDIUM   40 LOW   48 of 50 modes visible to kubernetes-super-admin  scored 4s ago - r re-scores, : access shows your rights
 
-WORKSHEET  50 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
-┌────┬────────┬────┬────┬────┬─────┬────────┬─────────────────────────────────┬──────────────────────────────────────────┬───────────────────────────────────────────────┐
-│ #  │ AP     │  S │  O │  D │ RPN │ ID     │ OBJECT                          │ FAILURE MODE                             │ NOW                                           │
-├────┼────────┼────┼────┼────┼─────┼────────┼─────────────────────────────────┼──────────────────────────────────────────┼───────────────────────────────────────────────┤
-│ 1  │ HIGH   │ 10 │ 2* │ 10 │ 200 │ CP-03  │ cluster                         │ No recent backup                         │ not visible on this cluster: etcd snapshot a~ │
-│ 2  │ HIGH   │  8 │ 10 │  4 │ 320 │ PVC-01 │ kdash-e2e/z-unbound             │ Pending                                  │ claim is Pending - not bound to a volume      │
-│ 3  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/missing-backend       │ No endpoints                             │ selector app=does-not-exist matches no pod i~ │
-│ 4  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash               │ CrashLoopBackOff                         │ CrashLoopBackOff, 91 restarts (last: Error)   │
-│ 5  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending             │ Pending, unschedulable                   │ Pending                                       │
-│ 6  │ MEDIUM │ 10 │ 2* │  5 │ 100 │ CP-02  │ cluster                         │ Quorum lost or unhealthy                 │ ok                                            │
-│ 7  │ MEDIUM │  8 │ 2* │  5 │  80 │ PVC-02 │ -                               │ Volume full                              │ all 2 pvcs ok (partial: needs a volume metri~ │
-│ 8  │ MEDIUM │  7 │ 2* │  5 │  70 │ PVC-03 │ -                               │ Attach or mount failure                  │ all 2 pvcs ok                                 │
-│ 9  │ MEDIUM │  7 │  4 │  2 │  56 │ PVC-04 │ storageclass/local-path         │ Reclaim policy Delete on stateful data   │ 7 bound volume(s) deleted with their claims ~ │
-│ 10 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/deployment/app-server │ All replicas on one node                 │ 2 of 2 replicas on dev                        │
-│ 11 │ LOW    │ 10 │ 2* │  3 │  60 │ CP-01  │ cluster                         │ Unreachable or slow                      │ ok                                            │
-│ 12 │ LOW    │ 10 │ 2* │  2 │  40 │ CRT-01 │ cluster                         │ API or kubelet cert expiring             │ ok                                            │
-│ 13 │ LOW    │  9 │ 2* │  4 │  72 │ ADM-01 │ -                               │ Webhook down with failurePolicy Fail     │ all 2 webhooks ok                             │
-│ 14 │ LOW    │  9 │ 2* │  4 │  72 │ DNS-01 │ -                               │ DNS failing                              │ no dns in scope                               │
-│ 15 │ LOW    │  9 │ 2* │  4 │  72 │ WRK-01 │ -                               │ All replicas unavailable                 │ all 1 deployments ok                          │
-│ 16 │ LOW    │  8 │ 2* │  4 │  64 │ NOD-01 │ -                               │ NotReady                                 │ all 1 nodes ok                                │
-│ 17 │ LOW    │  8 │ 2* │  4 │  64 │ WRK-04 │ -                               │ Ordinal stuck, later pods never start    │ no statefulsets in scope                      │
-│ 18 │ LOW    │  8 │ 2* │  3 │  48 │ ACC-02 │ cluster                         │ Provider unreachable or token expired    │ ok                                            │
-│ 19 │ LOW    │  7 │ 2* │  4 │  56 │ CFG-01 │ -                               │ Referenced object missing                │ all 5 pods ok                                 │
-│ 20 │ LOW    │  7 │ 2* │  4 │  56 │ JOB-02 │ -                               │ Not running on schedule                  │ no cronjobs in scope                          │
-│ 21 │ LOW    │  7 │ 2* │  4 │  56 │ NOD-02 │ -                               │ Memory, disk or PID pressure             │ all 1 nodes ok                                │
-│ 22 │ LOW    │  7 │ 2* │  4 │  56 │ SVC-03 │ -                               │ External IP pending                      │ all 2 services ok                             │
-│ 23 │ LOW    │  7 │ 2* │  3 │  42 │ ING-01 │ -                               │ Backend Service missing                  │ all 1 ingresses ok                            │
-│ 24 │ LOW    │  7 │ 2* │  3 │  42 │ QTA-01 │ -                               │ Quota nearly used up                     │ no quotas in scope                            │
-│ 25 │ LOW    │  7 │ 2* │  2 │  28 │ ING-02 │ -                               │ TLS secret missing or expiring           │ all 1 ingresses ok                            │
-│ 26 │ LOW    │  6 │ 2* │  8 │  96 │ NET-01 │ -                               │ Default deny blocks needed traffic       │ no netpols in scope                           │
-│ 27 │ LOW    │  6 │ 2* │  6 │  72 │ ACC-01 │ cluster                         │ Permission denied                        │ ok                                            │
-│ 28 │ LOW    │  6 │ 2* │  5 │  60 │ CRD-01 │ -                               │ Operator not running                     │ all 1 deployments ok                          │
-│ 29 │ LOW    │  6 │ 2* │  5 │  60 │ JOB-01 │ -                               │ Failed after backoffLimit                │ all 1 jobs ok                                 │
-│ 30 │ LOW    │  6 │ 2* │  5 │  60 │ POD-05 │ -                               │ Readiness probe failing                  │ all 5 pods ok                                 │
-│ 31 │ LOW    │  6 │ 2* │  4 │  48 │ HPA-01 │ -                               │ Cannot read metrics                      │ no hpas in scope                              │
-│ 32 │ LOW    │  6 │ 2* │  4 │  48 │ POD-02 │ -                               │ OOMKilled                                │ all 5 pods ok                                 │
-│ 33 │ LOW    │  6 │ 2* │  4 │  48 │ POD-04 │ -                               │ ImagePullBackOff                         │ all 5 pods ok                                 │
+WORKSHEET  58 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
+┌────┬────────┬────┬────┬────┬─────┬────────┬──────────────────────────────────────┬──────────────────────────────────────────┬──────────────────────────────────────────┐
+│ #  │ AP     │  S │  O │  D │ RPN │ ID     │ OBJECT                               │ FAILURE MODE                             │ NOW                                      │
+├────┼────────┼────┼────┼────┼─────┼────────┼──────────────────────────────────────┼──────────────────────────────────────────┼──────────────────────────────────────────┤
+│ 1  │ HIGH   │ 10 │ 2* │ 10 │ 200 │ CP-03  │ cluster                              │ No recent backup                         │ not visible on this cluster: etcd snaps~ │
+│ 2  │ HIGH   │  8 │ 10 │  4 │ 320 │ PVC-01 │ kdash-e2e/z-unbound                  │ Pending                                  │ claim is Pending - not bound to a volume │
+│ 3  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/missing-backend            │ No endpoints                             │ selector app=does-not-exist matches no ~ │
+│ 4  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-loadbalancer           │ No endpoints                             │ selector app=app-server matches no pod ~ │
+│ 5  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-nodeport               │ No endpoints                             │ selector app=app-server matches no pod ~ │
+│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash                    │ CrashLoopBackOff                         │ CrashLoopBackOff, 331 restarts (last: E~ │
+│ 7  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending                  │ Pending, unschedulable                   │ Pending                                  │
+│ 8  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-unschedulable            │ Pending, unschedulable                   │ Pending                                  │
+│ 9  │ HIGH   │  7 │ 10 │  4 │ 280 │ SVC-03 │ kdash-e2e/functionality-loadbalancer │ External IP pending                      │ LoadBalancer without an external IP      │
+│ 10 │ HIGH   │  7 │ 10 │  4 │ 280 │ SVC-03 │ kdash-e2e/web-loadbalancer           │ External IP pending                      │ LoadBalancer without an external IP      │
+│ 11 │ HIGH   │  5 │ 10 │  5 │ 250 │ HPA-02 │ kdash-e2e/functionality-legacy       │ Pinned at maxReplicas                    │ at maxReplicas 1                         │
+│ 12 │ MEDIUM │ 10 │ 2* │  5 │ 100 │ CP-02  │ cluster                              │ Quorum lost or unhealthy                 │ ok                                       │
+│ 13 │ MEDIUM │  8 │ 2* │ 10 │ 160 │ PVC-02 │ -                                    │ Volume full                              │ not visible on this cluster: kubelet vo~ │
+│ 14 │ MEDIUM │  7 │ 2* │  5 │  70 │ PVC-03 │ -                                    │ Attach or mount failure                  │ all 4 pvcs ok                            │
+│ 15 │ MEDIUM │  7 │  4 │  2 │  56 │ PVC-04 │ storageclass/local-path              │ Reclaim policy Delete on stateful data   │ 11 bound volume(s) deleted with their c~ │
+│ 16 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/deployment/app-server      │ All replicas on one node                 │ 2 of 2 replicas on dev                   │
+│ 17 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/statefulset/db-stateful    │ All replicas on one node                 │ 2 of 2 replicas on dev                   │
+│ 18 │ MEDIUM │  6 │ 10 │  4 │ 240 │ POD-04 │ kdash-e2e/z-imagepull                │ ImagePullBackOff                         │ ImagePullBackOff - the image cannot be ~ │
+│ 19 │ LOW    │ 10 │ 2* │  3 │  60 │ CP-01  │ cluster                              │ Unreachable or slow                      │ ok                                       │
+│ 20 │ LOW    │ 10 │ 2* │  2 │  40 │ CRT-01 │ cluster                              │ API or kubelet cert expiring             │ ok                                       │
+│ 21 │ LOW    │  9 │ 2* │  4 │  72 │ ADM-01 │ -                                    │ Webhook down with failurePolicy Fail     │ all 2 webhooks ok                        │
+│ 22 │ LOW    │  9 │ 2* │  4 │  72 │ DNS-01 │ -                                    │ DNS failing                              │ no dns in scope                          │
+│ 23 │ LOW    │  9 │ 2* │  4 │  72 │ WRK-01 │ -                                    │ All replicas unavailable                 │ all 1 deployments ok                     │
+│ 24 │ LOW    │  8 │ 2* │  4 │  64 │ NOD-01 │ -                                    │ NotReady                                 │ all 1 nodes ok                           │
+│ 25 │ LOW    │  8 │ 2* │  4 │  64 │ WRK-04 │ -                                    │ Ordinal stuck, later pods never start    │ all 2 statefulsets ok                    │
+│ 26 │ LOW    │  8 │ 2* │  3 │  48 │ ACC-02 │ cluster                              │ Provider unreachable or token expired    │ ok                                       │
+│ 27 │ LOW    │  7 │ 2* │  4 │  56 │ CFG-01 │ -                                    │ Referenced object missing                │ all 17 pods ok                           │
+│ 28 │ LOW    │  7 │ 2* │  4 │  56 │ JOB-02 │ -                                    │ Not running on schedule                  │ all 1 cronjobs ok                        │
+│ 29 │ LOW    │  7 │ 2* │  4 │  56 │ NOD-02 │ -                                    │ Memory, disk or PID pressure             │ all 1 nodes ok                           │
+│ 30 │ LOW    │  7 │ 2* │  3 │  42 │ ING-01 │ -                                    │ Backend Service missing                  │ all 2 ingresses ok                       │
+│ 31 │ LOW    │  7 │ 2* │  3 │  42 │ QTA-01 │ -                                    │ Quota nearly used up                     │ all 1 quotas ok                          │
+│ 32 │ LOW    │  7 │ 2* │  2 │  28 │ ING-02 │ -                                    │ TLS secret missing or expiring           │ all 2 ingresses ok                       │
+│ 33 │ LOW    │  6 │ 2* │  8 │  96 │ NET-01 │ -                                    │ Default deny blocks needed traffic       │ all 1 netpols ok                         │
 M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
- ○ LIVE 01:56:01  next 1s  data 0s old  spec 1/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/88 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html
+ ● LIVE 22:33:02  next 1s  data 1s old  spec 9/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/128 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html

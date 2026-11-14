@@ -1,8 +1,8 @@
 {
   "version": "4.32.0",
-  "source_sha256": "64debfaa8f2457ac56c51bc64b921d9a88e55578ec30e3bac613adf569a9c6ea",
-  "report": "reports/kdash_namespace_report_vcluster-docker_dev_kdash-e2e_20261114_015101.html",
-  "report_sha256": "da6f09faf162be7164c9a12c1c7e6ce32fc93c30664192e1ff069f014052fad3",
+  "source_sha256": "31f1bc9fe1a6d9510b24672a014ff7497b81a81beb39c8b6a96023ad98c8ff88",
+  "report": "reports/kdash_namespace_report_vcluster-docker_dev_kdash-e2e_20261114_222745.html",
+  "report_sha256": "27e2c9d576295ae28222149550d635811c164f07cacc1cf3989be87288d413a0",
   "status": "PASS",
   "checks": [
     {
@@ -99,60 +99,89 @@
       "name": "html-fmea-no-script-errors",
       "status": "PASS",
       "detail": ""
+    },
+    {
+      "name": "html-secrets-real-data",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-secrets-no-values",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-secrets-tables",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-secrets-no-script-errors",
+      "status": "PASS",
+      "detail": ""
     }
   ],
   "screenshots": [
     {
       "file": "samples/html4320/screenshots/overview.png",
-      "sha256": "262a24b383858debc5b317082a162479edaadac57ae6e2718797fc027eb97a26",
+      "sha256": "56ec356b6caf21d41da627dd41a0e3d5d80b7ed881a978bdaa81d3dc77a41cdd",
       "tab": "overview"
     },
     {
       "file": "samples/html4320/screenshots/pods.png",
-      "sha256": "9446bd25d8aa283341254341636a90ebe651ce7735414795f675d9ee80d6b820",
+      "sha256": "f39ba22735f6e91f9d768065fdf9cba962b7946638af5ff994ab9728f1bd9a9e",
       "tab": "pods"
     },
     {
       "file": "samples/html4320/screenshots/nodes.png",
-      "sha256": "4c43caad34e9fa242cb554fcc44053ef86463392f75432452a903de6a875ccec",
+      "sha256": "520446878fc7e92b6f6890966669ae7db32af9cb6ba82553e1dd6a101b55c485",
       "tab": "nodes"
     },
     {
       "file": "samples/html4320/screenshots/workloads.png",
-      "sha256": "9806900479da29446971925048ed936a27c1c0d1da686cec51ffd63629758304",
+      "sha256": "819b98a2f1157c731bb8b0ef2ac3597d50cc79fa7fe3674aea2881657575fd40",
       "tab": "workloads"
     },
     {
       "file": "samples/html4320/screenshots/ip.png",
-      "sha256": "cfe3fe877757aff3f7e6b2c96b0754dc5d0c8be42e311e7c1c1c13bff181a684",
+      "sha256": "d350fa7e89a22666b8dfb79ed3a91fcfab36ba5792b4bd77ec7dcd7963d0d668",
       "tab": "ip"
     },
     {
       "file": "samples/html4320/screenshots/mem.png",
-      "sha256": "3d3930aacf20f44622606a7cb4c2d8de688c785c33ae9b43c2f16fda7fe5747d",
+      "sha256": "1389dd9c3fa7f52050075705f6435d374c9575c3ddade52a84c2ab52013ecc1e",
       "tab": "mem"
     },
     {
       "file": "samples/html4320/screenshots/io.png",
-      "sha256": "d5d7a0a998d7bbe9bb0284264db9a0cca392be3f8a53fbf3db6d2f74090b7376",
+      "sha256": "0f8e1cba39429ff7f9cd680e0ce9ec78450721333db5d7c4acc9a7cb1968de02",
       "tab": "io"
     },
     {
       "file": "samples/html4320/screenshots/history.png",
-      "sha256": "a1356bf0d47db1fd7313bd95d120d5ba69e4adeb5ebd9e25677dc83f61493404",
+      "sha256": "df865bcb07b2db79210e4103176224ed882e7f10c7e32ab0e9874462954b8cac",
       "tab": "history"
     },
     {
       "file": "samples/html4320/screenshots/fmea.png",
-      "sha256": "aa3dce655fc4dd8845a41c98a2d902d647833e1549521fe59c3b4fd84515d222",
+      "sha256": "4d33a1fdde2c40eb3a3ce22933571994696415d89b326b7bda792c3a2d9ec606",
       "tab": "fmea"
+    },
+    {
+      "file": "samples/html4320/screenshots/secrets.png",
+      "sha256": "5110b98d152fc45d8e4079b907ca7c3b9351e2f6a07f43b50e585114d5fff221",
+      "tab": "secrets"
     }
   ],
   "errors": [],
   "additional_reports": [
     {
-      "report": "reports/fmea/fmea_vcluster-docker_dev_kdash-e2e_20261114_014728.html",
-      "sha256": "587da0e658efcde6d905c9ab94cc8ef1d874d4016cc0b2369255c5674585839b"
+      "report": "reports/fmea/fmea_vcluster-docker_dev_kdash-e2e_20261114_222411.html",
+      "sha256": "4b85621a2235e05ef0f733c9eee5886e271174a8b1346dcfaa1438e871c70742"
+    },
+    {
+      "report": "secrets/reports/secrets/secrets_vcluster-docker_dev_kdash-e2e_20261114_223449.html",
+      "sha256": "4d77cc418be2eaee68546edfc78c7266eef6d9ff45e701dd73f26a1ebca83194"
     }
   ]
 }

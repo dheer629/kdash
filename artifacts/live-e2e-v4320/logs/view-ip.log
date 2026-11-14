@@ -1,31 +1,54 @@
- KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:45:44 IST
- match .*   sorted by IP address
- ! pods 3/5 ready rst 118 oom 0 oomk 0 nolim 0 cpu 6m 1% lim mem 2Mi 1% lim wl 4
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                        audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 22:21:41 IST
+┌─ SCOPE ──────────────────────────┬─ POD HEALTH ────────────────────────────┬─ USAGE vs LIMITS ──────┬─ WORKLOADS ────┐
+│ match .*   sorted by IP address  │ ! pods 13/17 ready   restarts 369       │ cpu     60m   4% lim   │ workloads 13   │
+│ poll 2s  spec 0s/30s             │ OOM risk 0   OOMKilled 0   no-limit 1   │ mem     5Mi   1% lim   │                │
+└──────────────────────────────────┴─────────────────────────────────────────┴────────────────────────┴────────────────┘
  DATA ● pods fresh 0s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
- pod IPs 3 in use   no IP 2   host-network 0   duplicate 0   subnets 1
- services 2   ClusterIP 2   headless 0   NodePort 0   LoadBalancer 0   external addresses 0
-────────────────────────────────────────────────────────────────────────────────
-► POD SUBNETS (observed, /24) ─────────────────────────────────────────────────
+┌─ ADDRESSES ──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ pod IPs 14 in use   no IP 3   host-network 0   duplicate 0   subnets 1                                               │
+│ services 10   ClusterIP 6   headless 2   NodePort 2   LoadBalancer 2   external addresses 0                          │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+► POD SUBNETS (observed, /24) ─────────────────────────────────────────────────────────────────────────────────────────
   SUBNET                 PODS  NODES
-  10.244.0.0/24             3  dev
+  10.244.0.0/24            14  dev
 
-► NODE IP BLOCKS (per worker node) ────────────────────────────────────────────
+► NODE IP BLOCKS (per worker node) ────────────────────────────────────────────────────────────────────────────────────
   NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
-  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254     3     0 ░░░░░░░░░░  10.244.0.128/26
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 █░░░░░░░░░  10.244.0.128/26 10.244.0.0/26 10.244.0.192/26
 
-► SERVICES ────────────────────────────────────────────────────────────────────
+► SERVICES ────────────────────────────────────────────────────────────────────────────────────────────────────────────
   SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
   app-server                           ClusterIP              10.111.83.216    -                        80/TCP
+  db-headless                          ClusterIP/Headless     None             -                        5432/TCP
+  external-api                         ExternalName           -                -                        -
+  functionality-external               ExternalName           -                -                        -
+  functionality-headless               ClusterIP/Headless     None             -                        8080/TCP
+  functionality-loadbalancer           LoadBalancer           10.109.199.192   -                        8080/TCP
+  functionality-nodeport               NodePort               10.102.33.174    -                        8080/TCP
   missing-backend                      ClusterIP              10.104.104.128   -                        80/TCP
+  web-loadbalancer                     LoadBalancer           10.101.152.223   -                        80/TCP
+  web-nodeport                         NodePort               10.107.100.32    -                        80/TCP
 
-► POD IP ASSIGNMENTS ──────────────────────────────────────────────────────────
+► POD IP ASSIGNMENTS ──────────────────────────────────────────────────────────────────────────────────────────────────
   POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.19      functionality-legacy-67ks7                   dev                        172.18.0.2       functionality-legacy         
   10.244.0.133     z-crash                                      dev                        172.18.0.2       z-crash                      CrashLoopBackOff
   10.244.0.135     app-server-8fb4699bc-cx5vz                   dev                        172.18.0.2       app-server                   
   10.244.0.138     app-server-8fb4699bc-t7zxj                   dev                        172.18.0.2       app-server                   
+  10.244.0.148     sync-pod                                     dev                        172.18.0.2       sync-pod                     Succeeded
+  10.244.0.149     test-sts-0                                   dev                        172.18.0.2       test-sts                     
+  10.244.0.150     node-agent-ctvg6                             dev                        172.18.0.2       node-agent                   
+  10.244.0.152     z-imagepull                                  dev                        172.18.0.2       z-imagepull                  ImagePullBackOff
+  10.244.0.153     z-oom                                        dev                        172.18.0.2       z-oom                        
+  10.244.0.154     db-stateful-0                                dev                        172.18.0.2       db-stateful                  
+  10.244.0.156     db-stateful-1                                dev                        172.18.0.2       db-stateful                  
+  10.244.0.240     nightly-report-29911240-kvv2n                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.243     nightly-report-29911245-4tq7z                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.244     nightly-report-29911250-rbgfv                dev                        172.18.0.2       nightly-report               Succeeded
   -                completed-check-m9swm                        dev                        172.18.0.2       completed-check              NO_IP
   -                z-pending                                    (unscheduled)              -                z-pending                    NO_IP
-────────────────────────────────────────────────────────────────────────────────
+  -                z-unschedulable                              (unscheduled)              -                z-unschedulable              NO_IP
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the node IP.  DUPLICATE = same IP on 2+ pods.

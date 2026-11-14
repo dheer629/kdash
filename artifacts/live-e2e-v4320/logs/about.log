@@ -17,9 +17,9 @@ attachment are logged and stored (local audit log, central audit log when
 configured, and syslog).
 
 ┌─ AUDIT ──────────────────────────────────────────────────────────────────────────────────────────┐
-│ local    │ /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/audit~ │
-│ central  │ not configured (/mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live~ │
+│ local    │ /workspace/kdash/artifacts/live-e2e-v4320/audit~ │
+│ central  │ not configured (/workspace/kdash/artifacts/live~ │
 │ syslog   │ off                                                                                   │
-│ session  │ 20261114-014634-40217 (root@Dheeraj from local)                                       │
-│ accepted │ 2026-11-14T01:45:42+0530 root@Dheeraj from local via flag kdash 4.32.0                │
+│ session  │ 20261114-222319-62473 (root@Dheeraj from local)                                       │
+│ accepted │ 2026-11-14T22:21:36+0530 root@Dheeraj from local via flag kdash 4.32.0                │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘

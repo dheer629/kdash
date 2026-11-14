@@ -42,9 +42,9 @@ root@app$ exit
 
 
 
- KDASH   shell closed  app-server-8fb4699bc-cx5vz  container app  exit status 0  duration 4s  audited
- KDASH   session closed  context vcluster-docker_dev  namespace kdash-e2e  duration 3m 21s  audited
-        history  /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/reports/sessions/kdash_vcluster-docker_dev_kdash-e2e_20261114_014751
+ KDASH   shell closed  app-server-8fb4699bc-cx5vz  container app  exit status 0  duration 5s  audited
+ KDASH   session closed  context vcluster-docker_dev  namespace kdash-e2e  duration 3m 23s  audited
+        history  /workspace/kdash/artifacts/live-e2e-v4320/reports/sessions/kdash_vcluster-docker_dev_kdash-e2e_20261114_222433
         report   kdash --session-report latest   (every tab + the full history as HTML)
 
-Pane is dead (status 0, Sat Nov 14 01:51:13 2026)
+Pane is dead (status 0, Sat Nov 14 22:27:56 2026)

@@ -1,4 +1,0 @@
-EPOCH	NODE	POOL	STATUS	NS_PODS	NS_CPU_m	NS_MEM_Mi	NODE_CPU_m	NODE_MEM_Mi	NODE_MEM_ALLOC_Mi
-1794601511	dev	role:control-plane,master	Ready	4	7	2	184	2084	7524
-1794601513	dev	role:control-plane,master	Ready	4	7	2	184	2084	7524
-1794601516	dev	role:control-plane,master	Ready	4	7	2	184	2084	7524

@@ -1,0 +1,195 @@
+# Local end-to-end fixtures. Every object stays in the dedicated test namespace.
+# Existing deployment/statefulset/daemonset/job/cronjob, PVC and unhealthy-pod
+# fixtures are created by scripts/live-e2e.py --setup and remain unchanged here.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: functionality-reader
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: functionality-reader
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+rules:
+- apiGroups: [""]
+  resources: [pods, services, events, configmaps]
+  verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: functionality-reader
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+subjects:
+- {kind: ServiceAccount, name: functionality-reader, namespace: kdash-e2e}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: functionality-reader}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: functionality-content
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+data:
+  index.html: "Local Kubernetes functionality fixture\n"
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: functionality-legacy
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  replicas: 1
+  selector: {kdash-fixture: functionality, role: legacy}
+  template:
+    metadata:
+      labels: {kdash-fixture: functionality, role: legacy}
+    spec:
+      serviceAccountName: functionality-reader
+      containers:
+      - name: web
+        image: busybox:1.36
+        command: [httpd, -f, -p, "8080", -h, /data]
+        ports: [{name: http, containerPort: 8080}]
+        resources:
+          requests: {cpu: 10m, memory: 8Mi}
+          limits: {cpu: 50m, memory: 32Mi}
+        readinessProbe:
+          httpGet: {path: /, port: http}
+          initialDelaySeconds: 1
+          periodSeconds: 3
+        volumeMounts: [{name: content, mountPath: /data, readOnly: true}]
+      volumes:
+      - name: content
+        configMap: {name: functionality-content}
+---
+apiVersion: v1
+kind: PodTemplate
+metadata:
+  name: functionality-template
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+template:
+  metadata:
+    labels: {kdash-fixture: functionality, role: template}
+  spec:
+    serviceAccountName: functionality-reader
+    restartPolicy: Never
+    containers:
+    - name: check
+      image: busybox:1.36
+      command: [sh, -c, "echo local template validation"]
+      resources:
+        requests: {cpu: 10m, memory: 8Mi}
+        limits: {cpu: 50m, memory: 32Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: functionality-nodeport
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  type: NodePort
+  selector: {kdash-fixture: functionality, role: legacy}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: functionality-loadbalancer
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  type: LoadBalancer
+  selector: {kdash-fixture: functionality, role: legacy}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: functionality-headless
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  clusterIP: None
+  selector: {kdash-fixture: functionality, role: legacy}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: functionality-external
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  type: ExternalName
+  externalName: kubernetes.default.svc.cluster.local
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: functionality-legacy
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  scaleTargetRef: {apiVersion: v1, kind: ReplicationController, name: functionality-legacy}
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: {type: Utilization, averageUtilization: 80}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: functionality-legacy
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: {kdash-fixture: functionality, role: legacy}
+---
+apiVersion: coordination.k8s.io/v1
+kind: Lease
+metadata:
+  name: functionality-lease
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  holderIdentity: local-functionality-test
+  leaseDurationSeconds: 60
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: functionality-selfsigned
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: functionality-certificate
+  namespace: kdash-e2e
+  labels: {kdash-fixture: functionality}
+spec:
+  secretName: functionality-tls
+  duration: 720h
+  renewBefore: 168h
+  commonName: functionality.local.test
+  dnsNames: [functionality.local.test]
+  privateKey: {algorithm: ECDSA, size: 256}
+  issuerRef: {name: functionality-selfsigned, kind: Issuer}

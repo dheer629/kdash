@@ -1,17 +1,22 @@
  KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:55:09 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   22:32:03 IST
  match .*   sort cpu ▼ high first
- ! pods 3/5 ready rst 119 oom 0 oomk 0 nolim 0 cpu 7m 1% lim mem 2Mi 1% lim wl 4
-     ev15m ! 0 ^ 0
+ ! pods 13/17 ready rst 371 oom 0 oomk 0 nolim 1 cpu 61m 4% lim mem 5Mi 1% lim
+     wl 13 ev15m ! 0 ^ 0
  DATA ● pods fresh 4s old  metrics available │ C certs │ K check now │ i inspec›
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo›
                                        │   ACTUAL (live)    │    ASSIGNED (req ›
 WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  ME›
 ────────────────────────────────────────────────────────────────────────────────
-► Deployment app-server  (2 p~ 2/2  28 │      7 ·       2 · │     50    500    ›
-  app-server-8fb4699bc-cx5vz   2/2  14 │      4 ·       2 · │     25    250    ›
+► Pod z-oom  (1 pod)           1/1   0 │     51 ·       1 · │     10     50    ›
+  z-oom                        1/1   0 │     51 ·       1 · │     10     50    ›
+      node dev   pool role:control-plane,master   ip 10.244.0.153   qos Burstab›
+    └─ hog                     Y     0 │     51 ·       1 · │     10     50    ›
+................................................................................
+► Deployment app-server  (2 p~ 2/2  28 │      6 ·       3 · │     50    500    ›
+  app-server-8fb4699bc-cx5vz   2/2  14 │      3 ·       3 · │     25    250    ›
       node dev   pool role:control-plane,master   ip 10.244.0.135   qos Burstab›
-    ├─ app                     Y     7 │      3 ·       2 · │     20    200    ›
+    ├─ app                     Y     7 │      2 ·       3 · │     20    200    ›
         last-exit Unknown
     └─ sidecar                 Y     7 │      1 ·       0 · │      5     50    ›
         last-exit Unknown
@@ -19,12 +24,7 @@ WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim 
       node dev   pool role:control-plane,master   ip 10.244.0.138   qos Burstab›
     ├─ app                     Y     7 │      2 ·       0 · │     20    200    ›
         last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50    ›
-        last-exit Unknown
-................................................................................
-► Job completed-check  (1 pod) 0/1   0 │      - ·       - · │      5     50    ›
-  completed-check-m9swm        0/1   0 │      - ·       - · │      5     50    ›
 ────────────────────────────────────────────────────────────────────────────────
-TOTAL (5 pods, 4 workloads)        119 │      7 ·       2 · │     65    650    ›
+TOTAL (17 pods, 13 workloads)      371 │     61 ·       5 · │    265   1550    ›
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9›
- AUDITED session 20261114-015505-35294 - every action is logged; use is your re>
+ AUDITED session 20261114-223158-22901 - every action is logged; use is your re>

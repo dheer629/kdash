@@ -1,12 +1,12 @@
  KDASH │ UPLOAD │ REVIEW │ vcluster-docker_dev │ kdash-e2e                                                                                 nothing is copied before Enter
 
 ┌─ UPLOAD ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── review ─┐
-│ FROM   /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/work   this host                                                                │
+│ FROM   /workspace/kdash/artifacts/live-e2e-v4320/work   this host                                                                │
 │ TO     app-server-8fb4699bc-cx5vz ► app ► /tmp/kdash-transfer/   same names as here                                                                                   │
 ├────────────────────────────────┬────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ ITEM                           │       SIZE │ NOTE                                                                                                                    │
 ├────────────────────────────────┼────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ upload-tree/                   │        0 B │ directory - exists in the container                                                                                     │
+│ upload-tree/                   │        0 B │ directory                                                                                                               │
 ├────────────────────────────────┴────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ 1 item  ·  0 B  ·  SHA-256 verified after the copy                                                                                                                    │
 ├─────────────────────────────┬───────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
@@ -15,12 +15,12 @@
 │ readable here               │ ● pass    │ 1 of 1 item(s)                                                                                                              │
 │ tar in the container        │ ● pass    │ receives the stream                                                                                                         │
 │ destination writable        │ ● pass    │ /tmp/kdash-transfer                                                                                                         │
-│ free space in the container │ ● pass    │ 924.2 GiB free, about 1.0 KiB needed                                                                                        │
+│ free space in the container │ ● pass    │ 924.0 GiB free, about 1.0 KiB needed                                                                                        │
 │ checksum in the container   │ ● pass    │ sha256sum - every file is verified after the copy                                                                           │
-│ names                       │ ● check   │ 1 item already in the destination - Enter asks before replacing                                                             │
+│ names                       │ ● pass    │ same names as here, none exists in the destination yet                                                                      │
 └─────────────────────────────┴───────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-  READY   5 checks passed, 1 to note (yellow)
+  READY   all 6 checks passed
  <enter> upload  <d> other destination  <b> back to files  <q> cancel
  choose >
 

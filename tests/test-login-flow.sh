@@ -138,6 +138,7 @@ try:
         t = Terminal('continue-' + key.decode(), 'fail', r'''
 rc=0; login_interactive session || rc=$?
 printf '\nCONTINUED rc=%s needed=%s auto=%s\n' "$rc" "$LOGIN_NEEDED" "$LOGIN_AUTO_DONE"
+[ -z "${LOGIN_ACTIVE_TAG:-}" ] && [ -z "${LOGIN_HP:-}" ] || exit 96
 fetch; toolkit_tick
 auto_rc=0; login_auto_maybe || auto_rc=$?
 [ ! -e "$CASE_ROOT/fetch-started" ] || exit 91
@@ -171,6 +172,10 @@ printf '\nRETRY_OK count=%s needed=%s auto=%s\n' "$(cat "$CASE_ROOT/count")" "$L
         t.expect('Logged in as fixture-user.')
         t.expect('RETRY_OK count=2 needed=0 auto=0')
         t.exited()
+        tags = (t.path / 'tags').read_text().splitlines()
+        assert len(tags) == 2 and len(set(tags)) == 2, ('retry reused its login attempt tag', tags)
+        assert all(re.fullmatch(r'fixture-session-\d+-login-\d+-\d+', tag) for tag in tags), tags
+        checks += 2
 
     # Startup continue has the same persistent pause, even before the main loop.
     t = Terminal('startup-continue', 'fail', r'''

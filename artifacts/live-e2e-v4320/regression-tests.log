@@ -1,0 +1,112 @@
+kdash full fixture validation
+Started UTC: 2026-11-14T17:05:58.519982+00:00
+kdash SHA256: 31f1bc9fe1a6d9510b24672a014ff7497b81a81beb39c8b6a96023ad98c8ff88
+
+=== tests/test-build.sh (exit 0) ===
+PASS: import, build and check preserve synchronized files byte for byte
+PASS: check detects a stale embedded module refuses without changing files
+PASS: normal build propagates source module edits into both entry points
+PASS: bundle import recovers CLI, modules and uninstaller without changing the bundle
+PASS: normal build protects a newer bundle refuses without changing files
+PASS: import rejects a malformed payload marker refuses without changing files
+PASS: import rejects malformed module markers refuses without changing files
+PASS: import rejects an unknown module boundary refuses without changing files
+PASS: import rejects a duplicated module boundary refuses without changing files
+PASS: check detects a stale embedded uninstaller refuses without changing files
+PASS: normal build and import synchronize the standalone uninstaller
+PASS: build rejects a malformed uninstaller marker refuses without changing files
+PASS: 12 build/import checks (no cluster required)
+
+=== tests/test-capture-terminal.sh (exit 0) ===
+PASS: 23 terminal replay checks preserve bright colors, bold, reset, RGB/indexed payloads and reverse video
+
+=== tests/test-events.sh (exit 0) ===
+ok - quoted messages flatten controls, preserve literals and deduplicate Event identities
+ok - collection uses explicit context, bounded timeout and command-local scope flags
+ok - cached rendering filters by namespace and pod without network calls
+ok - explanations distinguish historical identities and print context-scoped read-only checks
+ok - image and storage explanations follow reason/message evidence
+ok - denied reads retain stale evidence while sanitizing diagnostic errors
+ok - unavailable, transport and malformed responses preserve unknown/stale coverage
+ok - scope changes cannot leak earlier cached evidence
+ok - recovery and successful empty responses replace earlier evidence
+ok - all-namespace reads keep command order and context changes invalidate cached rendering
+All Events tests passed.
+
+=== tests/test-fmea.sh (exit 0) ===
+/tmp/kdash-fmea-tests.Tu7MZ7o0/export.html
+PASS: 83 FMEA fixture checks
+
+=== tests/test-health.sh (exit 0) ===
+PASS bounded read-only collector scopes namespace flags after the resource
+PASS service and Ingress joins distinguish mismatch, unready, unknown, named ports and manual/DNS backends
+PASS storage joins bindings, class mode, pod mounts, recorded events and measured usage without equating allocation
+PASS all-namespace reads keep command-local flags in place and metrics joins keep namespace identity
+PASS optional API/RBAC failures stay unknown and do not become absent resources or zero endpoints
+PASS failed pod collection never becomes selector mismatch or zero mount references
+PASS unconfigured metrics remain unknown and do not trigger discovery or extra API permissions
+PASS configured URL/existing service proxy are reused and failed samples never reuse old measured data
+PASS successful empty resource responses replace prior data while empty metrics stay no-data
+9 health fixture tests passed.
+
+=== tests/test-inspector.sh (exit 0) ===
+PASS: inspector identity, bounded opt-in logs, search and highlighting, level filter, container drill-down, export, failures, filters and report isolation
+
+=== tests/test-interactive.sh (exit 0) ===
+== 1. with interactive mode off (the default) exec and cp are refused
+== 2. with --allow-interactive the same two verbs run, marked as writes
+== 3. the 12s command cap applies to reads, never to an attachment
+== 4. the shell: the exact argv, and the audit events around it
+== 5. upload and download: argv, direction and path hygiene
+== 6. path hygiene: credential-looking paths, absolute paths, control bytes
+== 7. off by default: the keys explain themselves and nothing runs
+== 8. the wiring is published: flag, keys, help and the embedded module
+interactive regression checks passed
+
+=== tests/test-login-cleanup.sh (exit 0) ===
+PASS: 27 login-cleanup checks, exact helper/tag scope, keep tree, detached login and TERM/KILL
+
+=== tests/test-login-flow.sh (exit 0) ===
+PASS: 39 login-flow PTY checks (no cluster or identity provider required)
+
+=== tests/test-mode-switch.sh (exit 0) ===
+PASS: 198 mode-switch terminal checks, guarded writes, detail panes, follow and parent state
+
+=== tests/test-runtime.sh (exit 0) ===
+panel views keep the standard header and their own body and footer
+PASS: runtime doctor, CLI scoping/filters, missing metrics, empty/error transitions, command deadline, panel wiring and asynchronous recovery
+
+=== tests/test-transfer-download-regressions.sh (exit 0) ===
+PASS: downloads verify before replacing destinations; keep both and hardlink caching preserve data; failed or incomplete verification leaves no partial files
+
+=== tests/test-transfer-progress.sh (exit 0) ===
+PASS: progress reaches 100% only after success; verification is cancellable and all nested workers stop
+
+=== tests/test-transfer-upload-regressions.sh (exit 0) ===
+PASS: uploads preserve files, links and empty directories; corruption, incomplete verification and failed stream stages return failure
+
+=== tests/test-transfer-verification.sh (exit 0) ===
+PASS: transfer fingerprints and archive checks catch corruption; mismatches fail and are audited; keep both and namespace defaults preserve user data
+
+=== tests/test-transfer.sh (exit 0) ===
+PASS: Python ZIP fallback preserves regular files and six file/directory/dangling links without reading host targets
+
+=== tests/test-uninstall.sh (exit 0) ===
+PASS test_installer_roundtrip
+PASS test_dry_run
+PASS test_binary_only
+PASS test_other_prefix_integration
+PASS test_default_prefix
+PASS test_malformed_markers
+PASS test_symlink_and_text_preservation
+PASS test_permission_failure
+PASS test_binary_symlinks
+PASS test_cli_validation
+PASS test_bundle_compatibility
+PASS test_shortcut_preservation
+Passed 12 uninstall integration tests.
+
+=== tests/test-visuals.sh (exit 0) ===
+PASS: 24 frame encoding, junction, clipping and width combinations (C/UTF-8, ASCII/Unicode, color/mono, 80/100/170 columns)
+
+PASS: 18/18 fixture scripts; kdash unchanged=True

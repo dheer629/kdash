@@ -1,0 +1,8 @@
+context=vcluster-docker_dev
+namespace=kdash-e2e
+pod=node-agent-ctvg6
+container=agent
+started_utc=2026-11-14T17:07:15Z
+remote_bin_seconds=1.795
+local_bin_seconds=0.020 path=/tmp/kdash-transfer-live.ScoUcGCu/bin-stage
+local_bin_seconds=0.784 path=/workspace/kdash/artifacts/live-e2e-v4320/transfer-live/.bin-stage.ERv00JYA

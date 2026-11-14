@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -34,6 +35,11 @@ class LiveE2E:
         self.binary = Path(os.path.abspath(Path(args.binary).expanduser()))
         self.stamp = time.strftime("%Y%m%d-%H%M%S")
         self.out = Path(os.path.abspath(args.output or self.repo / "artifacts" / ("live-e2e-" + self.stamp)))
+        # The audit chain is append-only and hash-linked, so a log left behind by
+        # an earlier run (or rewritten in transit by a cloud-sync client on a 9p
+        # mount) would make --audit-verify report a broken chain before this run
+        # writes anything. Every run starts its own audit directory.
+        shutil.rmtree(self.out / "audit", ignore_errors=True)
         for child in ("logs", "raw", "reports", "audit", "config", "work"):
             (self.out / child).mkdir(parents=True, exist_ok=True)
         self.env = os.environ.copy()
@@ -92,6 +98,7 @@ class LiveE2E:
             "version": self.version, "namespace": self.args.namespace,
             "context": self.args.context or "current", "started": self.stamp,
             "phase": self.args.phase, "completed": self.completed,
+            "cli_workers": self.args.workers,
             "sha256": self.source_sha256, "installed_sha256": self.installed_sha256,
             "binary_sha256": self.installed_sha256,
             "capture_source_sha256": self.source_sha256,
@@ -320,7 +327,6 @@ spec:
             ("explain", ["--explain", "z-crash"], ("z-crash",)),
             ("inspect-summary", ["--inspect", self.pod], (self.pod, "CONTAINERS")),
             ("inspect-logs", ["--inspect", self.pod, "--container", "app", "--logs", "current"], ("INFO request",)),
-            ("inspect-previous", ["--inspect", "z-crash", "--container", "crash", "--logs", "previous"], ("intentional validation failure",)),
             ("filter-label", ["--once", "--selector", "role=server"], ("app-server",)),
             ("filter-status", ["--once", "--status", "Running"], ("app-server",)),
             ("filter-workload", ["--once", "--workload", "app-server"], ("app-server",)),
@@ -342,6 +348,16 @@ spec:
             futures = [pool.submit(self.cli, name, opts, expect) for name, opts, expect in tasks]
             for f in concurrent.futures.as_completed(futures):
                 self.finish_cli(f.result())
+        previous_args = ["--inspect", "z-crash", "--container", "crash", "--logs", "previous"]
+        previous = self.cli("inspect-previous", previous_args, ("intentional validation failure",))
+        retries = 0
+        while not previous["passed"] and retries < 10 and \
+                "unable to retrieve container logs" in (self.out / "logs/inspect-previous.log").read_text().lower():
+            time.sleep(1)
+            retries += 1
+            previous = self.cli("inspect-previous", previous_args, ("intentional validation failure",))
+        previous["detail"] += f"; previous-log retries={retries}"
+        self.finish_cli(previous)
         for name, opts, expect in reports:
             self.finish_cli(self.cli(name, opts, expect))
         self.finish_cli(self.cli("all-namespaces", ["--once", "-v", "pods", "-A", "--no-cluster", "--selector", "app=kdash-e2e"], ("app-server",)))
@@ -614,6 +630,12 @@ spec:
             ("!", "11-explain", "INCIDENT EVIDENCE from actual failing workloads"),
         ]:
             self.key(s, key, delay=3)
+            if key == "8":
+                self.wait(s, "missing-backend", timeout=90)
+            elif key == "9":
+                self.wait(s, "z-unbound", timeout=90)
+            elif key == "E":
+                self.wait(s, "FailedScheduling|BackOff|Unhealthy", timeout=90)
             self.capture(s, stem, title)
         self.key(s, "1", "n", delay=3)
         self.capture(s, "12-namespace-picker", "Framed namespace picker with access and persistent default controls", "SELECT NAMESPACE")
@@ -646,7 +668,7 @@ spec:
         if "SELECT CONTAINER" in self.screen(s):
             self.key(s, "Enter", delay=3)
         self.text(s, "printf 'KDASH_DETAIL_MODE_OK\\n'; id", delay=1)
-        self.capture(s, "79-detail-shell", "Actual container shell opened after enabling X in detail", "KDASH_DETAIL_MODE_OK")
+        self.capture(s, "79-detail-shell", "Actual container shell opened after enabling X in detail", r"uid=\d+.*gid=")
         self.text(s, "exit", delay=3)
         self.key(s, "X")
         self.capture(s, "80-detail-interactive-off", "X disables interactive actions immediately in the inspector", "READ-ONLY")
@@ -693,7 +715,11 @@ spec:
         self.capture(bare, "67-namespace-saved-default", "A subsequent launch opens the namespace saved with d")
         self.record("namespace-default-next-launch", self.args.namespace in self.screen(bare),
                     "new process with no -n selected the persisted namespace")
-        self.key(bare, "n", "x", delay=2)
+        self.key(bare, "n", delay=2)
+        # Clear only takes effect from inside the namespace picker; give the
+        # picker time to open so x cannot race the dashboard key handler.
+        self.wait(bare, "SELECT NAMESPACE", timeout=20)
+        self.key(bare, "x", delay=3)
         self.record("namespace-clear-default", conf.exists() and (self.args.context + "=" + self.args.namespace) not in conf.read_text(),
                     "x removes the saved mapping without changing other settings")
         self.key(bare, "t")
@@ -756,13 +782,19 @@ spec:
         self.text(s, self.pod)
         self.key(s, "Enter", delay=4)
         self.text(s, "printf 'KDASH_E2E_SHELL_OK\\n'; id; pwd", delay=2)
-        self.capture(s, "26-shell-inside", "Actual shell inside the live app container", "KDASH_E2E_SHELL_OK")
+        self.capture(s, "26-shell-inside", "Actual shell inside the live app container", r"uid=\d+.*gid=")
         self.text(s, "exit", delay=3)
         # A fresh session starts with an empty picker filter. Reusing the shell
         # session keeps its filter, and the C-u that clears it is only handled while
         # the filter is being edited, so the pod name could be appended to the old
         # value and match nothing.
         self.tm("kill-session", "-t", s)
+        # Uploads must exercise the real copy rather than stop at a name-conflict
+        # left by an earlier run. Reset only the documented fixture directory.
+        reset = self.call(self.kc + ["-n", self.args.namespace, "exec", self.pod, "-c", "app", "--", "sh", "-c",
+                                     "rm -rf -- /tmp/kdash-transfer && mkdir -p -- /tmp/kdash-transfer"])
+        self.record("transfer-destination-reset", reset.returncode == 0,
+                    "private fixture upload destination starts empty for the real copy and result capture")
         s = self.transfer_browser("files-upload", "U")
         self.capture(s, "27-upload-browser", "Local framed file browser with enabled upload actions", "THIS HOST|SELECT LOCAL FILES")
         self.key(s, "/")
@@ -774,13 +806,19 @@ spec:
         self.key(s, "u", delay=3)
         self.capture(s, "29-upload-review", "Upload preflight checks and explicit review", "UPLOAD|confirm")
         self.key(s, "Enter", delay=5)
-        self.capture(s, "30-upload-result", "Real upload result with source and destination hashes", "UPLOAD|verified|match")
+        self.capture(s, "30-upload-result", "Real upload result with source and destination hashes", "UPLOAD.*RESULT|SAVED")
         actual = self.call(self.kc + ["-n", self.args.namespace, "exec", self.pod, "-c", "app", "--", "cat", "/tmp/kdash-transfer/upload.txt"])
         self.record("upload-roundtrip-bytes", actual.returncode == 0 and actual.stdout.encode() == self.payload,
                     "uploaded file read independently through kubectl exec and compared byte for byte")
         self.tm("kill-session", "-t", s)
         self.directory_upload()
         work = self.out / "work"
+        # Reset transfer artifacts so a re-run starts from a known local state:
+        # stale archives or "upload (2).txt" would otherwise satisfy the name
+        # checks without exercising them.
+        for leftover in ("upload.txt", "upload (2).txt", "upload (3).txt",
+                         "upload-tree.zip", "upload-tree.tar.gz"):
+            (work / leftover).unlink(missing_ok=True)
         (work / "upload.txt").write_text("local value before replace\n")
         self.download("download-replace", "upload.txt", conflict="r", stems=("31-download-browser", "49-download-review", "50-download-result"))
         self.record("download-default-plain-replace", (work / "upload.txt").read_bytes() == self.payload,
@@ -829,7 +867,7 @@ spec:
         self.key(s, "u", delay=3)
         self.capture(s, "70-directory-upload-review", "Directory upload preflight and recursive checksum checks", "UPLOAD")
         self.key(s, "Enter", delay=5)
-        self.capture(s, "71-directory-upload-result", "Actual directory upload with recursive fingerprints", "UPLOAD|RESULT")
+        self.capture(s, "71-directory-upload-result", "Actual directory upload with recursive fingerprints", "UPLOAD.*RESULT|SAVED")
         actual = self.call(self.kc + ["-n", self.args.namespace, "exec", self.pod, "-c", "app", "--", "cat", "/tmp/kdash-transfer/upload-tree/nested/child.txt"])
         self.record("directory-upload-bytes", actual.returncode == 0 and actual.stdout.encode() == self.payload,
                     "independent kubectl read confirms the uploaded nested file bytes")
@@ -849,10 +887,13 @@ spec:
         if stems[1]:
             self.capture(s, stems[1], "Download preflight, selected format and name conflict checks", "DOWNLOAD")
         self.key(s, "Enter", delay=1)
-        if conflict:
-            self.wait(s, "r replace|keep both", timeout=10)
-            self.key(s, conflict, delay=5)
-        else:
+        # A previous run can leave the destination file behind, which makes the
+        # real kdash name-check prompt appear. Answer it when it shows, and fall
+        # back to a plain wait when the destination is clean.
+        try:
+            self.wait(s, "r replace|keep both", timeout=6)
+            self.key(s, conflict or "r", delay=5)
+        except RuntimeError:
             time.sleep(4)
         if stems[2]:
             self.capture(s, stems[2], "Real download result and per-item hash verification", "DOWNLOAD.*RESULT|SAVED")
@@ -967,7 +1008,7 @@ def main():
     parser.add_argument("--gallery", default="samples/cli_4232")
     parser.add_argument("--setup", action="store_true", help="create the isolated, intentionally healthy/unhealthy fixture resources")
     parser.add_argument("--phase", choices=("all", "cli", "ui"), default="all")
-    parser.add_argument("--workers", type=int, default=3)
+    parser.add_argument("--workers", type=int, default=1, help="CLI checks run one by one by default")
     parser.add_argument("--no-render", action="store_true")
     parser.add_argument("--native-screenshots", action="store_true", help="also capture actual xterm windows on an isolated local Xvfb display")
     args = parser.parse_args()

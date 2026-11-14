@@ -1,0 +1,10 @@
+PASS bounded read-only collector scopes namespace flags after the resource
+PASS service and Ingress joins distinguish mismatch, unready, unknown, named ports and manual/DNS backends
+PASS storage joins bindings, class mode, pod mounts, recorded events and measured usage without equating allocation
+PASS all-namespace reads keep command-local flags in place and metrics joins keep namespace identity
+PASS optional API/RBAC failures stay unknown and do not become absent resources or zero endpoints
+PASS failed pod collection never becomes selector mismatch or zero mount references
+PASS unconfigured metrics remain unknown and do not trigger discovery or extra API permissions
+PASS configured URL/existing service proxy are reused and failed samples never reuse old measured data
+PASS successful empty resource responses replace prior data while empty metrics stay no-data
+9 health fixture tests passed.

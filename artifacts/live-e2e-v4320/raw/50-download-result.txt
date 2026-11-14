@@ -1,8 +1,8 @@
  KDASH │ DOWNLOAD │ RESULT │ vcluster-docker_dev │ kdash-e2e                                                                                                      audited
 
 ┌─ DOWNLOAD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── result ─┐
-│  VERIFIED   1 item identical  ·  SHA-256  ·  1s                                                                                                                       │
-│ SAVED  /mnt/c/Users/user/OneDrive/Desktop/AI Projects/kdash/artifacts/live-e2e-v4320/work/   upload.txt                                                              │
+│  VERIFIED   1 item identical  ·  SHA-256  ·  under 1s                                                                                                                 │
+│ SAVED  /workspace/kdash/artifacts/live-e2e-v4320/work/   upload.txt                                                              │
 │ FROM   app-server-8fb4699bc-cx5vz ► app ► /tmp/kdash-transfer                                                                                                         │
 ├──────────────────────────────────────────────────────────────────────────────────┬───────┬───────┬──────────────┬──────────────┬─────────────────────┬────────────────┤
 │ ITEM                                                                             │ TYPE  │ FILES │ IN CONTAINER │         HERE │ SHA-256             │ CHECK          │

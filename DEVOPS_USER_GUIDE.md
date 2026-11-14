@@ -32,9 +32,21 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 ## Current 4.32.0 validation and visual changes
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4320` records **198 passed live checks**, **19 passed browser checks** and **91 native WSL terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
+Run `live-e2e-v4320` records **199 passed live checks**, **23 passed browser checks** and **96 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
 [Inspect the recorded checks](artifacts/live-e2e-v4320/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

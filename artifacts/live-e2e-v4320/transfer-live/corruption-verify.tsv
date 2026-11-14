@@ -1,0 +1,5 @@
+ITEM	TYPE	>FILES	>LOCAL	>REMOTE	SHA-256	CHECK
+plain file.txt	file	1	23 B	23 B	a1bd26a7be..f3c144	{g}* identical
+tree/	dir	2	256.0 KiB	256.0 KiB	270b7b7e0a..38c9b6	{r}* content differs
+dangling-link	link	0	15 B	15 B	d376093328..ecae93	{g}* identical
+directory-link	link	0	5 B	5 B	f27e01fe76..8cdfb8	{g}* identical

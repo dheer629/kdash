@@ -1,41 +1,98 @@
- KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:46:10 IST
- match .*   sort cpu ▼ high first
- ! pods 3/5 ready rst 118 oom 0 oomk 0 nolim 0 cpu 6m 1% lim mem 2Mi 1% lim wl 4
- DATA ● pods fresh 0s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                        audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 22:22:55 IST
+┌─ SCOPE ───────────────────────────┬─ POD HEALTH ───────────────────────────┬─ USAGE vs LIMITS ──────┬─ WORKLOADS ────┐
+│ match .*   sort cpu ▼ high first  │ ! pods 13/17 ready   restarts 369      │ cpu     60m   4% lim   │ workloads 13   │
+│ poll 2s  spec 1s/30s              │ OOM risk 0   OOMKilled 0   no-limit 1  │ mem     5Mi   1% lim   │                │
+└───────────────────────────────────┴────────────────────────────────────────┴────────────────────────┴────────────────┘
+ DATA ● pods fresh 1s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
-                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
-WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
-────────────────────────────────────────────────────────────────────────────────
-► Deployment app-server  (2 p~ 2/2  28 │      6 ·       2 · │     50    500      24     192 │  12.0   1.2   8.3   1.0
-  app-server-8fb4699bc-cx5vz   2/2  14 │      3 ·       2 · │     25    250      12      96 │  12.0   1.2  16.7   2.1
+                                         │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER       RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► Pod z-oom  (1 pod)             1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+  z-oom                          1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+      node dev   pool role:control-plane,master   ip 10.244.0.153   qos Burstable   status Running
+    └─ hog                       Y     0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+........................................................................................................................
+► Deployment app-server  (2 pod~ 2/2  28 │      5 ·       3 · │     50    500      24     192 │  10.0   1.0  12.5   1.6
+  app-server-8fb4699bc-cx5vz     2/2  14 │      3 ·       3 · │     25    250      12      96 │  12.0   1.2  25.0   3.1
       node dev   pool role:control-plane,master   ip 10.244.0.135   qos Burstable   status Running   last-exit Unknown
-    ├─ app                     Y     7 │      2 ·       2 · │     20    200       8      64 │  10.0   1.0  25.0   3.1
+    ├─ app                       Y     7 │      2 ·       3 · │     20    200       8      64 │  10.0   1.0  37.5   4.7
         last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+    └─ sidecar                   Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
         last-exit Unknown
-  app-server-8fb4699bc-t7zxj   2/2  14 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2   0.0   0.0
+  app-server-8fb4699bc-t7zxj     2/2  14 │      2 ·       0 · │     25    250      12      96 │   8.0   0.8   0.0   0.0
       node dev   pool role:control-plane,master   ip 10.244.0.138   qos Burstable   status Running   last-exit Unknown
-    ├─ app                     Y     7 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0   0.0   0.0
+    ├─ app                       Y     7 │      1 ·       0 · │     20    200       8      64 │   5.0   0.5   0.0   0.0
         last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+    └─ sidecar                   Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
         last-exit Unknown
-................................................................................
-► Job completed-check  (1 pod) 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  completed-check-m9swm        0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► StatefulSet db-stateful  (2 p~ 2/2   0 │      2 ·       0 · │     40    200      64     128 │   5.0   1.0   0.0   0.0
+  db-stateful-0                  1/1   0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.154   qos Burstable   status Running
+    └─ db                        Y     0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+  db-stateful-1                  1/1   0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.156   qos Burstable   status Running
+    └─ db                        Y     0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+........................................................................................................................
+► ReplicationController functio~ 1/1   0 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0   0.0   0.0
+  functionality-legacy-67ks7     1/1   0 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.19   qos Burstable   status Running
+    └─ web                       Y     0 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0   0.0   0.0
+........................................................................................................................
+► DaemonSet node-agent  (1 pod)  1/1   0 │      1 ·       1 · │     10     50      16      32 │  10.0   2.0   6.2   3.1
+  node-agent-ctvg6               1/1   0 │      1 ·       1 · │     10     50      16      32 │  10.0   2.0   6.2   3.1
+      node dev   pool role:control-plane,master   ip 10.244.0.150   qos Burstable   status Running
+    └─ agent                     Y     0 │      1 ·       1 · │     10     50      16      32 │  10.0   2.0   6.2   3.1
+........................................................................................................................
+► StatefulSet test-sts  (1 pod)  1/1  12 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+  test-sts-0                     1/1  12 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.149   qos BestEffort   status Running
+    └─ c                         Y    12 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+........................................................................................................................
+► Job completed-check  (1 pod)   0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  completed-check-m9swm          0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
       node dev   pool role:control-plane,master   ip -   qos Burstable   status Succeeded
-    └─ check                   N     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-................................................................................
-► Pod z-crash  (1 pod)         0/1  90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  z-crash                      0/1  90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+    └─ check                     N     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► CronJob nightly-report  (3 po~ 0/3   0 │      - ·       - · │     30    150      48      96 │     -     -     -     -
+  nightly-report-29911240-kvv2n  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.240   qos Burstable   status Succeeded
+    └─ report                    N     0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+  nightly-report-29911245-4tq7z  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.243   qos Burstable   status Succeeded
+    └─ report                    N     0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+  nightly-report-29911250-rbgfv  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.244   qos Burstable   status Succeeded
+    └─ report                    N     0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+........................................................................................................................
+► Pod sync-pod  (1 pod)          0/1   0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+  sync-pod                       0/1   0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.148   qos BestEffort   status Succeeded
+    └─ sync-pod                  N     0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+........................................................................................................................
+► Pod z-crash  (1 pod)           0/1 329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-crash                        0/1 329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
       node dev   pool role:control-plane,master   ip 10.244.0.133   qos Burstable   status CrashLoopBackOff   last-exit Error
-    └─ crash                   N    90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+    └─ crash                     N   329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
         waiting CrashLoopBackOff   last-exit Error
-................................................................................
-► Pod z-pending  (1 pod)       0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  z-pending                    0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Pod z-imagepull  (1 pod)       0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+  z-imagepull                    0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.152   qos Burstable   status ImagePullBackOff
+    └─ bad                       N     0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+        waiting ImagePullBackOff   
+........................................................................................................................
+► Pod z-pending  (1 pod)         0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-pending                      0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
       node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
-    └─ pending                 -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-────────────────────────────────────────────────────────────────────────────────
-TOTAL (5 pods, 4 workloads)        118 │      6 ·       2 · │     65    650      36     288 │   9.2   0.9   5.6   0.7
+    └─ pending                   -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Pod z-unschedulable  (1 pod)   0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+  z-unschedulable                0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    └─ wait                      -     0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (17 pods, 13 workloads)        369 │     60 ·       5 · │    265   1550     244     848 │  22.6   3.9   2.0   0.6
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.

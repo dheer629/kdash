@@ -2,7 +2,7 @@
  KDASH | SHELL | context vcluster-docker_dev | namespace kdash-e2e | audited    exit: back   exit 198: related pods   exit 197: leave kdash
  POD        app-server-8fb4699bc-cx5vz | Running   ready 2/2   restarts 14   QoS Burstable
  CONTAINER  app  busybox:1.36 | state Running, ready, restarts 7, last exit Unknown exit=255
- NODE       dev   10.244.0.135 | cpu 3m / 250m   mem 2Mi / 96Mi (2%)   user root
+ NODE       dev   10.244.0.135 | cpu 2m / 250m   mem 3Mi / 96Mi (3%)   user root
 
 root@app$ printf 'KDASH_E2E_SHELL_OK\n'; id; pwd
 KDASH_E2E_SHELL_OK

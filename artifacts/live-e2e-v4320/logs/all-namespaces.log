@@ -1,41 +1,70 @@
- KDASH 4.32.0 │ context vcluster-docker_dev │ namespace (all namespaces)        
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:46:32 IST
- match .* label=app=kdash-e2e   sort cpu ▼ high first
- ! pods 3/5 ready rst 118 oom 0 oomk 0 nolim 0 cpu 6m 1% lim mem 2Mi 1% lim wl 4
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace (all namespaces)                 audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 22:23:17 IST
+┌─ SCOPE ──────────────────────────┬─ POD HEALTH ─────────────────────────┬─ USAGE vs LIMITS ────────┬─ WORKLOADS ─────┐
+│ match .* label=app=kdash-e2e     │ ! pods 6/10 ready   restarts 367     │ cpu     10m   1% lim     │ workloads 8     │
+│ sort cpu ▼ high first            │ OOM risk 0   OOMKilled 0             │ mem     3Mi   1% lim     │                 │
+│ poll 2s  spec 1s/30s             │ no-limit 0                           │                          │                 │
+└──────────────────────────────────┴──────────────────────────────────────┴──────────────────────────┴─────────────────┘
  DATA ● pods fresh 1s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
-                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+                                         │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
 WORKLOAD / NAMESPACE / POD / CONTAINER RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
-────────────────────────────────────────────────────────────────────────────────
-► Deployment kdash-e2e/app-se~ 2/2  28 │      6 ·       2 · │     50    500      24     192 │  12.0   1.2   8.3   1.0
-  kdash-e2e/app-server-8fb469~ 2/2  14 │      3 ·       2 · │     25    250      12      96 │  12.0   1.2  16.7   2.1
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► Deployment kdash-e2e-qa-20261~ 2/2   0 │      6 ·       0 · │     50    500      24     192 │  12.0   1.2   0.0   0.0
+  kdash-e2e-qa-20261114-fast/ap~ 2/2   0 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.233   qos Burstable   status Running
+    ├─ app                       Y     0 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0   0.0   0.0
+    └─ sidecar                   Y     0 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+  kdash-e2e-qa-20261114-fast/ap~ 2/2   0 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.232   qos Burstable   status Running
+    ├─ app                       Y     0 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0   0.0   0.0
+    └─ sidecar                   Y     0 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+........................................................................................................................
+► Deployment kdash-e2e/app-serv~ 2/2  28 │      4 ·       3 · │     50    500      24     192 │   8.0   0.8  12.5   1.6
+  kdash-e2e/app-server-8fb4699b~ 2/2  14 │      2 ·       3 · │     25    250      12      96 │   8.0   0.8  25.0   3.1
       node dev   pool role:control-plane,master   ip 10.244.0.135   qos Burstable   status Running   last-exit Unknown
-    ├─ app                     Y     7 │      2 ·       2 · │     20    200       8      64 │  10.0   1.0  25.0   3.1
+    ├─ app                       Y     7 │      1 ·       3 · │     20    200       8      64 │   5.0   0.5  37.5   4.7
         last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+    └─ sidecar                   Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
         last-exit Unknown
-  kdash-e2e/app-server-8fb469~ 2/2  14 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2   0.0   0.0
+  kdash-e2e/app-server-8fb4699b~ 2/2  14 │      2 ·       0 · │     25    250      12      96 │   8.0   0.8   0.0   0.0
       node dev   pool role:control-plane,master   ip 10.244.0.138   qos Burstable   status Running   last-exit Unknown
-    ├─ app                     Y     7 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0   0.0   0.0
+    ├─ app                       Y     7 │      1 ·       0 · │     20    200       8      64 │   5.0   0.5   0.0   0.0
         last-exit Unknown
-    └─ sidecar                 Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+    └─ sidecar                   Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
         last-exit Unknown
-................................................................................
-► Job kdash-e2e/completed-che~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  kdash-e2e/completed-check-m~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-      node dev   pool role:control-plane,master   ip -   qos Burstable   status Succeeded
-    └─ check                   N     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-................................................................................
-► Pod kdash-e2e/z-crash  (1 p~ 0/1  90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  kdash-e2e/z-crash            0/1  90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-      node dev   pool role:control-plane,master   ip 10.244.0.133   qos Burstable   status CrashLoopBackOff   last-exit Error
-    └─ crash                   N    90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Job kdash-e2e-qa-20261114-fas~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  kdash-e2e-qa-20261114-fast/co~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.231   qos Burstable   status Succeeded
+    └─ check                     N     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Pod kdash-e2e-qa-20261114-fas~ 0/1  10 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  kdash-e2e-qa-20261114-fast/z-~ 0/1  10 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.230   qos Burstable   status CrashLoopBackOff   last-exit Error
+    └─ crash                     N    10 │      - ·       - · │      5     50       4      32 │     -     -     -     -
         waiting CrashLoopBackOff   last-exit Error
-................................................................................
-► Pod kdash-e2e/z-pending  (1~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  kdash-e2e/z-pending          0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Pod kdash-e2e-qa-20261114-fas~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  kdash-e2e-qa-20261114-fast/z-~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
       node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
-    └─ pending                 -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-────────────────────────────────────────────────────────────────────────────────
-TOTAL (5 pods, 4 workloads)        118 │      6 ·       2 · │     65    650      36     288 │   9.2   0.9   5.6   0.7
+    └─ pending                   -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Job kdash-e2e/completed-check~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  kdash-e2e/completed-check-m9s~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Succeeded
+    └─ check                     N     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Pod kdash-e2e/z-crash  (1 pod) 0/1 329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  kdash-e2e/z-crash              0/1 329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.133   qos Burstable   status CrashLoopBackOff   last-exit Error
+    └─ crash                     N   329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+        waiting CrashLoopBackOff   last-exit Error
+........................................................................................................................
+► Pod kdash-e2e/z-pending  (1 p~ 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  kdash-e2e/z-pending            0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    └─ pending                   -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (10 pods, 8 workloads)         367 │     10 ·       3 · │    130   1300      72     576 │   7.7   0.8   4.2   0.5
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.

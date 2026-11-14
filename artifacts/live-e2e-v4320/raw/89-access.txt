@@ -1,13 +1,13 @@
  KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 01:56:05 IST
-┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
-│ match .*   sort cpu ▼ high first                     │ ! pods 3/5 ready   restarts 120             │ cpu      6m ░░░░░░░░   1% lim       │ workloads 4                 │
-│ poll 2s  spec 5s/30s   session 01:55:29 up 36s       │ OOM risk 0   OOMKilled 0   no-limit 0       │ mem     2Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 1         │
-└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
- DATA ● pods fresh 5s old  metrics available │ C certs  M fmea (5 high, 100% visible) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-14 22:33:06 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 371           │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 13s/30s   session 22:32:23 up 43s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 13s old  metrics available │ C certs (1 expiring)  M fmea (11 high, 96% visible) │ K check now │ i inspect │ 8 services  9 storage  E events  ! explai›
  ACCESS   what you may read, checked with kubectl auth whoami / can-i - every FMEA check runs only where this allows
 
- user kubernetes-super-admin   groups system:masters system:authenticated   context vcluster-docker_dev   scope kdash-e2e   checked 11s ago
+ user kubernetes-super-admin   groups system:masters system:authenticated   context vcluster-docker_dev   scope kdash-e2e   checked 12s ago
 
 PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) and never asks for more
 ┌──────────────────────────────────────────────────────────┬─────────────┬─────────┬─────────────────────────────────────────────────────────────────────────────────────┐
@@ -41,10 +41,10 @@ PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) a
 │ list validatingwebhookconfigurations.admissionregistrat~ │ cluster     │ ● yes   │ ADM-01                                                                              │
 └──────────────────────────────────────────────────────────┴─────────────┴─────────┴─────────────────────────────────────────────────────────────────────────────────────┘
 
-COVERAGE  2 levels   full = every check runs; partial = a fallback signal, D + 2; none = no access, D 10 and never counted as OK
-┌───────────┬───────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ACCESS    │ MODES │ IDS                                                                                                                                                │
-├───────────┼───────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ ● full    │    49 │ CP-03 PVC-01 SVC-01 POD-01 POD-03 CP-02 PVC-03 PVC-04 WRK-07 CP-01 CRT-01 ADM-01 DNS-01 WRK-01 NOD-01 WRK-04 ACC-02 CFG-01 JOB-02 NOD-02 SVC-03 I~ │
+COVERAGE  1 level   full = every check runs; partial = a fallback signal, D + 2; none = no access, D 10 and never counted as OK
+┌────────┬───────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ACCESS │ MODES │ IDS                                                                                                                                                   │
+├────────┼───────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ● full │    50 │ CP-03 PVC-01 SVC-01 POD-01 POD-03 SVC-03 HPA-02 CP-02 PVC-02 PVC-03 PVC-04 WRK-07 POD-04 CP-01 CRT-01 ADM-01 DNS-01 WRK-01 NOD-01 WRK-04 ACC-02 CFG-~ │
 M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
- ○ LIVE 01:56:05  next 2s  data 2s old  spec 5/30s  fetch 0.0s  poll 2s  AUDITED | access | rows 1-41/44 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause  x html
+ ● LIVE 22:33:06  next 2s  data 2s old  spec 13/30s  fetch 0.0s  poll 2s  AUDITED | access | rows 1-41/43 | ? help  1-9 view  n ns  s sort(cpu)  / filter  P pause

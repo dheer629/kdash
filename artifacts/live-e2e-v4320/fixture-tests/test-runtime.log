@@ -1,0 +1,2 @@
+panel views keep the standard header and their own body and footer
+PASS: runtime doctor, CLI scoping/filters, missing metrics, empty/error transitions, command deadline, panel wiring and asynchronous recovery

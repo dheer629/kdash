@@ -1,20 +1,40 @@
 # ip
 POD,POD_IP,NODE,POOL,HOST_IP,KIND,WORKLOAD,STATUS,NOTE
+functionality-legacy-67ks7,10.244.0.19,dev,"role:control-plane,master",172.18.0.2,ReplicationController,functionality-legacy,Running,
 z-crash,10.244.0.133,dev,"role:control-plane,master",172.18.0.2,Pod,z-crash,CrashLoopBackOff,
 app-server-8fb4699bc-cx5vz,10.244.0.135,dev,"role:control-plane,master",172.18.0.2,Deployment,app-server,Running,
 app-server-8fb4699bc-t7zxj,10.244.0.138,dev,"role:control-plane,master",172.18.0.2,Deployment,app-server,Running,
+sync-pod,10.244.0.148,dev,"role:control-plane,master",172.18.0.2,Pod,sync-pod,Succeeded,
+test-sts-0,10.244.0.149,dev,"role:control-plane,master",172.18.0.2,StatefulSet,test-sts,Running,
+node-agent-ctvg6,10.244.0.150,dev,"role:control-plane,master",172.18.0.2,DaemonSet,node-agent,Running,
+z-imagepull,10.244.0.152,dev,"role:control-plane,master",172.18.0.2,Pod,z-imagepull,ImagePullBackOff,
+z-oom,10.244.0.153,dev,"role:control-plane,master",172.18.0.2,Pod,z-oom,Running,
+db-stateful-0,10.244.0.154,dev,"role:control-plane,master",172.18.0.2,StatefulSet,db-stateful,Running,
+db-stateful-1,10.244.0.156,dev,"role:control-plane,master",172.18.0.2,StatefulSet,db-stateful,Running,
+nightly-report-29911240-kvv2n,10.244.0.240,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
+nightly-report-29911245-4tq7z,10.244.0.243,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
+nightly-report-29911250-rbgfv,10.244.0.244,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
 completed-check-m9swm,,dev,"role:control-plane,master",172.18.0.2,Job,completed-check,Succeeded,NO_IP
 z-pending,,(unscheduled),(none),,Pod,z-pending,Pending,NO_IP
+z-unschedulable,,(unscheduled),(none),,Pod,z-unschedulable,Pending,NO_IP
 
 # subnets
 SUBNET,PODS,NODES
-10.244.0.0/24,3,dev
+10.244.0.0/24,14,dev
 
 # ipblocks
 NODE,POOL,INTERNAL_IP,POD_CIDR,CIDR_ADDRESSES,NS_PODS_WITH_IP,HOST_NETWORK_PODS,IP_BLOCKS_OBSERVED
-dev,"role:control-plane,master",172.18.0.2,10.244.0.0/24,254,3,0,10.244.0.128/26
+dev,"role:control-plane,master",172.18.0.2,10.244.0.0/24,254,14,0,10.244.0.128/26 10.244.0.0/26 10.244.0.192/26
 
 # services
 NAMESPACE,SERVICE,TYPE,CLUSTER_IP,EXTERNAL_IPS,LB_INGRESS,PORTS
 kdash-e2e,app-server,ClusterIP,10.111.83.216,,,80/TCP
+kdash-e2e,db-headless,ClusterIP/Headless,None,,,5432/TCP
+kdash-e2e,external-api,ExternalName,,,,
+kdash-e2e,functionality-external,ExternalName,,,,
+kdash-e2e,functionality-headless,ClusterIP/Headless,None,,,8080/TCP
+kdash-e2e,functionality-loadbalancer,LoadBalancer,10.109.199.192,,,8080/TCP
+kdash-e2e,functionality-nodeport,NodePort,10.102.33.174,,,8080/TCP
 kdash-e2e,missing-backend,ClusterIP,10.104.104.128,,,80/TCP
+kdash-e2e,web-loadbalancer,LoadBalancer,10.101.152.223,,,80/TCP
+kdash-e2e,web-nodeport,NodePort,10.107.100.32,,,80/TCP

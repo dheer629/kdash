@@ -1,22 +1,36 @@
- KDASH 4.32.0 │ context vcluster-docker_dev │ namespace kdash-e2e       audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   01:46:08 IST
- match .* unhealthy   sort cpu ▼ high first
- ! pods 0/2 ready rst 90 oom 0 oomk 0 nolim 0 cpu 0m 0% lim mem 0Mi 0% lim wl 2
- DATA ● pods fresh 0s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ KDASH 4.32.0 │ KUBERNETES RESOURCES │ context vcluster-docker_dev │ namespace kdash-e2e                        audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-14 22:22:50 IST
+┌─ SCOPE ─────────────────────┬─ POD HEALTH ──────────────────────────┬─ USAGE vs LIMITS ──────────┬─ WORKLOADS ───────┐
+│ match .* unhealthy          │ ! pods 0/4 ready   restarts 329       │ cpu      0m   0% lim       │ workloads 4       │
+│ sort cpu ▼ high first       │ OOM risk 0   OOMKilled 0              │ mem     0Mi   0% lim       │                   │
+│ poll 2s  spec 1s/30s        │ no-limit 0                            │                            │                   │
+└─────────────────────────────┴───────────────────────────────────────┴────────────────────────────┴───────────────────┘
+ DATA ● pods fresh 1s old  metrics available │ C certs │ K check now │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
-                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
-WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
-────────────────────────────────────────────────────────────────────────────────
-► Pod z-crash  (1 pod)         0/1  90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  z-crash                      0/1  90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+                                         │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER       RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► Pod z-crash  (1 pod)           0/1 329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-crash                        0/1 329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
       node dev   pool role:control-plane,master   ip 10.244.0.133   qos Burstable   status CrashLoopBackOff   last-exit Error
-    └─ crash                   N    90 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+    └─ crash                     N   329 │      - ·       - · │      5     50       4      32 │     -     -     -     -
         waiting CrashLoopBackOff   last-exit Error
-................................................................................
-► Pod z-pending  (1 pod)       0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-  z-pending                    0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Pod z-imagepull  (1 pod)       0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+  z-imagepull                    0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.152   qos Burstable   status ImagePullBackOff
+    └─ bad                       N     0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+        waiting ImagePullBackOff   
+........................................................................................................................
+► Pod z-pending  (1 pod)         0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-pending                      0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
       node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
-    └─ pending                 -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
-────────────────────────────────────────────────────────────────────────────────
-TOTAL (2 pods, 2 workloads)         90 │      - ·       - · │     10    100       8      64 │     -     -     -     -
+    └─ pending                   -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+........................................................................................................................
+► Pod z-unschedulable  (1 pod)   0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+  z-unschedulable                0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    └─ wait                      -     0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (4 pods, 4 workloads)          329 │      - ·       - · │    110    500      72     320 │     -     -     -     -
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
