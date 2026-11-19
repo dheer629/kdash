@@ -7,94 +7,73 @@ DATA SOURCES   context kdash-local
 │ events │ ● ok  │ 1s ago │ kdash-e2e │ read succeeded │
 └────────┴───────┴────────┴───────────┴────────────────┘
 
-WARNING EVIDENCE  13 items   one row per object and category, newest first, up to 20
-┌────┬───────────┬──────────────────────────────────────────────┬──────────────────────────────┬───────┬────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ #  │ LAST SEEN │ OBJECT                                       │ REASON                       │ COUNT │ CATEGORY   │ MESSAGE                                                                                                                                                         │
-├────┼───────────┼──────────────────────────────────────────────┼──────────────────────────────┼───────┼────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1  │ 15s       │ Pod/z-crash                                  │ BackOff                      │  6903 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)                                                       │
-│ 2  │ 4m        │ PersistentVolumeClaim/z-unbound              │ ProvisioningFailed           │  6041 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                         │
-│ 3  │ 12m       │ Job/nightly-report-29918365                  │ FailedCreate                 │     1 │ other      │ Error creating: Unauthorized                                                                                                                                    │
-│ 4  │ 13m       │ Pod/app-server-8fb4699bc-t7zxj               │ Unhealthy                    │     3 │ probe      │ Readiness probe failed: Get "http://10.244.0.138:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)                             │
-│ 5  │ 13m       │ Service/app-server                           │ FailedToUpdateEndpointSlices │     1 │ other      │ Error updating Endpoint Slices for Service kdash-e2e/app-server: failed to update app-server-hgvwd EndpointSlice for Service kdash-e2e/app-server: Unauthorized │
-│ 6  │ 13m       │ Endpoints/app-server                         │ FailedToUpdateEndpoint       │     1 │ other      │ Failed to update endpoint kdash-e2e/app-server: Unauthorized                                                                                                    │
-│ 7  │ 13m       │ Pod/app-server-8fb4699bc-hn9wd               │ Unhealthy                    │     1 │ probe      │ Readiness probe failed: Get "http://10.244.0.9:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)                               │
-│ 8  │ 13m       │ Pod/app-server-8fb4699bc-cx5vz               │ Unhealthy                    │     1 │ probe      │ Readiness probe failed: Get "http://10.244.0.135:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)                             │
-│ 9  │ 14m       │ Pod/functionality-legacy-67ks7               │ Unhealthy                    │     2 │ probe      │ Readiness probe failed: Get "http://10.244.0.19:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)                              │
-│ 10 │ 14m       │ HorizontalPodAutoscaler/app-server-hpa       │ FailedGetScale               │     1 │ other      │ Unauthorized                                                                                                                                                    │
-│ 11 │ 14m       │ HorizontalPodAutoscaler/functionality-legacy │ FailedGetScale               │     1 │ other      │ Unauthorized                                                                                                                                                    │
-│ 12 │ 4d22h     │ Pod/z-unschedulable                          │ FailedScheduling             │   153 │ scheduling │ 0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.  │
-│ 13 │ 4d22h     │ Pod/z-pending                                │ FailedScheduling             │   307 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.     │
-└────┴───────────┴──────────────────────────────────────────────┴──────────────────────────────┴───────┴────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+WARNING EVIDENCE  8 items   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────────────────────────┬──────────────────────────────┬───────┬────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT                          │ REASON                       │ COUNT │ CATEGORY   │ MESSAGE                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      │
+├───┼───────────┼─────────────────────────────────┼──────────────────────────────┼───────┼────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 1m        │ Service/kdash-secrets-live      │ FailedToUpdateEndpointSlices │     1 │ other      │ Error updating Endpoint Slices for Service kdash-e2e/kdash-secrets-live: failed to update kdash-secrets-live-7hg2s EndpointSlice for Service kdash-e2e/kdash-secrets-live: Operation cannot be fulfilled on endpointslices.discovery.k8s.io "kdash-secrets-live-7hg2s": StorageError: invalid object, Code: 4, Key: /registry/endpointslices/kdash-e2e/kdash-secrets-live-7hg2s, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: be703428-1075-4bb0-9624-bc6c3a89883c, UID in object meta: │
+│ 2 │ 2m        │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed           │  6801 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                                                                                                                                                                                                                                                                                                                                                                                      │
+│ 3 │ 2m        │ Pod/z-crash                     │ BackOff                      │  7742 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)                                                                                                                                                                                                                                                                                                                                                                                                                    │
+│ 4 │ 23m       │ Pod/z-unschedulable             │ FailedScheduling             │   188 │ scheduling │ 0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.                                                                                                                                                                                                                                                                                                                                                               │
+│ 5 │ 23m       │ Pod/z-pending                   │ FailedScheduling             │   342 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.                                                                                                                                                                                                                                                                                                                                                                  │
+│ 6 │ 36m       │ Pod/app-server-8fb4699bc-4kx2b  │ Unhealthy                    │     1 │ probe      │ Readiness probe failed: Get "http://10.244.0.78:8080/": dial tcp 10.244.0.78:8080: connect: connection refused                                                                                                                                                                                                                                                                                                                                                                                                               │
+│ 7 │ 36m       │ Pod/app-server-8fb4699bc-9dxvd  │ Unhealthy                    │     1 │ probe      │ Readiness probe failed: Get "http://10.244.0.79:8080/": dial tcp 10.244.0.79:8080: connect: connection refused                                                                                                                                                                                                                                                                                                                                                                                                               │
+│ 8 │ 36m       │ Pod/app-server-8fb4699bc-xjkgq  │ Unhealthy                    │     1 │ probe      │ Readiness probe failed: Get "http://10.244.0.77:8080/": dial tcp 10.244.0.77:8080: connect: connection refused                                                                                                                                                                                                                                                                                                                                                                                                               │
+└───┴───────────┴─────────────────────────────────┴──────────────────────────────┴───────┴────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 POSSIBLE EXPLANATIONS  5 categories   hypotheses to check, not conclusions
-┌────────────┬──────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ CATEGORY   │ EVIDENCE             │ POSSIBLE EXPLANATION                                                                                   │
-├────────────┼──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ restart    │ #1                   │ a container may be exiting repeatedly - the event alone does not say why                               │
-│ storage    │ #2                   │ volume binding, provisioning, attachment or mounting may block startup - not evidence of a full volume │
-│ other      │ #3, #5, #6, #10, #11 │ needs object-specific investigation - its presence alone does not establish a cause                    │
-│ probe      │ #4, #7, #8, #9       │ a readiness, liveness or startup probe may be failing - check its settings and the application logs    │
-│ scheduling │ #12, #13             │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
-└────────────┴──────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────┬────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY   │ EVIDENCE   │ POSSIBLE EXPLANATION                                                                                   │
+├────────────┼────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ other      │ #1         │ needs object-specific investigation - its presence alone does not establish a cause                    │
+│ storage    │ #2         │ volume binding, provisioning, attachment or mounting may block startup - not evidence of a full volume │
+│ restart    │ #3         │ a container may be exiting repeatedly - the event alone does not say why                               │
+│ scheduling │ #4, #5     │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
+│ probe      │ #6, #7, #8 │ a readiness, liveness or startup probe may be failing - check its settings and the application logs    │
+└────────────┴────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
 
   #1    evidence #1  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash
-      read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100
+      read   kubectl --context kdash-local -n kdash-e2e describe service kdash-secrets-live
 
   #2    evidence #2  (WARNING EVIDENCE above)
       read   kubectl --context kdash-local -n kdash-e2e describe persistentvolumeclaim z-unbound
       read   kubectl --context kdash-local -n kdash-e2e get pvc
 
   #3    evidence #3  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe job nightly-report-29918365
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash
+      read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100
 
   #4    evidence #4  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-t7zxj
-      read   kubectl --context kdash-local -n kdash-e2e logs app-server-8fb4699bc-t7zxj --all-containers --tail=100 --since=5m
-
-  #5    evidence #5  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe service app-server
-
-  #6    evidence #6  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe endpoints app-server
-
-  #7    evidence #7  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-hn9wd
-      read   kubectl --context kdash-local -n kdash-e2e logs app-server-8fb4699bc-hn9wd --all-containers --tail=100 --since=5m
-
-  #8    evidence #8  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-cx5vz
-      read   kubectl --context kdash-local -n kdash-e2e logs app-server-8fb4699bc-cx5vz --all-containers --tail=100 --since=5m
-
-  #9    evidence #9  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe pod functionality-legacy-67ks7
-      read   kubectl --context kdash-local -n kdash-e2e logs functionality-legacy-67ks7 --all-containers --tail=100 --since=5m
-
-  #10    evidence #10  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe horizontalpodautoscaler app-server-hpa
-
-  #11    evidence #11  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe horizontalpodautoscaler functionality-legacy
-
-  #12    evidence #12  (WARNING EVIDENCE above)
       read   kubectl --context kdash-local -n kdash-e2e describe pod z-unschedulable
 
-  #13    evidence #13  (WARNING EVIDENCE above)
+  #5    evidence #5  (WARNING EVIDENCE above)
       read   kubectl --context kdash-local -n kdash-e2e describe pod z-pending
+
+  #6    evidence #6  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-4kx2b
+      read   kubectl --context kdash-local -n kdash-e2e logs app-server-8fb4699bc-4kx2b --all-containers --tail=100 --since=5m
+
+  #7    evidence #7  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-9dxvd
+      read   kubectl --context kdash-local -n kdash-e2e logs app-server-8fb4699bc-9dxvd --all-containers --tail=100 --since=5m
+
+  #8    evidence #8  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-xjkgq
+      read   kubectl --context kdash-local -n kdash-e2e logs app-server-8fb4699bc-xjkgq --all-containers --tail=100 --since=5m
+
+  >   storage  volume problems  see key 9 STORAGE: its findings carry their own next commands
 
   >   restart  crash loop  what usually fixes it
       note   the previous logs (above) show the exit reason; a config or Secret change is the usual cause - compare with the last rollout:
       read   kubectl --context kdash-local -n kdash-e2e rollout history deployment/DEPLOYMENT  # what changed and when
 
-  >   storage  volume problems  see key 9 STORAGE: its findings carry their own next commands
-
-  >   probe  probe failures  what usually fixes it
-      note   if the app is slow to start, a startupProbe (or a longer initialDelaySeconds) usually fixes it; if it really fails, the logs above say why
-
   >   scheduling  pods not placed  what usually fixes it
       read   kubectl --context kdash-local describe nodes | grep -A 8 'Allocated resources'  # free capacity per node
       note   reduce requests, add capacity, or fix the nodeSelector / affinity / taint tolerations the scheduler message names
+
+  >   probe  probe failures  what usually fixes it
+      note   if the app is slow to start, a startupProbe (or a longer initialDelaySeconds) usually fixes it; if it really fails, the logs above say why
 
   Compare current readiness, resource identities, logs and workload conditions before deciding on a change.

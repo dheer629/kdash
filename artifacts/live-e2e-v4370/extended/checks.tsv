@@ -5,77 +5,77 @@ extended-dashboard-live-search	PASS	in-place find counts matching lines before E
 capture-100-dashboard-search	PASS	In-place dashboard search counts real matching lines
 extended-dashboard-search-navigation	PASS	n/N retain the search and navigate matches
 capture-101-search-other-view	PASS	Search retained while switching to live workloads
-extended-quick-export-searched-workloads	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261119-221358.log
+extended-quick-export-searched-workloads	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261120-004301.log
 capture-102-export-searched-workloads	PASS	Quick export includes the screen and every workload line
 capture-103-invalid-search	PASS	Invalid search expressions remain editable
 capture-104-search-no-match	PASS	A valid unmatched search reports zero matching lines
-extended-quick-export-pod-filter	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261119-221409.log
+extended-quick-export-pod-filter	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261120-004312.log
 extended-line-editor-insert-arrow	PASS	Left inserts a missing character inside the live search
-extended-quick-export-editor-insertion	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261119-221423.log
+extended-quick-export-editor-insertion	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261120-004326.log
 capture-105-search-history	PASS	Shared editor recalls this session's earlier search
 capture-106-search-editor-delete	PASS	Cursor Home/Delete/End/Backspace leaves the intended search text
-extended-quick-export-editor-delete	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261119-221436.log
-extended-quick-export-view-1	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261119-221445.log
-extended-quick-export-view-2	PASS	reports/exports/kdash_view-nodes_kdash-e2e_20261119-221451.log
-extended-quick-export-view-3	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261119-221456.log
-extended-quick-export-view-4	PASS	reports/exports/kdash_view-ip_kdash-e2e_20261119-221501.log
-extended-quick-export-view-5	PASS	reports/exports/kdash_view-mem_kdash-e2e_20261119-221506.log
-extended-quick-export-view-6	PASS	reports/exports/kdash_view-io_kdash-e2e_20261119-221511.log
-extended-quick-export-view-7	PASS	reports/exports/kdash_view-alerts_kdash-e2e_20261119-221516.log
-extended-quick-export-view-8	PASS	reports/exports/kdash_view-services_kdash-e2e_20261119-221521.log
-extended-quick-export-view-9	PASS	reports/exports/kdash_view-storage_kdash-e2e_20261119-221526.log
-extended-quick-export-view-E	PASS	reports/exports/kdash_view-events_kdash-e2e_20261119-221531.log
-extended-quick-export-view-explain	PASS	reports/exports/kdash_view-explain_kdash-e2e_20261119-221536.log
-extended-quick-export-view-C	PASS	reports/exports/kdash_view-certs_kdash-e2e_20261119-221541.log
-extended-quick-export-view-R	PASS	reports/exports/kdash_view-runbook_kdash-e2e_20261119-221546.log
-extended-quick-export-view-K	PASS	reports/exports/kdash_view-check_kdash-e2e_20261119-221551.log
-extended-quick-export-view-M	PASS	reports/exports/kdash_view-fmea_kdash-e2e_20261119-221556.log
-extended-quick-export-view-Y	PASS	reports/exports/kdash_view-secrets_kdash-e2e_20261119-221601.log
-extended-quick-export-access	PASS	reports/exports/kdash_view-access_kdash-e2e_20261119-221608.log
+extended-quick-export-editor-delete	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261120-004339.log
+extended-quick-export-view-1	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261120-004348.log
+extended-quick-export-view-2	PASS	reports/exports/kdash_view-nodes_kdash-e2e_20261120-004353.log
+extended-quick-export-view-3	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261120-004358.log
+extended-quick-export-view-4	PASS	reports/exports/kdash_view-ip_kdash-e2e_20261120-004403.log
+extended-quick-export-view-5	PASS	reports/exports/kdash_view-mem_kdash-e2e_20261120-004408.log
+extended-quick-export-view-6	PASS	reports/exports/kdash_view-io_kdash-e2e_20261120-004413.log
+extended-quick-export-view-7	PASS	reports/exports/kdash_view-alerts_kdash-e2e_20261120-004418.log
+extended-quick-export-view-8	PASS	reports/exports/kdash_view-services_kdash-e2e_20261120-004423.log
+extended-quick-export-view-9	PASS	reports/exports/kdash_view-storage_kdash-e2e_20261120-004428.log
+extended-quick-export-view-E	PASS	reports/exports/kdash_view-events_kdash-e2e_20261120-004433.log
+extended-quick-export-view-explain	PASS	reports/exports/kdash_view-explain_kdash-e2e_20261120-004438.log
+extended-quick-export-view-C	PASS	reports/exports/kdash_view-certs_kdash-e2e_20261120-004443.log
+extended-quick-export-view-R	PASS	reports/exports/kdash_view-runbook_kdash-e2e_20261120-004448.log
+extended-quick-export-view-K	PASS	reports/exports/kdash_view-check_kdash-e2e_20261120-004453.log
+extended-quick-export-view-M	PASS	reports/exports/kdash_view-fmea_kdash-e2e_20261120-004458.log
+extended-quick-export-view-Y	PASS	reports/exports/kdash_view-secrets_kdash-e2e_20261120-004503.log
+extended-quick-export-access	PASS	reports/exports/kdash_view-access_kdash-e2e_20261120-004510.log
 capture-107-export-access	PASS	Access view exports its complete permission review
-extended-quick-export-namespaces	PASS	reports/exports/kdash_namespace-list_kdash-local_20261119-221613.log
+extended-quick-export-namespaces	PASS	reports/exports/kdash_namespace-list_kdash-local_20261120-004515.log
 capture-108-export-namespaces	PASS	Namespace picker quick export retains every namespace name
-extended-quick-export-pods	PASS	reports/exports/kdash_pod-list_kdash-e2e_20261119-221618.log
+extended-quick-export-pods	PASS	reports/exports/kdash_pod-list_kdash-e2e_20261120-004520.log
 capture-109-export-pods	PASS	Pod picker quick export retains full names and resource columns
-extended-quick-export-summary	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261119-221631.log
+extended-quick-export-summary	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261120-004534.log
 capture-110-container-find	PASS	Container picker finds a real sidecar by name
-extended-quick-export-containers	PASS	reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261119-221639.log
+extended-quick-export-containers	PASS	reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261120-004541.log
 capture-111-export-containers	PASS	Container picker exports every regular container and image
 capture-112-whole-log-coverage	PASS	Whole current log displays read coverage and node proxy capability
-extended-quick-export-current-log	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221650.log
+extended-quick-export-current-log	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261120-004552.log
 extended-log-coverage-truthful	PASS	export retains the actual coverage result; rotated files counted only when read
 extended-real-rotated-log-read	PASS	actual node-proxy read reports a positive rotated-file count
 capture-113-log-find-in-place	PASS	Whole log search counts case-insensitive real warnings
-extended-quick-export-matching-log	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221703.log
+extended-quick-export-matching-log	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261120-004605.log
 extended-only-matches-export	PASS	whole-pane export follows the chosen matching-lines filter
-extended-quick-export-describe	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261119-221710.log
-extended-quick-export-events	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261119-221715.log
-extended-quick-export-explain	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261119-221720.log
+extended-quick-export-describe	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261120-004612.log
+extended-quick-export-events	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261120-004617.log
+extended-quick-export-explain	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261120-004622.log
 extended-log-scope-cancel	PASS	cancelling the scope picker returns to the same real pod detail
 capture-114-log-search-scope	PASS	Full log search offers this pod, workload and namespace scopes
 capture-115-log-search-invalid-pattern	PASS	Invalid full-log search patterns can be corrected before reads begin
 capture-116-log-search-pod	PASS	Merged timestamped matching lines from real pod container logs
-extended-quick-export-find-pod	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221745.log
+extended-quick-export-find-pod	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261120-004647.log
 extended-log-scope-pod	PASS	: 4 of 4 logs read
 extended-log-merge-order-pod	PASS	12040 exported matching lines remain in timestamp order
 capture-117-log-search-workload	PASS	Merged timestamped matching lines from real workload container logs
-extended-quick-export-find-workload	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221754.log
+extended-quick-export-find-workload	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261120-004656.log
 extended-log-scope-workload	PASS	: 8 of 8 logs read
 extended-log-merge-order-workload	PASS	24082 exported matching lines remain in timestamp order
 capture-118-log-search-namespace	PASS	Merged timestamped matching lines from real namespace container logs
-extended-quick-export-find-namespace	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221803.log
+extended-quick-export-find-namespace	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261120-004710.log
 extended-log-scope-namespace	PASS	: 26 of 26 logs read
 extended-log-merge-order-namespace	PASS	39085 exported matching lines remain in timestamp order
 extended-log-search-previous-instance	PASS	restarted fixture contributes its previous container instance
 capture-119-whole-previous-log	PASS	Full previous instance of a real restarted container
-extended-quick-export-whole-previous	PASS	reports/exports/kdash_z-crash_previous_20261119-221823.log
+extended-quick-export-whole-previous	PASS	reports/exports/kdash_z-crash_previous_20261120-004730.log
 extended-previous-log-coverage	PASS	previous instance is read with the same explicit node-rotation capability reporting
 extended-report-bundle	PASS	exit 0; 326 bytes
-extended-bundle-fmea-txt	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.txt
-extended-bundle-fmea-csv	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.csv
-extended-bundle-secrets-txt	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.txt
-extended-bundle-secrets-csv	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.csv
-extended-bundle-secrets-json	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.json
+extended-bundle-fmea-txt	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/fmea.txt
+extended-bundle-fmea-csv	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/fmea.csv
+extended-bundle-secrets-txt	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/secrets.txt
+extended-bundle-secrets-csv	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/secrets.csv
+extended-bundle-secrets-json	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/secrets.json
 extended-bundle-secrets-json-valid	PASS	report bundle's structured Secrets data parses
 extended-report-with-extras-snapshot	PASS	exit 0; 299 bytes
 extended-combined-extra-tab-data	PASS	combined live snapshot embeds both populated, searchable/sortable diagnostic tables
@@ -83,7 +83,7 @@ extended-report-without-extras	PASS	exit 0; 287 bytes
 extended-combined-extra-tabs-opt-out	PASS	KDASH_REPORT_EXTRAS=0 retains resource/history report tabs
 extended-certs-secret-certificates	PASS	exit 2; 16967 bytes
 capture-120-certs-secret-public-certificate	PASS	Certificate view includes real generated Secret public certificate expiry
-extended-quick-export-certs-secret-rows	PASS	reports/exports/kdash_view-certs_kdash-e2e_20261119-221905.log
+extended-quick-export-certs-secret-rows	PASS	reports/exports/kdash_view-certs_kdash-e2e_20261120-004812.log
 capture-121-certs-secret-search	PASS	Certificate search finds the generated Secret certificate
 capture-122-theme-safe	PASS	Live dashboard theme safe
 extended-theme-safe	PASS	observed real ANSI output and retained workload data
@@ -95,9 +95,9 @@ capture-125-theme-mono	PASS	Live dashboard theme mono
 extended-theme-mono	PASS	observed real ANSI output and retained workload data
 extended-legacy-render-fallbacks	PASS	16 colours, sequential reads, foreground model and no view cache remain usable
 capture-126-fallback-16-colours	PASS	Live compatibility mode with sequential reads and 16 ANSI colours
-extended-quick-export-local-files	PASS	reports/exports/kdash_files_local_20261119-221940.log
+extended-quick-export-local-files	PASS	reports/exports/kdash_files_local_20261120-004846.log
 capture-127-export-local-files	PASS	Quick export from the actual local files browser
-extended-quick-export-remote-files	PASS	reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261119-221951.log
+extended-quick-export-remote-files	PASS	reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261120-004858.log
 capture-128-export-remote-files	PASS	Quick export from the actual remote files browser
 extended-session-export-aggregation	PASS	8 session logs aggregate their explicit exports
 extended-latest-export-link	PASS	latest.log resolves to the newest individual export

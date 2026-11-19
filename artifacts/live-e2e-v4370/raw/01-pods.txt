@@ -1,50 +1,50 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:10:43 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:18:15 IST
 ┌─ SCOPE ───────────────────────────────────────────┬─ POD HEALTH ──────────────────────────────┬─ USAGE vs LIMITS ──────────────────┬─ WORKLOADS · EVENTS ──────┐
-│ match .*   sort cpu ▼ high first                  │ ! pods 13/17 ready   restarts 381         │ cpu     60m ░░░░░░░░   4% lim      │ workloads 13              │
-│ poll 2s  spec 6s/30s   session 21:10:37 up 6s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     5Mi ░░░░░░░░   1% lim      │ events 15m ! 0  ^ 0       │
+│ match .*   sort cpu ▼ high first                  │ ! pods 13/17 ready   restarts 420         │ cpu     61m ░░░░░░░░   4% lim      │ workloads 13              │
+│ poll 2s  spec 6s/30s   session 00:18:09 up 6s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     5Mi ░░░░░░░░   1% lim      │ events 15m ! 0  ^ 0       │
 └───────────────────────────────────────────────────┴───────────────────────────────────────────┴────────────────────────────────────┴───────────────────────────┘
  DATA ● pods fresh 6s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
                                                                  │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)
 WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-► TIMELINE  21:10:37 -> 21:10:43 IST  (all since kdash started, z window, c hides graphs) ───────────────────────────────────────────────────────────────────────
+► TIMELINE  00:18:09 -> 00:18:15 IST  (all since kdash started, z window, c hides graphs) ───────────────────────────────────────────────────────────────────────
   CPU used - namespace                                                              MEMORY used - namespace
-     69m┤                ·                  ·                ·                         6Mi┤                ·                  ·                ·
-        │                ·      ████████████████████████████████████████████████          │                ·      ████████████████████████████████████████████████
-        │                ·      ████████████████████████████████████████████████          │                ·      ████████████████████████████████████████████████
-     35m┤                ·      ████████████████████████████████████████████████       3Mi┤                ·      ████████████████████████████████████████████████
-        │                ·      ████████████████████████████████████████████████          │                ·      ████████████████████████████████████████████████
-        │                ·      ████████████████████████████████████████████████          │                ·      ████████████████████████████████████████████████
+     70m┤                ·                  ·                ·                         6Mi┤                ·                  ·                ·
+        │                ·                  ·           ████████████████████████          │                ·                  ·           ████████████████████████
+        │                ·                  ·           ████████████████████████          │                ·                  ·           ████████████████████████
+     35m┤                ·                  ·           ████████████████████████       3Mi┤                ·                  ·           ████████████████████████
+        │                ·                  ·           ████████████████████████          │                ·                  ·           ████████████████████████
+        │                ·                  ·           ████████████████████████          │                ·                  ·           ████████████████████████
       0m└┴───────────────┴──────────────────┴────────────────┴─────────────────┴       0Mi└┴───────────────┴──────────────────┴────────────────┴─────────────────┴
-         21:10:37                       21:10:40                        21:10:43           21:10:37                       21:10:40                        21:10:43
+         00:18:09                       00:18:12                        00:18:15           00:18:09                       00:18:12                        00:18:15
   events                                                                            events
-  now 60m  min 60m  avg 60m  max 60m @ 21:10:43                                     now 5Mi  min 5Mi  avg 5Mi  max 5Mi @ 21:10:43
+  now 61m  min 61m  avg 61m  max 61m @ 00:18:15                                     now 5Mi  min 5Mi  avg 5Mi  max 5Mi @ 00:18:15
   request 265m (above)  limit 1550m (above)  4% of limit                            request 244Mi (above)  limit 848Mi (above)  1% of limit
 
 ► PODS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-► Pod z-oom  (1 pod)                                     1/1   0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0 ████████  12.5   6.2 █░░░░░░░
-  z-oom                                                  1/1   0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0 ████████  12.5   6.2 █░░░░░░░
-      cpu ██__              mem ░░░░              pk 1Mi    node dev   pool role:control-plane,master   ip 10.244.0.153   qos Burstable   status Running
-    └─ hog                                               Y     0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0 ████████  12.5   6.2 █░░░░░░░
+► Pod z-oom  (1 pod)                                     1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0 ████████  12.5   6.2 █░░░░░░░
+  z-oom                                                  1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0 ████████  12.5   6.2 █░░░░░░░
+      cpu ░░░               mem ░░░               pk 1Mi    node dev   pool role:control-plane,master   ip 10.244.0.153   qos Burstable   status Running
+    └─ hog                                               Y     0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0 ████████  12.5   6.2 █░░░░░░░
 ..................................................................................................................................................................
 ► Deployment app-server  (2 pods)                        2/2  28 │      6 ·       3 · │     50    500      24     192 │  12.0   1.2 ░░░░░░░░  12.5   1.6 ░░░░░░░░
   app-server-8fb4699bc-cx5vz                             2/2  14 │      3 ·       3 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░  25.0   3.1 ░░░░░░░░
-      cpu ░░░░              mem ░░░░              pk 3Mi    node dev   pool role:control-plane,master   ip 10.244.0.135   qos Burstable   status Running   last-exit Unkn›
+      cpu ░░░               mem ░░░               pk 3Mi    node dev   pool role:control-plane,master   ip 10.244.0.135   qos Burstable   status Running   last-exit Unkn›
     ├─ app                                               Y     7 │      2 ·       3 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░  37.5   4.7 ░░░░░░░░
         last-exit Unknown
     └─ sidecar                                           Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
         last-exit Unknown
-  app-server-8fb4699bc-t7zxj                             2/2  14 │      3 ▲       0 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░   0.0   0.0 ░░░░░░░░
-      cpu __██              mem ░░░░              pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.138   qos Burstable   status Running   last-exit Unkn›
-    ├─ app                                               Y     7 │      2 ▲       0 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+  app-server-8fb4699bc-t7zxj                             2/2  14 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ░░░               mem ░░░               pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.138   qos Burstable   status Running   last-exit Unkn›
+    ├─ app                                               Y     7 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
         last-exit Unknown
     └─ sidecar                                           Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
         last-exit Unknown
 ..................................................................................................................................................................
 ► StatefulSet db-stateful  (2 pods)                      2/2   0 │      2 ·       0 · │     40    200      64     128 │   5.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-TOTAL (17 pods, 13 workloads)                                381 │     60 ·       5 · │    265   1550     244     848 │  22.6   3.9 ░░░░░░░░   2.0   0.6 ░░░░░░░░
+TOTAL (17 pods, 13 workloads)                                420 │     61 ·       5 · │    265   1550     244     848 │  23.0   3.9 ░░░░░░░░   2.0   0.6 ░░░░░░░░
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
- AUDITED session 20261119-211036-52085 - every action is logged; use is your responsibility (kdash --about) | ● LIVE 21:10:44  next 1s  data 1s old  fetch 0.0s  AUDITED
+ AUDITED session 20261120-001809-69887 - every action is logged; use is your responsibility (kdash --about) | ● LIVE 00:18:16  next 1s  data 1s old  fetch 0.0s  AUDITED

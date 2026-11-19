@@ -20,7 +20,7 @@ and report galleries in [`samples/cli_4370/`](samples/cli_4370/README.md) and
 [HTML reports](samples/html4320/README.md) and earlier versions remain available.
 The local cluster uses certificate authentication; controlled OIDC helpers test
 the login flow separately.
-The 2026-11-19 local validation run (`live-e2e-v4370`) passed 303 live checks,
+The 2026-11-20 local validation run (`live-e2e-v4370`) passed 303 live checks,
 30 Secrets checks, 33 browser checks and all 19 fixture suites; 125 CLI
 screenshots and the combined HTML reports are published in the galleries above.
 See `docs/VALIDATION-4.37.0.md` for the row-by-row evidence and limits.

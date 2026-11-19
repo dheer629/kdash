@@ -2,7 +2,7 @@
 ┌─ LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 7   last exit Unknown exit=255   busybox:1.36                                                                           │
-└─ rows 1-38 / 4490 · 4490 lines 493.3 KiB since 2026-11-14 16:31:44, current file (/ and A also read the rotated ones) ────────────────────────────────────────────────┘
+└─ rows 1-38 / 16460 · 16460 lines 1.8 MiB since 2026-11-14 16:31:44, current file (/ and A also read the rotated ones) ────────────────────────────────────────────────┘
 2026-11-14T16:31:44.471044286Z 2026-11-14T16:31:44+00:00 INFO request=43283 service=app-server healthy=true
 2026-11-14T16:31:44.471788036Z 2026-11-14T16:31:44+00:00 WARN request=43283 demonstration warning from live workload
 2026-11-14T16:31:46.472722227Z 2026-11-14T16:31:46+00:00 INFO request=43284 service=app-server healthy=true

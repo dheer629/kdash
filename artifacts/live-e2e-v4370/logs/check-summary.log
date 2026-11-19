@@ -6,7 +6,7 @@ AREAS  8 areas
 ┌──────────────┬───────────────┬──────────┬──────────────────────────────────────────────────────────────────┐
 │ AREA         │ STATUS        │ FINDINGS │ DETAIL                                                           │
 ├──────────────┼───────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
-│ api          │ ● OK          │        0 │ pods read 3s ago                                                 │
+│ api          │ ● OK          │        0 │ pods read 4s ago                                                 │
 │ nodes        │ ● OK          │        0 │ 1 of 1 Ready                                                     │
 │ pods         │ ● CRITICAL    │        4 │ 17 pods in the dashboard scope                                   │
 │ services     │ ● CRITICAL    │        3 │ services ok, endpoints ok, ingresses ok                          │
@@ -20,7 +20,7 @@ FINDINGS  12 findings   critical first - Enter runs the read commands of one now
 ┌────┬────────────┬──────────────┬─────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ #  │ SEVERITY   │ AREA         │ OBJECT                              │ FINDING                                                                                                                                                   │
 ├────┼────────────┼──────────────┼─────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1  │ ● CRITICAL │ pods         │ z-crash                             │ CrashLoopBackOff, 340 restarts (last: Error)                                                                                                              │
+│ 1  │ ● CRITICAL │ pods         │ z-crash                             │ CrashLoopBackOff, 376 restarts (last: Error)                                                                                                              │
 │ 2  │ ● CRITICAL │ pods         │ z-imagepull                         │ ImagePullBackOff - the image cannot be pulled                                                                                                             │
 │ 3  │ ● CRITICAL │ services     │ missing-backend                     │ selector app=does-not-exist matches no pod in this scope                                                                                                  │
 │ 4  │ ● CRITICAL │ services     │ web-loadbalancer                    │ selector app=app-server matches no pod in this scope                                                                                                      │
@@ -36,7 +36,7 @@ FINDINGS  12 findings   critical first - Enter runs the read commands of one now
 
 NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  kdash --check --run N runs the read commands of finding N
 
-  #1  CRITICAL  z-crash  CrashLoopBackOff, 340 restarts (last: Error)
+  #1  CRITICAL  z-crash  CrashLoopBackOff, 376 restarts (last: Error)
       read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
       read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
 

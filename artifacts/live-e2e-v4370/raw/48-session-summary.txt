@@ -1,3 +1,8 @@
+ NODE       dev   10.244.0.135 | cpu 3m / 250m   mem 3Mi / 96Mi (3%)   user root
+
+root@app$ printf 'KDASH_DETAIL_MODE_OK\n'; id
+KDASH_DETAIL_MODE_OK
+uid=0(root) gid=0(root) groups=0(root),10(wheel)
 root@app$ exit
 
 
@@ -38,13 +43,8 @@ root@app$ exit
 
 
 
- KDASH   shell closed  app-server-8fb4699bc-cx5vz  container app  exit status 0  duration 4s  audited
-kdash: errors during run:
-/tmp/kdash-installed/kdash: line 8774: UE_H: bad array subscript
-/tmp/kdash-installed/kdash: line 8774: UE_H: bad array subscript
-/tmp/kdash-installed/kdash: line 8774: UE_H: bad array subscript
- KDASH   session closed  context kdash-local  namespace kdash-e2e  duration 3m 25s  audited
-        history  /workspace/kdash/artifacts/live-e2e-v4370/reports/sessions/kdash_kdash-local_kdash-e2e_20261119_211036
+ KDASH   shell closed  app-server-8fb4699bc-cx5vz  container app  exit status 0  duration 5s  audited
+ KDASH   session closed  context kdash-local  namespace kdash-e2e  duration 15m 32s  audited
+        history  /workspace/kdash/artifacts/live-e2e-v4370/reports/sessions/kdash_kdash-local_kdash-e2e_20261120_001809
         report   kdash --session-report latest   (every tab + the full history as HTML)
 
-Pane is dead (status 0, Thu Nov 19 21:14:01 2026)

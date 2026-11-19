@@ -1,7 +1,7 @@
  KDASH 4.37.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   21:08:52 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:16:20 IST
  match .*   sort name Z-A
- ! pods 13/17 ready rst 380 oom 0 oomk 0 nolim 1 cpu 61m 4% lim mem 5Mi 1% lim
+ ! pods 13/17 ready rst 420 oom 0 oomk 0 nolim 1 cpu 60m 4% lim mem 5Mi 1% lim
     wl 13
  DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits   (w = group by workload)
@@ -14,16 +14,16 @@ z-unschedulable                0/1   0 │      - ·       - · │     50    20
 z-pending                      0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
     node (unscheduled)   pool (none)   ip -   Pod z-pending   qos Burstable   status Pending
 ................................................................................
-z-oom                          1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+z-oom                          1/1   0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0  12.5   6.2
     node dev   pool role:control-plane,master   ip 10.244.0.153   Pod z-oom   qos Burstable   status Running
 ................................................................................
 z-imagepull                    0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
     node dev   pool role:control-plane,master   ip 10.244.0.152   Pod z-imagepull   qos Burstable   status ImagePullBackOff
 ................................................................................
-z-crash                        0/1 339 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+z-crash                        0/1 376 │      - ·       - · │      5     50       4      32 │     -     -     -     -
     node dev   pool role:control-plane,master   ip 10.244.0.133   Pod z-crash   qos Burstable   status CrashLoopBackOff   last-exit Error
 ................................................................................
-test-sts-0                     1/1  13 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+test-sts-0                     1/1  16 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
     node dev   pool role:control-plane,master   ip 10.244.0.149   StatefulSet test-sts   qos BestEffort   status Running   last-exit Completed
 ................................................................................
 sync-pod                       0/1   0 │      - ·       - · │      -      -       -       - │     -     -     -     -
@@ -32,14 +32,14 @@ sync-pod                       0/1   0 │      - ·       - · │      -      
 node-agent-ctvg6               1/1   0 │      1 ·       1 · │     10     50      16      32 │  10.0   2.0   6.2   3.1
     node dev   pool role:control-plane,master   ip 10.244.0.150   DaemonSet node-agent   qos Burstable   status Running
 ................................................................................
-nightly-report-29918375-zgx7m  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
-    node dev   pool role:control-plane,master   ip 10.244.0.16   CronJob nightly-report   qos Burstable   status Succeeded
+nightly-report-29918565-mw26x  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+    node dev   pool role:control-plane,master   ip 10.244.0.98   CronJob nightly-report   qos Burstable   status Succeeded
 ................................................................................
-nightly-report-29918370-qdkw5  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
-    node dev   pool role:control-plane,master   ip 10.244.0.14   CronJob nightly-report   qos Burstable   status Succeeded
+nightly-report-29918560-9hbzn  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+    node dev   pool role:control-plane,master   ip 10.244.0.95   CronJob nightly-report   qos Burstable   status Succeeded
 ................................................................................
-nightly-report-29918365-lcp6m  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
-    node dev   pool role:control-plane,master   ip 10.244.0.12   CronJob nightly-report   qos Burstable   status Succeeded
+nightly-report-29918555-xdkkc  0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+    node dev   pool role:control-plane,master   ip 10.244.0.93   CronJob nightly-report   qos Burstable   status Succeeded
 ................................................................................
 functionality-legacy-67ks7     1/1   0 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0   0.0   0.0
     node dev   pool role:control-plane,master   ip 10.244.0.19   ReplicationController functionality-legacy   qos Burstable   status Running
@@ -59,5 +59,5 @@ app-server-8fb4699bc-t7zxj     2/2  14 │      3 ·       0 · │     25    25
 app-server-8fb4699bc-cx5vz     2/2  14 │      3 ·       3 · │     25    250      12      96 │  12.0   1.2  25.0   3.1
     node dev   pool role:control-plane,master   ip 10.244.0.135   Deployment app-server   qos Burstable   status Running   last-exit Unknown
 ────────────────────────────────────────────────────────────────────────────────
-TOTAL (17 pods)                    380 │     61 ·       5 · │    265   1550     244     848 │  23.0   3.9   2.0   0.6
+TOTAL (17 pods)                    420 │     60 ·       5 · │    265   1550     244     848 │  22.6   3.9   2.0   0.6
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.

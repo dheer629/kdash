@@ -4,7 +4,7 @@
 == 4. the shell: the exact argv, and the audit events around it
 == 5. upload and download: argv, direction and path hygiene
 == 6. path hygiene: credential-looking paths, absolute paths, control bytes
-/workspace/kdash/src/inspector.sh: line 1750: /dev/tty: No such device or address
+/workspace/kdash/src/inspector.sh: line 1753: /dev/tty: No such device or address
 /workspace/kdash/src/interactive.sh: line 484: /dev/tty: No such device or address
 == 7. off by default: the keys explain themselves and nothing runs
 == 8. the wiring is published: flag, keys, help and the embedded module

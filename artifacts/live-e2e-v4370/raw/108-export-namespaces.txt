@@ -40,7 +40,7 @@
 
 
 
-── ► exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_namespace-list_kdash-local_20261119-221613.log ────────────────────────────────────── 1 / 14 · audited ──
+── ► exported to /var/tmp/kdash-extended-exports-87ggsf4a/kdash_namespace-list_kdash-local_20261120-004515.log ────────────────────────────────────── 1 / 14 · audited ──
 ┌─ MOVE ──────────────────┬─ FIND ────────────────────┬─ LEAVE ────────────────────────────┬─ CHOOSE ───────────────────────────────────────────────────────────────────┐
 │ j/k ↑↓     move         │ /  filter by name         │ q / Esc  cancel, stay on kdash-e2e │ Enter  open kdash-e2e                                                      │
 │ PgUp/PgDn  page         │ t  type a name not listed │ Q        quit kdash                │ A      all namespaces at once                                              │

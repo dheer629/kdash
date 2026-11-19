@@ -124,9 +124,11 @@ Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser che
 
 
 
+
+
 The run covers 200 baseline checks plus 103 extension checks, 30 Secrets checks,
 33 browser checks and all 19 fixture suites. One real kubelet-rotated log
-(94,906 lines, 10.2 MiB) was read alongside the current file.
+(103,840 lines, 11.1 MiB) was read alongside the current file.
 
 
 

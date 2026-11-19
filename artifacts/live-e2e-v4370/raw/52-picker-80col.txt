@@ -4,19 +4,19 @@
 ┌──────────────────────────┬─────────┬───────┬─────┬────────┬─────────┬───────┐
 │ POD                      │ STATUS  │ READY │ RST │    CPU │     MEM │  %LIM │
 ├──────────────────────────┼─────────┼───────┼─────┼────────┼─────────┼───────┤
-│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  14 │     4m │     3Mi │    3% │
-│ app-server-8~699bc-t7zxj │ Running │ 2/2   │  14 │     3m │     0Mi │    0% │
+│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  14 │     3m │     3Mi │    3% │
+│ app-server-8~699bc-t7zxj │ Running │ 2/2   │  14 │     2m │     0Mi │    0% │
 │ completed-check-m9swm    │ Succeed │ 0/1   │   0 │      - │       - │     - │
 │ db-stateful-0            │ Running │ 1/1   │   0 │     1m │     0Mi │    0% │
 │ db-stateful-1            │ Running │ 1/1   │   0 │     1m │     0Mi │    0% │
 │ functionalit~egacy-67ks7 │ Running │ 1/1   │   0 │     1m │     0Mi │    0% │
-│ nightly-repo~18375-zgx7m │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ nightly-repo~18380-96w9g │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ nightly-repo~18385-mx6cp │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~18575-zxln6 │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~18580-gx66n │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~18585-rj9d9 │ Succeed │ 0/1   │   0 │      - │       - │     - │
 │ node-agent-ctvg6         │ Running │ 1/1   │   0 │     1m │     1Mi │    3% │
 │ sync-pod                 │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ test-sts-0               │ Running │ 1/1   │  13 │     0m │     0Mi │     - │
-│ z-crash                  │ CrashLo │ 0/1   │ 341 │      - │       - │     - │
+│ test-sts-0               │ Running │ 1/1   │  16 │     0m │     0Mi │     - │
+│ z-crash                  │ CrashLo │ 0/1   │ 380 │      - │       - │     - │
 │ z-imagepull              │ ImagePu │ 0/1   │   0 │      - │       - │     - │
 │ z-oom                    │ Running │ 1/1   │   0 │    51m │     1Mi │    6% │
 │ z-pending                │ Pending │ 0/1   │   0 │      - │       - │     - │

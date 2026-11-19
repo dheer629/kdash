@@ -2,14 +2,14 @@
   "version": "4.37.0",
   "namespace": "kdash-e2e",
   "context": "kdash-local",
-  "started": "20261119-221345",
+  "started": "20261120-004248",
   "phase": "extended",
   "completed": true,
   "cli_workers": 1,
-  "sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
-  "installed_sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
-  "binary_sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
-  "capture_source_sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
+  "sha256": "9f17258a0e73023b3046b13a934b26cc30bf755ec1b48aa7923446137e16fc44",
+  "installed_sha256": "9f17258a0e73023b3046b13a934b26cc30bf755ec1b48aa7923446137e16fc44",
+  "binary_sha256": "9f17258a0e73023b3046b13a934b26cc30bf755ec1b48aa7923446137e16fc44",
+  "capture_source_sha256": "9f17258a0e73023b3046b13a934b26cc30bf755ec1b48aa7923446137e16fc44",
   "status": "PASS",
   "checks": [
     {
@@ -45,7 +45,7 @@
     {
       "name": "extended-quick-export-searched-workloads",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221358.log"
+      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261120-004301.log"
     },
     {
       "name": "capture-102-export-searched-workloads",
@@ -65,7 +65,7 @@
     {
       "name": "extended-quick-export-pod-filter",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221409.log"
+      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261120-004312.log"
     },
     {
       "name": "extended-line-editor-insert-arrow",
@@ -75,7 +75,7 @@
     {
       "name": "extended-quick-export-editor-insertion",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221423.log"
+      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261120-004326.log"
     },
     {
       "name": "capture-105-search-history",
@@ -90,92 +90,92 @@
     {
       "name": "extended-quick-export-editor-delete",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221436.log"
+      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261120-004339.log"
     },
     {
       "name": "extended-quick-export-view-1",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221445.log"
+      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261120-004348.log"
     },
     {
       "name": "extended-quick-export-view-2",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-nodes_kdash-e2e_20261119-221451.log"
+      "detail": "reports/exports/kdash_view-nodes_kdash-e2e_20261120-004353.log"
     },
     {
       "name": "extended-quick-export-view-3",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221456.log"
+      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261120-004358.log"
     },
     {
       "name": "extended-quick-export-view-4",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-ip_kdash-e2e_20261119-221501.log"
+      "detail": "reports/exports/kdash_view-ip_kdash-e2e_20261120-004403.log"
     },
     {
       "name": "extended-quick-export-view-5",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-mem_kdash-e2e_20261119-221506.log"
+      "detail": "reports/exports/kdash_view-mem_kdash-e2e_20261120-004408.log"
     },
     {
       "name": "extended-quick-export-view-6",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-io_kdash-e2e_20261119-221511.log"
+      "detail": "reports/exports/kdash_view-io_kdash-e2e_20261120-004413.log"
     },
     {
       "name": "extended-quick-export-view-7",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-alerts_kdash-e2e_20261119-221516.log"
+      "detail": "reports/exports/kdash_view-alerts_kdash-e2e_20261120-004418.log"
     },
     {
       "name": "extended-quick-export-view-8",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-services_kdash-e2e_20261119-221521.log"
+      "detail": "reports/exports/kdash_view-services_kdash-e2e_20261120-004423.log"
     },
     {
       "name": "extended-quick-export-view-9",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-storage_kdash-e2e_20261119-221526.log"
+      "detail": "reports/exports/kdash_view-storage_kdash-e2e_20261120-004428.log"
     },
     {
       "name": "extended-quick-export-view-E",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-events_kdash-e2e_20261119-221531.log"
+      "detail": "reports/exports/kdash_view-events_kdash-e2e_20261120-004433.log"
     },
     {
       "name": "extended-quick-export-view-explain",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-explain_kdash-e2e_20261119-221536.log"
+      "detail": "reports/exports/kdash_view-explain_kdash-e2e_20261120-004438.log"
     },
     {
       "name": "extended-quick-export-view-C",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-certs_kdash-e2e_20261119-221541.log"
+      "detail": "reports/exports/kdash_view-certs_kdash-e2e_20261120-004443.log"
     },
     {
       "name": "extended-quick-export-view-R",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-runbook_kdash-e2e_20261119-221546.log"
+      "detail": "reports/exports/kdash_view-runbook_kdash-e2e_20261120-004448.log"
     },
     {
       "name": "extended-quick-export-view-K",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-check_kdash-e2e_20261119-221551.log"
+      "detail": "reports/exports/kdash_view-check_kdash-e2e_20261120-004453.log"
     },
     {
       "name": "extended-quick-export-view-M",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-fmea_kdash-e2e_20261119-221556.log"
+      "detail": "reports/exports/kdash_view-fmea_kdash-e2e_20261120-004458.log"
     },
     {
       "name": "extended-quick-export-view-Y",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-secrets_kdash-e2e_20261119-221601.log"
+      "detail": "reports/exports/kdash_view-secrets_kdash-e2e_20261120-004503.log"
     },
     {
       "name": "extended-quick-export-access",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-access_kdash-e2e_20261119-221608.log"
+      "detail": "reports/exports/kdash_view-access_kdash-e2e_20261120-004510.log"
     },
     {
       "name": "capture-107-export-access",
@@ -185,7 +185,7 @@
     {
       "name": "extended-quick-export-namespaces",
       "status": "PASS",
-      "detail": "reports/exports/kdash_namespace-list_kdash-local_20261119-221613.log"
+      "detail": "reports/exports/kdash_namespace-list_kdash-local_20261120-004515.log"
     },
     {
       "name": "capture-108-export-namespaces",
@@ -195,7 +195,7 @@
     {
       "name": "extended-quick-export-pods",
       "status": "PASS",
-      "detail": "reports/exports/kdash_pod-list_kdash-e2e_20261119-221618.log"
+      "detail": "reports/exports/kdash_pod-list_kdash-e2e_20261120-004520.log"
     },
     {
       "name": "capture-109-export-pods",
@@ -205,7 +205,7 @@
     {
       "name": "extended-quick-export-summary",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261119-221631.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261120-004534.log"
     },
     {
       "name": "capture-110-container-find",
@@ -215,7 +215,7 @@
     {
       "name": "extended-quick-export-containers",
       "status": "PASS",
-      "detail": "reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261119-221639.log"
+      "detail": "reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261120-004541.log"
     },
     {
       "name": "capture-111-export-containers",
@@ -230,7 +230,7 @@
     {
       "name": "extended-quick-export-current-log",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221650.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261120-004552.log"
     },
     {
       "name": "extended-log-coverage-truthful",
@@ -250,7 +250,7 @@
     {
       "name": "extended-quick-export-matching-log",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221703.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261120-004605.log"
     },
     {
       "name": "extended-only-matches-export",
@@ -260,17 +260,17 @@
     {
       "name": "extended-quick-export-describe",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261119-221710.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261120-004612.log"
     },
     {
       "name": "extended-quick-export-events",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261119-221715.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261120-004617.log"
     },
     {
       "name": "extended-quick-export-explain",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261119-221720.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261120-004622.log"
     },
     {
       "name": "extended-log-scope-cancel",
@@ -295,7 +295,7 @@
     {
       "name": "extended-quick-export-find-pod",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221745.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261120-004647.log"
     },
     {
       "name": "extended-log-scope-pod",
@@ -315,7 +315,7 @@
     {
       "name": "extended-quick-export-find-workload",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221754.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261120-004656.log"
     },
     {
       "name": "extended-log-scope-workload",
@@ -335,7 +335,7 @@
     {
       "name": "extended-quick-export-find-namespace",
       "status": "PASS",
-      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221803.log"
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261120-004710.log"
     },
     {
       "name": "extended-log-scope-namespace",
@@ -360,7 +360,7 @@
     {
       "name": "extended-quick-export-whole-previous",
       "status": "PASS",
-      "detail": "reports/exports/kdash_z-crash_previous_20261119-221823.log"
+      "detail": "reports/exports/kdash_z-crash_previous_20261120-004730.log"
     },
     {
       "name": "extended-previous-log-coverage",
@@ -373,33 +373,33 @@
       "detail": "exit 0; 326 bytes",
       "command": "kdash -c kdash-local -n kdash-e2e --report /workspace/kdash/artifacts/live-e2e-v4370/extended/reports/with-extras --no-io",
       "exit_code": 0,
-      "seconds": 9.17,
+      "seconds": 10.17,
       "log": "logs/extended-report-bundle.log"
     },
     {
       "name": "extended-bundle-fmea-txt",
       "status": "PASS",
-      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.txt"
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/fmea.txt"
     },
     {
       "name": "extended-bundle-fmea-csv",
       "status": "PASS",
-      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.csv"
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/fmea.csv"
     },
     {
       "name": "extended-bundle-secrets-txt",
       "status": "PASS",
-      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.txt"
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/secrets.txt"
     },
     {
       "name": "extended-bundle-secrets-csv",
       "status": "PASS",
-      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.csv"
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/secrets.csv"
     },
     {
       "name": "extended-bundle-secrets-json",
       "status": "PASS",
-      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.json"
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261120_004733/secrets.json"
     },
     {
       "name": "extended-bundle-secrets-json-valid",
@@ -412,7 +412,7 @@
       "detail": "exit 0; 299 bytes",
       "command": "kdash -c kdash-local -n kdash-e2e --snapshot --no-io",
       "exit_code": 0,
-      "seconds": 8.19,
+      "seconds": 7.93,
       "log": "logs/extended-report-with-extras-snapshot.log"
     },
     {
@@ -426,7 +426,7 @@
       "detail": "exit 0; 287 bytes",
       "command": "kdash -c kdash-local -n kdash-e2e --snapshot --no-io",
       "exit_code": 0,
-      "seconds": 1.34,
+      "seconds": 1.21,
       "log": "logs/extended-report-without-extras.log"
     },
     {
@@ -440,7 +440,7 @@
       "detail": "exit 2; 16967 bytes",
       "command": "kdash -c kdash-local -n kdash-e2e --certs -o tsv",
       "exit_code": 2,
-      "seconds": 6.84,
+      "seconds": 6.78,
       "log": "logs/extended-certs-secret-certificates.log"
     },
     {
@@ -451,7 +451,7 @@
     {
       "name": "extended-quick-export-certs-secret-rows",
       "status": "PASS",
-      "detail": "reports/exports/kdash_view-certs_kdash-e2e_20261119-221905.log"
+      "detail": "reports/exports/kdash_view-certs_kdash-e2e_20261120-004812.log"
     },
     {
       "name": "capture-121-certs-secret-search",
@@ -511,7 +511,7 @@
     {
       "name": "extended-quick-export-local-files",
       "status": "PASS",
-      "detail": "reports/exports/kdash_files_local_20261119-221940.log"
+      "detail": "reports/exports/kdash_files_local_20261120-004846.log"
     },
     {
       "name": "capture-127-export-local-files",
@@ -521,7 +521,7 @@
     {
       "name": "extended-quick-export-remote-files",
       "status": "PASS",
-      "detail": "reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261119-221951.log"
+      "detail": "reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261120-004858.log"
     },
     {
       "name": "capture-128-export-remote-files",
@@ -551,9 +551,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | In-place dashboard search counts real matching lines",
       "png": "samples/cli_4370/100-dashboard-search.png",
-      "sha256": "6bde3318a2cf872e51aee1718cf94806a1c7576e92d3f8ab5cd099db76f5ead4",
+      "sha256": "2bd7066d3bd79d94960c514c81c0dabaa1d3bb38216594e728c53b0f7ef7ec5a",
       "native_png": "samples/cli_4370/native/100-dashboard-search.png",
-      "native_sha256": "019dc2e787afa04309c5d6c3a533e57df427d1feaf270c2ae00b89cfadc08e15"
+      "native_sha256": "67e0c4ee08f7d8ebdf02d152637595a9ff8c8b87377fc8837bc1f0ea2f530936"
     },
     {
       "file": "raw/101-search-other-view.ansi",
@@ -561,9 +561,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Search retained while switching to live workloads",
       "png": "samples/cli_4370/101-search-other-view.png",
-      "sha256": "519b41ad7ebb3f73a19283aec36ba2437e1a4e58da6e465db4d03842e012b221",
+      "sha256": "2070847f4b2f9abcb0235c6da1491e6ab782aa421d58da44f48414531e364158",
       "native_png": "samples/cli_4370/native/101-search-other-view.png",
-      "native_sha256": "f8a881edc43bdac205c28140daa5361d6eee7d715b9d92aa1b8a0b6f74c88fd8"
+      "native_sha256": "8d54850a8c01edd7e575d9172205df69ba6dd398ba4e5f797f4898a55e1c9dae"
     },
     {
       "file": "raw/102-export-searched-workloads.ansi",
@@ -571,9 +571,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Quick export includes the screen and every workload line",
       "png": "samples/cli_4370/102-export-searched-workloads.png",
-      "sha256": "e790d8e55d44921f331023c92ed500fe2946e79e2152df3007b4129536edeb1c",
+      "sha256": "85116a19142c60baab8c3a79a4a3e6b1cf501388c8fa5771792ada6d55d329df",
       "native_png": "samples/cli_4370/native/102-export-searched-workloads.png",
-      "native_sha256": "8255c40c21524200f91fddc26b2dc2514d915ec01a75277bb629c8777b51e338"
+      "native_sha256": "27df99efb82bb1bbdf670c54eb05b8c8fc5d9b3ef210ca58c180062388d389be"
     },
     {
       "file": "raw/103-invalid-search.ansi",
@@ -581,9 +581,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Invalid search expressions remain editable",
       "png": "samples/cli_4370/103-invalid-search.png",
-      "sha256": "119a93033548c2e3996d327bafeb6cccb866bfd3f8d5e51b94ca6e9a47e10730",
+      "sha256": "069c8f53693e39240b8578a37963d7455eee6e93162d1e04a85b151901a593ec",
       "native_png": "samples/cli_4370/native/103-invalid-search.png",
-      "native_sha256": "63c33dfa1607beec9cf7856eb138661f2174cbfbc2c516046cbec1cd1b768613"
+      "native_sha256": "26fed44cf652badfbcec4c78ef065ea67c1405dd5932ed93d25ff0bec87d7dae"
     },
     {
       "file": "raw/104-search-no-match.ansi",
@@ -591,9 +591,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | A valid unmatched search reports zero matching lines",
       "png": "samples/cli_4370/104-search-no-match.png",
-      "sha256": "a0c5d005813754d18ca8207c64b172b08578391e6233671a06b37f2e742136f0",
+      "sha256": "d6693a2f85c5141d660a5ca59e2e9d47cc9ca3958dfe6f98f9cd1208a7745f6a",
       "native_png": "samples/cli_4370/native/104-search-no-match.png",
-      "native_sha256": "73de58d49360ab7976c31dedae8f7962bd4be9dea672fc240dcb2a8d18b1dc4c"
+      "native_sha256": "cc4dc6968c25a8c62f1e42771d112702b008ebe897b15c7aca77abbfcaf9dcc7"
     },
     {
       "file": "raw/105-search-history.ansi",
@@ -601,9 +601,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Shared editor recalls this session's earlier search",
       "png": "samples/cli_4370/105-search-history.png",
-      "sha256": "165b1432f1d4d2fc1ca4ad737a6f66e3b37d76ac59f8f0f401eeafca1a9c6d7e",
+      "sha256": "2cd7b0268c5b201299018ba5e12957010978fd98c2c9d8172c5dbf84de890b8e",
       "native_png": "samples/cli_4370/native/105-search-history.png",
-      "native_sha256": "291b950060f6a5e83352a907de90d9ee063900a2dbd75f6b0275d2151e3b00bc"
+      "native_sha256": "6154578b1973f4a2f1a9611da9970e6dd6560253387acc0caa87ce71d1bab7df"
     },
     {
       "file": "raw/106-search-editor-delete.ansi",
@@ -611,9 +611,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Cursor Home/Delete/End/Backspace leaves the intended search text",
       "png": "samples/cli_4370/106-search-editor-delete.png",
-      "sha256": "423ca4a29e4babca0fae7b0fec517c3a7a6b442b6e7e8068bb65051f3606c418",
+      "sha256": "0055cdc6914bd6896d28b4b058781f0b370938dffd5b18483956c737408772ee",
       "native_png": "samples/cli_4370/native/106-search-editor-delete.png",
-      "native_sha256": "92f843bcea0ad8c0d15436c1361f718d593c59acc2999926036a563a36474a02"
+      "native_sha256": "df31e9f44414805b32a3207b3a274f0261425d795c14dea6ee85adf9ee484cbc"
     },
     {
       "file": "raw/107-export-access.ansi",
@@ -621,9 +621,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Access view exports its complete permission review",
       "png": "samples/cli_4370/107-export-access.png",
-      "sha256": "2e7e2012878d9cc53fe57d384e779778fcf897e1e4740f885a683474791e0504",
+      "sha256": "807536c1f3d2d5b2322b502ae4e773328532346d3bad7a192c91cffc0d7da037",
       "native_png": "samples/cli_4370/native/107-export-access.png",
-      "native_sha256": "cb6cc2e85ed8e8ef0cb6f3f5f771a725d0205f80cc90cfe79021fb7b3e9e5219"
+      "native_sha256": "cdb45c953bd84a64b717b58f8663d5094cbedfa62f96d2514d92d02bb113caf2"
     },
     {
       "file": "raw/108-export-namespaces.ansi",
@@ -631,9 +631,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Namespace picker quick export retains every namespace name",
       "png": "samples/cli_4370/108-export-namespaces.png",
-      "sha256": "03ec9980bb70cdf4f5d9ea850b7f9e28ef746b358bc568860dc53e3b80b59f0a",
+      "sha256": "1123ce69f8f04f30c34253a66bb6ebb178999ce31a72a3e4f7f83a5228924b40",
       "native_png": "samples/cli_4370/native/108-export-namespaces.png",
-      "native_sha256": "c0708bd8cd541190028a0f6dd50f1d7549168e0a8a95a9adbc6a3c98e2ff6ed1"
+      "native_sha256": "02848e6905e660512a74e83df171e4c4e73b6ff146427b49b59c85cb1231f11e"
     },
     {
       "file": "raw/109-export-pods.ansi",
@@ -641,9 +641,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Pod picker quick export retains full names and resource columns",
       "png": "samples/cli_4370/109-export-pods.png",
-      "sha256": "25d2ab6ce4671791d0a678b6a101a911e4601a19bbff2e3eb718928372f71e66",
+      "sha256": "067bc52ba39077896c7cd14eac5d14712ead425dffbbdf3f20dfee329875089b",
       "native_png": "samples/cli_4370/native/109-export-pods.png",
-      "native_sha256": "23ebb556de66991095ee7da0911250efc242ca061660b5ef53bcaacd74d6fad7"
+      "native_sha256": "66eb0b93d65ebab478f0123884efed9188726ad667dcb5b719e3310b9f5ff98b"
     },
     {
       "file": "raw/110-container-find.ansi",
@@ -661,9 +661,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Container picker exports every regular container and image",
       "png": "samples/cli_4370/111-export-containers.png",
-      "sha256": "a3edacc8a4766fa3d51f0558e4ecbb85ffbab67c14dc5aeeae989696314d428b",
+      "sha256": "31c4cba5ddb3a24a021f2b3a1d5ae630d639458f74fa405daa68fc7de6c2c1dc",
       "native_png": "samples/cli_4370/native/111-export-containers.png",
-      "native_sha256": "af64f019dde9d01e410543570347747306efb88fc1be4375eeb81eae4a7d4556"
+      "native_sha256": "676a3a261c241dddd5b7916f4d8f0f9866c98ab3ba3cf4ea4bfe676a010d1f01"
     },
     {
       "file": "raw/112-whole-log-coverage.ansi",
@@ -671,9 +671,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Whole current log displays read coverage and node proxy capability",
       "png": "samples/cli_4370/112-whole-log-coverage.png",
-      "sha256": "6d969a96f6b2fa7d41463f14a84fc0d31d0122831aa261bf5846146bc08fb457",
+      "sha256": "6786c3981eb1fdb4baecc4c4a569b69da4b321f104e36e911ac3703f2fbc4c40",
       "native_png": "samples/cli_4370/native/112-whole-log-coverage.png",
-      "native_sha256": "d4136dc3743cea22b0d2208cbda3b68ee35a6933e33a8eb424c5d0f12c19cd11"
+      "native_sha256": "ef342b00a72a1f4dcac0fb1d37dca41c3e3f0f0105335fe7553ad3f22e8685a4"
     },
     {
       "file": "raw/113-log-find-in-place.ansi",
@@ -681,9 +681,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Whole log search counts case-insensitive real warnings",
       "png": "samples/cli_4370/113-log-find-in-place.png",
-      "sha256": "2d1e2f797ffa7357b1bc8a7e1b54e4e11ca61624cd7855d62a6a19a683dcd073",
+      "sha256": "fad2ac56309744ccd8743ab30a3f9d3c8ef4ad8dac1171eb3ec6fd4a09589c03",
       "native_png": "samples/cli_4370/native/113-log-find-in-place.png",
-      "native_sha256": "941ab6660101166c1751d38dc26c99fdb56ec408c7b011f663d3ec2472e815be"
+      "native_sha256": "73370810e4174959cd39337a239178bce71f6300398d97a70c2e21b7a7f0962f"
     },
     {
       "file": "raw/114-log-search-scope.ansi",
@@ -711,9 +711,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Merged timestamped matching lines from real pod container logs",
       "png": "samples/cli_4370/116-log-search-pod.png",
-      "sha256": "b962d03405b0d9811a52e3fbf5209fd87ae617948659a311a032abeae5ddf453",
+      "sha256": "7a46f664c48d39e34889346a0c0480254e74bbe12b507756fca9fb12c20bff3f",
       "native_png": "samples/cli_4370/native/116-log-search-pod.png",
-      "native_sha256": "b380a5cf695b7a28ce8649c37006e9087c342b67eb56f178c472b2919cfb0469"
+      "native_sha256": "fb7fe2468204bb32d2706786ae3a4ffa10cbada6f26cd9cbeca6ba05bdcf562f"
     },
     {
       "file": "raw/117-log-search-workload.ansi",
@@ -721,9 +721,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Merged timestamped matching lines from real workload container logs",
       "png": "samples/cli_4370/117-log-search-workload.png",
-      "sha256": "4f9cd726960806ca8fc681edccaa8b29cd742dbffcfeaa492a9ff011e5d121ad",
+      "sha256": "b6d11835eb8586b9d5fe4a97206f835ab804d0541ddecfb0a9c0eb317df20c19",
       "native_png": "samples/cli_4370/native/117-log-search-workload.png",
-      "native_sha256": "7208589224c111a3a17573ff96a595e7c41b707c80281218d4e08f90513ca766"
+      "native_sha256": "9d319e9db4b4525d9b827a9f552de1d800b9b553ad7646318ad74687bb3c3f86"
     },
     {
       "file": "raw/118-log-search-namespace.ansi",
@@ -731,9 +731,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Merged timestamped matching lines from real namespace container logs",
       "png": "samples/cli_4370/118-log-search-namespace.png",
-      "sha256": "3736e1251cd4abd894a8e034b6dff00fb70d7822473814cdd741a6749522688f",
+      "sha256": "88f1fb6bfdd53fef727cb6b30910de5533ec19bb577f9d510943fb99c61c80b1",
       "native_png": "samples/cli_4370/native/118-log-search-namespace.png",
-      "native_sha256": "35874e06a6d2b5717039b43112857bc2f2231b5349d457f61c15de5a17a2c5cd"
+      "native_sha256": "cd80ad3b54f202e021d095da747cd131eab3338d138ffabfcc719b0f81318861"
     },
     {
       "file": "raw/119-whole-previous-log.ansi",
@@ -741,9 +741,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Full previous instance of a real restarted container",
       "png": "samples/cli_4370/119-whole-previous-log.png",
-      "sha256": "38ec9092290c7b2694aa141d908ca71642c1bda047ca4006935136ed61b01f57",
+      "sha256": "44bdceeb6d2ec7801fa7d4f5ad0078df7ac85827b48fc4eb01c8fd9039f89144",
       "native_png": "samples/cli_4370/native/119-whole-previous-log.png",
-      "native_sha256": "2d32be9140763855e86dc5fe2d1b49c1011e7629838c939cb0febff5bfeb34f3"
+      "native_sha256": "4bff4c523ca9dc7046f8a67c2d480c0a143666b4097b53e19bbadbb8bf5e9d6a"
     },
     {
       "file": "raw/120-certs-secret-public-certificate.ansi",
@@ -751,9 +751,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Certificate view includes real generated Secret public certificate expiry",
       "png": "samples/cli_4370/120-certs-secret-public-certificate.png",
-      "sha256": "c3046bcc6a7dd7e1e0a3b10040f8707a294840801b51788a49c8bd1ac706f5d6",
+      "sha256": "5000d0cf63c948580b76b015d43d8e7fdcd2928f3eccde7a67eea3effe15a7eb",
       "native_png": "samples/cli_4370/native/120-certs-secret-public-certificate.png",
-      "native_sha256": "2f1c10a0fbec9d2d2249ed958dfe0d64b6e52e61e335abdf422be81ba2816cc2"
+      "native_sha256": "ff68c7c2090825ca387cf776b166ed654f4677dc26426437775e37ece91ea5e5"
     },
     {
       "file": "raw/121-certs-secret-search.ansi",
@@ -761,9 +761,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Certificate search finds the generated Secret certificate",
       "png": "samples/cli_4370/121-certs-secret-search.png",
-      "sha256": "42ebce83d19673412eaf228882af9b1af8838a3cc9e5d270082e677e7074125f",
+      "sha256": "42b219dab248312cc415f043be679f3f5af71a353b231c844e9d923c848841f2",
       "native_png": "samples/cli_4370/native/121-certs-secret-search.png",
-      "native_sha256": "9f1c6efe16d0917d98ac992791378e76cc4ad621cdf48de66bbb1c9a026ba847"
+      "native_sha256": "f7d18fadc56e5b1b7bd4c7ccdc2d57ed5055ba228ea668b8eb2b0ad4fa1a3a4e"
     },
     {
       "file": "raw/122-theme-safe.ansi",
@@ -771,9 +771,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Live dashboard theme safe",
       "png": "samples/cli_4370/122-theme-safe.png",
-      "sha256": "5a18e319bb7e9e759004a390fe4345b0b0432fe6b303e0e728148faaef472f04",
+      "sha256": "8895dba48df5d75a38d0e31a7575cd7c641f26b65cb35e1a86b6390adedd26a7",
       "native_png": "samples/cli_4370/native/122-theme-safe.png",
-      "native_sha256": "504d290357463863fce7375cdbb32ef288c7a4560e7ed26bccde3eb7cdba8bda"
+      "native_sha256": "4ac9eed801774dfe7b5f0dbacd59c1142c2329a088968fe47920747a8d30f8a6"
     },
     {
       "file": "raw/123-theme-dark.ansi",
@@ -781,9 +781,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Live dashboard theme dark",
       "png": "samples/cli_4370/123-theme-dark.png",
-      "sha256": "3a71a9572edf9311a3230f3a07ea4074da1f6e2f33a7441571533d381e333e54",
+      "sha256": "4306e8564d336335fdf818e3935f302da49f55e1e00e409e7cc61ee17ead3abd",
       "native_png": "samples/cli_4370/native/123-theme-dark.png",
-      "native_sha256": "cfb2c26a74b838f1fd8bb295362f4fcaf4b34ae09f49af706ce39d00bd042fbb"
+      "native_sha256": "c06f819e873fafe142334d78034c064a4ce2889c15b374b5aba71f5d29aee7e0"
     },
     {
       "file": "raw/124-theme-light.ansi",
@@ -791,9 +791,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Live dashboard theme light",
       "png": "samples/cli_4370/124-theme-light.png",
-      "sha256": "9303bae690530d15027f9fbd15ec8f32dc689f4af900678a172a53b88de884a3",
+      "sha256": "cfc650c86f9e9fc3c090adac59768dc1d7990c7cd4f8beeedcc054527d309d24",
       "native_png": "samples/cli_4370/native/124-theme-light.png",
-      "native_sha256": "e9d9aafc86fdb4b8e2ceec550024e6eb832e67f6af36400e91ff4626ffe64bb2"
+      "native_sha256": "46d01ad6d4381f057f2286266dc0ee9916d09d41db459bee10e74bafe847134f"
     },
     {
       "file": "raw/125-theme-mono.ansi",
@@ -801,9 +801,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Live dashboard theme mono",
       "png": "samples/cli_4370/125-theme-mono.png",
-      "sha256": "614a86ce05bfb44b05f3998cb8935be2197c28e040da1806886f03513efa2ad6",
+      "sha256": "542029f86c385716eaad11aac1b02aecb2346ac64456b478f8d72efb2d053466",
       "native_png": "samples/cli_4370/native/125-theme-mono.png",
-      "native_sha256": "8471a419da3f1b699bda8d3b4e74670402ce630de67f025db02abd4d399bd1d6"
+      "native_sha256": "3ff399afc6d23185bbca13c779642acb71def5c8bf111de2ee090a6e137ef111"
     },
     {
       "file": "raw/126-fallback-16-colours.ansi",
@@ -811,9 +811,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Live compatibility mode with sequential reads and 16 ANSI colours",
       "png": "samples/cli_4370/126-fallback-16-colours.png",
-      "sha256": "32b33a7961ddf726fe29cbc5d809680de7cf35dcc30c10c1fbabcad71cba9554",
+      "sha256": "e50de00b580e773604ef94b3bbd312794958b753ae65873248e51f8dc9275f18",
       "native_png": "samples/cli_4370/native/126-fallback-16-colours.png",
-      "native_sha256": "cd9a41acfb47aa8aa0252671414ea2c925c7b47dd45e65321cebfe358e2ba908"
+      "native_sha256": "2ac49189aeb126764f36a409a987d6de3bde08acc0e800a9a9a07b69d6fb2c0e"
     },
     {
       "file": "raw/127-export-local-files.ansi",
@@ -821,9 +821,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Quick export from the actual local files browser",
       "png": "samples/cli_4370/127-export-local-files.png",
-      "sha256": "76456177a195c757d0df1092df6f11e2b556b0a885705bc20d36a9b1632abcf1",
+      "sha256": "02866d29639c053563389dc2d9ca3d98e65cc16a34bf8239567c22b6b3e5c4f7",
       "native_png": "samples/cli_4370/native/127-export-local-files.png",
-      "native_sha256": "f04a4066dde6ff9f43f88e68b1596b57fe95c8a4199e10d59c11595c4dd6cade"
+      "native_sha256": "bd262ec276c752052a12f644e26ee02f5e57a9e381384c74c22caccc95ef32e0"
     },
     {
       "file": "raw/128-export-remote-files.ansi",
@@ -831,9 +831,9 @@
       "rows": 50,
       "title": "kdash 4.37.0 | Quick export from the actual remote files browser",
       "png": "samples/cli_4370/128-export-remote-files.png",
-      "sha256": "716bf6e90331f09b0432bf0e9ee51157c9ff1f9eca7710936f0ad84f192426a8",
+      "sha256": "d8e596e2a4c0dfa1b7fbc42b3d1950d78c1eabf61a05537aaafee60b4ddf5f03",
       "native_png": "samples/cli_4370/native/128-export-remote-files.png",
-      "native_sha256": "2e08a55bae8bd67c559d105180b7397fe0c6e8451651e793f3fb6683ca36638c"
+      "native_sha256": "8ff120511ce580eeb3f29d3bb68592cbf202a6c75117df6d2dfa8b116bb0e71e"
     }
   ],
   "failures": []

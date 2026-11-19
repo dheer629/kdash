@@ -38,9 +38,11 @@ Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser che
 
 
 
+
+
 The refresh exercised 200 baseline checks, 103 extension checks, 30 Secrets
 checks, 33 browser checks and all 19 fixture suites on the installed binary. It
-also read a real rotated kubelet log (94,906 lines, 10.2 MiB) alongside the
+also read a real rotated kubelet log (103,840 lines, 11.1 MiB) alongside the
 current file; see the limits below and in the feature checklist.
 
 

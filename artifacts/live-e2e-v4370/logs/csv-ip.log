@@ -1,9 +1,9 @@
 # ip
 POD,POD_IP,NODE,POOL,HOST_IP,KIND,WORKLOAD,STATUS,NOTE
-nightly-report-29918365-lcp6m,10.244.0.12,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
-nightly-report-29918370-qdkw5,10.244.0.14,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
-nightly-report-29918375-zgx7m,10.244.0.16,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
 functionality-legacy-67ks7,10.244.0.19,dev,"role:control-plane,master",172.18.0.2,ReplicationController,functionality-legacy,Running,
+nightly-report-29918555-xdkkc,10.244.0.93,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
+nightly-report-29918560-9hbzn,10.244.0.95,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
+nightly-report-29918565-mw26x,10.244.0.98,dev,"role:control-plane,master",172.18.0.2,CronJob,nightly-report,Succeeded,
 z-crash,10.244.0.133,dev,"role:control-plane,master",172.18.0.2,Pod,z-crash,CrashLoopBackOff,
 app-server-8fb4699bc-cx5vz,10.244.0.135,dev,"role:control-plane,master",172.18.0.2,Deployment,app-server,Running,
 app-server-8fb4699bc-t7zxj,10.244.0.138,dev,"role:control-plane,master",172.18.0.2,Deployment,app-server,Running,
@@ -24,7 +24,7 @@ SUBNET,PODS,NODES
 
 # ipblocks
 NODE,POOL,INTERNAL_IP,POD_CIDR,CIDR_ADDRESSES,NS_PODS_WITH_IP,HOST_NETWORK_PODS,IP_BLOCKS_OBSERVED
-dev,"role:control-plane,master",172.18.0.2,10.244.0.0/24,254,14,0,10.244.0.128/26 10.244.0.0/26
+dev,"role:control-plane,master",172.18.0.2,10.244.0.0/24,254,14,0,10.244.0.128/26 10.244.0.0/26 10.244.0.64/26
 
 # services
 NAMESPACE,SERVICE,TYPE,CLUSTER_IP,EXTERNAL_IPS,LB_INGRESS,PORTS

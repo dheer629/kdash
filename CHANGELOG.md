@@ -57,7 +57,7 @@ the detailed per-release notes.
 - `live-e2e-v4370` on the local WSL cluster passed 303 live checks (200 baseline
   plus 103 search/log/export extensions), 30 Secrets checks, 33 browser checks
   and all 19 fixture suites. It published 125 CLI screenshots and read a real
-  kubelet-rotated log (94,906 lines, 10.2 MiB) alongside the current file.
+  kubelet-rotated log (103,840 lines, 11.1 MiB) alongside the current file.
   Source and installed SHA-256 matched. See `docs/VALIDATION-4.37.0.md`.
 
 ### Historical 4.32.0 validation

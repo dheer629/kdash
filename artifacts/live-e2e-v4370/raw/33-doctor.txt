@@ -1,10 +1,10 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:13:11 IST
-┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 381           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
-│ poll 2s  spec 6s/30s   session 21:10:37 up 2m34s      │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
-└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
- DATA ● pods fresh 6s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:32:51 IST
+┌─ SCOPE ────────────────────────────────────────────────┬─ POD HEALTH ───────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                       │ ! pods 13/17 ready   restarts 423          │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 6s/30s   session 00:18:09 up 14m42s      │ OOM risk 0   OOMKilled 0   no-limit 1      │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 5  ^ 5        │
+└────────────────────────────────────────────────────────┴────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 7s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  KDASH 4.37.0 DOCTOR   read-only capability checks - no cluster changes are made
 
 CONNECTION
@@ -47,4 +47,4 @@ CHECKS  9 checks   all required checks passed
 
 
 K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
- ● LIVE 21:13:12  next 1s  data 1s old  spec 7/30s  fetch 0.0s  poll 2s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / search  > export  P pause  x html
+ ● LIVE 00:32:52  next 1s  data 1s old  spec 7/30s  fetch 0.0s  poll 2s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / search  > export  P pause  x html

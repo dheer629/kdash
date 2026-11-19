@@ -1,10 +1,10 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:18:46 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:38:23 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 382           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
-│ poll 2s  spec 17s/30s   session 21:18:29 up 17s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 424           │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 18s/30s   session 00:38:05 up 18s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
- DATA ● pods fresh 17s old  metrics available │ C certs (3 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 18s old  metrics available │ C certs (3 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  RUNBOOK - etcd-restore   printed procedures with your cluster's names filled in - kdash never runs them
 runbooks:  [1 etcd-restore]   2 cert-rotate    3 node-notready    4 api-unreachable    5 oidc-login    [ ] previous / next   (kdash --runbook NAME)
 
@@ -47,4 +47,4 @@ A. RESTORE ONTO THE EXISTING SERVERS  servers: dev
       note   nodes are restored from the snapshot too: delete nodes that no longer exist (kubectl --context kdash-local delete node NAME) and re-run workloads changed af›
 
 K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
- certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ○ LIVE 21:18:47  next 2s  data 2s old  fetch >
+ certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ● LIVE 00:38:24  next 2s  data 2s old  fetch >

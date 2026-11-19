@@ -1,24 +1,24 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:19:10 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:38:47 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 382           │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13               │
-│ poll 2s  spec 11s/30s   session 21:18:29 up 41s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 424           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 11s/30s   session 00:38:05 up 42s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 1  ^ 0        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
- DATA ● pods fresh 11s old  metrics available │ C certs (3 expiring)  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  !›
+ DATA ● pods fresh 12s old  metrics available │ C certs (3 expiring)  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  !›
  FMEA   failure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection
 
-  11 HIGH   7 MEDIUM   40 LOW   48 of 50 modes visible to kubernetes-super-admin  scored 10s ago - r re-scores, : access shows your rights
+  11 HIGH   7 MEDIUM   40 LOW   48 of 50 modes visible to kubernetes-super-admin  scored 9s ago - r re-scores, : access shows your rights
   showing kind: Pod (t cycles, empty = all)
 
 WORKSHEET  15 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
 ┌────┬────────┬───┬────┬───┬─────┬────────┬───────────────────────────────────┬──────────────────────────────────────┬────────────────────────────────────────────────┐
 │ #  │ AP     │ S │  O │ D │ RPN │ ID     │ OBJECT                            │ FAILURE MODE                         │ NOW                                            │
 ├────┼────────┼───┼────┼───┼─────┼────────┼───────────────────────────────────┼──────────────────────────────────────┼────────────────────────────────────────────────┤
-│ 1  │ HIGH   │ 7 │ 10 │ 4 │ 280 │ POD-01 │ kdash-e2e/z-crash                 │ CrashLoopBackOff                     │ CrashLoopBackOff, 341 restarts (last: Error)   │
+│ 1  │ HIGH   │ 7 │ 10 │ 4 │ 280 │ POD-01 │ kdash-e2e/z-crash                 │ CrashLoopBackOff                     │ CrashLoopBackOff, 380 restarts (last: Error)   │
 │ 2  │ HIGH   │ 7 │ 10 │ 4 │ 280 │ POD-03 │ kdash-e2e/z-pending               │ Pending, unschedulable               │ Pending                                        │
 │ 3  │ HIGH   │ 7 │ 10 │ 4 │ 280 │ POD-03 │ kdash-e2e/z-unschedulable         │ Pending, unschedulable               │ Pending                                        │
 │ 4  │ HIGH   │ 5 │ 10 │ 5 │ 250 │ HPA-02 │ kdash-e2e/functionality-legacy    │ Pinned at maxReplicas                │ at maxReplicas 1                               │
-│ 5  │ MEDIUM │ 6 │ 10 │ 4 │ 240 │ POD-04 │ kdash-e2e/z-imagepull             │ ImagePullBackOff                     │ ImagePullBackOff - the image cannot be pulled  │
+│ 5  │ MEDIUM │ 6 │ 10 │ 4 │ 240 │ POD-04 │ kdash-e2e/z-imagepull             │ ImagePullBackOff                     │ ErrImagePull - the image cannot be pulled      │
 │ 6  │ LOW    │ 6 │ 2* │ 5 │  60 │ POD-05 │ -                                 │ Readiness probe failing              │ all 17 pods ok                                 │
 │ 7  │ LOW    │ 6 │ 2* │ 4 │  48 │ HPA-01 │ -                                 │ Cannot read metrics                  │ all 2 hpas ok                                  │
 │ 8  │ LOW    │ 6 │ 2* │ 4 │  48 │ POD-02 │ -                                 │ OOMKilled                            │ all 17 pods ok                                 │
@@ -34,7 +34,7 @@ WORKSHEET  15 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 
 NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now
 
-  #1  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 341 restarts (last: Error)
+  #1  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 380 restarts (last: Error)
       read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
       read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
 
@@ -47,4 +47,4 @@ NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (print
 
   #4  CRITICAL  kdash-e2e/functionality-legacy  HPA-02 Pinned at maxReplicas: at maxReplicas 1
 M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
- FMEA kind: Pod | ● LIVE 21:19:12  next 1s  data 3s old  spec 13/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/49 | ? help  1-9 view  n ns  s sort(cpu)  / search
+ FMEA kind: Pod | ○ LIVE 00:38:49  next 2s  data 2s old  spec 13/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/49 | ? help  1-9 view  n ns  s sort(cpu)  / search

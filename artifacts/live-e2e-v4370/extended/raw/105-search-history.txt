@@ -1,15 +1,15 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 22:14:25 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:43:28 IST
 ┌─ SCOPE ─────────────────────────────────────────────┬─ POD HEALTH ──────────────────────────────┬─ USAGE vs LIMITS ─────────────────┬─ WORKLOADS · EVENTS ─────┐
-│ match .*   sort cpu ▼ high first                    │ ! pods 14/18 ready   restarts 394         │ cpu     61m ░░░░░░░░   3% lim     │ workloads 14             │
-│ poll 2s  spec 10s/30s   session 22:14:15 up 10s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     5Mi ░░░░░░░░   1% lim     │ events 15m ! 0  ^ 0      │
+│ match .*   sort cpu ▼ high first                    │ ! pods 14/18 ready   restarts 425         │ cpu     60m ░░░░░░░░   3% lim     │ workloads 14             │
+│ poll 2s  spec 10s/30s   session 00:43:18 up 10s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     5Mi ░░░░░░░░   1% lim     │ events 15m ! 0  ^ 0      │
 └─────────────────────────────────────────────────────┴───────────────────────────────────────────┴───────────────────────────────────┴──────────────────────────┘
- DATA ● pods fresh 11s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 10s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
                                                                  │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)
 WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-    └─ hog                                               Y     0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0 ████████  12.5   6.2 █░░░░░░░
+    └─ hog                                               Y     0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0 ████████  12.5   6.2 █░░░░░░░
 ..................................................................................................................................................................
 ► Deployment app-server  (2 pods)                        2/2  28 │      6 ·       3 · │     50    500      24     192 │  12.0   1.2 ░░░░░░░░  12.5   1.6 ░░░░░░░░
   app-server-8fb4699bc-cx5vz                             2/2  14 │      3 ·       3 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░  25.0   3.1 ░░░░░░░░
@@ -45,6 +45,6 @@ WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  M
 │ / app-server                                                                                                                                                           │
 └─ Enter keep   n/N next/prev   Up/Down earlier   Tab filter pods   Esc close ───────────────────────────────────────────────────────────────────────────────────────────┘
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-TOTAL (18 pods, 14 workloads)                                394 │     61 ·       5 · │    315   1750     276     976 │  19.4   3.5 ░░░░░░░░   1.8   0.5 ░░░░░░░░
+TOTAL (18 pods, 14 workloads)                                425 │     60 ·       5 · │    315   1750     276     976 │  19.0   3.4 ░░░░░░░░   1.8   0.5 ░░░░░░░░
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
- search closed | ○ LIVE 22:14:27  next 0s  data 2s old  spec 12/30s  fetch 0.0s  poll 2s  AUDITED | pods | rows 19-50/105 | ? help  1-9 view  n/N match  s sort(cpu)
+ search closed | ● LIVE 00:43:30  next 0s  data 2s old  spec 12/30s  fetch 0.0s  poll 2s  AUDITED | pods | rows 19-50/105 | ? help  1-9 view  n/N match  s sort(cpu)

@@ -41,7 +41,7 @@
 
 
 
-── exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_containers_app-server-8fb4699bc-cx5vz_20261119-221639.log ─────────────────────────────────────────────────
+── exported to /var/tmp/kdash-extended-exports-87ggsf4a/kdash_containers_app-server-8fb4699bc-cx5vz_20261120-004541.log ─────────────────────────────────────────────────
 ┌─ MOVE ───────────────────┬─ INSPECT ────────────────┬─ LOGS ───────────┬─ LEAVE ──────────────────────────────────────────────────────────────────────────────────────┐
 │ j/k ↑↓  move             │ Enter / i  summary of it │ l  logs          │ q / Esc  back                                                                                │
 │ g / G   first / last     │            2 app         │ p  previous logs │ Q        quit kdash                                                                          │

@@ -1,19 +1,19 @@
  KDASH 4.37.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   21:07:46 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:15:14 IST
  match .*   sort cpu ▼ high first
- ! pods 13/17 ready rst 380 oom 0 oomk 0 nolim 1 cpu 59m 4% lim mem 5Mi 1% lim
+ ! pods 13/17 ready rst 420 oom 0 oomk 0 nolim 1 cpu 60m 4% lim mem 5Mi 1% lim
     wl 13
- DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  WORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes
  workloads 13: Deployment 1  StatefulSet 2  DaemonSet 1  CronJob 1  Job 1  Pod 6  ReplicationController 1   pods 17 (13 ready)   0 degraded  0 rolling out  2 HA risk  0 skewed  2 unscheduled
 ────────────────────────────────────────────────────────────────────────────────
 ► WORKLOADS   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec
   KIND        WORKLOAD               READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
-  Pod         z-oom                    1/1    -     1     1    50m / 10m        1Mi /     8Mi / 16Mi       0 N/A
-      └─ z-oom                    Running              1/1 dev                          cpu    50m  mem     1Mi  rst 0  10.244.0.153
+  Pod         z-oom                    1/1    -     1     1    51m / 10m        1Mi /     8Mi / 16Mi       0 N/A
+      └─ z-oom                    Running              1/1 dev                          cpu    51m  mem     1Mi  rst 0  10.244.0.153
   Deployment  app-server               2/2    2     2     1     5m / 50m        3Mi /    24Mi / 192Mi     28 HA_RISK
-      ├─ app-server-8fb4699bc-t7~ Running              2/2 dev                          cpu     3m  mem     0Mi  rst 14  10.244.0.138
-      ├─ app-server-8fb4699bc-cx~ Running              2/2 dev                          cpu     2m  mem     3Mi  rst 14  10.244.0.135
+      ├─ app-server-8fb4699bc-cx~ Running              2/2 dev                          cpu     3m  mem     3Mi  rst 14  10.244.0.135
+      ├─ app-server-8fb4699bc-t7~ Running              2/2 dev                          cpu     2m  mem     0Mi  rst 14  10.244.0.138
       └─ image busybox:1.36 busybox:1.36
   StatefulSet db-stateful              2/2    2     2     1     2m / 40m        0Mi /    64Mi / 128Mi      0 HA_RISK
       ├─ db-stateful-0            Running              1/1 dev                          cpu     1m  mem     0Mi  rst 0  10.244.0.154
@@ -24,21 +24,21 @@
       └─ image busybox:1.36
   Replicatio~ functionality-legacy     1/1    -     1     1     1m / 10m        0Mi /     8Mi / 32Mi       0 SINGLE
       └─ functionality-legacy-67~ Running              1/1 dev                          cpu     1m  mem     0Mi  rst 0  10.244.0.19
-  StatefulSet test-sts                 1/1    1     1     1     0m / -          0Mi /       - / -         13 SINGLE
-      ├─ test-sts-0               Running              1/1 dev                          cpu     0m  mem     0Mi  rst 13  10.244.0.149
+  StatefulSet test-sts                 1/1    1     1     1     0m / -          0Mi /       - / -         16 SINGLE
+      ├─ test-sts-0               Running              1/1 dev                          cpu     0m  mem     0Mi  rst 16  10.244.0.149
       └─ image busybox:1.36
   CronJob     nightly-report           3/3    -     3     1      - / 30m          - /    48Mi / 96Mi       0 N/A  rollout scheduled
-      ├─ nightly-report-29918365~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.12
-      ├─ nightly-report-29918370~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.14
-      ├─ nightly-report-29918375~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.16
-      ├─ schedule */5 * * * *   last run 2026-11-19T15:35:00Z
+      ├─ nightly-report-29918555~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.93
+      ├─ nightly-report-29918560~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.95
+      ├─ nightly-report-29918565~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.98
+      ├─ schedule */5 * * * *   last run 2026-11-19T18:45:00Z
       └─ image busybox:1.36
   Job         completed-check          1/1    -     1     1      - / 5m           - /     4Mi / 32Mi       0 N/A
       └─ completed-check-m9swm    Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  -
   Pod         sync-pod                 1/1    -     1     1      - / -            - /       - / -          0 N/A
       └─ sync-pod                 Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.148
-  Pod         z-crash                  0/1    -     1     1      - / 5m           - /     4Mi / 32Mi     339 N/A
-      └─ z-crash                  CrashLoopBackOff     0/1 dev                          cpu      -  mem       -  rst 339  10.244.0.133
+  Pod         z-crash                  0/1    -     1     1      - / 5m           - /     4Mi / 32Mi     376 N/A
+      └─ z-crash                  CrashLoopBackOff     0/1 dev                          cpu      -  mem       -  rst 376  10.244.0.133
   Pod         z-imagepull              0/1    -     1     1      - / 50m          - /    32Mi / 128Mi      0 N/A
       └─ z-imagepull              ImagePullBackOff     0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.152
   Pod         z-pending                0/1    -     1     0      - / 5m           - /     4Mi / 32Mi       0 N/A+UNSCHEDULED+NOT_READY

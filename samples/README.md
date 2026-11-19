@@ -7,6 +7,8 @@ Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser che
 
 
 
+
+
 The 125 published screenshots comprise 91 baseline views, 29 extension scenarios
 (search, full logs, exports, themes, compatibility and file browsers) and 5
 Secrets-map screens. Every capture links its raw ANSI screen and native xterm grab.

@@ -1,6 +1,6 @@
 # kdash 4.37.0 feature validation
 
-This checklist records the 2026-11-19 local WSL validation refresh. Run
+This checklist records the 2026-11-20 local WSL validation refresh. Run
 `live-e2e-v4370` finished with 303 live checks (200 baseline plus 103 extension),
 30 Secrets checks, 33 browser checks, all 19 fixture suites and 125 published
 terminal screenshots. Every row below is backed by current-version evidence; the
@@ -135,11 +135,11 @@ screens are separate checks named `capture-<stem>`.
 - Secrets map: 30/30 checks and 5 captures, including key-match and mismatch.
 - Browser: 33/33 checks over all ten report tabs, FMEA, Secrets and downloads.
 - Fixtures: 19/19 suites, including 22 rotated-log and 198 mode-switch checks.
-- Installed and source SHA-256: `1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b`.
-- Rotated live read: one older kubelet file plus the current file, 94,906 lines
-  and 10.2 MiB, with matches merged in timestamp order.
+- Installed and source SHA-256: `9f17258a0e73023b3046b13a934b26cc30bf755ec1b48aa7923446137e16fc44`.
+- Rotated live read: one older kubelet file plus the current file, 103,840 lines
+  and 11.1 MiB, with matches merged in timestamp order.
 - Combined report used by the browser checks:
-  `reports/kdash_namespace_report_kdash-local_kdash-e2e_20261119_213856.html`.
+  `reports/kdash_namespace_report_kdash-local_kdash-e2e_20261120_004235.html`.
 - Representative quick exports are under `reports/exports/`; the multi-megabyte
   full-log search dumps are identified by the extension checks and raw captures.
 
@@ -149,7 +149,7 @@ The local cluster has one visible node: displayed placement and metrics can be
 tested, while real multi-node failover cannot. A missing metric remains unknown.
 The local provisioner may omit measured volume usage. OIDC tests use controlled
 helpers because the cluster authenticates with certificates. The live log read
-did include one kubelet-rotated file from node `dev` (94,906 lines, 10.2 MiB,
+did include one kubelet-rotated file from node `dev` (103,840 lines, 11.1 MiB,
 current plus rotated); byte caps, gzip, denied access and incomplete reads are
 covered by `tests/test-log-history.sh` fixtures. The generated two-day Secret
 certificates correctly produce CRITICAL findings, so `--certs` exits 2 in that

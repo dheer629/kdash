@@ -7,9 +7,11 @@ Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser che
 
 
 
+
+
 The run combines 200 baseline checks with 103 search/log/export extension checks,
 30 Secrets checks, 19 fixture suites and 33 browser checks. It includes one real
-rotated kubelet log (94,906 lines, 10.2 MiB) plus the current file. Representative
+rotated kubelet log (103,840 lines, 11.1 MiB) plus the current file. Representative
 quick-export logs are under `reports/exports/`; multi-megabyte full-log dumps are
 summarized by their checks and raw captures instead of being committed.
 

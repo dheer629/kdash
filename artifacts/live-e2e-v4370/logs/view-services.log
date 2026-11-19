@@ -4,10 +4,10 @@ DATA SOURCES
 ┌───────────┬───────┬────────┬────────────────┐
 │ SOURCE    │ STATE │   READ │ DETAIL         │
 ├───────────┼───────┼────────┼────────────────┤
-│ services  │ ● ok  │ 0s ago │ read succeeded │
-│ pods      │ ● ok  │ 0s ago │ read succeeded │
-│ endpoints │ ● ok  │ 0s ago │ read succeeded │
-│ ingresses │ ● ok  │ 0s ago │ read succeeded │
+│ services  │ ● ok  │ 1s ago │ read succeeded │
+│ pods      │ ● ok  │ 1s ago │ read succeeded │
+│ endpoints │ ● ok  │ 1s ago │ read succeeded │
+│ ingresses │ ● ok  │ 1s ago │ read succeeded │
 └───────────┴───────┴────────┴────────────────┘
 
 SERVICES  10 services

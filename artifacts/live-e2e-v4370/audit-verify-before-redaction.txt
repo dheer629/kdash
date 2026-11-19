@@ -1,1 +1,1 @@
-OK      /workspace/kdash/artifacts/live-e2e-v4370/audit/audit_202611.log  (109 events, chain intact)
+OK      /workspace/kdash/artifacts/live-e2e-v4370/audit/audit_202611.log  (438 events, chain intact)

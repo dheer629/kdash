@@ -2,7 +2,7 @@
 [0m[38;5;243m┌─[39m [1mFIND IN LOGS[0m [38;5;243m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [38;5;243mREAD-ONLY / audited[39m [38;5;243m─┐[39m
 [38;5;243m│[39m [38;5;243mPOD      [39m  [1mapp-server-8fb4699bc-cx5vz[0m                                                                                                                                 [38;5;243m│[39m
 [38;5;243m│[39m [38;5;243mCONTAINER[39m  [1mapp[0m   [38;5;29m● Running[39m   [38;5;243mready[39m   [38;5;243mrestarts[39m 7   [38;5;243mlast exit[39m [1m[38;5;196mUnknown exit=255[0m   [38;5;243mbusybox:1.36[39m                                                                           [38;5;243m│[39m
-[38;5;243m└─[39m [1mrows 33-70 / 39117 · /INFO|WARN|ERROR in namespace kdash-e2e: 26 of 26 logs read, 283043 lines, 283040 matching[0m [38;5;243m─────────────────────────────────────────────────────┘[39m
+[38;5;243m└─[39m [1mrows 33-70 / 39117 · /INFO|WARN|ERROR in namespace kdash-e2e: 26 of 26 logs read, 311353 lines, 311350 matching[0m [38;5;243m─────────────────────────────────────────────────────┘[39m
 2026-11-06T12:38:09.400936105Z [completed-check-m9swm/check] [1m[38;5;196mINFO[0m completed live validation job
 2026-11-13T16:06:05.677215023Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mINFO[0m request=0 service=app-server healthy=true
 2026-11-13T16:06:05.677976679Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mWARN[0m request=0 demonstration warning from live workload

@@ -740,10 +740,15 @@ spec:
         # Clear only takes effect from inside the namespace picker; give the
         # picker time to open so x cannot race the dashboard key handler.
         self.wait(bare, "SELECT NAMESPACE", timeout=20)
-        self.key(bare, "x", delay=3)
+        self.key(bare, "x", delay=1)
+        # The picker must finish rewriting the configuration before the next
+        # key. Otherwise the literal name typed below is consumed as picker
+        # shortcuts (d would save the highlighted namespace).
+        self.wait(bare, "forgot the default|no default saved", timeout=20)
         self.record("namespace-clear-default", conf.exists() and (self.args.context + "=" + self.args.namespace) not in conf.read_text(),
                     "x removes the saved mapping without changing other settings")
         self.key(bare, "t")
+        self.wait(bare, "namespace name:", timeout=20)
         self.text(bare, self.args.namespace, delay=3)
         self.capture(bare, "68-namespace-typed", "t opens an explicitly typed namespace")
         self.record("namespace-typed-name", "app-server" in self.screen(bare), "typed namespace opened the real workload")

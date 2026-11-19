@@ -2,7 +2,7 @@
 [0m[38;5;243m┌─[39m [1mFIND IN LOGS[0m [38;5;243m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [38;5;243mREAD-ONLY / audited[39m [38;5;243m─┐[39m
 [38;5;243m│[39m [38;5;243mPOD      [39m  [1mapp-server-8fb4699bc-cx5vz[0m                                                                                                                                 [38;5;243m│[39m
 [38;5;243m│[39m [38;5;243mCONTAINER[39m  [1mapp[0m   [38;5;29m● Running[39m   [38;5;243mready[39m   [38;5;243mrestarts[39m 7   [38;5;243mlast exit[39m [1m[38;5;196mUnknown exit=255[0m   [38;5;243mbusybox:1.36[39m                                                                           [38;5;243m│[39m
-[38;5;243m└─[39m [1mrows 14-51 / 24095 · /INFO|WARN|ERROR in Deployment app-server: 8 of 8 logs read, 257374 lines, 257374 matching[0m [38;5;243m─────────────────────────────────────────────────────┘[39m
+[38;5;243m└─[39m [1mrows 14-51 / 24095 · /INFO|WARN|ERROR in Deployment app-server: 8 of 8 logs read, 281205 lines, 281205 matching[0m [38;5;243m─────────────────────────────────────────────────────┘[39m
 2026-11-13T16:06:05.677215023Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mINFO[0m request=0 service=app-server healthy=true
 2026-11-13T16:06:05.677976679Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mWARN[0m request=0 demonstration warning from live workload
 2026-11-13T16:06:05.899641964Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat

@@ -4,21 +4,21 @@
 +--------------------------------------------------------------------------------+------------------+-------+-----+--------+---------+-------+--------------------------+
 | POD                                                                            | STATUS           | READY | RST |    CPU |     MEM |  %LIM | NODE                     |
 +--------------------------------------------------------------------------------+------------------+-------+-----+--------+---------+-------+--------------------------+
-| app-server-8fb4699bc-cx5vz                                                     | Running          | 2/2   |  14 |     4m |     3Mi |    3% | dev  last-exit Unknown   |
+| app-server-8fb4699bc-cx5vz                                                     | Running          | 2/2   |  14 |     3m |     3Mi |    3% | dev  last-exit Unknown   |
 | app-server-8fb4699bc-t7zxj                                                     | Running          | 2/2   |  14 |     3m |     0Mi |    0% | dev  last-exit Unknown   |
 | completed-check-m9swm                                                          | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
 | db-stateful-0                                                                  | Running          | 1/1   |   0 |     1m |     0Mi |    0% | dev                      |
 | db-stateful-1                                                                  | Running          | 1/1   |   0 |     1m |     0Mi |    0% | dev                      |
 | functionality-legacy-67ks7                                                     | Running          | 1/1   |   0 |     1m |     0Mi |    0% | dev                      |
-| nightly-report-29918375-zgx7m                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
-| nightly-report-29918380-96w9g                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
-| nightly-report-29918385-mx6cp                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
+| nightly-report-29918575-zxln6                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
+| nightly-report-29918580-gx66n                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
+| nightly-report-29918585-rj9d9                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
 | node-agent-ctvg6                                                               | Running          | 1/1   |   0 |     1m |     1Mi |    3% | dev                      |
 | sync-pod                                                                       | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
-| test-sts-0                                                                     | Running          | 1/1   |  13 |     0m |     0Mi |     - | dev  last-exit Completed |
-| z-crash                                                                        | CrashLoopBackOff | 0/1   | 341 |      - |       - |     - | dev  last-exit Error     |
+| test-sts-0                                                                     | Running          | 1/1   |  16 |     0m |     0Mi |     - | dev  last-exit Completed |
+| z-crash                                                                        | CrashLoopBackOff | 0/1   | 380 |      - |       - |     - | dev  last-exit Error     |
 | z-imagepull                                                                    | ImagePullBackOff | 0/1   |   0 |      - |       - |     - | dev                      |
-| z-oom                                                                          | Running          | 1/1   |   0 |    51m |     1Mi |    6% | dev                      |
+| z-oom                                                                          | Running          | 1/1   |   0 |    50m |     1Mi |    6% | dev                      |
 | z-pending                                                                      | Pending          | 0/1   |   0 |      - |       - |     - | (unscheduled)            |
 | z-unschedulable                                                                | Pending          | 0/1   |   0 |      - |       - |     - | (unscheduled)            |
 +--------------------------------------------------------------------------------+------------------+-------+-----+--------+---------+-------+--------------------------+

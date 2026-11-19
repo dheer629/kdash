@@ -2,7 +2,7 @@
 ┌─ LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 7   last exit Unknown exit=255   busybox:1.36                                                                           │
-└─ rows 1-38 / 45537 · 45537 shown · only /WARN (45537) · 91074 lines 9.7 MiB since 2026-11-13 16:32:17, whole log: 1 rotated file from dev + the current file ─────────┘
+└─ rows 1-38 / 51522 · 51522 shown · only /WARN (51522) · 103044 lines 11.0 MiB since 2026-11-13 16:32:17, whole log: 1 rotated file from dev + the current file ───────┘
 2026-11-13T16:32:17.078024228Z 2026-11-13T16:32:17+00:00 WARN request=0 demonstration warning from live workload
 2026-11-13T16:32:19.080135333Z 2026-11-13T16:32:19+00:00 WARN request=1 demonstration warning from live workload
 2026-11-13T16:32:21.083056457Z 2026-11-13T16:32:21+00:00 WARN request=2 demonstration warning from live workload
@@ -47,4 +47,4 @@
 │ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
 │ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
 └─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
- match 1/45537
+ match 1/51522

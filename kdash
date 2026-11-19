@@ -8770,8 +8770,11 @@ ue_begin() { # history-key [initial text]
   UE_HI=${#UE_H[@]}
 }
 ue_remember() { # store UE_T in the history of this prompt (session only)
-  local x
-  [ -n "$UE_KEY" ] && [ -n "$UE_T" ] && [ "$UE_T" != "${UE_H[${#UE_H[@]}-1]:-}" ] || return 0
+  local x n last=""
+  [ -n "$UE_KEY" ] && [ -n "$UE_T" ] || return 0
+  n=${#UE_H[@]}
+  [ "$n" -eq 0 ] || last="${UE_H[n-1]}"
+  [ "$UE_T" != "$last" ] || return 0
   UE_H+=("$UE_T"); [ "${#UE_H[@]}" -le 50 ] || UE_H=("${UE_H[@]:1}")
   printf -v x '%s\n' "${UE_H[@]}"; UI_HIST[$UE_KEY]="${x%$'\n'}"
 }

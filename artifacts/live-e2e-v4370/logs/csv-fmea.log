@@ -4,7 +4,7 @@ H,8,10,4,320,PVC-01,PersistentVolumeClaim,kdash-e2e/z-unbound,Pending,claim is P
 H,8,10,4,320,SVC-01,Service,kdash-e2e/missing-backend,No endpoints,selector app=does-not-exist matches no pod in this scope,fail,full,0,Callers get connection refused,"Selector mismatch, no ready pods",,
 H,8,10,4,320,SVC-01,Service,kdash-e2e/web-loadbalancer,No endpoints,selector app=app-server matches no pod in this scope,fail,full,0,Callers get connection refused,"Selector mismatch, no ready pods",,
 H,8,10,4,320,SVC-01,Service,kdash-e2e/web-nodeport,No endpoints,selector app=app-server matches no pod in this scope,fail,full,0,Callers get connection refused,"Selector mismatch, no ready pods",,
-H,7,10,4,280,POD-01,Pod,kdash-e2e/z-crash,CrashLoopBackOff,"CrashLoopBackOff, 340 restarts (last: Error)",fail,full,0,Restarts; service degraded or down,"App error, bad config, failing start",,
+H,7,10,4,280,POD-01,Pod,kdash-e2e/z-crash,CrashLoopBackOff,"CrashLoopBackOff, 376 restarts (last: Error)",fail,full,0,Restarts; service degraded or down,"App error, bad config, failing start",,
 H,7,10,4,280,POD-03,Pod,kdash-e2e/z-pending,"Pending, unschedulable",Pending,fail,full,0,New or moved pods never start,"No CPU/memory left, taints, affinity, PVC zone",,
 H,7,10,4,280,POD-03,Pod,kdash-e2e/z-unschedulable,"Pending, unschedulable",Pending,fail,full,0,New or moved pods never start,"No CPU/memory left, taints, affinity, PVC zone",,
 H,7,10,4,280,SVC-03,Service (LoadBalancer),kdash-e2e/functionality-loadbalancer,External IP pending,LoadBalancer without an external IP,fail,full,0,Not reachable from outside,"LB controller down, IP pool exhausted",,

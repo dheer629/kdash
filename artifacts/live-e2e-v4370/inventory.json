@@ -484,46 +484,46 @@
   },
   {
     "kind": "Pod",
-    "name": "nightly-report-29918365-lcp6m",
+    "name": "nightly-report-29918555-xdkkc",
     "status": {
       "conditions": [
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:25:54Z",
+          "lastTransitionTime": "2026-11-19T18:35:06Z",
           "status": "False",
           "type": "PodReadyToStartContainers"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:25:47Z",
+          "lastTransitionTime": "2026-11-19T18:35:00Z",
           "reason": "PodCompleted",
           "status": "True",
           "type": "Initialized"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:25:53Z",
+          "lastTransitionTime": "2026-11-19T18:35:05Z",
           "reason": "PodCompleted",
           "status": "False",
           "type": "Ready"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:25:53Z",
+          "lastTransitionTime": "2026-11-19T18:35:05Z",
           "reason": "PodCompleted",
           "status": "False",
           "type": "ContainersReady"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:25:47Z",
+          "lastTransitionTime": "2026-11-19T18:35:00Z",
           "status": "True",
           "type": "PodScheduled"
         }
       ],
       "containerStatuses": [
         {
-          "containerID": "containerd://5f55ce83aa2acef645647f13ce9f30d936f60ab969cc6a9828e593286c68b760",
+          "containerID": "containerd://7219ef98884cde59a146372c516d9a6f6563b04b140ffa7d58948d15f77952da",
           "image": "docker.io/library/busybox:1.36",
           "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
           "lastState": {},
@@ -533,11 +533,11 @@
           "started": false,
           "state": {
             "terminated": {
-              "containerID": "containerd://5f55ce83aa2acef645647f13ce9f30d936f60ab969cc6a9828e593286c68b760",
+              "containerID": "containerd://7219ef98884cde59a146372c516d9a6f6563b04b140ffa7d58948d15f77952da",
               "exitCode": 0,
-              "finishedAt": "2026-11-19T15:25:52Z",
+              "finishedAt": "2026-11-19T18:35:04Z",
               "reason": "Completed",
-              "startedAt": "2026-11-19T15:25:50Z"
+              "startedAt": "2026-11-19T18:35:02Z"
             }
           }
         }
@@ -549,58 +549,58 @@
         }
       ],
       "phase": "Succeeded",
-      "podIP": "10.244.0.12",
+      "podIP": "10.244.0.93",
       "podIPs": [
         {
-          "ip": "10.244.0.12"
+          "ip": "10.244.0.93"
         }
       ],
       "qosClass": "Burstable",
-      "startTime": "2026-11-19T15:25:47Z"
+      "startTime": "2026-11-19T18:35:00Z"
     }
   },
   {
     "kind": "Pod",
-    "name": "nightly-report-29918370-qdkw5",
+    "name": "nightly-report-29918560-9hbzn",
     "status": {
       "conditions": [
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:30:09Z",
+          "lastTransitionTime": "2026-11-19T18:40:05Z",
           "status": "False",
           "type": "PodReadyToStartContainers"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:30:00Z",
+          "lastTransitionTime": "2026-11-19T18:40:00Z",
           "reason": "PodCompleted",
           "status": "True",
           "type": "Initialized"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:30:08Z",
+          "lastTransitionTime": "2026-11-19T18:40:04Z",
           "reason": "PodCompleted",
           "status": "False",
           "type": "Ready"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:30:08Z",
+          "lastTransitionTime": "2026-11-19T18:40:04Z",
           "reason": "PodCompleted",
           "status": "False",
           "type": "ContainersReady"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:30:00Z",
+          "lastTransitionTime": "2026-11-19T18:40:00Z",
           "status": "True",
           "type": "PodScheduled"
         }
       ],
       "containerStatuses": [
         {
-          "containerID": "containerd://72afbad12f93ed2b663f26ff026beb7310ae9a7b025cb43d1656650ef01de0a7",
+          "containerID": "containerd://299cee3a74551fa1d3875daf8d077209416b9a31fd87d7e149e4f783d7bfec5a",
           "image": "docker.io/library/busybox:1.36",
           "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
           "lastState": {},
@@ -610,11 +610,11 @@
           "started": false,
           "state": {
             "terminated": {
-              "containerID": "containerd://72afbad12f93ed2b663f26ff026beb7310ae9a7b025cb43d1656650ef01de0a7",
+              "containerID": "containerd://299cee3a74551fa1d3875daf8d077209416b9a31fd87d7e149e4f783d7bfec5a",
               "exitCode": 0,
-              "finishedAt": "2026-11-19T15:30:07Z",
+              "finishedAt": "2026-11-19T18:40:03Z",
               "reason": "Completed",
-              "startedAt": "2026-11-19T15:30:05Z"
+              "startedAt": "2026-11-19T18:40:01Z"
             }
           }
         }
@@ -626,58 +626,58 @@
         }
       ],
       "phase": "Succeeded",
-      "podIP": "10.244.0.14",
+      "podIP": "10.244.0.95",
       "podIPs": [
         {
-          "ip": "10.244.0.14"
+          "ip": "10.244.0.95"
         }
       ],
       "qosClass": "Burstable",
-      "startTime": "2026-11-19T15:30:00Z"
+      "startTime": "2026-11-19T18:40:00Z"
     }
   },
   {
     "kind": "Pod",
-    "name": "nightly-report-29918375-zgx7m",
+    "name": "nightly-report-29918565-mw26x",
     "status": {
       "conditions": [
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:35:07Z",
+          "lastTransitionTime": "2026-11-19T18:45:05Z",
           "status": "False",
           "type": "PodReadyToStartContainers"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:35:00Z",
+          "lastTransitionTime": "2026-11-19T18:45:00Z",
           "reason": "PodCompleted",
           "status": "True",
           "type": "Initialized"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:35:05Z",
+          "lastTransitionTime": "2026-11-19T18:45:04Z",
           "reason": "PodCompleted",
           "status": "False",
           "type": "Ready"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:35:05Z",
+          "lastTransitionTime": "2026-11-19T18:45:04Z",
           "reason": "PodCompleted",
           "status": "False",
           "type": "ContainersReady"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:35:00Z",
+          "lastTransitionTime": "2026-11-19T18:45:00Z",
           "status": "True",
           "type": "PodScheduled"
         }
       ],
       "containerStatuses": [
         {
-          "containerID": "containerd://e2c150eaebe5f4db755bd4c365c46e99a897ae4cd36a65bfb00dc6914ff97a1f",
+          "containerID": "containerd://839fc4a60771eccbc3ff2b4efdd08e7aa5aa4214f98f05f02d5dd8d62c018e41",
           "image": "docker.io/library/busybox:1.36",
           "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
           "lastState": {},
@@ -687,11 +687,11 @@
           "started": false,
           "state": {
             "terminated": {
-              "containerID": "containerd://e2c150eaebe5f4db755bd4c365c46e99a897ae4cd36a65bfb00dc6914ff97a1f",
+              "containerID": "containerd://839fc4a60771eccbc3ff2b4efdd08e7aa5aa4214f98f05f02d5dd8d62c018e41",
               "exitCode": 0,
-              "finishedAt": "2026-11-19T15:35:05Z",
+              "finishedAt": "2026-11-19T18:45:03Z",
               "reason": "Completed",
-              "startedAt": "2026-11-19T15:35:03Z"
+              "startedAt": "2026-11-19T18:45:01Z"
             }
           }
         }
@@ -703,14 +703,14 @@
         }
       ],
       "phase": "Succeeded",
-      "podIP": "10.244.0.16",
+      "podIP": "10.244.0.98",
       "podIPs": [
         {
-          "ip": "10.244.0.16"
+          "ip": "10.244.0.98"
         }
       ],
       "qosClass": "Burstable",
-      "startTime": "2026-11-19T15:35:00Z"
+      "startTime": "2026-11-19T18:45:00Z"
     }
   },
   {
@@ -879,13 +879,13 @@
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:33:05Z",
+          "lastTransitionTime": "2026-11-19T18:33:04Z",
           "status": "True",
           "type": "Ready"
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:33:05Z",
+          "lastTransitionTime": "2026-11-19T18:33:04Z",
           "status": "True",
           "type": "ContainersReady"
         },
@@ -898,25 +898,25 @@
       ],
       "containerStatuses": [
         {
-          "containerID": "containerd://cdcc82566b345c6d12aee5b6fc60c04d97e3983da2abe6ecf3e07eb507aa1011",
+          "containerID": "containerd://405b53a40b5f0b89ef3afca79650c2ca5b7a73394ff3621e2492ffe271187a47",
           "image": "docker.io/library/busybox:1.36",
           "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
           "lastState": {
             "terminated": {
-              "containerID": "containerd://32e25c5fa6f33538b468b1d419425866b9b8731542af6bfd29c6ebfa8b5e3c51",
+              "containerID": "containerd://c137a6409143698870ff564200e66ad6926d995babd881c19116184ca97d6ed5",
               "exitCode": 0,
-              "finishedAt": "2026-11-19T15:33:03Z",
+              "finishedAt": "2026-11-19T18:33:03Z",
               "reason": "Completed",
-              "startedAt": "2026-11-14T16:37:18Z"
+              "startedAt": "2026-11-19T17:33:04Z"
             }
           },
           "name": "c",
           "ready": true,
-          "restartCount": 13,
+          "restartCount": 16,
           "started": true,
           "state": {
             "running": {
-              "startedAt": "2026-11-19T15:33:04Z"
+              "startedAt": "2026-11-19T18:33:03Z"
             }
           }
         }
@@ -957,7 +957,7 @@
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:33:58Z",
+          "lastTransitionTime": "2026-11-19T18:44:51Z",
           "message": "containers with unready status: [crash]",
           "reason": "ContainersNotReady",
           "status": "False",
@@ -965,7 +965,7 @@
         },
         {
           "lastProbeTime": null,
-          "lastTransitionTime": "2026-11-19T15:33:58Z",
+          "lastTransitionTime": "2026-11-19T18:44:51Z",
           "message": "containers with unready status: [crash]",
           "reason": "ContainersNotReady",
           "status": "False",
@@ -980,21 +980,21 @@
       ],
       "containerStatuses": [
         {
-          "containerID": "containerd://0689547c1c7e0d9dd6ce2dfe3b28c7e0ff1be4100fa814d2a7bc3ee4656dd952",
+          "containerID": "containerd://d7ab0a0bcfc810dfae9408fa48525f1884c25c8da88adff95a3e8e83ec495574",
           "image": "docker.io/library/busybox:1.36",
           "imageID": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
           "lastState": {
             "terminated": {
-              "containerID": "containerd://0689547c1c7e0d9dd6ce2dfe3b28c7e0ff1be4100fa814d2a7bc3ee4656dd952",
+              "containerID": "containerd://d7ab0a0bcfc810dfae9408fa48525f1884c25c8da88adff95a3e8e83ec495574",
               "exitCode": 42,
-              "finishedAt": "2026-11-19T15:33:58Z",
+              "finishedAt": "2026-11-19T18:44:50Z",
               "reason": "Error",
-              "startedAt": "2026-11-19T15:33:55Z"
+              "startedAt": "2026-11-19T18:44:47Z"
             }
           },
           "name": "crash",
           "ready": false,
-          "restartCount": 339,
+          "restartCount": 376,
           "started": false,
           "state": {
             "waiting": {
@@ -1346,15 +1346,15 @@
           "type": "Progressing"
         },
         {
-          "lastTransitionTime": "2026-11-19T15:24:48Z",
-          "lastUpdateTime": "2026-11-19T15:24:48Z",
+          "lastTransitionTime": "2026-11-19T18:03:37Z",
+          "lastUpdateTime": "2026-11-19T18:03:37Z",
           "message": "Deployment has minimum availability.",
           "reason": "MinimumReplicasAvailable",
           "status": "True",
           "type": "Available"
         }
       ],
-      "observedGeneration": 9,
+      "observedGeneration": 12,
       "readyReplicas": 2,
       "replicas": 2,
       "updatedReplicas": 2
@@ -1382,19 +1382,19 @@
   },
   {
     "kind": "Job",
-    "name": "nightly-report-29918365",
+    "name": "nightly-report-29918555",
     "status": {
-      "completionTime": "2026-11-19T15:25:55Z",
+      "completionTime": "2026-11-19T18:35:07Z",
       "conditions": [
         {
-          "lastProbeTime": "2026-11-19T15:25:55Z",
-          "lastTransitionTime": "2026-11-19T15:25:55Z",
+          "lastProbeTime": "2026-11-19T18:35:07Z",
+          "lastTransitionTime": "2026-11-19T18:35:07Z",
           "status": "True",
           "type": "Complete"
         }
       ],
       "ready": 0,
-      "startTime": "2026-11-19T15:25:46Z",
+      "startTime": "2026-11-19T18:35:00Z",
       "succeeded": 1,
       "terminating": 0,
       "uncountedTerminatedPods": {}
@@ -1402,19 +1402,19 @@
   },
   {
     "kind": "Job",
-    "name": "nightly-report-29918370",
+    "name": "nightly-report-29918560",
     "status": {
-      "completionTime": "2026-11-19T15:30:10Z",
+      "completionTime": "2026-11-19T18:40:06Z",
       "conditions": [
         {
-          "lastProbeTime": "2026-11-19T15:30:10Z",
-          "lastTransitionTime": "2026-11-19T15:30:10Z",
+          "lastProbeTime": "2026-11-19T18:40:06Z",
+          "lastTransitionTime": "2026-11-19T18:40:06Z",
           "status": "True",
           "type": "Complete"
         }
       ],
       "ready": 0,
-      "startTime": "2026-11-19T15:30:00Z",
+      "startTime": "2026-11-19T18:40:00Z",
       "succeeded": 1,
       "terminating": 0,
       "uncountedTerminatedPods": {}
@@ -1422,19 +1422,19 @@
   },
   {
     "kind": "Job",
-    "name": "nightly-report-29918375",
+    "name": "nightly-report-29918565",
     "status": {
-      "completionTime": "2026-11-19T15:35:07Z",
+      "completionTime": "2026-11-19T18:45:06Z",
       "conditions": [
         {
-          "lastProbeTime": "2026-11-19T15:35:07Z",
-          "lastTransitionTime": "2026-11-19T15:35:07Z",
+          "lastProbeTime": "2026-11-19T18:45:06Z",
+          "lastTransitionTime": "2026-11-19T18:45:06Z",
           "status": "True",
           "type": "Complete"
         }
       ],
       "ready": 0,
-      "startTime": "2026-11-19T15:35:00Z",
+      "startTime": "2026-11-19T18:45:00Z",
       "succeeded": 1,
       "terminating": 0,
       "uncountedTerminatedPods": {}

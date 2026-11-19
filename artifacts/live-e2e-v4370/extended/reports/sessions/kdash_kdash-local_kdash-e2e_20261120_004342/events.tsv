@@ -1,0 +1,5 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1795115622	info	SESSION	kdash-e2e	kdash 4.37.0 started on Dheeraj by dheer - filter .*
+1795115713	info	POD_ADDED	nightly-report-29918595-4tqd9	added on dev (CronJob/nightly-report, Succeeded)
+1795115713	warn	POD_REMOVED	nightly-report-29918580-gx66n	gone (was on dev, Succeeded)
+1795115723	info	SESSION	kdash-e2e	kdash stopped after 101s

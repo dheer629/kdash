@@ -1,0 +1,4 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1795115285	info	SESSION	kdash-e2e	kdash 4.37.0 started on Dheeraj by dheer - filter .*
+1795115317	bad	STATUS	z-imagepull	ImagePullBackOff -> ErrImagePull on dev
+1795115331	info	SESSION	kdash-e2e	kdash stopped after 46s

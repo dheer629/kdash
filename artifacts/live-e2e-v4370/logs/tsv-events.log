@@ -3,103 +3,103 @@ SOURCE	STATE	READ	SCOPE	DETAIL
 events	ok	1s ago	kdash-e2e	read succeeded
 # EVENTS
 LAST SEEN	TYPE	REASON	OBJECT	COUNT	FIRST SEEN	MESSAGE
-5s	Normal	BackOff	Pod/z-imagepull	3434	5d11h ago	Back-off pulling image "busybox:does-not-exist"
-25s	Warning	BackOff	Pod/z-crash	6903	5d23h ago	Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
-3m	Normal	Completed	Job/nightly-report-29918375	1	3m ago	Job completed
-3m	Normal	Started	Pod/nightly-report-29918375-zgx7m	1	3m ago	Started container report
-3m	Normal	Created	Pod/nightly-report-29918375-zgx7m	1	3m ago	Created container report
-3m	Normal	Pulled	Pod/nightly-report-29918375-zgx7m	1	3m ago	Container image "busybox:1.36" already present on machine
-3m	Normal	Scheduled	Pod/nightly-report-29918375-zgx7m	1	3m ago	Successfully assigned kdash-e2e/nightly-report-29918375-zgx7m to dev
-3m	Normal	SuccessfulCreate	CronJob/nightly-report	148	5d10h ago	(combined from similar events): Created job nightly-report-29918375
-3m	Normal	SuccessfulCreate	Job/nightly-report-29918375	1	3m ago	Created pod: nightly-report-29918375-zgx7m
-4m	Warning	ProvisioningFailed	PersistentVolumeClaim/z-unbound	6041	5d23h ago	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
-5m	Normal	Created	Pod/test-sts-0	14	5d11h ago	Created container c
-5m	Normal	Pulled	Pod/test-sts-0	14	5d11h ago	Container image "busybox:1.36" already present on machine
-5m	Normal	Started	Pod/test-sts-0	14	5d11h ago	Started container c
-7m	Normal	ScalingReplicaSet	Deployment/app-server	1	7m ago	Scaled down replica set app-server-8fb4699bc to 2 from 3
-7m	Normal	SuccessfulDelete	ReplicaSet/app-server-8fb4699bc	1	7m ago	Deleted pod: app-server-8fb4699bc-8lf4l
-7m	Normal	Killing	Pod/app-server-8fb4699bc-8lf4l	1	7m ago	Stopping container app
-7m	Normal	Killing	Pod/app-server-8fb4699bc-8lf4l	1	7m ago	Stopping container sidecar
-7m	Normal	SuccessfulRescale	HorizontalPodAutoscaler/app-server-hpa	2	5d10h ago	New size: 2; reason: All metrics below target
-7m	Normal	ScalingReplicaSet	Deployment/app-server	1	7m ago	Scaled down replica set app-server-8fb4699bc to 3 from 5
-7m	Normal	SuccessfulDelete	ReplicaSet/app-server-8fb4699bc	1	7m ago	Deleted pod: app-server-8fb4699bc-9gttw
-7m	Normal	SuccessfulDelete	ReplicaSet/app-server-8fb4699bc	1	7m ago	Deleted pod: app-server-8fb4699bc-hn9wd
-7m	Normal	Killing	Pod/app-server-8fb4699bc-9gttw	1	7m ago	Stopping container app
-7m	Normal	Killing	Pod/app-server-8fb4699bc-9gttw	1	7m ago	Stopping container sidecar
-7m	Normal	Killing	Pod/app-server-8fb4699bc-hn9wd	1	7m ago	Stopping container app
-7m	Normal	Killing	Pod/app-server-8fb4699bc-hn9wd	1	7m ago	Stopping container sidecar
-7m	Normal	SuccessfulRescale	HorizontalPodAutoscaler/app-server-hpa	1	7m ago	New size: 3; reason: All metrics below target
-8m	Normal	Completed	Job/nightly-report-29918370	1	8m ago	Job completed
-8m	Normal	Started	Pod/nightly-report-29918370-qdkw5	1	8m ago	Started container report
-8m	Normal	Created	Pod/nightly-report-29918370-qdkw5	1	8m ago	Created container report
-8m	Normal	Pulled	Pod/nightly-report-29918370-qdkw5	1	8m ago	Container image "busybox:1.36" already present on machine
-8m	Normal	Scheduled	Pod/nightly-report-29918370-qdkw5	1	8m ago	Successfully assigned kdash-e2e/nightly-report-29918370-qdkw5 to dev
-8m	Normal	SuccessfulCreate	Job/nightly-report-29918370	1	8m ago	Created pod: nightly-report-29918370-qdkw5
-12m	Normal	Completed	Job/nightly-report-29918365	1	12m ago	Job completed
-12m	Normal	Started	Pod/nightly-report-29918365-lcp6m	1	12m ago	Started container report
-12m	Normal	Created	Pod/nightly-report-29918365-lcp6m	1	12m ago	Created container report
-12m	Normal	Pulled	Pod/nightly-report-29918365-lcp6m	1	12m ago	Container image "busybox:1.36" already present on machine
-12m	Normal	Scheduled	Pod/nightly-report-29918365-lcp6m	1	12m ago	Successfully assigned kdash-e2e/nightly-report-29918365-lcp6m to dev
-12m	Normal	SuccessfulCreate	Job/nightly-report-29918365	1	12m ago	Created pod: nightly-report-29918365-lcp6m
-12m	Warning	FailedCreate	Job/nightly-report-29918365	1	12m ago	Error creating: Unauthorized
-13m	Normal	Created	Pod/app-server-8fb4699bc-8lf4l	1	13m ago	Created container sidecar
-13m	Normal	Started	Pod/app-server-8fb4699bc-8lf4l	1	13m ago	Started container sidecar
-13m	Normal	Pulled	Pod/app-server-8fb4699bc-8lf4l	1	13m ago	Container image "busybox:1.36" already present on machine
-13m	Normal	Started	Pod/app-server-8fb4699bc-8lf4l	1	13m ago	Started container app
-13m	Normal	Created	Pod/app-server-8fb4699bc-8lf4l	1	13m ago	Created container app
-13m	Warning	Unhealthy	Pod/app-server-8fb4699bc-t7zxj	3	14m ago	Readiness probe failed: Get "http://10.244.0.138:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
-13m	Normal	Pulled	Pod/app-server-8fb4699bc-8lf4l	1	13m ago	Container image "busybox:1.36" already present on machine
-13m	Normal	Scheduled	Pod/app-server-8fb4699bc-8lf4l	1	13m ago	Successfully assigned kdash-e2e/app-server-8fb4699bc-8lf4l to dev
-13m	Warning	FailedToUpdateEndpointSlices	Service/app-server	1	13m ago	Error updating Endpoint Slices for Service kdash-e2e/app-server: failed to update app-server-hgvwd EndpointSlice for Service kdash-e2e/app-server: Unauthorized
-13m	Warning	FailedToUpdateEndpoint	Endpoints/app-server	1	13m ago	Failed to update endpoint kdash-e2e/app-server: Unauthorized
-13m	Normal	SuccessfulCreate	ReplicaSet/app-server-8fb4699bc	1	13m ago	Created pod: app-server-8fb4699bc-8lf4l
-13m	Warning	Unhealthy	Pod/app-server-8fb4699bc-hn9wd	1	13m ago	Readiness probe failed: Get "http://10.244.0.9:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
-13m	Warning	Unhealthy	Pod/app-server-8fb4699bc-cx5vz	1	13m ago	Readiness probe failed: Get "http://10.244.0.135:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
-13m	Normal	Started	Pod/app-server-8fb4699bc-hn9wd	1	13m ago	Started container sidecar
-13m	Normal	ScalingReplicaSet	Deployment/app-server	2	5d10h ago	Scaled up replica set app-server-8fb4699bc to 5 from 4
-13m	Normal	Started	Pod/app-server-8fb4699bc-9gttw	1	13m ago	Started container sidecar
-13m	Normal	SuccessfulRescale	HorizontalPodAutoscaler/app-server-hpa	1	13m ago	New size: 5; reason: cpu resource utilization (percentage of request) above target
-13m	Normal	Created	Pod/app-server-8fb4699bc-9gttw	1	13m ago	Created container sidecar
-13m	Normal	Created	Pod/app-server-8fb4699bc-hn9wd	1	13m ago	Created container sidecar
-13m	Normal	Pulled	Pod/app-server-8fb4699bc-9gttw	1	13m ago	Container image "busybox:1.36" already present on machine
-13m	Normal	Started	Pod/app-server-8fb4699bc-9gttw	1	13m ago	Started container app
-13m	Normal	Pulled	Pod/app-server-8fb4699bc-hn9wd	1	13m ago	Container image "busybox:1.36" already present on machine
-13m	Normal	Started	Pod/app-server-8fb4699bc-hn9wd	1	13m ago	Started container app
-13m	Normal	Created	Pod/app-server-8fb4699bc-9gttw	1	13m ago	Created container app
-13m	Normal	Created	Pod/app-server-8fb4699bc-hn9wd	1	13m ago	Created container app
-13m	Normal	Pulled	Pod/app-server-8fb4699bc-9gttw	1	13m ago	Container image "busybox:1.36" already present on machine
-13m	Normal	Pulled	Pod/app-server-8fb4699bc-hn9wd	1	13m ago	Container image "busybox:1.36" already present on machine
-14m	Warning	Unhealthy	Pod/functionality-legacy-67ks7	2	14m ago	Readiness probe failed: Get "http://10.244.0.19:8080/": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
-14m	Normal	Scheduled	Pod/app-server-8fb4699bc-9gttw	1	14m ago	Successfully assigned kdash-e2e/app-server-8fb4699bc-9gttw to dev
-14m	Normal	Scheduled	Pod/app-server-8fb4699bc-hn9wd	1	14m ago	Successfully assigned kdash-e2e/app-server-8fb4699bc-hn9wd to dev
-14m	Normal	ScalingReplicaSet	Deployment/app-server	2	5d10h ago	Scaled up replica set app-server-8fb4699bc to 4 from 2
-14m	Normal	SuccessfulCreate	ReplicaSet/app-server-8fb4699bc	1	14m ago	Created pod: app-server-8fb4699bc-9gttw
-14m	Normal	SuccessfulCreate	ReplicaSet/app-server-8fb4699bc	1	14m ago	Created pod: app-server-8fb4699bc-hn9wd
-14m	Normal	SuccessfulRescale	HorizontalPodAutoscaler/app-server-hpa	2	5d10h ago	New size: 4; reason: cpu resource utilization (percentage of request) above target
-14m	Warning	FailedGetScale	HorizontalPodAutoscaler/app-server-hpa	1	14m ago	Unauthorized
-14m	Warning	FailedGetScale	HorizontalPodAutoscaler/functionality-legacy	1	14m ago	Unauthorized
-4d22h	Warning	FailedScheduling	Pod/z-unschedulable	153	5d10h ago	0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
-4d22h	Warning	FailedScheduling	Pod/z-pending	307	5d23h ago	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
-4d22h	Normal	Completed	Job/nightly-report-29911285	1	4d22h ago	Job completed
-4d22h	Normal	Created	Pod/nightly-report-29911285-bbnlv	1	4d22h ago	Created container report
-4d22h	Normal	Pulled	Pod/nightly-report-29911285-bbnlv	1	4d22h ago	Container image "busybox:1.36" already present on machine
-4d22h	Normal	Started	Pod/nightly-report-29911285-bbnlv	1	4d22h ago	Started container report
-4d22h	Normal	Scheduled	Pod/nightly-report-29911285-bbnlv	1	4d22h ago	Successfully assigned kdash-e2e/nightly-report-29911285-bbnlv to dev
-4d22h	Normal	SuccessfulCreate	Job/nightly-report-29911285	1	4d22h ago	Created pod: nightly-report-29911285-bbnlv
-4d22h	Normal	Completed	Job/nightly-report-29911280	1	4d22h ago	Job completed
-4d22h	Normal	Started	Pod/nightly-report-29911280-jp4tm	1	4d22h ago	Started container report
-4d22h	Normal	Created	Pod/nightly-report-29911280-jp4tm	1	4d22h ago	Created container report
-4d22h	Normal	Pulled	Pod/nightly-report-29911280-jp4tm	1	4d22h ago	Container image "busybox:1.36" already present on machine
-4d22h	Normal	Scheduled	Pod/nightly-report-29911280-jp4tm	1	4d22h ago	Successfully assigned kdash-e2e/nightly-report-29911280-jp4tm to dev
-4d22h	Normal	SuccessfulCreate	Job/nightly-report-29911280	1	4d22h ago	Created pod: nightly-report-29911280-jp4tm
-4d22h	Normal	Completed	Job/nightly-report-29911275	1	4d22h ago	Job completed
-4d22h	Normal	Created	Pod/nightly-report-29911275-h7vtm	1	4d22h ago	Created container report
-4d22h	Normal	Started	Pod/nightly-report-29911275-h7vtm	1	4d22h ago	Started container report
-4d22h	Normal	Pulled	Pod/nightly-report-29911275-h7vtm	1	4d22h ago	Container image "busybox:1.36" already present on machine
-4d22h	Normal	Scheduled	Pod/nightly-report-29911275-h7vtm	1	4d22h ago	Successfully assigned kdash-e2e/nightly-report-29911275-h7vtm to dev
-4d22h	Normal	SuccessfulCreate	Job/nightly-report-29911275	1	4d22h ago	Created pod: nightly-report-29911275-h7vtm
-4d22h	Normal	Completed	Job/nightly-report-29911270	1	4d22h ago	Job completed
-4d22h	Normal	Created	Pod/nightly-report-29911270-mgtnz	1	4d22h ago	Created container report
-4d22h	Normal	Pulled	Pod/nightly-report-29911270-mgtnz	1	4d22h ago	Container image "busybox:1.36" already present on machine
-4d22h	Normal	Started	Pod/nightly-report-29911270-mgtnz	1	4d22h ago	Started container report
-4d22h	Normal	Scheduled	Pod/nightly-report-29911270-mgtnz	1	4d22h ago	Successfully assigned kdash-e2e/nightly-report-29911270-mgtnz to dev
+47s	Normal	Completed	Job/nightly-report-29918565	1	47s ago	Job completed
+52s	Normal	Created	Pod/nightly-report-29918565-mw26x	1	52s ago	Created container report
+52s	Normal	Pulled	Pod/nightly-report-29918565-mw26x	1	52s ago	Container image "busybox:1.36" already present on machine
+52s	Normal	Started	Pod/nightly-report-29918565-mw26x	1	52s ago	Started container report
+53s	Normal	Scheduled	Pod/nightly-report-29918565-mw26x	1	53s ago	Successfully assigned kdash-e2e/nightly-report-29918565-mw26x to dev
+53s	Normal	SuccessfulCreate	CronJob/nightly-report	186	5d13h ago	(combined from similar events): Created job nightly-report-29918565
+53s	Normal	SuccessfulCreate	Job/nightly-report-29918565	1	53s ago	Created pod: nightly-report-29918565-mw26x
+1m	Warning	FailedToUpdateEndpointSlices	Service/kdash-secrets-live	1	1m ago	Error updating Endpoint Slices for Service kdash-e2e/kdash-secrets-live: failed to update kdash-secrets-live-7hg2s EndpointSlice for Service kdash-e2e/kdash-secrets-live: Operation cannot be fulfilled on endpointslices.discovery.k8s.io "kdash-secrets-live-7hg2s": StorageError: invalid object, Code: 4, Key: /registry/endpointslices/kdash-e2e/kdash-secrets-live-7hg2s, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: be703428-1075-4bb0-9624-bc6c3a89883c, UID in object meta:
+1m	Normal	Killing	Pod/kdash-secrets-live-consumer	1	1m ago	Stopping container consumer
+2m	Warning	ProvisioningFailed	PersistentVolumeClaim/z-unbound	6801	6d02h ago	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
+2m	Normal	BackOff	Pod/z-imagepull	4241	5d14h ago	Back-off pulling image "busybox:does-not-exist"
+3m	Warning	BackOff	Pod/z-crash	7742	6d02h ago	Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
+5m	Normal	Completed	Job/nightly-report-29918560	1	5m ago	Job completed
+5m	Normal	Created	Pod/nightly-report-29918560-9hbzn	1	5m ago	Created container report
+5m	Normal	Pulled	Pod/nightly-report-29918560-9hbzn	1	5m ago	Container image "busybox:1.36" already present on machine
+5m	Normal	Started	Pod/nightly-report-29918560-9hbzn	1	5m ago	Started container report
+5m	Normal	Scheduled	Pod/nightly-report-29918560-9hbzn	1	5m ago	Successfully assigned kdash-e2e/nightly-report-29918560-9hbzn to dev
+5m	Normal	SuccessfulCreate	Job/nightly-report-29918560	1	5m ago	Created pod: nightly-report-29918560-9hbzn
+10m	Normal	Completed	Job/nightly-report-29918555	1	10m ago	Job completed
+10m	Normal	Started	Pod/nightly-report-29918555-xdkkc	1	10m ago	Started container report
+10m	Normal	Created	Pod/nightly-report-29918555-xdkkc	1	10m ago	Created container report
+10m	Normal	Pulled	Pod/nightly-report-29918555-xdkkc	1	10m ago	Container image "busybox:1.36" already present on machine
+10m	Normal	Scheduled	Pod/nightly-report-29918555-xdkkc	1	10m ago	Successfully assigned kdash-e2e/nightly-report-29918555-xdkkc to dev
+10m	Normal	SuccessfulCreate	Job/nightly-report-29918555	1	10m ago	Created pod: nightly-report-29918555-xdkkc
+12m	Normal	Created	Pod/test-sts-0	17	5d14h ago	Created container c
+12m	Normal	Pulled	Pod/test-sts-0	17	5d14h ago	Container image "busybox:1.36" already present on machine
+12m	Normal	Started	Pod/test-sts-0	17	5d14h ago	Started container c
+15m	Normal	Completed	Job/nightly-report-29918550	1	15m ago	Job completed
+15m	Normal	Started	Pod/nightly-report-29918550-5blqb	1	15m ago	Started container report
+15m	Normal	Created	Pod/nightly-report-29918550-5blqb	1	15m ago	Created container report
+15m	Normal	Pulled	Pod/nightly-report-29918550-5blqb	1	15m ago	Container image "busybox:1.36" already present on machine
+15m	Normal	Scheduled	Pod/nightly-report-29918550-5blqb	1	15m ago	Successfully assigned kdash-e2e/nightly-report-29918550-5blqb to dev
+15m	Normal	SuccessfulCreate	Job/nightly-report-29918550	1	15m ago	Created pod: nightly-report-29918550-5blqb
+20m	Normal	Completed	Job/nightly-report-29918545	1	20m ago	Job completed
+20m	Normal	Created	Pod/nightly-report-29918545-4wbfg	1	20m ago	Created container report
+20m	Normal	Pulled	Pod/nightly-report-29918545-4wbfg	1	20m ago	Container image "busybox:1.36" already present on machine
+20m	Normal	Started	Pod/nightly-report-29918545-4wbfg	1	20m ago	Started container report
+20m	Normal	Scheduled	Pod/nightly-report-29918545-4wbfg	1	20m ago	Successfully assigned kdash-e2e/nightly-report-29918545-4wbfg to dev
+20m	Normal	SuccessfulCreate	Job/nightly-report-29918545	1	20m ago	Created pod: nightly-report-29918545-4wbfg
+20m	Normal	Created	Pod/kdash-secrets-live-consumer	1	20m ago	Created container consumer
+20m	Normal	Pulled	Pod/kdash-secrets-live-consumer	1	20m ago	Container image "busybox:1.36" already present on machine
+20m	Normal	Started	Pod/kdash-secrets-live-consumer	1	20m ago	Started container consumer
+20m	Normal	Scheduled	Pod/kdash-secrets-live-consumer	1	20m ago	Successfully assigned kdash-e2e/kdash-secrets-live-consumer to dev
+23m	Warning	FailedScheduling	Pod/z-unschedulable	188	5d14h ago	0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+23m	Warning	FailedScheduling	Pod/z-pending	342	6d02h ago	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+25m	Normal	Completed	Job/nightly-report-29918540	1	25m ago	Job completed
+25m	Normal	Created	Pod/nightly-report-29918540-lx926	1	25m ago	Created container report
+25m	Normal	Pulled	Pod/nightly-report-29918540-lx926	1	25m ago	Container image "busybox:1.36" already present on machine
+25m	Normal	Started	Pod/nightly-report-29918540-lx926	1	25m ago	Started container report
+25m	Normal	Scheduled	Pod/nightly-report-29918540-lx926	1	25m ago	Successfully assigned kdash-e2e/nightly-report-29918540-lx926 to dev
+25m	Normal	SuccessfulCreate	Job/nightly-report-29918540	1	25m ago	Created pod: nightly-report-29918540-lx926
+30m	Normal	Completed	Job/nightly-report-29918535	1	30m ago	Job completed
+30m	Normal	Started	Pod/nightly-report-29918535-dqk2p	1	30m ago	Started container report
+30m	Normal	Created	Pod/nightly-report-29918535-dqk2p	1	30m ago	Created container report
+30m	Normal	Pulled	Pod/nightly-report-29918535-dqk2p	1	30m ago	Container image "busybox:1.36" already present on machine
+30m	Normal	Scheduled	Pod/nightly-report-29918535-dqk2p	1	30m ago	Successfully assigned kdash-e2e/nightly-report-29918535-dqk2p to dev
+30m	Normal	SuccessfulCreate	Job/nightly-report-29918535	1	30m ago	Created pod: nightly-report-29918535-dqk2p
+35m	Normal	Completed	Job/nightly-report-29918530	1	35m ago	Job completed
+35m	Normal	Created	Pod/nightly-report-29918530-g7fgd	1	35m ago	Created container report
+35m	Normal	Pulled	Pod/nightly-report-29918530-g7fgd	1	35m ago	Container image "busybox:1.36" already present on machine
+35m	Normal	Started	Pod/nightly-report-29918530-g7fgd	1	35m ago	Started container report
+35m	Normal	Scheduled	Pod/nightly-report-29918530-g7fgd	1	35m ago	Successfully assigned kdash-e2e/nightly-report-29918530-g7fgd to dev
+35m	Normal	SuccessfulCreate	Job/nightly-report-29918530	1	35m ago	Created pod: nightly-report-29918530-g7fgd
+36m	Warning	Unhealthy	Pod/app-server-8fb4699bc-4kx2b	1	36m ago	Readiness probe failed: Get "http://10.244.0.78:8080/": dial tcp 10.244.0.78:8080: connect: connection refused
+36m	Warning	Unhealthy	Pod/app-server-8fb4699bc-9dxvd	1	36m ago	Readiness probe failed: Get "http://10.244.0.79:8080/": dial tcp 10.244.0.79:8080: connect: connection refused
+36m	Warning	Unhealthy	Pod/app-server-8fb4699bc-xjkgq	1	36m ago	Readiness probe failed: Get "http://10.244.0.77:8080/": dial tcp 10.244.0.77:8080: connect: connection refused
+37m	Normal	ScalingReplicaSet	Deployment/app-server	1	37m ago	Scaled down replica set app-server-8fb4699bc to 2 from 5
+37m	Normal	SuccessfulDelete	ReplicaSet/app-server-8fb4699bc	1	37m ago	Deleted pod: app-server-8fb4699bc-4kx2b
+37m	Normal	SuccessfulDelete	ReplicaSet/app-server-8fb4699bc	1	37m ago	Deleted pod: app-server-8fb4699bc-9dxvd
+37m	Normal	SuccessfulDelete	ReplicaSet/app-server-8fb4699bc	1	37m ago	Deleted pod: app-server-8fb4699bc-xjkgq
+37m	Normal	Killing	Pod/app-server-8fb4699bc-4kx2b	1	37m ago	Stopping container app
+37m	Normal	Killing	Pod/app-server-8fb4699bc-4kx2b	1	37m ago	Stopping container sidecar
+37m	Normal	Killing	Pod/app-server-8fb4699bc-9dxvd	1	37m ago	Stopping container app
+37m	Normal	Killing	Pod/app-server-8fb4699bc-9dxvd	1	37m ago	Stopping container sidecar
+37m	Normal	Killing	Pod/app-server-8fb4699bc-xjkgq	1	37m ago	Stopping container app
+37m	Normal	Killing	Pod/app-server-8fb4699bc-xjkgq	1	37m ago	Stopping container sidecar
+37m	Normal	SuccessfulRescale	HorizontalPodAutoscaler/app-server-hpa	3	5d13h ago	New size: 2; reason: All metrics below target
+40m	Normal	Completed	Job/nightly-report-29918525	1	40m ago	Job completed
+40m	Normal	Created	Pod/nightly-report-29918525-d49cq	1	40m ago	Created container report
+40m	Normal	Pulled	Pod/nightly-report-29918525-d49cq	1	40m ago	Container image "busybox:1.36" already present on machine
+40m	Normal	Started	Pod/nightly-report-29918525-d49cq	1	40m ago	Started container report
+40m	Normal	Scheduled	Pod/nightly-report-29918525-d49cq	1	40m ago	Successfully assigned kdash-e2e/nightly-report-29918525-d49cq to dev
+40m	Normal	SuccessfulCreate	Job/nightly-report-29918525	1	40m ago	Created pod: nightly-report-29918525-d49cq
+42m	Normal	Created	Pod/app-server-8fb4699bc-9dxvd	1	42m ago	Created container app
+42m	Normal	Created	Pod/app-server-8fb4699bc-9dxvd	1	42m ago	Created container sidecar
+42m	Normal	Pulled	Pod/app-server-8fb4699bc-9dxvd	1	42m ago	Container image "busybox:1.36" already present on machine
+42m	Normal	Pulled	Pod/app-server-8fb4699bc-9dxvd	1	42m ago	Container image "busybox:1.36" already present on machine
+42m	Normal	Started	Pod/app-server-8fb4699bc-9dxvd	1	42m ago	Started container app
+42m	Normal	Started	Pod/app-server-8fb4699bc-9dxvd	1	42m ago	Started container sidecar
+42m	Normal	Scheduled	Pod/app-server-8fb4699bc-9dxvd	1	42m ago	Successfully assigned kdash-e2e/app-server-8fb4699bc-9dxvd to dev
+42m	Normal	ScalingReplicaSet	Deployment/app-server	3	5d13h ago	Scaled up replica set app-server-8fb4699bc to 5 from 4
+42m	Normal	SuccessfulCreate	ReplicaSet/app-server-8fb4699bc	1	42m ago	Created pod: app-server-8fb4699bc-9dxvd
+42m	Normal	SuccessfulRescale	HorizontalPodAutoscaler/app-server-hpa	2	3h21m ago	New size: 5; reason: cpu resource utilization (percentage of request) above target
+42m	Normal	Created	Pod/app-server-8fb4699bc-4kx2b	1	42m ago	Created container app
+42m	Normal	Created	Pod/app-server-8fb4699bc-4kx2b	1	42m ago	Created container sidecar
+42m	Normal	Pulled	Pod/app-server-8fb4699bc-4kx2b	1	42m ago	Container image "busybox:1.36" already present on machine
+42m	Normal	Pulled	Pod/app-server-8fb4699bc-4kx2b	1	42m ago	Container image "busybox:1.36" already present on machine
+42m	Normal	Started	Pod/app-server-8fb4699bc-4kx2b	1	42m ago	Started container app
+42m	Normal	Started	Pod/app-server-8fb4699bc-4kx2b	1	42m ago	Started container sidecar
+42m	Normal	Created	Pod/app-server-8fb4699bc-xjkgq	1	42m ago	Created container app

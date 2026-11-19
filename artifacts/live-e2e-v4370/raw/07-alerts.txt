@@ -1,8 +1,8 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:11:05 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:18:37 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 381           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
-│ poll 2s  spec 28s/30s   session 21:10:37 up 28s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 420           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 28s/30s   session 00:18:09 up 28s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
  DATA ● pods fresh 28s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  ALERTS   live critical summary of every section, with the action for each signal
@@ -10,21 +10,21 @@
 │   CRITICAL    4 critical   8 warning   0 new   0 cleared in 5 min   rules run every refresh (2s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000          │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ► SECTIONS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  ● PODS       13/17 ready  rst 381  2 crit 3 warn                                   ● MEMORY     5Mi / 848Mi lim  0.6%  0 >=90%  1 no-limit  ░░░░░░░░░░░░
-  ● NODES      1 hosting  0 NotReady  max node mem 34.8% dev                         ● WORKLOADS  13  0 degraded  2 HA risk  0 rolling
+  ● PODS       13/17 ready  rst 420  2 crit 3 warn                                   ● MEMORY     5Mi / 848Mi lim  0.6%  0 >=90%  1 no-limit  ░░░░░░░░░░░░
+  ● NODES      1 hosting  0 NotReady  max node mem 34.1% dev                         ● WORKLOADS  13  0 degraded  2 HA risk  0 rolling
   ● IP         14 pod IPs  3 no IP  0 duplicate  10 svc                              ● TRAFFIC    no IO source (unavailable)
 
 ► ACTIVE ALERTS  12 (4 critical, 8 warning)   critical first, NEW first, action under each ──────────────────────────────────────────────────────────────────────────────
     AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE                           TREND
-  ! NEW    PODS      z-crash                        CrashLoopBackOff   restarts 340, ready 0/1
+  ! NEW    PODS      z-crash                        CrashLoopBackOff   restarts 376, ready 0/1
                    ↳ kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100
-  ! NEW    PODS      z-imagepull                    ImagePullBackOff   image / config error
+  ! NEW    PODS      z-imagepull                    ErrImagePull       image / config error
                    ↳ kubectl -n kdash-e2e describe pod z-imagepull
   ! NEW    WORKLOADS Pod/z-pending                  UNSCHEDULED        1 pod(s) not placed
                    ↳ kubectl -n kdash-e2e get events --field-selector reason=FailedScheduling
   ! NEW    WORKLOADS Pod/z-unschedulable            UNSCHEDULED        1 pod(s) not placed
                    ↳ kubectl -n kdash-e2e get events --field-selector reason=FailedScheduling
-  ^ NEW    PODS      z-oom                          CPU_LIMIT_PRESSURE cpu 50m = 100% of limit 50m          ░░░░░░░░░░
+  ^ NEW    PODS      z-oom                          CPU_LIMIT_PRESSURE cpu 50m = 100% of limit 50m          ███_______
                    ↳ kubectl -n kdash-e2e top pod z-oom --containers
   ^ NEW    PODS      z-pending                      Pending            node (unscheduled)
                    ↳ kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending
@@ -47,4 +47,4 @@
     3.1 app-server-8fb4699bc-cx5vz                          2.0 functionality-legacy-67ks7
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS›
- ● LIVE 21:11:06  next 1s  data 1s old  spec 29/30s  fetch 0.0s  poll 2s  AUDITED | alerts | rows 1-36/43 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export
+ ● LIVE 00:18:38  next 1s  data 1s old  spec 29/30s  fetch 0.0s  poll 2s  AUDITED | alerts | rows 1-36/43 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export

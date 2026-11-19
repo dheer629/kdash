@@ -1,13 +1,13 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:19:03 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:38:40 IST
 ┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
-│ match .*   sort cpu ▼ high first                     │ ! pods 13/17 ready   restarts 382           │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13                │
-│ poll 2s  spec 4s/30s   session 21:18:29 up 34s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0         │
+│ match .*   sort cpu ▼ high first                     │ ! pods 13/17 ready   restarts 424           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13                │
+│ poll 2s  spec 4s/30s   session 00:38:05 up 35s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 1  ^ 0         │
 └──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
- DATA ● pods fresh 5s old  metrics available │ C certs (3 expiring)  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! ›
+ DATA ● pods fresh 4s old  metrics available │ C certs (3 expiring)  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! ›
  FMEA   failure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection
 
-  11 HIGH   7 MEDIUM   40 LOW   48 of 50 modes visible to kubernetes-super-admin  scored 3s ago - r re-scores, : access shows your rights
+  11 HIGH   7 MEDIUM   40 LOW   48 of 50 modes visible to kubernetes-super-admin  scored 2s ago - r re-scores, : access shows your rights
 
 WORKSHEET  58 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
 ┌────┬────────┬────┬────┬────┬─────┬────────┬──────────────────────────────────────┬──────────────────────────────────────────┬──────────────────────────────────────────┐
@@ -22,7 +22,7 @@ WORKSHEET  58 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 │    │        │    │    │    │     │        │                                      │                                          │ in this scope                            │
 │ 5  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-nodeport               │ No endpoints                             │ selector app=app-server matches no pod   │
 │    │        │    │    │    │     │        │                                      │                                          │ in this scope                            │
-│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash                    │ CrashLoopBackOff                         │ CrashLoopBackOff, 341 restarts (last:    │
+│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash                    │ CrashLoopBackOff                         │ CrashLoopBackOff, 380 restarts (last:    │
 │    │        │    │    │    │     │        │                                      │                                          │ Error)                                   │
 │ 7  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending                  │ Pending, unschedulable                   │ Pending                                  │
 │ 8  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-unschedulable            │ Pending, unschedulable                   │ Pending                                  │
@@ -38,7 +38,7 @@ WORKSHEET  58 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 │    │        │    │    │    │     │        │                                      │                                          │ claims (reclaimPolicy Delete)            │
 │ 16 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/deployment/app-server      │ All replicas on one node                 │ 2 of 2 replicas on dev                   │
 │ 17 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/statefulset/db-stateful    │ All replicas on one node                 │ 2 of 2 replicas on dev                   │
-│ 18 │ MEDIUM │  6 │ 10 │  4 │ 240 │ POD-04 │ kdash-e2e/z-imagepull                │ ImagePullBackOff                         │ ImagePullBackOff - the image cannot be   │
+│ 18 │ MEDIUM │  6 │ 10 │  4 │ 240 │ POD-04 │ kdash-e2e/z-imagepull                │ ImagePullBackOff                         │ ErrImagePull - the image cannot be       │
 │    │        │    │    │    │     │        │                                      │                                          │ pulled                                   │
 │ 19 │ LOW    │ 10 │ 2* │  3 │  60 │ CP-01  │ cluster                              │ Unreachable or slow                      │ ok                                       │
 │ 20 │ LOW    │ 10 │ 2* │  2 │  40 │ CRT-01 │ cluster                              │ API or kubelet cert expiring             │ ok                                       │
@@ -47,4 +47,4 @@ WORKSHEET  58 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 │ 23 │ LOW    │  9 │ 2* │  4 │  72 │ WRK-01 │ -                                    │ All replicas unavailable                 │ all 1 deployments ok                     │
 │ 24 │ LOW    │  8 │ 2* │  4 │  64 │ NOD-01 │ -                                    │ NotReady                                 │ all 1 nodes ok                           │
 M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
- ● LIVE 21:19:04  next 1s  data 1s old  spec 5/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/142 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export
+ ALERT 00:38:37 STATUS z-imagepull  - 5 MEMORY / x report | ○ LIVE 00:38:41  next 1s  data 1s old  spec 5/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/142

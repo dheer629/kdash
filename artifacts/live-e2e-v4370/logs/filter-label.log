@@ -1,5 +1,5 @@
  KDASH 4.37.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   21:08:46 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:16:13 IST
  match .* label=role=server   sort cpu ▼ high first
  pods 2/2 ready rst 28 oom 0 oomk 0 nolim 0 cpu 6m 1% lim mem 3Mi 2% lim wl 1
  DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands

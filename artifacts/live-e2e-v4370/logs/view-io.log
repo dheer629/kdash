@@ -1,14 +1,14 @@
  KDASH 4.37.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   21:08:05 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:15:35 IST
  match .*   sort cpu ▼ high first
- ! pods 13/17 ready rst 380 oom 0 oomk 0 nolim 1 cpu 59m 4% lim mem 5Mi 1% lim
+ ! pods 13/17 ready rst 420 oom 0 oomk 0 nolim 1 cpu 60m 4% lim mem 5Mi 1% lim
     wl 13
  DATA ● pods fresh 17s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod
  source kubelet cAdvisor of the worker nodes (API node proxy)   sampled every 15s, last 0s ago, rates between the last two samples
- namespace  in 298B/s  out 382B/s   disk read 0B/s  write 0B/s   IOPS read 0  write 0   ░
+ namespace  in 467B/s  out 593B/s   disk read 0B/s  write 0B/s   IOPS read 0  write 0   ░
 ────────────────────────────────────────────────────────────────────────────────
-► TIMELINE  21:08:04 -> 21:08:05 IST  (all since kdash started, host clock, z cycles) 
+► TIMELINE  00:15:34 -> 00:15:35 IST  (all since kdash started, host clock, z cycles) 
   NETWORK in (ingress) - namespace                                              
          one sample so far - the chart starts with the 2nd (run kdash live)     
   NETWORK out (egress) - namespace                                              
@@ -20,26 +20,26 @@
 
 ► WORKER NODES   whole node (all namespaces) and this namespace on it, bytes per second
   NODE                     POOL           PODS │  node in node out  disk rd  disk wr r-IOPS w-IOPS │    ns in   ns out    ns% │ ns share of node traffic
-  dev                      role:control-~   15 │    20.2K   209.3K     1.6K   217.5K      0     23 │     298B     382B    0.3 │ █▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  dev                      role:control-~   15 │    18.1K   217.5K    11.0K   280.7K      1     32 │     467B     593B    0.4 │ █▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
   (unscheduled)            (none)            2 │        -        -        -        -      -      - │        -        -      - │ n/a                     
 
 ► PODS   bytes per second   (sort cpu ▼ high first - s cycles: cpu = network, mem = disk, cpupct = in, mempct = out, restarts = IOPS)
   POD                      NODE                             in      out  disk rd  disk wr r-IOPS w-IOPS │ share of namespace traffic
-  functionality-legacy-67~ dev                            156B     200B        -        -      -      - │ █████████████░░░░░░░░░░░
-  app-server-8fb4699bc-t7~ dev                            142B     182B       0B       0B      0      0 │ ███████████░░░░░░░░░░░░░
+  app-server-8fb4699bc-cx~ dev                            162B     208B       0B       0B      0      0 │ ████████░░░░░░░░░░░░░░░░
+  functionality-legacy-67~ dev                            161B     201B        -        -      -      - │ ████████░░░░░░░░░░░░░░░░
+  app-server-8fb4699bc-t7~ dev                            144B     184B       0B       0B      0      0 │ ███████░░░░░░░░░░░░░░░░░
   db-stateful-0            dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   db-stateful-1            dev                              0B       0B       0B       0B      0      0 │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  test-sts-0               dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   z-crash                  dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  z-imagepull              dev                              0B       0B        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   z-oom                    dev                              0B       0B       0B       0B      0      0 │ ░░░░░░░░░░░░░░░░░░░░░░░░
-  app-server-8fb4699bc-cx~ dev                               -        -       0B       0B      0      0 │ ░░░░░░░░░░░░░░░░░░░░░░░░
   completed-check-m9swm    dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
-  nightly-report-29918365~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
-  nightly-report-29918370~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
-  nightly-report-29918375~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  nightly-report-29918555~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  nightly-report-29918560~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
+  nightly-report-29918565~ dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   node-agent-ctvg6         dev                               -        -       0B       0B      0      0 │ ░░░░░░░░░░░░░░░░░░░░░░░░
   sync-pod                 dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
-  test-sts-0               dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
-  z-imagepull              dev                               -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   z-pending                (unscheduled)                     -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
   z-unschedulable          (unscheduled)                     -        -        -        -      -      - │ ░░░░░░░░░░░░░░░░░░░░░░░░
 ────────────────────────────────────────────────────────────────────────────────

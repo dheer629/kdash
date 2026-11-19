@@ -5,12 +5,12 @@ DATA SOURCES
 │ SOURCE           │ STATE │   READ │ DETAIL                                                              │
 ├──────────────────┼───────┼────────┼─────────────────────────────────────────────────────────────────────┤
 │ cert-kubeconfig  │ ● ok  │ 5s ago │ context kdash-local read locally (tokens are never shown or stored) │
-│ cert-tls         │ ● ok  │ 1s ago │ 2 of 4 TLS endpoints answered from this host                        │
+│ cert-tls         │ ● ok  │ 2s ago │ 2 of 4 TLS endpoints answered from this host                        │
 │ cert-webhooks    │ ● ok  │ 5s ago │ read succeeded                                                      │
 │ cert-apiservices │ ● ok  │ 5s ago │ read succeeded                                                      │
-│ cert-manager     │ ● ok  │ 4s ago │ read succeeded                                                      │
-│ cert-nodes       │ ● ok  │ 4s ago │ read succeeded                                                      │
-│ cert-ingress     │ ● ok  │ 4s ago │ read succeeded                                                      │
+│ cert-manager     │ ● ok  │ 5s ago │ read succeeded                                                      │
+│ cert-nodes       │ ● ok  │ 5s ago │ read succeeded                                                      │
+│ cert-ingress     │ ● ok  │ 5s ago │ read succeeded                                                      │
 │ cert-secrets     │ ● ok  │ 0s ago │ 3 certificates in 3 Secrets (the same read as Y)                    │
 └──────────────────┴───────┴────────┴─────────────────────────────────────────────────────────────────────┘
 
@@ -26,7 +26,7 @@ EXPIRY  9 items   soonest first - warning under 30 days, critical under 7 days (
 │ ● OK      │ 191 d │ 2027-05-30 03:03 │ client certificate       │ kubernetes-super-admin              │ kdash-local                                 │ issued by kubernetes - kubectl stops working when it expires   │
 │ ● OK      │ 318 d │ 2027-10-04 06:06 │ webhook CA (mutating)    │ cert-manager-webhook                │ cert-manager/cert-manager-webhook           │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
 │ ● OK      │ 318 d │ 2027-10-04 06:06 │ webhook CA (validating)  │ cert-manager-webhook                │ cert-manager/cert-manager-webhook           │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
-│ ● OK      │ 359 d │ 2027-11-13 16:31 │ API endpoint             │ kdash-local                         │ localhost:10093                             │ what kubectl connects to; issuer kubernetes                    │
+│ ● OK      │ 358 d │ 2027-11-13 16:31 │ API endpoint             │ kdash-local                         │ localhost:10093                             │ what kubectl connects to; issuer kubernetes                    │
 └───────────┴───────┴──────────────────┴──────────────────────────┴─────────────────────────────────────┴─────────────────────────────────────────────┴────────────────────────────────────────────────────────────────┘
 
 FINDINGS  3 findings   critical first; includes x509 errors in Kubernetes events - next commands below

@@ -13,7 +13,7 @@
 │ [ ] │ dir   │ proc/                                                                                                                   │          - │ 2026-11-13 22:02 │
 │ [ ] │ dir   │ root/                                                                                                                   │          - │ 2026-11-13 23:07 │
 │ [ ] │ dir   │ sys/                                                                                                                    │          - │ 2026-11-13 22:02 │
-│ [ ] │ dir   │ tmp/                                                                                                                    │          - │ 2026-11-19 21:14 │
+│ [ ] │ dir   │ tmp/                                                                                                                    │          - │ 2026-11-20 00:34 │
 │ [ ] │ dir   │ usr/                                                                                                                    │          - │ 2023-05-19 04:04 │
 │ [ ] │ dir   │ var/                                                                                                                    │          - │ 2026-11-13 22:02 │
 └─────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴────────────┴──────────────────┘
@@ -40,7 +40,7 @@
 
 
 
-── ► exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_files_app-server-8fb4699bc-cx5vz_20261119-221951.log ─────────────────────── 1 / 13 · remote · audited ──
+── ► exported to /var/tmp/kdash-extended-exports-87ggsf4a/kdash_files_app-server-8fb4699bc-cx5vz_20261120-004858.log ─────────────────────── 1 / 13 · remote · audited ──
 ┌─ MOVE ──────────────────┬─ OPEN · VIEW ───────────────┬─ SELECT ──────────────────┬─ DOWNLOAD ────────────────────────────────────────────────────────────────────────┐
 │ j/k ↑↓     move         │ Enter     open bin/         │ Space  mark bin           │ d          download bin                                                           │
 │ PgUp/PgDn  page         │ h / Bksp  up (already at /) │ a      mark all files (0) │            then: review, confirm or cancel                                        │

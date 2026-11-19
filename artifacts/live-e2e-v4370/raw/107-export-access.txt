@@ -1,8 +1,8 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 22:16:11 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:45:13 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 394           │ cpu     61m ░░░░░░░░   3% lim       │ workloads 14               │
-│ poll 2s  spec 1s/30s   session 22:14:39 up 1m32s      │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 1        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 425           │ cpu     60m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 1s/30s   session 00:43:42 up 1m31s      │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 1        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
  DATA ● pods fresh 1s old  metrics available │ C certs  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : c›
  ACCESS   what you may read, checked with kubectl auth whoami / can-i - every FMEA check runs only where this allows
@@ -47,4 +47,4 @@ PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) a
 COVERAGE  1 level   full = every check runs; partial = a fallback signal, D + 2; none = no access, D 10 and never counted as OK
 ┌────────┬───────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
- exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_view-access_kdash-e2e_20261119-221608.log | ○ LIVE 22:16:11  next 1s  data 1s old  fetch 0.0s  AUDITED
+ exported to /var/tmp/kdash-extended-exports-87ggsf4a/kdash_view-access_kdash-e2e_20261120-004510.log | ○ LIVE 00:45:13  next 1s  data 1s old  fetch 0.0s  AUDITED

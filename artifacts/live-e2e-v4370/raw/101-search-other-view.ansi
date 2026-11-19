@@ -1,8 +1,8 @@
 [1;7m KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [1;7m 3 WORKLOADS [0m [38;5;243m 4 IP POOL [39m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [38;5;243m 8 SVCS [39m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-19 22:13:57[0m[38;5;243m IST[39m
+[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [1;7m 3 WORKLOADS [0m [38;5;243m 4 IP POOL [39m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [38;5;243m 8 SVCS [39m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-20 00:43:00[0m[38;5;243m IST[39m
 [38;5;243m┌─ [1m[39mSCOPE[0m[38;5;243m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[38;5;243m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[38;5;243m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[38;5;243m ───────┐
-│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msort cpu ▼ high first[0m                      [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m394[39m           [38;5;243m│[39m [38;5;243mcpu [39m    60m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14               [38;5;243m│
-│[39m [38;5;243mpoll 2s  spec 11s/30s   session [39m22:13:46[38;5;243m up [39m11s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    5Mi [38;5;29m░░░░░░░░[39m [38;5;29m  1%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;29m^ 0[39m        [38;5;243m│
+│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msort cpu ▼ high first[0m                      [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m425[39m           [38;5;243m│[39m [38;5;243mcpu [39m    61m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14               [38;5;243m│
+│[39m [38;5;243mpoll 2s  spec 11s/30s   session [39m00:42:49[38;5;243m up [39m11s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    5Mi [38;5;29m░░░░░░░░[39m [38;5;29m  1%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;29m^ 0[39m        [38;5;243m│
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
 [39m [1mDATA[0m [38;5;29m●[39m pods [1mfresh[0m [38;5;243m11s old[39m  metrics [1mavailable[0m [38;5;243m│[39m [1mC[0m certs [38;5;243m│[39m [1m/[0m search [38;5;243m│[39m [1mK[0m check [38;5;243m│[39m [1mi[0m inspect [38;5;243m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [38;5;243m│[39m [1m:[0m commands
  [1m[38;5;98mWORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes[0m
@@ -10,41 +10,41 @@
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 [1m[38;5;63m►[0m [1mWORKLOADS[0m[38;5;243m   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec[39m
   KIND        WORKLOAD                      READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
-  Pod         [1mz-oom                      [0m [38;5;29m    1/1[39m    -     1     1    50m / 10m        1Mi /     8Mi / 16Mi    [38;5;243m   0[39m [38;5;243mN/A[39m
-      [38;5;243m├─ cpu [38;5;29m░░░             [38;5;243m  mem [38;5;63m░░░             [38;5;243m  last 3 samples, sum of its pods[39m
-      [38;5;243m└─ [39mz-oom                          [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu    50m  mem     1Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.153[39m
-  Deployment  [1;7mapp-server[0;1m                 [0m [38;5;29m    2/2[39m    2     2     1     6m / 50m        3Mi /    24Mi / 192Mi   [38;5;163m  28[39m [1m[38;5;196mHA_RISK[0m
-      [38;5;243m├─ cpu [38;5;29m░░░             [38;5;243m  mem [38;5;63m░░░             [38;5;243m  last 3 samples, sum of its pods[39m
+  Pod         [1mz-oom                      [0m [38;5;29m    1/1[39m    -     1     1    51m / 10m        1Mi /     8Mi / 16Mi    [38;5;243m   0[39m [38;5;243mN/A[39m
+      [38;5;243m├─ cpu [38;5;29m░░              [38;5;243m  mem [38;5;63m░░              [38;5;243m  last 2 samples, sum of its pods[39m
+      [38;5;243m└─ [39mz-oom                          [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu    51m  mem     1Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.153[39m
+  Deployment  [1;4;7mapp-server[0;1m                 [0m [38;5;29m    2/2[39m    2     2     1     6m / 50m        3Mi /    24Mi / 192Mi   [38;5;163m  28[39m [1m[38;5;196mHA_RISK[0m
+      [38;5;243m├─ cpu [38;5;29m░░              [38;5;243m  mem [38;5;63m░░              [38;5;243m  last 2 samples, sum of its pods[39m
       [38;5;243m├─ [7m[39mapp-server[0m-8fb4699bc-cx5vz     [38;5;243mRunning           [39m [38;5;29m  2/2[39m dev                          cpu     3m  mem     3Mi  rst [38;5;163m14[39m  [38;5;243m10.244.0.135[39m
       [38;5;243m├─ [7m[39mapp-server[0m-8fb4699bc-t7zxj     [38;5;243mRunning           [39m [38;5;29m  2/2[39m dev                          cpu     3m  mem     0Mi  rst [38;5;163m14[39m  [38;5;243m10.244.0.138[39m
       [38;5;243m└─ image busybox:1.36 busybox:1.36[39m
   StatefulSet [1mdb-stateful                [0m [38;5;29m    2/2[39m    2     2     1     2m / 40m        0Mi /    64Mi / 128Mi   [38;5;243m   0[39m [1m[38;5;196mHA_RISK[0m
-      [38;5;243m├─ cpu [38;5;29m░░░             [38;5;243m  mem [38;5;63m░░░             [38;5;243m  last 3 samples, sum of its pods[39m
+      [38;5;243m├─ cpu [38;5;29m░░              [38;5;243m  mem [38;5;63m░░              [38;5;243m  last 2 samples, sum of its pods[39m
       [38;5;243m├─ [39mdb-stateful-0                  [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     1m  mem     0Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.154[39m
       [38;5;243m├─ [39mdb-stateful-1                  [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     1m  mem     0Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.156[39m
       [38;5;243m└─ image busybox:1.36[39m
   DaemonSet   [1mnode-agent                 [0m [38;5;29m    1/1[39m    1     1     1     1m / 10m        1Mi /    16Mi / 32Mi    [38;5;243m   0[39m [38;5;243mPER_NODE[39m
-      [38;5;243m├─ cpu [38;5;29m░░░             [38;5;243m  mem [38;5;63m░░░             [38;5;243m  last 3 samples, sum of its pods[39m
+      [38;5;243m├─ cpu [38;5;29m░░              [38;5;243m  mem [38;5;63m░░              [38;5;243m  last 2 samples, sum of its pods[39m
       [38;5;243m├─ [39mnode-agent-ctvg6               [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     1m  mem     1Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.150[39m
       [38;5;243m└─ image busybox:1.36[39m
   Replicatio~ [1mfunctionality-legacy       [0m [38;5;29m    1/1[39m    -     1     1     1m / 10m        0Mi /     8Mi / 32Mi    [38;5;243m   0[39m [38;5;243mSINGLE[39m
-      [38;5;243m├─ cpu [38;5;29m░░░             [38;5;243m  mem [38;5;63m░░░             [38;5;243m  last 3 samples, sum of its pods[39m
+      [38;5;243m├─ cpu [38;5;29m░░              [38;5;243m  mem [38;5;63m░░              [38;5;243m  last 2 samples, sum of its pods[39m
       [38;5;243m└─ [39mfunctionality-legacy-67ks7     [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     1m  mem     0Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.19[39m
   Pod         [1mkdash-secrets-live-consumer[0m [38;5;29m    1/1[39m    -     1     1     0m / 50m        0Mi /    32Mi / 128Mi   [38;5;243m   0[39m [38;5;243mN/A[39m
-      [38;5;243m├─ cpu [38;5;29m░░░             [38;5;243m  mem [38;5;63m░░░             [38;5;243m  last 3 samples, sum of its pods[39m
-      [38;5;243m└─ [39mkdash-secrets-live-consumer    [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     0m  mem     0Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.30[39m
-  StatefulSet [1mtest-sts                   [0m [38;5;29m    1/1[39m    1     1     1     0m / -          0Mi /       - / -       [38;5;163m  14[39m [38;5;243mSINGLE[39m
-      [38;5;243m├─ cpu [38;5;29m░░░             [38;5;243m  mem [38;5;63m░░░             [38;5;243m  last 3 samples, sum of its pods[39m
-      [38;5;243m├─ [39mtest-sts-0                     [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     0m  mem     0Mi  rst [38;5;163m14[39m  [38;5;243m10.244.0.149[39m
+      [38;5;243m├─ cpu [38;5;29m░░              [38;5;243m  mem [38;5;63m░░              [38;5;243m  last 2 samples, sum of its pods[39m
+      [38;5;243m└─ [39mkdash-secrets-live-consumer    [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     0m  mem     0Mi  rst [38;5;243m0[39m  [38;5;243m10.244.0.107[39m
+  StatefulSet [1mtest-sts                   [0m [38;5;29m    1/1[39m    1     1     1     0m / -          0Mi /       - / -       [38;5;163m  16[39m [38;5;243mSINGLE[39m
+      [38;5;243m├─ cpu [38;5;29m░░              [38;5;243m  mem [38;5;63m░░              [38;5;243m  last 2 samples, sum of its pods[39m
+      [38;5;243m├─ [39mtest-sts-0                     [38;5;243mRunning           [39m [38;5;29m  1/1[39m dev                          cpu     0m  mem     0Mi  rst [38;5;163m16[39m  [38;5;243m10.244.0.149[39m
       [38;5;243m└─ image busybox:1.36[39m
   CronJob     [1mnightly-report             [0m [38;5;29m    3/3[39m    -     3     1      - / 30m          - /    48Mi / 96Mi    [38;5;243m   0[39m [38;5;243mN/A  rollout scheduled[39m
-      [38;5;243m├─ cpu [38;5;29m                [38;5;243m  mem [38;5;63m                [38;5;243m  last 3 samples, sum of its pods[39m
-      [38;5;243m├─ [39mnightly-report-29918430-6fwn6  [38;5;243mSucceeded         [39m [38;5;29m  0/1[39m dev                          cpu      -  mem       -  rst [38;5;243m0[39m  [38;5;243m10.244.0.39[39m
-      [38;5;243m├─ [39mnightly-report-29918435-9cljn  [38;5;243mSucceeded         [39m [38;5;29m  0/1[39m dev                          cpu      -  mem       -  rst [38;5;243m0[39m  [38;5;243m10.244.0.42[39m
-      [38;5;243m├─ [39mnightly-report-29918440-xxv6v  [38;5;243mSucceeded         [39m [38;5;29m  0/1[39m dev                          cpu      -  mem       -  rst [38;5;243m0[39m  [38;5;243m10.244.0.43[39m
+      [38;5;243m├─ cpu [38;5;29m                [38;5;243m  mem [38;5;63m                [38;5;243m  last 2 samples, sum of its pods[39m
+      [38;5;243m├─ [39mnightly-report-29918580-gx66n  [38;5;243mSucceeded         [39m [38;5;29m  0/1[39m dev                          cpu      -  mem       -  rst [38;5;243m0[39m  [38;5;243m10.244.0.104[39m
+      [38;5;243m├─ [39mnightly-report-29918585-rj9d9  [38;5;243mSucceeded         [39m [38;5;29m  0/1[39m dev                          cpu      -  mem       -  rst [38;5;243m0[39m  [38;5;243m10.244.0.106[39m
+      [38;5;243m├─ [39mnightly-report-29918590-8qz7x  [38;5;243mSucceeded         [39m [38;5;29m  0/1[39m dev                          cpu      -  mem       -  rst [38;5;243m0[39m  [38;5;243m10.244.0.109[39m
 [38;5;243m┌─[39m [1mSEARCH[0m [38;5;243m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m match 1 of 4 matching lines in this view [38;5;243m─┐
 │[39m [1m/ app-server[0m                                                                                                                                                           [38;5;243m│
 └─[39m [38;5;243mn next   N prev   / edit   Esc close[39m [38;5;243m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 [39m [38;5;243mlegend[39m DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hi[38;5;243m›
-[7m[39m ○ LIVE 22:13:57  next 2s  data 0s old  spec 11/30s  fetch 0.0s  poll 2s  AUDITED | workloads | rows 1-34/74 | ? help  1-9 view  n/N match  s sort(cpu)  / search       [0m
+[7m[39m ● LIVE 00:43:00  next 2s  data 0s old  spec 11/30s  fetch 0.0s  poll 2s  AUDITED | workloads | rows 1-34/74 | ? help  1-9 view  n/N match  s sort(cpu)  / search       [0m

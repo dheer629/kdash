@@ -7,18 +7,18 @@ app-server-8fb4699bc-t7zxj,dev,"role:control-plane,master",Deployment,app-server
 db-stateful-0,dev,"role:control-plane,master",StatefulSet,db-stateful,0,32,64,0.0,0.0,0,,
 db-stateful-1,dev,"role:control-plane,master",StatefulSet,db-stateful,0,32,64,0.0,0.0,0,,
 functionality-legacy-67ks7,dev,"role:control-plane,master",ReplicationController,functionality-legacy,0,8,32,0.0,0.0,0,,
-test-sts-0,dev,"role:control-plane,master",StatefulSet,test-sts,0,,,,,13,Completed,NO_LIMIT
+test-sts-0,dev,"role:control-plane,master",StatefulSet,test-sts,0,,,,,16,Completed,NO_LIMIT
 completed-check-m9swm,dev,"role:control-plane,master",Job,completed-check,,4,32,,,0,,
-nightly-report-29918365-lcp6m,dev,"role:control-plane,master",CronJob,nightly-report,,16,32,,,0,,
-nightly-report-29918370-qdkw5,dev,"role:control-plane,master",CronJob,nightly-report,,16,32,,,0,,
-nightly-report-29918375-zgx7m,dev,"role:control-plane,master",CronJob,nightly-report,,16,32,,,0,,
+nightly-report-29918555-xdkkc,dev,"role:control-plane,master",CronJob,nightly-report,,16,32,,,0,,
+nightly-report-29918560-9hbzn,dev,"role:control-plane,master",CronJob,nightly-report,,16,32,,,0,,
+nightly-report-29918565-mw26x,dev,"role:control-plane,master",CronJob,nightly-report,,16,32,,,0,,
 sync-pod,dev,"role:control-plane,master",Pod,sync-pod,,,,,,0,,
-z-crash,dev,"role:control-plane,master",Pod,z-crash,,4,32,,,339,Error,
+z-crash,dev,"role:control-plane,master",Pod,z-crash,,4,32,,,376,Error,
 z-imagepull,dev,"role:control-plane,master",Pod,z-imagepull,,32,128,,,0,,
 z-pending,(unscheduled),(none),Pod,z-pending,,4,32,,,0,,
 z-unschedulable,(unscheduled),(none),Pod,z-unschedulable,,32,128,,,0,,
 
 # nodes
 POOL,NODE,STATUS,ROLES,NS_PODS,NS_PODS_READY,NS_RESTARTS,NS_CPU_USED_m,NS_CPU_REQ_m,NS_CPU_LIM_m,NODE_CPU_ALLOC_m,NODE_CPU_USED_m,NS_MEM_USED_Mi,NS_MEM_REQ_Mi,NS_MEM_LIM_Mi,NODE_MEM_ALLOC_Mi,NODE_MEM_USED_Mi,NS_MEM_PCT_ALLOC,NODE_MEM_PCT,INTERNAL_IP,POD_CIDR,NS_POD_IPS,IP_BLOCKS,TAINTS,CL_PODS,CL_CPU_REQ_m,CL_MEM_REQ_Mi,CL_MEM_LIM_Mi,OTHER_NS_MEM_REQ_Mi,OTHER_NS_MEM_USED_Mi,CL_MEM_REQ_PCT,CL_CPU_REQ_PCT,CL_NAMESPACES
-"role:control-plane,master",dev,Ready,"control-plane,master",15,13,380,60,210,1300,24000,623,5,208,688,7524,2601,0.1,34.6,172.18.0.2,10.244.0.0/24,14,10.244.0.128/26 10.244.0.0/26,,41,1770,2474,10858,2266,2596,32.9,7.4,11
+"role:control-plane,master",dev,Ready,"control-plane,master",15,13,420,59,210,1300,24000,407,5,208,688,7524,2573,0.1,34.2,172.18.0.2,10.244.0.0/24,14,10.244.0.128/26 10.244.0.0/26 10.244.0.64/26,,41,1770,2474,10858,2266,2568,32.9,7.4,11
 (none),(unscheduled),,,2,0,0,,55,250,,,,36,160,,,,,,,0,,,4,110,72,320,36,,,,3

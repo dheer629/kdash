@@ -1,0 +1,216 @@
+# kdash 4.37.0 - quick export (key >)
+# screen   : dashboard, view EVENTS (E) | pod filter .* | sort cpu
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-20 00:44:33 +0530 by operator on Dheeraj (session 20261120-004342-81424)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:44:32 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 425           │ cpu     61m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 20s/30s   session 00:43:42 up 50s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 20s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ KUBERNETES EVENTS   API events, newest first - local session changes are recorded separately
+
+DATA SOURCES   context kdash-local
+┌────────┬───────┬─────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │    READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼─────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 12s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴─────────┴───────────┴────────────────┘
+
+EVENTS  92 events   5 warning, 87 normal
+┌───────────┬───────────┬──────────────────────────────┬───────────────────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────┐
+│ LAST SEEN │ TYPE      │ REASON                       │ OBJECT                            │ COUNT │ FIRST SEEN │ MESSAGE                                                │
+├───────────┼───────────┼──────────────────────────────┼───────────────────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────┤
+│ 1m        │ ● Warning │ ProvisioningFailed           │ PersistentVolumeClaim/z-unbound   │  6921 │ 6d02h ago  │ storageclass.storage.k8s.io "kdash-e2e-intentionally-  │
+│           │           │                              │                                   │       │            │ missing" not found                                     │
+│ 1m        │ ● Normal  │ BackOff                      │ Pod/z-imagepull                   │  4376 │ 5d14h ago  │ Back-off pulling image "busybox:does-not-exist"        │
+│ 1m        │ ● Warning │ BackOff                      │ Pod/z-crash                       │  7879 │ 6d02h ago  │ Back-off restarting failed container crash in pod z-   │
+│           │           │                              │                                   │       │            │ crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)  │
+│ 4m        │ ● Normal  │ Completed                    │ Job/nightly-report-29918590       │     1 │ 4m ago     │ Job completed                                          │
+│ 4m        │ ● Normal  │ Started                      │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Started container report                               │
+│ 4m        │ ● Normal  │ Created                      │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Created container report                               │
+│ 4m        │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 4m        │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918590-8qz7x to dev                                  │
+│ 4m        │ ● Normal  │ SuccessfulCreate             │ CronJob/nightly-report            │   191 │ 5d13h ago  │ (combined from similar events): Created job nightly-   │
+│           │           │                              │                                   │       │            │ report-29918590                                        │
+│ 4m        │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918590       │     1 │ 4m ago     │ Created pod: nightly-report-29918590-8qz7x             │
+│ 4m        │ ● Normal  │ Created                      │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Created container consumer                             │
+│ 4m        │ ● Normal  │ Pulled                       │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 4m        │ ● Normal  │ Started                      │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Started container consumer                             │
+│ 4m        │ ● Normal  │ Scheduled                    │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Successfully assigned kdash-e2e/kdash-secrets-live-    │
+│           │           │                              │                                   │       │            │ consumer to dev                                        │
+│ 6m        │ ● Normal  │ Pulling                      │ Pod/z-imagepull                   │   198 │ 5d14h ago  │ Pulling image "busybox:does-not-exist"                 │
+│ 9m        │ ● Normal  │ Completed                    │ Job/nightly-report-29918585       │     1 │ 9m ago     │ Job completed                                          │
+│ 9m        │ ● Normal  │ Created                      │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Created container report                               │
+│ 9m        │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 9m        │ ● Normal  │ Started                      │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Started container report                               │
+│ 9m        │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Successfully assigned kdash-e2e/nightly-report-        │
+K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
+ exported to /var/tmp/kdash-extended-exports-87ggsf4a/kdash_view-storage_kdash-e2e_20261120-004428.log | ○ LIVE 00:44:33  next 1s  data 1s old  fetch 0.0s  AUDITED
+
+================================================================================
+ THE WHOLE EVENTS VIEW (151 lines, every line and column - nothing cut)
+================================================================================
+ KUBERNETES EVENTS   API events, newest first - local session changes are recorded separately
+
+DATA SOURCES   context kdash-local
+┌────────┬───────┬─────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │    READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼─────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 12s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴─────────┴───────────┴────────────────┘
+
+EVENTS  92 events   5 warning, 87 normal
+┌───────────┬───────────┬──────────────────────────────┬───────────────────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────┐
+│ LAST SEEN │ TYPE      │ REASON                       │ OBJECT                            │ COUNT │ FIRST SEEN │ MESSAGE                                                │
+├───────────┼───────────┼──────────────────────────────┼───────────────────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────┤
+│ 1m        │ ● Warning │ ProvisioningFailed           │ PersistentVolumeClaim/z-unbound   │  6921 │ 6d02h ago  │ storageclass.storage.k8s.io "kdash-e2e-intentionally-  │
+│           │           │                              │                                   │       │            │ missing" not found                                     │
+│ 1m        │ ● Normal  │ BackOff                      │ Pod/z-imagepull                   │  4376 │ 5d14h ago  │ Back-off pulling image "busybox:does-not-exist"        │
+│ 1m        │ ● Warning │ BackOff                      │ Pod/z-crash                       │  7879 │ 6d02h ago  │ Back-off restarting failed container crash in pod z-   │
+│           │           │                              │                                   │       │            │ crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)  │
+│ 4m        │ ● Normal  │ Completed                    │ Job/nightly-report-29918590       │     1 │ 4m ago     │ Job completed                                          │
+│ 4m        │ ● Normal  │ Started                      │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Started container report                               │
+│ 4m        │ ● Normal  │ Created                      │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Created container report                               │
+│ 4m        │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 4m        │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918590-8qz7x │     1 │ 4m ago     │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918590-8qz7x to dev                                  │
+│ 4m        │ ● Normal  │ SuccessfulCreate             │ CronJob/nightly-report            │   191 │ 5d13h ago  │ (combined from similar events): Created job nightly-   │
+│           │           │                              │                                   │       │            │ report-29918590                                        │
+│ 4m        │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918590       │     1 │ 4m ago     │ Created pod: nightly-report-29918590-8qz7x             │
+│ 4m        │ ● Normal  │ Created                      │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Created container consumer                             │
+│ 4m        │ ● Normal  │ Pulled                       │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 4m        │ ● Normal  │ Started                      │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Started container consumer                             │
+│ 4m        │ ● Normal  │ Scheduled                    │ Pod/kdash-secrets-live-consumer   │     1 │ 4m ago     │ Successfully assigned kdash-e2e/kdash-secrets-live-    │
+│           │           │                              │                                   │       │            │ consumer to dev                                        │
+│ 6m        │ ● Normal  │ Pulling                      │ Pod/z-imagepull                   │   198 │ 5d14h ago  │ Pulling image "busybox:does-not-exist"                 │
+│ 9m        │ ● Normal  │ Completed                    │ Job/nightly-report-29918585       │     1 │ 9m ago     │ Job completed                                          │
+│ 9m        │ ● Normal  │ Created                      │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Created container report                               │
+│ 9m        │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 9m        │ ● Normal  │ Started                      │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Started container report                               │
+│ 9m        │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918585-rj9d9 │     1 │ 9m ago     │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918585-rj9d9 to dev                                  │
+│ 9m        │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918585       │     1 │ 9m ago     │ Created pod: nightly-report-29918585-rj9d9             │
+│ 14m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918580       │     1 │ 14m ago    │ Job completed                                          │
+│ 14m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918580-gx66n │     1 │ 14m ago    │ Created container report                               │
+│ 14m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918580-gx66n │     1 │ 14m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 14m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918580-gx66n │     1 │ 14m ago    │ Started container report                               │
+│ 14m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918580-gx66n │     1 │ 14m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918580-gx66n to dev                                  │
+│ 14m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918580       │     1 │ 14m ago    │ Created pod: nightly-report-29918580-gx66n             │
+│ 19m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918575       │     1 │ 19m ago    │ Job completed                                          │
+│ 19m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918575-zxln6 │     1 │ 19m ago    │ Started container report                               │
+│ 19m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918575-zxln6 │     1 │ 19m ago    │ Created container report                               │
+│ 19m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918575-zxln6 │     1 │ 19m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 19m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918575-zxln6 │     1 │ 19m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918575-zxln6 to dev                                  │
+│ 19m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918575       │     1 │ 19m ago    │ Created pod: nightly-report-29918575-zxln6             │
+│ 24m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918570       │     1 │ 24m ago    │ Job completed                                          │
+│ 24m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918570-xd865 │     1 │ 24m ago    │ Started container report                               │
+│ 24m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918570-xd865 │     1 │ 24m ago    │ Created container report                               │
+│ 24m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918570-xd865 │     1 │ 24m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 24m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918570-xd865 │     1 │ 24m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918570-xd865 to dev                                  │
+│ 24m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918570       │     1 │ 24m ago    │ Created pod: nightly-report-29918570-xd865             │
+│ 26m       │ ● Warning │ FailedScheduling             │ Pod/z-unschedulable               │   193 │ 5d14h ago  │ 0/1 nodes are available: 1 node(s) didn't match Pod's  │
+│           │           │                              │                                   │       │            │ node affinity/selector. preemption: 0/1 nodes are      │
+│           │           │                              │                                   │       │            │ available: 1 Preemption is not helpful for scheduling. │
+│ 26m       │ ● Warning │ FailedScheduling             │ Pod/z-pending                     │   347 │ 6d02h ago  │ 0/1 nodes are available: pod has unbound immediate     │
+│           │           │                              │                                   │       │            │ PersistentVolumeClaims. preemption: 0/1 nodes are      │
+│           │           │                              │                                   │       │            │ available: 1 Preemption is not helpful for scheduling. │
+│ 29m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918565       │     1 │ 29m ago    │ Job completed                                          │
+│ 29m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918565-mw26x │     1 │ 29m ago    │ Created container report                               │
+│ 29m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918565-mw26x │     1 │ 29m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 29m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918565-mw26x │     1 │ 29m ago    │ Started container report                               │
+│ 29m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918565-mw26x │     1 │ 29m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918565-mw26x to dev                                  │
+│ 29m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918565       │     1 │ 29m ago    │ Created pod: nightly-report-29918565-mw26x             │
+│ 30m       │ ● Warning │ FailedToUpdateEndpointSlices │ Service/kdash-secrets-live        │     1 │ 30m ago    │ Error updating Endpoint Slices for Service kdash-e2e/  │
+│           │           │                              │                                   │       │            │ kdash-secrets-live: failed to update kdash-secrets-    │
+│           │           │                              │                                   │       │            │ live-7hg2s EndpointSlice for Service kdash-e2e/kdash-  │
+│           │           │                              │                                   │       │            │ secrets-live: Operation cannot be fulfilled on         │
+│           │           │                              │                                   │       │            │ endpointslices.discovery.k8s.io "kdash-secrets-live-   │
+│           │           │                              │                                   │       │            │ 7hg2s": StorageError: invalid object, Code: 4, Key: /  │
+│           │           │                              │                                   │       │            │ registry/endpointslices/kdash-e2e/kdash-secrets-live-  │
+│           │           │                              │                                   │       │            │ 7hg2s, ResourceVersion: 0, AdditionalErrorMsg:         │
+│           │           │                              │                                   │       │            │ Precondition failed: UID in precondition: be703428-    │
+│           │           │                              │                                   │       │            │ 1075-4bb0-9624-bc6c3a89883c, UID in object meta:       │
+│ 30m       │ ● Normal  │ Killing                      │ Pod/kdash-secrets-live-consumer   │     1 │ 30m ago    │ Stopping container consumer                            │
+│ 34m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918560       │     1 │ 34m ago    │ Job completed                                          │
+│ 34m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918560-9hbzn │     1 │ 34m ago    │ Created container report                               │
+│ 34m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918560-9hbzn │     1 │ 34m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 34m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918560-9hbzn │     1 │ 34m ago    │ Started container report                               │
+│ 34m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918560-9hbzn │     1 │ 34m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918560-9hbzn to dev                                  │
+│ 34m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918560       │     1 │ 34m ago    │ Created pod: nightly-report-29918560-9hbzn             │
+│ 39m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918555       │     1 │ 39m ago    │ Job completed                                          │
+│ 39m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918555-xdkkc │     1 │ 39m ago    │ Started container report                               │
+│ 39m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918555-xdkkc │     1 │ 39m ago    │ Created container report                               │
+│ 39m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918555-xdkkc │     1 │ 39m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 39m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918555-xdkkc │     1 │ 39m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918555-xdkkc to dev                                  │
+│ 39m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918555       │     1 │ 39m ago    │ Created pod: nightly-report-29918555-xdkkc             │
+│ 41m       │ ● Normal  │ Created                      │ Pod/test-sts-0                    │    17 │ 5d14h ago  │ Created container c                                    │
+│ 41m       │ ● Normal  │ Pulled                       │ Pod/test-sts-0                    │    17 │ 5d14h ago  │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 41m       │ ● Normal  │ Started                      │ Pod/test-sts-0                    │    17 │ 5d14h ago  │ Started container c                                    │
+│ 44m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918550       │     1 │ 44m ago    │ Job completed                                          │
+│ 44m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918550-5blqb │     1 │ 44m ago    │ Started container report                               │
+│ 44m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918550-5blqb │     1 │ 44m ago    │ Created container report                               │
+│ 44m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918550-5blqb │     1 │ 44m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 44m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918550-5blqb │     1 │ 44m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918550-5blqb to dev                                  │
+│ 44m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918550       │     1 │ 44m ago    │ Created pod: nightly-report-29918550-5blqb             │
+│ 49m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918545       │     1 │ 49m ago    │ Job completed                                          │
+│ 49m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918545-4wbfg │     1 │ 49m ago    │ Created container report                               │
+│ 49m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918545-4wbfg │     1 │ 49m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 49m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918545-4wbfg │     1 │ 49m ago    │ Started container report                               │
+│ 49m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918545-4wbfg │     1 │ 49m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918545-4wbfg to dev                                  │
+│ 49m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918545       │     1 │ 49m ago    │ Created pod: nightly-report-29918545-4wbfg             │
+│ 49m       │ ● Normal  │ Created                      │ Pod/kdash-secrets-live-consumer   │     1 │ 49m ago    │ Created container consumer                             │
+│ 49m       │ ● Normal  │ Pulled                       │ Pod/kdash-secrets-live-consumer   │     1 │ 49m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 49m       │ ● Normal  │ Started                      │ Pod/kdash-secrets-live-consumer   │     1 │ 49m ago    │ Started container consumer                             │
+│ 49m       │ ● Normal  │ Scheduled                    │ Pod/kdash-secrets-live-consumer   │     1 │ 49m ago    │ Successfully assigned kdash-e2e/kdash-secrets-live-    │
+│           │           │                              │                                   │       │            │ consumer to dev                                        │
+│ 54m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918540       │     1 │ 54m ago    │ Job completed                                          │
+│ 54m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918540-lx926 │     1 │ 54m ago    │ Created container report                               │
+│ 54m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918540-lx926 │     1 │ 54m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 54m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918540-lx926 │     1 │ 54m ago    │ Started container report                               │
+│ 54m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918540-lx926 │     1 │ 54m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918540-lx926 to dev                                  │
+│ 54m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918540       │     1 │ 54m ago    │ Created pod: nightly-report-29918540-lx926             │
+│ 59m       │ ● Normal  │ Completed                    │ Job/nightly-report-29918535       │     1 │ 59m ago    │ Job completed                                          │
+│ 59m       │ ● Normal  │ Started                      │ Pod/nightly-report-29918535-dqk2p │     1 │ 59m ago    │ Started container report                               │
+│ 59m       │ ● Normal  │ Created                      │ Pod/nightly-report-29918535-dqk2p │     1 │ 59m ago    │ Created container report                               │
+│ 59m       │ ● Normal  │ Pulled                       │ Pod/nightly-report-29918535-dqk2p │     1 │ 59m ago    │ Container image "busybox:1.36" already present on      │
+│           │           │                              │                                   │       │            │ machine                                                │
+│ 59m       │ ● Normal  │ Scheduled                    │ Pod/nightly-report-29918535-dqk2p │     1 │ 59m ago    │ Successfully assigned kdash-e2e/nightly-report-        │
+│           │           │                              │                                   │       │            │ 29918535-dqk2p to dev                                  │
+│ 59m       │ ● Normal  │ SuccessfulCreate             │ Job/nightly-report-29918535       │     1 │ 59m ago    │ Created pod: nightly-report-29918535-dqk2p             │
+└───────────┴───────────┴──────────────────────────────┴───────────────────────────────────┴───────┴────────────┴────────────────────────────────────────────────────────┘
+
+# end of export

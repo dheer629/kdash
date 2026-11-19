@@ -1,26 +1,26 @@
 [7m KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V [0m
- [7m 1 PODS [0m  2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   [1m2026-11-19 21:13:41[0m IST
-┌─ [1mSCOPE[0m ──────────────────────────────────────────────┬─ [1mPOD HEALTH[0m ─────────────────────────────┬─ [1mUSAGE vs LIMITS[0m ─────────────────┬─ [1mWORKLOADS · EVENTS[0m ─────┐
-│ match .*   [1msort mem ▲ low first[0m                      │ [1m! pods 13/17 ready[0m   restarts 381        │ cpu     61m ░░░░░░░░   4% lim     │ workloads 13             │
-│ poll 3s  spec 19s/30s   session 21:10:37 up 3m04s    │ OOM risk 0   OOMKilled 0   no-limit 1    │ mem     5Mi ░░░░░░░░   1% lim     │ events 15m ! 0  ^ 0      │
-└──────────────────────────────────────────────────────┴──────────────────────────────────────────┴───────────────────────────────────┴──────────────────────────┘
+ [7m 1 PODS [0m  2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   [1m2026-11-20 00:33:21[0m IST
+┌─ [1mSCOPE[0m ───────────────────────────────────────────────┬─ [1mPOD HEALTH[0m ─────────────────────────────┬─ [1mUSAGE vs LIMITS[0m ────────────────┬─ [1mWORKLOADS · EVENTS[0m ─────┐
+│ match .*   [1msort mem ▲ low first[0m                       │ [1m! pods 13/17 ready[0m   restarts 423        │ cpu     61m ░░░░░░░░   4% lim    │ workloads 13             │
+│ poll 3s  spec 19s/30s   session 00:18:09 up 15m12s    │ OOM risk 0   OOMKilled 0   no-limit 1    │ mem     5Mi ░░░░░░░░   1% lim    │ events 15m [1m! 5[0m  ^ 5      │
+└───────────────────────────────────────────────────────┴──────────────────────────────────────────┴──────────────────────────────────┴──────────────────────────┘
  [1mDATA[0m ● pods [1mfresh[0m 19s old  metrics [1mavailable[0m │ [1mC[0m certs (1 expiring) │ [1m/[0m search │ [1mK[0m check │ [1mi[0m inspect │ [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain │ [1m:[0m commands
  [1mPOD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)[0m
                                                                  │ [1m  ACTUAL (live)   [0m │ [1m   ASSIGNED (req / limit)    [0m │ [1m     UTILISATION (used vs req / lim)      [0m
 WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[1m►[0m [1mTIMELINE  21:10:37 -> 21:13:41 IST  (all since kdash started, z window, c hides graphs)[0m ───────────────────────────────────────────────────────────────────────
+[1m►[0m [1mTIMELINE  00:18:09 -> 00:33:21 IST  (all since kdash started, z window, c hides graphs)[0m ───────────────────────────────────────────────────────────────────────
   [1mCPU used - namespace                                  [0m                            [1mMEMORY used - namespace                               [0m
      70m┤                ·                  ·                ·                         6Mi┤                ·                  ·                ·
-        │███████████████████████████████████·                ·   ████  █████████          │███████████████████████████████████·                ·   ████  █████████
-        │███████████████████████████████████·                ·   ████  █████████          │███████████████████████████████████·                ·   ████  █████████
-     35m┤███████████████████████████████████·                ·   ████  █████████       3Mi┤███████████████████████████████████·                ·   ███████████████
-        │███████████████████████████████████·                ·   ████  █████████          │███████████████████████████████████·                ·   ███████████████
-        │███████████████████████████████████·                ·   ████▄▄█████████          │███████████████████████████████████·                ·   ███████████████
+        │██████████████████████████████████ ·                ·        ████   ███          │██████████████████████████████████ ·                ·        ████   ███
+        │██████████████████████████████████ ·                ·        ████   ███          │██████████████████████████████████ ·                ·        ████   ███
+     35m┤██████████████████████████████████ ·                ·        ████   ███       3Mi┤██████████████████████████████████ ·                ·        ████   ███
+        │██████████████████████████████████ ·                ·        ████   ███          │██████████████████████████████████ ·                ·        ████   ███
+        │██████████████████████████████████ ·                ·        ████   ███          │██████████████████████████████████ ·                ·        ████   ███
       0m└┴───────────────┴──────────────────┴────────────────┴─────────────────┴       0Mi└┴───────────────┴──────────────────┴────────────────┴─────────────────┴
-         21:10:37                       21:12:09                        21:13:41           21:10:37                       21:12:09                        21:13:41
-  events                                                                            events
-  now [1m61m[0m  min 6m  avg 58m  max [1m61m[0m @ 21:13:40                                      now [1m5Mi[0m  min 3Mi  avg 5Mi  max [1m5Mi[0m @ 21:13:40
+         00:18:09                       00:25:45                        00:33:21           00:18:09                       00:25:45                        00:33:21
+  events   [1m![0m      [1m![0m [1m![0m           [1m![0m [1m![0m                                   ^             events   [1m![0m      [1m![0m [1m![0m           [1m![0m [1m![0m                                   ^
+  now [1m61m[0m  min 6m  avg 60m  max [1m61m[0m @ 00:33:20                                      now [1m5Mi[0m  min 3Mi  avg 5Mi  max [1m5Mi[0m @ 00:33:20
   request 265m (above)  limit 1550m (above)  4% of limit                            request 244Mi (above)  limit 848Mi (above)  1% of limit
 
 [1m►[0m [1mPODS[0m ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -30,14 +30,14 @@ WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  M
 [1m    └─ check                                            [0m [1mN  [0m   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
 ..................................................................................................................................................................
 [1m► CronJob nightly-report  (3 pods)                      [0m [1m0/3[0m   0 │      - ·       - · │     30    150      48      96 │     -     - n/a          -     - n/a
-  nightly-report-29918370-qdkw5                          [1m0/1[0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
-      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.14   qos Burstable   status Succeeded
+  nightly-report-29918570-xd865                          [1m0/1[0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.100   qos Burstable   status Succeeded
 [1m    └─ report                                           [0m [1mN  [0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
-  nightly-report-29918375-zgx7m                          [1m0/1[0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
-      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.16   qos Burstable   status Succeeded
+  nightly-report-29918575-zxln6                          [1m0/1[0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.101   qos Burstable   status Succeeded
 [1m    └─ report                                           [0m [1mN  [0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
-  nightly-report-29918380-96w9g                          [1m0/1[0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
-      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.17   qos Burstable   status Succeeded
+  nightly-report-29918580-gx66n                          [1m0/1[0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.104   qos Burstable   status Succeeded
 [1m    └─ report                                           [0m [1mN  [0m   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
 ..................................................................................................................................................................
 [1m► Pod sync-pod  (1 pod)                                 [0m [1m0/1[0m   0 │      - ·       - · │      -      -       -       - │     -     - n/a          -     - n/a
@@ -45,6 +45,6 @@ WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  M
       cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.148   qos BestEffort   status Succeeded
 [1m    └─ sync-pod                                         [0m [1mN  [0m   0 │      - ·       - · │      -      -       -       - │     -     - n/a          -     - n/a
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[1mTOTAL (17 pods, 13 workloads)                           [0m     381 │     61 ·       5 · │    265   1550     244     848 │  23.0   3.9 ░░░░░░░░   2.0   0.6 ░░░░░░░░
+[1mTOTAL (17 pods, 13 workloads)                           [0m     423 │     61 ·       5 · │    265   1550     244     848 │  23.0   3.9 ░░░░░░░░   2.0   0.6 ░░░░░░░░
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
-[7m colour theme: mono - no colour, bold and reverse only (T: next) | ● LIVE 21:13:42  next 1s  data 2s old  spec 20/30s  fetch 0.0s  poll 3s  AUDITED | pods | rows 1-35/100
+[7m colour theme: mono - no colour, bold and reverse only (T: next) | ● LIVE 00:33:22  next 1s  data 2s old  spec 20/30s  fetch 0.0s  poll 3s  AUDITED | pods | rows 1-35/100

@@ -1,7 +1,7 @@
 {
-  "completed_utc": "2026-11-19T16:51:45.856895+00:00",
-  "kdash_sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
-  "kdash_sha256_after": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
+  "completed_utc": "2026-11-19T19:22:55.234222+00:00",
+  "kdash_sha256": "9f17258a0e73023b3046b13a934b26cc30bf755ec1b48aa7923446137e16fc44",
+  "kdash_sha256_after": "9f17258a0e73023b3046b13a934b26cc30bf755ec1b48aa7923446137e16fc44",
   "unchanged": true,
   "passed": 19,
   "total": 19,
@@ -32,7 +32,7 @@
       "exit_code": 0,
       "last_line": "PASS: 83 FMEA fixture checks",
       "log": "artifacts/live-e2e-v4370/fixture-tests/test-fmea.log",
-      "log_sha256": "de880f85e666de5c6f4fab980c5ecd50789e04f694400b48b8112a0b8fcabb32"
+      "log_sha256": "a67f715c00325553c0870a70aea549290bc059b35097b85d9862c50b6261b216"
     },
     {
       "test": "tests/test-health.sh",
@@ -53,7 +53,7 @@
       "exit_code": 0,
       "last_line": "interactive regression checks passed",
       "log": "artifacts/live-e2e-v4370/fixture-tests/test-interactive.log",
-      "log_sha256": "d42b8dbb0dd85a053761221e7b286c06c42008a219395de1872bfc1e4332e829"
+      "log_sha256": "da14feb496cbe12c5b10fac9867934297639dc82bc6eb1fe5390ef492f4a1aef"
     },
     {
       "test": "tests/test-log-history.sh",

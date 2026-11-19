@@ -1,0 +1,130 @@
+NS	KIND	NAME	UID	TYPE	REASON	COUNT	FIRST	LAST	MESSAGE
+kdash-e2e	Job	nightly-report-29918565	40522dd2-4d4d-40b0-88f0-b417aaa82818	Normal	Completed	1	2026-11-19T18:45:06Z	2026-11-19T18:45:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29918565-mw26x	e0d12af5-1927-46f7-8270-2f92bf6ab281	Normal	Created	1	2026-11-19T18:45:01Z	2026-11-19T18:45:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918565-mw26x	e0d12af5-1927-46f7-8270-2f92bf6ab281	Normal	Pulled	1	2026-11-19T18:45:01Z	2026-11-19T18:45:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918565-mw26x	e0d12af5-1927-46f7-8270-2f92bf6ab281	Normal	Started	1	2026-11-19T18:45:01Z	2026-11-19T18:45:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918565-mw26x	e0d12af5-1927-46f7-8270-2f92bf6ab281	Normal	Scheduled	1	2026-11-19T18:45:00.136718Z	2026-11-19T18:45:00.136718Z	Successfully assigned kdash-e2e/nightly-report-29918565-mw26x to dev
+kdash-e2e	CronJob	nightly-report	a46b0dfd-4122-46a3-b7df-8e38dcbd70ba	Normal	SuccessfulCreate	186	2026-11-14T05:25:00Z	2026-11-19T18:45:00Z	(combined from similar events): Created job nightly-report-29918565
+kdash-e2e	Job	nightly-report-29918565	40522dd2-4d4d-40b0-88f0-b417aaa82818	Normal	SuccessfulCreate	1	2026-11-19T18:45:00Z	2026-11-19T18:45:00Z	Created pod: nightly-report-29918565-mw26x
+kdash-e2e	Service	kdash-secrets-live	8b90e21d-1223-44bc-a855-e332155cec51	Warning	FailedToUpdateEndpointSlices	1	2026-11-19T18:44:23Z	2026-11-19T18:44:23Z	Error updating Endpoint Slices for Service kdash-e2e/kdash-secrets-live: failed to update kdash-secrets-live-7hg2s EndpointSlice for Service kdash-e2e/kdash-secrets-live: Operation cannot be fulfilled on endpointslices.discovery.k8s.io "kdash-secrets-live-7hg2s": StorageError: invalid object, Code: 4, Key: /registry/endpointslices/kdash-e2e/kdash-secrets-live-7hg2s, ResourceVersion: 0, AdditionalErrorMsg: Precondition failed: UID in precondition: be703428-1075-4bb0-9624-bc6c3a89883c, UID in object meta:
+kdash-e2e	Pod	kdash-secrets-live-consumer	c89e4045-c86b-4b83-b8cc-864477dd1a0e	Normal	Killing	1	2026-11-19T18:44:23Z	2026-11-19T18:44:23Z	Stopping container consumer
+kdash-e2e	PersistentVolumeClaim	z-unbound	adcffa9f-14a0-4e3c-a42f-26b384e88ff5	Warning	ProvisioningFailed	6801	2026-11-13T16:32:32Z	2026-11-19T18:43:22Z	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
+kdash-e2e	Pod	z-imagepull	46cdf3c5-022c-4f66-8a88-6ca9fd3a767d	Normal	BackOff	4241	2026-11-14T04:37:58Z	2026-11-19T18:43:05Z	Back-off pulling image "busybox:does-not-exist"
+kdash-e2e	Pod	z-crash	c908fc39-4ddb-46bf-b546-41038ddd13a3	Warning	BackOff	7742	2026-11-13T16:32:20Z	2026-11-19T18:42:51Z	Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
+kdash-e2e	Job	nightly-report-29918560	e82c7c3c-5d5b-4949-8a02-f3063c0dffd4	Normal	Completed	1	2026-11-19T18:40:06Z	2026-11-19T18:40:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29918560-9hbzn	2a5834d9-5c53-4e19-aefb-27db17a30a6e	Normal	Created	1	2026-11-19T18:40:01Z	2026-11-19T18:40:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918560-9hbzn	2a5834d9-5c53-4e19-aefb-27db17a30a6e	Normal	Pulled	1	2026-11-19T18:40:01Z	2026-11-19T18:40:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918560-9hbzn	2a5834d9-5c53-4e19-aefb-27db17a30a6e	Normal	Started	1	2026-11-19T18:40:01Z	2026-11-19T18:40:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918560-9hbzn	2a5834d9-5c53-4e19-aefb-27db17a30a6e	Normal	Scheduled	1	2026-11-19T18:40:00.122745Z	2026-11-19T18:40:00.122745Z	Successfully assigned kdash-e2e/nightly-report-29918560-9hbzn to dev
+kdash-e2e	Job	nightly-report-29918560	e82c7c3c-5d5b-4949-8a02-f3063c0dffd4	Normal	SuccessfulCreate	1	2026-11-19T18:40:00Z	2026-11-19T18:40:00Z	Created pod: nightly-report-29918560-9hbzn
+kdash-e2e	Job	nightly-report-29918555	11f61316-0580-453f-ada5-4a73edb806af	Normal	Completed	1	2026-11-19T18:35:07Z	2026-11-19T18:35:07Z	Job completed
+kdash-e2e	Pod	nightly-report-29918555-xdkkc	c2ba63c2-3229-44d1-96ed-8e78f4572d04	Normal	Started	1	2026-11-19T18:35:02Z	2026-11-19T18:35:02Z	Started container report
+kdash-e2e	Pod	nightly-report-29918555-xdkkc	c2ba63c2-3229-44d1-96ed-8e78f4572d04	Normal	Created	1	2026-11-19T18:35:01Z	2026-11-19T18:35:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918555-xdkkc	c2ba63c2-3229-44d1-96ed-8e78f4572d04	Normal	Pulled	1	2026-11-19T18:35:01Z	2026-11-19T18:35:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918555-xdkkc	c2ba63c2-3229-44d1-96ed-8e78f4572d04	Normal	Scheduled	1	2026-11-19T18:35:00.123746Z	2026-11-19T18:35:00.123746Z	Successfully assigned kdash-e2e/nightly-report-29918555-xdkkc to dev
+kdash-e2e	Job	nightly-report-29918555	11f61316-0580-453f-ada5-4a73edb806af	Normal	SuccessfulCreate	1	2026-11-19T18:35:00Z	2026-11-19T18:35:00Z	Created pod: nightly-report-29918555-xdkkc
+kdash-e2e	Pod	test-sts-0	f3562140-9756-4c2a-ad1c-49fc9071761a	Normal	Created	17	2026-11-14T04:37:42Z	2026-11-19T18:33:03Z	Created container c
+kdash-e2e	Pod	test-sts-0	f3562140-9756-4c2a-ad1c-49fc9071761a	Normal	Pulled	17	2026-11-14T04:37:42Z	2026-11-19T18:33:03Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	test-sts-0	f3562140-9756-4c2a-ad1c-49fc9071761a	Normal	Started	17	2026-11-14T04:37:42Z	2026-11-19T18:33:03Z	Started container c
+kdash-e2e	Job	nightly-report-29918550	9100ae33-05d2-432e-a70f-f7285294901c	Normal	Completed	1	2026-11-19T18:30:06Z	2026-11-19T18:30:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29918550-5blqb	5ab8c611-1852-4602-be65-32533d8b0e96	Normal	Started	1	2026-11-19T18:30:02Z	2026-11-19T18:30:02Z	Started container report
+kdash-e2e	Pod	nightly-report-29918550-5blqb	5ab8c611-1852-4602-be65-32533d8b0e96	Normal	Created	1	2026-11-19T18:30:01Z	2026-11-19T18:30:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918550-5blqb	5ab8c611-1852-4602-be65-32533d8b0e96	Normal	Pulled	1	2026-11-19T18:30:01Z	2026-11-19T18:30:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918550-5blqb	5ab8c611-1852-4602-be65-32533d8b0e96	Normal	Scheduled	1	2026-11-19T18:30:00.136396Z	2026-11-19T18:30:00.136396Z	Successfully assigned kdash-e2e/nightly-report-29918550-5blqb to dev
+kdash-e2e	Job	nightly-report-29918550	9100ae33-05d2-432e-a70f-f7285294901c	Normal	SuccessfulCreate	1	2026-11-19T18:30:00Z	2026-11-19T18:30:00Z	Created pod: nightly-report-29918550-5blqb
+kdash-e2e	Job	nightly-report-29918545	7be3985e-0004-4cb3-95c4-e3cf5198b4eb	Normal	Completed	1	2026-11-19T18:25:06Z	2026-11-19T18:25:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29918545-4wbfg	e234ea9a-f2fe-402c-b21e-21604e106e4c	Normal	Created	1	2026-11-19T18:25:01Z	2026-11-19T18:25:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918545-4wbfg	e234ea9a-f2fe-402c-b21e-21604e106e4c	Normal	Pulled	1	2026-11-19T18:25:01Z	2026-11-19T18:25:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918545-4wbfg	e234ea9a-f2fe-402c-b21e-21604e106e4c	Normal	Started	1	2026-11-19T18:25:01Z	2026-11-19T18:25:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918545-4wbfg	e234ea9a-f2fe-402c-b21e-21604e106e4c	Normal	Scheduled	1	2026-11-19T18:25:00.222366Z	2026-11-19T18:25:00.222366Z	Successfully assigned kdash-e2e/nightly-report-29918545-4wbfg to dev
+kdash-e2e	Job	nightly-report-29918545	7be3985e-0004-4cb3-95c4-e3cf5198b4eb	Normal	SuccessfulCreate	1	2026-11-19T18:25:00Z	2026-11-19T18:25:00Z	Created pod: nightly-report-29918545-4wbfg
+kdash-e2e	Pod	kdash-secrets-live-consumer	c89e4045-c86b-4b83-b8cc-864477dd1a0e	Normal	Created	1	2026-11-19T18:24:57Z	2026-11-19T18:24:57Z	Created container consumer
+kdash-e2e	Pod	kdash-secrets-live-consumer	c89e4045-c86b-4b83-b8cc-864477dd1a0e	Normal	Pulled	1	2026-11-19T18:24:57Z	2026-11-19T18:24:57Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	kdash-secrets-live-consumer	c89e4045-c86b-4b83-b8cc-864477dd1a0e	Normal	Started	1	2026-11-19T18:24:57Z	2026-11-19T18:24:57Z	Started container consumer
+kdash-e2e	Pod	kdash-secrets-live-consumer	c89e4045-c86b-4b83-b8cc-864477dd1a0e	Normal	Scheduled	1	2026-11-19T18:24:55.011624Z	2026-11-19T18:24:55.011624Z	Successfully assigned kdash-e2e/kdash-secrets-live-consumer to dev
+kdash-e2e	Pod	z-unschedulable	fc40885e-f063-4dbc-9878-6421bde1adfb	Warning	FailedScheduling	188	2026-11-14T04:42:58.155173Z	2026-11-19T18:22:39.958469Z	0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Pod	z-pending	497fbdc8-4a5b-4da4-9c76-bec7976cd910	Warning	FailedScheduling	342	2026-11-13T16:32:22.543644Z	2026-11-19T18:22:09.957290Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Job	nightly-report-29918540	2fc41793-f0f8-404a-a90a-d009fe7910aa	Normal	Completed	1	2026-11-19T18:20:06Z	2026-11-19T18:20:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29918540-lx926	8303a607-23a2-4a05-a566-a190d560f18d	Normal	Created	1	2026-11-19T18:20:01Z	2026-11-19T18:20:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918540-lx926	8303a607-23a2-4a05-a566-a190d560f18d	Normal	Pulled	1	2026-11-19T18:20:01Z	2026-11-19T18:20:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918540-lx926	8303a607-23a2-4a05-a566-a190d560f18d	Normal	Started	1	2026-11-19T18:20:01Z	2026-11-19T18:20:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918540-lx926	8303a607-23a2-4a05-a566-a190d560f18d	Normal	Scheduled	1	2026-11-19T18:20:00.122838Z	2026-11-19T18:20:00.122838Z	Successfully assigned kdash-e2e/nightly-report-29918540-lx926 to dev
+kdash-e2e	Job	nightly-report-29918540	2fc41793-f0f8-404a-a90a-d009fe7910aa	Normal	SuccessfulCreate	1	2026-11-19T18:20:00Z	2026-11-19T18:20:00Z	Created pod: nightly-report-29918540-lx926
+kdash-e2e	Job	nightly-report-29918535	2659da15-19a9-4d1a-930b-173ccf110f9a	Normal	Completed	1	2026-11-19T18:15:06Z	2026-11-19T18:15:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29918535-dqk2p	5c9a47aa-ba30-4114-96a7-754cb1717c7a	Normal	Started	1	2026-11-19T18:15:02Z	2026-11-19T18:15:02Z	Started container report
+kdash-e2e	Pod	nightly-report-29918535-dqk2p	5c9a47aa-ba30-4114-96a7-754cb1717c7a	Normal	Created	1	2026-11-19T18:15:01Z	2026-11-19T18:15:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918535-dqk2p	5c9a47aa-ba30-4114-96a7-754cb1717c7a	Normal	Pulled	1	2026-11-19T18:15:01Z	2026-11-19T18:15:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918535-dqk2p	5c9a47aa-ba30-4114-96a7-754cb1717c7a	Normal	Scheduled	1	2026-11-19T18:15:00.048948Z	2026-11-19T18:15:00.048948Z	Successfully assigned kdash-e2e/nightly-report-29918535-dqk2p to dev
+kdash-e2e	Job	nightly-report-29918535	2659da15-19a9-4d1a-930b-173ccf110f9a	Normal	SuccessfulCreate	1	2026-11-19T18:15:00Z	2026-11-19T18:15:00Z	Created pod: nightly-report-29918535-dqk2p
+kdash-e2e	Job	nightly-report-29918530	40c27f2f-3c77-4417-a84d-d3371121b90f	Normal	Completed	1	2026-11-19T18:10:06Z	2026-11-19T18:10:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29918530-g7fgd	68f30c84-3cc4-4571-88a3-86631d0bee22	Normal	Created	1	2026-11-19T18:10:01Z	2026-11-19T18:10:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918530-g7fgd	68f30c84-3cc4-4571-88a3-86631d0bee22	Normal	Pulled	1	2026-11-19T18:10:01Z	2026-11-19T18:10:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918530-g7fgd	68f30c84-3cc4-4571-88a3-86631d0bee22	Normal	Started	1	2026-11-19T18:10:01Z	2026-11-19T18:10:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918530-g7fgd	68f30c84-3cc4-4571-88a3-86631d0bee22	Normal	Scheduled	1	2026-11-19T18:10:00.174385Z	2026-11-19T18:10:00.174385Z	Successfully assigned kdash-e2e/nightly-report-29918530-g7fgd to dev
+kdash-e2e	Job	nightly-report-29918530	40c27f2f-3c77-4417-a84d-d3371121b90f	Normal	SuccessfulCreate	1	2026-11-19T18:10:00Z	2026-11-19T18:10:00Z	Created pod: nightly-report-29918530-g7fgd
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Warning	Unhealthy	1	2026-11-19T18:09:20Z	2026-11-19T18:09:20Z	Readiness probe failed: Get "http://10.244.0.78:8080/": dial tcp 10.244.0.78:8080: connect: connection refused
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Warning	Unhealthy	1	2026-11-19T18:09:20Z	2026-11-19T18:09:20Z	Readiness probe failed: Get "http://10.244.0.79:8080/": dial tcp 10.244.0.79:8080: connect: connection refused
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Warning	Unhealthy	1	2026-11-19T18:09:20Z	2026-11-19T18:09:20Z	Readiness probe failed: Get "http://10.244.0.77:8080/": dial tcp 10.244.0.77:8080: connect: connection refused
+kdash-e2e	Deployment	app-server	828e9990-4aaa-418c-b9ac-19e9a092aa62	Normal	ScalingReplicaSet	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Scaled down replica set app-server-8fb4699bc to 2 from 5
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulDelete	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Deleted pod: app-server-8fb4699bc-4kx2b
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulDelete	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Deleted pod: app-server-8fb4699bc-9dxvd
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulDelete	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Deleted pod: app-server-8fb4699bc-xjkgq
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Killing	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Stopping container app
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Killing	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Stopping container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Killing	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Stopping container app
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Killing	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Stopping container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Killing	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Stopping container app
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Killing	1	2026-11-19T18:08:50Z	2026-11-19T18:08:50Z	Stopping container sidecar
+kdash-e2e	HorizontalPodAutoscaler	app-server-hpa	e0bbdd62-e568-44a0-bb54-862961b0c923	Normal	SuccessfulRescale	3	2026-11-14T04:51:55Z	2026-11-19T18:08:50Z	New size: 2; reason: All metrics below target
+kdash-e2e	Job	nightly-report-29918525	c54e0b91-7bf2-4c43-a9d2-5dc8d3dc1153	Normal	Completed	1	2026-11-19T18:05:05Z	2026-11-19T18:05:05Z	Job completed
+kdash-e2e	Pod	nightly-report-29918525-d49cq	ac11f1b3-b387-4cda-adb9-744709c79be0	Normal	Created	1	2026-11-19T18:05:01Z	2026-11-19T18:05:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918525-d49cq	ac11f1b3-b387-4cda-adb9-744709c79be0	Normal	Pulled	1	2026-11-19T18:05:01Z	2026-11-19T18:05:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918525-d49cq	ac11f1b3-b387-4cda-adb9-744709c79be0	Normal	Started	1	2026-11-19T18:05:01Z	2026-11-19T18:05:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918525-d49cq	ac11f1b3-b387-4cda-adb9-744709c79be0	Normal	Scheduled	1	2026-11-19T18:05:00.117926Z	2026-11-19T18:05:00.117926Z	Successfully assigned kdash-e2e/nightly-report-29918525-d49cq to dev
+kdash-e2e	Job	nightly-report-29918525	c54e0b91-7bf2-4c43-a9d2-5dc8d3dc1153	Normal	SuccessfulCreate	1	2026-11-19T18:05:00Z	2026-11-19T18:05:00Z	Created pod: nightly-report-29918525-d49cq
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Created	1	2026-11-19T18:03:51Z	2026-11-19T18:03:51Z	Created container app
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Created	1	2026-11-19T18:03:51Z	2026-11-19T18:03:51Z	Created container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Pulled	1	2026-11-19T18:03:51Z	2026-11-19T18:03:51Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Pulled	1	2026-11-19T18:03:51Z	2026-11-19T18:03:51Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Started	1	2026-11-19T18:03:51Z	2026-11-19T18:03:51Z	Started container app
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Started	1	2026-11-19T18:03:51Z	2026-11-19T18:03:51Z	Started container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-9dxvd	cc9223d8-2d27-4d2d-9aa5-4f6690055dc7	Normal	Scheduled	1	2026-11-19T18:03:50.687897Z	2026-11-19T18:03:50.687897Z	Successfully assigned kdash-e2e/app-server-8fb4699bc-9dxvd to dev
+kdash-e2e	Deployment	app-server	828e9990-4aaa-418c-b9ac-19e9a092aa62	Normal	ScalingReplicaSet	3	2026-11-14T04:46:55Z	2026-11-19T18:03:50Z	Scaled up replica set app-server-8fb4699bc to 5 from 4
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulCreate	1	2026-11-19T18:03:50Z	2026-11-19T18:03:50Z	Created pod: app-server-8fb4699bc-9dxvd
+kdash-e2e	HorizontalPodAutoscaler	app-server-hpa	e0bbdd62-e568-44a0-bb54-862961b0c923	Normal	SuccessfulRescale	2	2026-11-19T15:24:36Z	2026-11-19T18:03:50Z	New size: 5; reason: cpu resource utilization (percentage of request) above target
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Created	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Created container app
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Created	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Created container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Pulled	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Pulled	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Started	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Started container app
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Started	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Started container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Created	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Created container app
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Created	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Created container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Pulled	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Pulled	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Started	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Started container app
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Started	1	2026-11-19T18:03:36Z	2026-11-19T18:03:36Z	Started container sidecar
+kdash-e2e	Pod	app-server-8fb4699bc-xjkgq	38815f30-771a-43ab-a000-76f279daf624	Normal	Scheduled	1	2026-11-19T18:03:35.701015Z	2026-11-19T18:03:35.701015Z	Successfully assigned kdash-e2e/app-server-8fb4699bc-xjkgq to dev
+kdash-e2e	Pod	app-server-8fb4699bc-4kx2b	a4ca553b-e12b-4ca9-b6ef-92b96425049d	Normal	Scheduled	1	2026-11-19T18:03:35.699772Z	2026-11-19T18:03:35.699772Z	Successfully assigned kdash-e2e/app-server-8fb4699bc-4kx2b to dev
+kdash-e2e	Deployment	app-server	828e9990-4aaa-418c-b9ac-19e9a092aa62	Normal	ScalingReplicaSet	3	2026-11-14T04:46:40Z	2026-11-19T18:03:35Z	Scaled up replica set app-server-8fb4699bc to 4 from 2
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulCreate	1	2026-11-19T18:03:35Z	2026-11-19T18:03:35Z	Created pod: app-server-8fb4699bc-4kx2b
+kdash-e2e	ReplicaSet	app-server-8fb4699bc	27bf32e1-0e3f-4784-aa8f-d5793324abee	Normal	SuccessfulCreate	1	2026-11-19T18:03:35Z	2026-11-19T18:03:35Z	Created pod: app-server-8fb4699bc-xjkgq
+kdash-e2e	HorizontalPodAutoscaler	app-server-hpa	e0bbdd62-e568-44a0-bb54-862961b0c923	Normal	SuccessfulRescale	3	2026-11-14T04:46:40Z	2026-11-19T18:03:35Z	New size: 4; reason: cpu resource utilization (percentage of request) above target
+kdash-e2e	Job	nightly-report-29918520	62cfb31c-23be-4843-8c2f-17dbe26dad45	Normal	Completed	1	2026-11-19T18:00:07Z	2026-11-19T18:00:07Z	Job completed
+kdash-e2e	Pod	nightly-report-29918520-56f5h	4be298df-1395-4225-9f7f-7450ce0cad5c	Normal	Started	1	2026-11-19T18:00:02Z	2026-11-19T18:00:02Z	Started container report
+kdash-e2e	Pod	nightly-report-29918520-56f5h	4be298df-1395-4225-9f7f-7450ce0cad5c	Normal	Created	1	2026-11-19T18:00:01Z	2026-11-19T18:00:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918520-56f5h	4be298df-1395-4225-9f7f-7450ce0cad5c	Normal	Pulled	1	2026-11-19T18:00:01Z	2026-11-19T18:00:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918520-56f5h	4be298df-1395-4225-9f7f-7450ce0cad5c	Normal	Scheduled	1	2026-11-19T18:00:00.130858Z	2026-11-19T18:00:00.130858Z	Successfully assigned kdash-e2e/nightly-report-29918520-56f5h to dev
+kdash-e2e	Job	nightly-report-29918520	62cfb31c-23be-4843-8c2f-17dbe26dad45	Normal	SuccessfulCreate	1	2026-11-19T18:00:00Z	2026-11-19T18:00:00Z	Created pod: nightly-report-29918520-56f5h
+kdash-e2e	Job	nightly-report-29918515	731a36ba-90b3-450f-90c5-5bcd2cf83147	Normal	Completed	1	2026-11-19T17:55:05Z	2026-11-19T17:55:05Z	Job completed
+kdash-e2e	Pod	nightly-report-29918515-5559p	63939993-c2b4-4982-93f5-79b249fef2d1	Normal	Created	1	2026-11-19T17:55:01Z	2026-11-19T17:55:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29918515-5559p	63939993-c2b4-4982-93f5-79b249fef2d1	Normal	Pulled	1	2026-11-19T17:55:01Z	2026-11-19T17:55:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29918515-5559p	63939993-c2b4-4982-93f5-79b249fef2d1	Normal	Started	1	2026-11-19T17:55:01Z	2026-11-19T17:55:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918515-5559p	63939993-c2b4-4982-93f5-79b249fef2d1	Normal	Scheduled	1	2026-11-19T17:55:00.120695Z	2026-11-19T17:55:00.120695Z	Successfully assigned kdash-e2e/nightly-report-29918515-5559p to dev
+kdash-e2e	Job	nightly-report-29918515	731a36ba-90b3-450f-90c5-5bcd2cf83147	Normal	SuccessfulCreate	1	2026-11-19T17:55:00Z	2026-11-19T17:55:00Z	Created pod: nightly-report-29918515-5559p
+kdash-e2e	Job	nightly-report-29918510	71ed56c2-14b4-4219-92c6-a6633524cf49	Normal	Completed	1	2026-11-19T17:50:05Z	2026-11-19T17:50:05Z	Job completed
+kdash-e2e	Pod	nightly-report-29918510-tckqg	74caf976-93be-4dc6-b1ff-b9509035f507	Normal	Started	1	2026-11-19T17:50:01Z	2026-11-19T17:50:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29918510-tckqg	74caf976-93be-4dc6-b1ff-b9509035f507	Normal	Scheduled	1	2026-11-19T17:50:00.025194Z	2026-11-19T17:50:00.025194Z	Successfully assigned kdash-e2e/nightly-report-29918510-tckqg to dev
+kdash-e2e	Job	nightly-report-29918510	71ed56c2-14b4-4219-92c6-a6633524cf49	Normal	SuccessfulCreate	1	2026-11-19T17:50:00Z	2026-11-19T17:50:00Z	Created pod: nightly-report-29918510-tckqg
+kdash-e2e	Pod	nightly-report-29918510-tckqg	74caf976-93be-4dc6-b1ff-b9509035f507	Normal	Created	1	2026-11-19T17:50:00Z	2026-11-19T17:50:00Z	Created container report
+kdash-e2e	Pod	nightly-report-29918510-tckqg	74caf976-93be-4dc6-b1ff-b9509035f507	Normal	Pulled	1	2026-11-19T17:50:00Z	2026-11-19T17:50:00Z	Container image "busybox:1.36" already present on machine

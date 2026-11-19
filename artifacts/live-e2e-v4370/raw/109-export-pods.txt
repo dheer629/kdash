@@ -1,6 +1,6 @@
  KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e                                                                                 18 of 18 pods
  pods    ● CrashLoopBackOff 1  ● ImagePullBackOff 1  ● Pending 2  ● Running 9  ● Succeeded 5
- exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_pod-list_kdash-e2e_20261119-221618.log
+ exported to /var/tmp/kdash-extended-exports-87ggsf4a/kdash_pod-list_kdash-e2e_20261120-004520.log
 ┌────────────────────────────────────────────────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┬──────────────────────────┐
 │ POD                                                                            │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │ NODE                     │
 ├────────────────────────────────────────────────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┼──────────────────────────┤
@@ -11,13 +11,13 @@
 │ db-stateful-1                                                                  │ Running          │ 1/1   │   0 │     1m │     0Mi │    0% │ dev                      │
 │ functionality-legacy-67ks7                                                     │ Running          │ 1/1   │   0 │     1m │     0Mi │    0% │ dev                      │
 │ kdash-secrets-live-consumer                                                    │ Running          │ 1/1   │   0 │     0m │     0Mi │    0% │ dev                      │
-│ nightly-report-29918435-9cljn                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
-│ nightly-report-29918440-xxv6v                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
-│ nightly-report-29918445-cf9m2                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ nightly-report-29918585-rj9d9                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ nightly-report-29918590-8qz7x                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ nightly-report-29918595-4tqd9                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
 │ node-agent-ctvg6                                                               │ Running          │ 1/1   │   0 │     1m │     1Mi │    3% │ dev                      │
 │ sync-pod                                                                       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
-│ test-sts-0                                                                     │ Running          │ 1/1   │  14 │     0m │     0Mi │     - │ dev  last-exit Completed │
-│ z-crash                                                                        │ CrashLoopBackOff │ 0/1   │ 352 │      - │       - │     - │ dev  last-exit Error     │
+│ test-sts-0                                                                     │ Running          │ 1/1   │  16 │     0m │     0Mi │     - │ dev  last-exit Completed │
+│ z-crash                                                                        │ CrashLoopBackOff │ 0/1   │ 381 │      - │       - │     - │ dev  last-exit Error     │
 │ z-imagepull                                                                    │ ImagePullBackOff │ 0/1   │   0 │      - │       - │     - │ dev                      │
 │ z-oom                                                                          │ Running          │ 1/1   │   0 │    50m │     1Mi │    6% │ dev                      │
 │ z-pending                                                                      │ Pending          │ 0/1   │   0 │      - │       - │     - │ (unscheduled)            │

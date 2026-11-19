@@ -1,16 +1,16 @@
  KDASH 4.37.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   21:07:48 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:15:17 IST
  match .*   sort mem ▼ high first
- ! pods 13/17 ready rst 380 oom 0 oomk 0 nolim 1 cpu 59m 4% lim mem 5Mi 1% lim
+ ! pods 13/17 ready rst 420 oom 0 oomk 0 nolim 1 cpu 60m 4% lim mem 5Mi 1% lim
     wl 13
  DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  MEMORY   live namespace memory dashboard
  MEMORY used      5Mi  req    244Mi  lim    848Mi   used/req    2.0%  used/lim    0.6%  ░░░░░░░░░░░░░░░░░░░░░░░░
- window 21:07:47 -> 21:07:48 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
- CPU    used      59m  req     265m  lim    1550m   used/req   22.3%  used/lim    3.8%  ░
- risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 380
+ window 00:15:16 -> 00:15:17 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
+ CPU    used      60m  req     265m  lim    1550m   used/req   22.6%  used/lim    3.9%  ░
+ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 420
 ────────────────────────────────────────────────────────────────────────────────
-► TIMELINE  21:07:47 -> 21:07:48 IST  (all since kdash started, host clock) ───
+► TIMELINE  00:15:16 -> 00:15:17 IST  (all since kdash started, host clock) ───
   MEMORY used - namespace                                                       
          one sample so far - the chart starts with the 2nd (run kdash live)     
 
@@ -23,7 +23,7 @@
 
 ► MEMORY BY WORKER NODE ───────────────────────────────────────────────────────
   NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory  ns trend
-  dev                          role:contro~      5Mi   7524Mi   0.1  34.6  █▓▓░░░░░░░  ░
+  dev                          role:contro~      5Mi   7524Mi   0.1  34.4  █▓▓░░░░░░░  ░
 
 ► PODS BY MEMORY USED  (top 15, --top N) ──────────────────────────────────────
   POD                      NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
@@ -34,13 +34,13 @@
   db-stateful-0            dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   0  
   db-stateful-1            dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   0  
   functionality-legacy-67~ dev                             0Mi      8Mi     32Mi   0.0   0.0 ░░░░░░░░   0  
-  test-sts-0               dev                             0Mi        -        -     -     - n/a       13  NO_LIMIT
+  test-sts-0               dev                             0Mi        -        -     -     - n/a       16  NO_LIMIT
   completed-check-m9swm    dev                               -      4Mi     32Mi     -     - n/a        0  
-  nightly-report-29918365~ dev                               -     16Mi     32Mi     -     - n/a        0  
-  nightly-report-29918370~ dev                               -     16Mi     32Mi     -     - n/a        0  
-  nightly-report-29918375~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29918555~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29918560~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29918565~ dev                               -     16Mi     32Mi     -     - n/a        0  
   sync-pod                 dev                               -        -        -     -     - n/a        0  
-  z-crash                  dev                               -      4Mi     32Mi     -     - n/a      339  
+  z-crash                  dev                               -      4Mi     32Mi     -     - n/a      376  
   z-imagepull              dev                               -     32Mi    128Mi     -     - n/a        0  
 
 ► OOM RISK  (>= 90% of memory limit) ──────────────────────────────────────────

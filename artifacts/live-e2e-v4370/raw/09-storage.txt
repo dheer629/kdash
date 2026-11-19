@@ -1,21 +1,21 @@
  KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:11:14 IST
-┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
-│ match .*   sort cpu ▼ high first                     │ ! pods 13/17 ready   restarts 381           │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13                │
-│ poll 2s  spec 7s/30s   session 21:10:37 up 37s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0         │
-└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
- DATA ● pods fresh 7s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-20 00:24:51 IST
+┌─ SCOPE ────────────────────────────────────────────────┬─ POD HEALTH ───────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                       │ ! pods 13/17 ready   restarts 421          │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 12s/30s   session 00:18:09 up 6m42s      │ OOM risk 0   OOMKilled 0   no-limit 1      │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 5  ^ 2        │
+└────────────────────────────────────────────────────────┴────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 12s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  PERSISTENT STORAGE   claims, volumes and classes - capacity is allocation; usage only from kubelet volume samples
 
 DATA SOURCES
 ┌────────────────┬───────────┬────────┬─────────────────────────────────────────────────────────────────────────┐
 │ SOURCE         │ STATE     │   READ │ DETAIL                                                                  │
 ├────────────────┼───────────┼────────┼─────────────────────────────────────────────────────────────────────────┤
-│ pvcs           │ ● ok      │ 7s ago │ read succeeded                                                          │
-│ pods           │ ● ok      │ 8s ago │ read succeeded                                                          │
-│ pvs            │ ● ok      │ 7s ago │ read succeeded                                                          │
-│ storageclasses │ ● ok      │ 7s ago │ read succeeded                                                          │
-│ volume-metrics │ ● unknown │ 7s ago │ no configured or existing Prometheus source; measured PVC usage unknown │
+│ pvcs           │ ● ok      │ 6s ago │ read succeeded                                                          │
+│ pods           │ ● ok      │ 7s ago │ read succeeded                                                          │
+│ pvs            │ ● ok      │ 6s ago │ read succeeded                                                          │
+│ storageclasses │ ● ok      │ 6s ago │ read succeeded                                                          │
+│ volume-metrics │ ● unknown │ 6s ago │ no configured or existing Prometheus source; measured PVC usage unknown │
 └────────────────┴───────────┴────────┴─────────────────────────────────────────────────────────────────────────┘
 
 PERSISTENT VOLUME CLAIMS  4 claims   USED / USE% need kubelet volume samples (Prometheus) - none here
@@ -47,4 +47,4 @@ NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (print
       read   kubectl --context kdash-local get storageclass kdash-e2e-intentionally-missing -o wide  # provisioner and binding mode
 
 K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
- ● LIVE 21:11:14  next 1s  data 1s old  spec 7/30s  fetch 0.0s  poll 2s  AUDITED | storage | rows 1-41/84 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export
+ ○ LIVE 00:24:51  next 2s  data 0s old  spec 12/30s  fetch 0.0s  poll 2s  AUDITED | storage | rows 1-41/84 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export

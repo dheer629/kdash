@@ -1,16 +1,16 @@
  KDASH 4.37.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   21:08:47 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   00:16:14 IST
  match .* status=Running   sort cpu ▼ high first
- pods 8/8 ready rst 41 oom 0 oomk 0 nolim 1 cpu 61m 7% lim mem 5Mi 1% lim wl 6
- DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ pods 8/8 ready rst 44 oom 0 oomk 0 nolim 1 cpu 60m 7% lim mem 5Mi 1% lim wl 6
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
                                        │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
 WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
 ────────────────────────────────────────────────────────────────────────────────
-► Pod z-oom  (1 pod)           1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
-  z-oom                        1/1   0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+► Pod z-oom  (1 pod)           1/1   0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0  12.5   6.2
+  z-oom                        1/1   0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0  12.5   6.2
       node dev   pool role:control-plane,master   ip 10.244.0.153   qos Burstable   status Running
-    └─ hog                     Y     0 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+    └─ hog                     Y     0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0  12.5   6.2
 ................................................................................
 ► Deployment app-server  (2 p~ 2/2  28 │      6 ·       3 · │     50    500      24     192 │  12.0   1.2  12.5   1.6
   app-server-8fb4699bc-cx5vz   2/2  14 │      3 ·       3 · │     25    250      12      96 │  12.0   1.2  25.0   3.1
@@ -44,11 +44,11 @@ WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim 
       node dev   pool role:control-plane,master   ip 10.244.0.150   qos Burstable   status Running
     └─ agent                   Y     0 │      1 ·       1 · │     10     50      16      32 │  10.0   2.0   6.2   3.1
 ................................................................................
-► StatefulSet test-sts  (1 po~ 1/1  13 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
-  test-sts-0                   1/1  13 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+► StatefulSet test-sts  (1 po~ 1/1  16 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+  test-sts-0                   1/1  16 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
       node dev   pool role:control-plane,master   ip 10.244.0.149   qos BestEffort   status Running   last-exit Completed
-    └─ c                       Y    13 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+    └─ c                       Y    16 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
         last-exit Completed
 ────────────────────────────────────────────────────────────────────────────────
-TOTAL (8 pods, 6 workloads)         41 │     61 ·       5 · │    120    850     120     400 │  50.8   7.2   4.2   1.2
+TOTAL (8 pods, 6 workloads)         44 │     60 ·       5 · │    120    850     120     400 │  50.0   7.1   4.2   1.2
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
