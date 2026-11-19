@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                FIND IN LOGS
+┌─ FIND IN LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
+│ CONTAINER  app   ● Running   ready   restarts 7   last exit Unknown exit=255   busybox:1.36                                                                           │
+└─ rows 10-47 / 12049 · /INFO|WARN|ERROR in pod app-server-8fb4699bc-cx5vz: 4 of 4 logs read, 128676 lines, 128676 matching ────────────────────────────────────────────┘
+2026-11-13T16:06:06.703619693Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:06+00:00 INFO request=0 service=app-server healthy=true
+2026-11-13T16:06:06.704548262Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:06+00:00 WARN request=0 demonstration warning from live workload
+2026-11-13T16:06:12.312059322Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:12+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:14.101989166Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:14+00:00 INFO request=1 service=app-server healthy=true
+2026-11-13T16:06:14.102672773Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:14+00:00 WARN request=1 demonstration warning from live workload
+2026-11-13T16:06:15.313125686Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:15+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:16.103704520Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:16+00:00 INFO request=2 service=app-server healthy=true
+2026-11-13T16:06:16.104355016Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:16+00:00 WARN request=2 demonstration warning from live workload
+2026-11-13T16:06:18.105795442Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:18+00:00 INFO request=3 service=app-server healthy=true
+2026-11-13T16:06:18.106616064Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:18+00:00 WARN request=3 demonstration warning from live workload
+2026-11-13T16:06:18.314825096Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:18+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:20.107699626Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:20+00:00 INFO request=4 service=app-server healthy=true
+2026-11-13T16:06:20.108296945Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:20+00:00 WARN request=4 demonstration warning from live workload
+2026-11-13T16:06:21.411171700Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:21+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:22.109529479Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 INFO request=5 service=app-server healthy=true
+2026-11-13T16:06:22.110432985Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 WARN request=5 demonstration warning from live workload
+2026-11-13T16:06:22.711285104Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 INFO request=8 service=app-server healthy=true
+2026-11-13T16:06:22.711978231Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 WARN request=8 demonstration warning from live workload
+2026-11-13T16:06:24.111864917Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:24+00:00 INFO request=6 service=app-server healthy=true
+2026-11-13T16:06:24.112632875Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:24+00:00 WARN request=6 demonstration warning from live workload
+2026-11-13T16:06:24.413143280Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:24+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:24.713103066Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:24+00:00 INFO request=9 service=app-server healthy=true
+2026-11-13T16:06:24.713967329Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:24+00:00 WARN request=9 demonstration warning from live workload
+2026-11-13T16:06:25.010822160Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:25+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:26.113985959Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:26+00:00 INFO request=7 service=app-server healthy=true
+2026-11-13T16:06:26.114780096Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:26+00:00 WARN request=7 demonstration warning from live workload
+2026-11-13T16:06:26.715147393Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:26+00:00 INFO request=10 service=app-server healthy=true
+2026-11-13T16:06:26.715780739Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:26+00:00 WARN request=10 demonstration warning from live workload
+2026-11-13T16:06:27.414539579Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:27+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:28.016754618Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:28+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:28.721228037Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:28+00:00 INFO request=11 service=app-server healthy=true
+2026-11-13T16:06:28.722068824Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:28+00:00 WARN request=11 demonstration warning from live workload
+2026-11-13T16:06:30.723158635Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:30+00:00 INFO request=12 service=app-server healthy=true
+2026-11-13T16:06:30.723838176Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:30+00:00 WARN request=12 demonstration warning from live workload
+2026-11-13T16:06:31.017635209Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:31+00:00 INFO sidecar heartbeat
+2026-11-13T16:06:32.714436267Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:32+00:00 INFO request=13 service=app-server healthy=true
+2026-11-13T16:06:32.715087946Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:32+00:00 WARN request=13 demonstration warning from live workload
+2026-11-13T16:06:34.008367550Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:34+00:00 INFO sidecar heartbeat
+┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
+│ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
+│ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │
+│ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
+│ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
+└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
+ match 1/12040

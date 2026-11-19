@@ -1,0 +1,11 @@
+ok - quoted messages flatten controls, preserve literals and deduplicate Event identities
+ok - collection uses explicit context, bounded timeout and command-local scope flags
+ok - cached rendering filters by namespace and pod without network calls
+ok - explanations distinguish historical identities and print context-scoped read-only checks
+ok - image and storage explanations follow reason/message evidence
+ok - denied reads retain stale evidence while sanitizing diagnostic errors
+ok - unavailable, transport and malformed responses preserve unknown/stale coverage
+ok - scope changes cannot leak earlier cached evidence
+ok - recovery and successful empty responses replace earlier evidence
+ok - all-namespace reads keep command order and context changes invalidate cached rendering
+All Events tests passed.

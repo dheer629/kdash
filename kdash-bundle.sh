@@ -43,7 +43,7 @@ set -uo pipefail
 # A damaged PATH from an earlier shell start-up must not stop the repair.
 PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"; export PATH
 
-VERSION="4.32.0"
+VERSION="4.37.0"
 PREFIX=""; DO_SHELL=1; UNINSTALL=0; KEEP_OLD=0; CHECK_ONLY=0; DRY_RUN=0
 BEGIN_MARK="# >>> kdash setup >>>"
 END_MARK="# <<< kdash setup <<<"
@@ -399,7 +399,7 @@ cat > "$tmp" <<'KDASH_PAYLOAD_EOF'
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.32.0"
+KDASH_VERSION="4.37.0"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"
@@ -418,7 +418,7 @@ REQUEST_TIMEOUT="${KDASH_REQUEST_TIMEOUT:-5}"
 KDASH_LABEL_SELECTOR="${KDASH_LABEL_SELECTOR:-}"; KDASH_STATUS_FILTER="${KDASH_STATUS_FILTER:-}"
 KDASH_NODE_FILTER="${KDASH_NODE_FILTER:-}"; KDASH_WORKLOAD_FILTER="${KDASH_WORKLOAD_FILTER:-}"; KDASH_UNHEALTHY="${KDASH_UNHEALTHY:-0}"
 TWIN="${KDASH_WINDOW:-all}"; FC_WIN="${KDASH_FORECAST_WINDOW:-1800}"; ZOOM="${KDASH_ZOOM:-1}"; COMPARE_NS="${KDASH_COMPARE_NS:-}"
-THEME="${KDASH_THEME:-safe}"; CLUSTER="${KDASH_CLUSTER:-1}"; ALL_NODES="${KDASH_ALL_NODES:-1}"
+UI_MAPK=(); UI_MAPV=(); THEME="${KDASH_THEME:-safe}"; CLUSTER="${KDASH_CLUSTER:-1}"; ALL_NODES="${KDASH_ALL_NODES:-1}"
 [ -n "${NO_COLOR:-}" ] && COLOR=0
 SELF="$(cd "$(dirname "$0")" 2>/dev/null && pwd)/$(basename "$0")"
 
@@ -443,7 +443,7 @@ AUDIT_DIR="${KDASH_AUDIT_DIR:-${KDASH_REPORT_DIR:-$HOME/kdash_reports}/audit}"
 AUDIT_CENTRAL="${KDASH_AUDIT_CENTRAL:-/var/log/kdash}"
 AUDIT_SYSLOG="${KDASH_AUDIT_SYSLOG:-1}"
 AUDIT_ARGV="$*"
-AUDIT_T0="$(date +%s)"
+printf -v AUDIT_T0 '%(%s)T' -1
 KDASH_LAUNCH_DIR="${KDASH_LAUNCH_DIR:-$PWD}"      # downloads land here, uploads start here
 AUDIT_SID="$(date +%Y%m%d-%H%M%S)-$$"
 # Every kubectl kdash starts carries this tag, and so do the login helpers kubectl starts.
@@ -579,7 +579,8 @@ case "$verb" in
       stream+=("$a")
     done
     "$KDASH_REAL_KUBECTL" "${stream[@]}"; rc=$? ;;
-  *) timeout --kill-after=1s "${KDASH_CMD_TIMEOUT:-12}s" "$KDASH_REAL_KUBECTL" "$@"; rc=$? ;;
+  *) timeout --kill-after=1s "${KDASH_CMD_TIMEOUT:-12}s" "$KDASH_REAL_KUBECTL" "$@"; rc=$?
+     case "$rc" in 124|137) printf 'kdash: kubectl %s stopped after %ss (timed out) - the API answered too slowly\n' "$verb" "${KDASH_CMD_TIMEOUT:-12}" >&2 ;; esac ;;
 esac
 printf '%s\t%s\t%s\n' "$(date +%s)" "$rc" "${shape:0:300}" >> "$KDASH_KLOG" 2>/dev/null
 exit "$rc"
@@ -635,7 +636,7 @@ audit_files() {           # every audit file this user can read, oldest first
 audit_show() {            # last N events, newest last - one framed table
   local n="${1:-40}" re="${AUDIT_GREP:-.}" fs cols=0 glyph=unicode
   fs="$(audit_files)"; [ -n "$fs" ] || { printf 'no audit log yet in %s\n' "$AUDIT_DIR"; return 0; }
-  # on a terminal the DETAIL column is cut to the window; piped or redirected, nothing is cut
+  # on a terminal the table fits the window (long values wrap onto more lines); piped, one line per event
   if [ -t 1 ]; then cols="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}"; elif [ -n "${KDASH_COLUMNS:-}" ]; then cols="$KDASH_COLUMNS"; fi
   case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in *UTF-8*|*utf8*|*UTF8*) ;; *) glyph=ascii ;; esac
   [ "${BARCHR:-}" != ascii ] || glyph=ascii
@@ -659,12 +660,19 @@ audit_show() {            # last N events, newest last - one framed table
         print hl(GTL, GTT, GTR)
         line = C("90", BV); for (i = 1; i <= NC; i++) line = line " " C("1", pad((length(H[i]) > WD[i] ? substr(H[i], 1, WD[i] - 1) "~" : H[i]), WD[i])) " " C("90", BV); print line
         print hl(GLT, GX, GRT)
-        for (n = 1; n <= nr; n++) { line = C("90", BV)
-          for (i = 1; i <= NC; i++) { v = R[n, i]; if (v == "") v = "-"
-            if (vl(v) > WD[i]) v = substr(v, 1, WD[i] - 1) "~"
+        # a value wider than its column continues on the next line of the row (nothing is cut)
+        for (n = 1; n <= nr; n++) { mx = 1
+          for (i = 1; i <= NC; i++) { v = R[n, i]; if (v == "") v = "-"; m = 0
             k = ""; if (i == 5) k = (v ~ /FAIL|DECLINED|REFUSED|DENIED|ALERT/) ? "1;31" : ((v ~ /START|END/) ? "1;94" : ((v ~ /REPORT|ACCEPT|EXPORT/) ? "32" : ""))
-            line = line " " C(k, pad(v, WD[i])) " " C("90", BV) }
-          print line }
+            KC_[i] = k
+            while (vl(v) > WD[i]) { b = 0
+              for (j = WD[i]; j > int(WD[i] * 0.4); j--) if (substr(v, j, 1) ~ /[ ,;=\/|-]/) { b = j; break }
+              if (b == 0) b = WD[i]
+              PS[i, ++m] = substr(v, 1, b); v = substr(v, b + 1); sub(/^ +/, "", v) }
+            PS[i, ++m] = v; PN[i] = m; if (m > mx) mx = m }
+          for (q = 1; q <= mx; q++) { line = C("90", BV)
+            for (i = 1; i <= NC; i++) line = line " " C(KC_[i], pad(q <= PN[i] ? PS[i, q] : "", WD[i])) " " C("90", BV)
+            print line } }
         print hl(GBL, GBT, GBR) }'
 }
 audit_verify() {          # recompute every chain; rc 0 = intact, 1 = broken
@@ -801,6 +809,8 @@ OUTPUT
       --report [DIR]     write a full evidence bundle (text + TSV + CSV) and a
                          combined HTML dashboard, then exit
                          (default DIR: ~/kdash_reports, or $KDASH_REPORT_DIR)
+                         Key > on any screen exports it to a log file in
+                         $KDASH_EXPORT_DIR (default ~/kdash_reports/exports)
       --top N            rows in "top pods" lists              (default 15)
       --pool-label KEY   node label that names the node pool (default: auto)
       --no-node-metrics  never call kubectl top node
@@ -836,8 +846,11 @@ VIEW OPTIONS
       --glyphs SET       safe (default: blocks every terminal font has, also
                          PuTTY / MobaXterm) | full (finer sparklines) | ascii
   -N, --no-color         disable colour
-      --theme NAME       safe (default: readable on black and white) | dark |
-                         light | mono       (key T cycles while running)
+      --theme NAME       safe (default: fixed 256-colour shades that keep about
+                         4.5:1 contrast on black AND white backgrounds) | dark
+                         (black backgrounds) | light (white backgrounds) | mono
+                         (key T cycles while running; KDASH_COLORS=16 keeps the
+                         16 ANSI colours for consoles without 256 colours)
   -S, --no-altscreen     draw in the normal buffer
 
 DIAGNOSTICS (read-only)
@@ -890,7 +903,8 @@ KEYS WHILE RUNNING
   e             HTML menu: all-tabs report, current view, views 1-6, or the bundle
   j k / arrows  scroll            space b   page down / up
   h l / arrows  pan left / right  0         back to column 1
-  g G           top / bottom      /         change pod filter (empty = all)
+  g G           top / bottom      /         search box: find in the view (n/N), Tab = pod filter
+  >             quick export: the screen + the whole view (or pane, or list) to a log file
   p             pods-only         d         toggle detail lines
   s             cycle sort key    o         reverse sort order
   w             PODS: group by workload / flat list       r   re-read spec now
@@ -957,7 +971,10 @@ CONFIGURATION  (later overrides earlier)
   KDASH_TOPN KDASH_HISTORY KDASH_NODE_METRICS KDASH_REPORT_DIR KDASH_THEME
   KDASH_CLUSTER KDASH_ALL_NODES KDASH_WINDOW KDASH_FORECAST_WINDOW KDASH_ZOOM KDASH_COMPARE_NS KDASH_NS_SCAN
   KDASH_SAMPLE_EVERY KDASH_SESSION_KEEP KDASH_SESSION_MAX_MB
-  KDASH_COLUMNS KDASH_LINES   NO_COLOR disables colour.
+  KDASH_COLUMNS KDASH_LINES   NO_COLOR disables colour.  KDASH_COLORS=16|256
+  speed: KDASH_REDRAW_MAX (10: a quiet screen is drawn again at least every N s;
+  0 = every tick), KDASH_BG_MODEL=0 and KDASH_PARALLEL_READS=0 go back to the
+  foreground model build and one API read after another
 
 AUDIT  (every run is logged; see the disclaimer at the top)
       --about            author, disclaimer, where this run is audited
@@ -1203,7 +1220,7 @@ case "$FC_WIN" in ''|*[!0-9]*) FC_WIN=1800 ;; esac; [ "$FC_WIN" -lt 120 ] && FC_
 # every time printed (header, chart axes, events, forecasts, HTML) uses one clock
 host_clock() {
   local z h m
-  read -r NOW_S z TZ_NAME < <(date '+%s %z %Z') || { NOW_S=$(date +%s); z=+0000; TZ_NAME=UTC; }
+  read -r NOW_S z TZ_NAME < <(date '+%s %z %Z') || { printf -v NOW_S '%(%s)T' -1; z=+0000; TZ_NAME=UTC; }
   case "$z" in [+-][0-9][0-9][0-9][0-9]) h=${z:1:2}; m=${z:3:2}; TZ_OFF=$(( (10#$h * 3600 + 10#$m * 60) * (${z:0:1}1) )) ;; *) TZ_OFF=0 ;; esac
   TZ_Z="$z"; [ -n "${TZ_NAME:-}" ] || TZ_NAME="UTC$z"
   # TZ names a zone this host has no data for: the C library silently uses UTC
@@ -1260,6 +1277,48 @@ fi
 read -r -a KC <<< "${KDASH_KUBECTL:-kubectl}"
 [ "$DO_SREP" = 1 ] || command -v "${KC[0]}" >/dev/null 2>&1 || fail "${KC[0]} not found in PATH"
 [ -t 1 ] || { COLOR=0; ALTSCR=0; }
+# ---- colour themes: every screen writes colour ROLES (the ANSI codes below); ui_flush
+# turns them into the theme's real colours as the lines go out. safe (default) uses
+# fixed 256-colour shades that keep about 4.5:1 contrast on white AND on black
+# backgrounds (terminal colour schemes remap the 16 ANSI colours, not these); dark and
+# light use stronger shades for one background; mono keeps bold / reverse only. Yellow is
+# never used. 16-colour terminals (TERM=linux, vt*, dumb, ansi; or KDASH_COLORS=16) keep
+# the ANSI codes. Roles: 32 ok, 94 info, 35 warning, 1;31 critical, 90 secondary,
+# 1;35 titles, 36 commands; reverse / background chips for verdicts and the status line.
+theme_map() {
+  UI_MAPK=(); UI_MAPV=()
+  [ "${COLOR:-1}" = 1 ] || return 0
+  local depth="${KDASH_COLORS:-auto}" spec="" kv k v
+  if [ "$depth" != 16 ] && [ "$depth" != 256 ]; then
+    case "${TERM:-}" in linux|vt[0-9]*|dumb|ansi|cons25|sun|sun-*|"") depth=16 ;; *) depth=256 ;; esac
+  fi
+  # chips: white text on a dark colour reads on any background (no yellow, no bold black)
+  local chips='7;1;31=1;38;5;231;48;5;160 7;1;35=1;38;5;231;48;5;127 7;1;32=1;38;5;231;48;5;28
+    1;30;42=1;38;5;231;48;5;28 1;30;43=1;38;5;231;48;5;127 1;97;41=1;38;5;231;48;5;160 1;41;97=1;38;5;231;48;5;160
+    41;97=38;5;231;48;5;160 41;97;1=1;38;5;231;48;5;160 45;97=38;5;231;48;5;127 1;43;30=1;38;5;231;48;5;127 1;47;30=1;38;5;16;48;5;252'
+  case "${THEME:-safe}:$depth" in
+    mono:*) spec='32= 1;32=1 31= 1;31=1 35= 1;35=1 94= 1;94=1 36= 33= 1;33=1 90= 2= 0;2=0
+              7;1;31=7;1 7;1;35=7;1 7;1;32=7;1 1;30;42=7;1 1;30;43=7;1 1;97;41=7;1 1;41;97=7;1 41;97=7 41;97;1=7;1 45;97=7 1;43;30=7;1 1;47;30=7;1' ;;
+    dark:256) spec="32=38;5;78 1;32=1;38;5;78 31=38;5;203 1;31=1;38;5;203 35=38;5;213 1;35=1;38;5;141 94=38;5;75 1;94=1;38;5;75
+              36=38;5;80 33=38;5;213 1;33=1;38;5;213 90=38;5;246 2=38;5;246 0;2=0;38;5;246 $chips" ;;
+    light:256) spec='32=38;5;22 1;32=1;38;5;22 31=38;5;124 1;31=1;38;5;124 35=38;5;90 1;35=1;38;5;54 94=38;5;25 1;94=1;38;5;25
+              36=38;5;24 33=38;5;90 1;33=1;38;5;90 90=38;5;241 2=38;5;241 0;2=0;38;5;241
+              7;1;31=1;38;5;231;48;5;124 7;1;35=1;38;5;231;48;5;90 7;1;32=1;38;5;231;48;5;22 1;30;42=1;38;5;231;48;5;22
+              1;30;43=1;38;5;231;48;5;90 1;97;41=1;38;5;231;48;5;124 1;41;97=1;38;5;231;48;5;124 41;97=38;5;231;48;5;124
+              41;97;1=1;38;5;231;48;5;124 45;97=38;5;231;48;5;90 1;43;30=1;38;5;231;48;5;90 1;47;30=1;38;5;16;48;5;252' ;;
+    *:256) spec="32=38;5;29 1;32=1;38;5;29 31=38;5;196 1;31=1;38;5;196 35=38;5;163 1;35=1;38;5;98 94=38;5;63 1;94=1;38;5;63
+              36=38;5;63 33=38;5;163 1;33=1;38;5;163 90=38;5;243 2=38;5;243 0;2=0;38;5;243 $chips" ;;
+    dark:16) spec='35=95 1;35=1;95 94=96 1;94=1;96 32=92 1;32=1;92 33=95 1;33=1;95 2=90 0;2=0;90 1;30;43=1;97;45 1;43;30=1;97;45' ;;
+    light:16) spec='94=34 1;94=1;34 33=35 1;33=1;35 2=90 0;2=0;90 1;30;43=1;97;45 1;43;30=1;97;45' ;;
+    *:16) spec='33=35 1;33=1;35 2=90 0;2=0;90 1;30;43=1;97;45 1;43;30=1;97;45' ;;
+  esac
+  for kv in $spec; do
+    k="${kv%%=*}"; v="${kv#*=}"; UI_MAPK+=($'\033['"$k"'m')
+    if [ -n "$v" ]; then UI_MAPV+=($'\033['"$v"'m'); else UI_MAPV+=(""); fi
+  done
+  UI_FL_KEY=""                    # the next frame is sent whole, in the new colours
+}
+theme_map
 KC+=(--request-timeout="${REQUEST_TIMEOUT}s")
 
 if [ -n "$KUBECONF" ]; then
@@ -1334,7 +1393,7 @@ cleanup() {
     if [ "${SESSION_ON:-0}" = 1 ]; then
       session_close
       local q1="" q0="" qd="" up=""
-      [ "${COLOR:-1}" != 1 ] || { q1=$'\033[7;1m'; q0=$'\033[0m'; qd=$'\033[90m'; }
+      [ "${COLOR:-1}" != 1 ] || { q1=$'\033[7;1m'; q0=$'\033[0m'; qd=$'\033[90m'; ! declare -F ui_mapl >/dev/null || { ui_mapl "$qd"; qd="$UI_ML"; }; }
       if [ -n "${AUDIT_T0:-}" ]; then up=$(( $(date +%s) - AUDIT_T0 )); up="$((up / 60))m $((up % 60))s"; up="${up#0m }"; fi
       printf '%s KDASH %s  session closed  %scontext%s %s  %snamespace%s %s  %sduration%s %s  %saudited%s\n' "$q1" "$q0" "$qd" "$q0" "${CTX_NAME:-current}" "$qd" "$q0" "${NS:-default}" "$qd" "$q0" "${up:--}" "$qd" "$q0"
       printf '        %shistory%s  %s\n        %sreport%s   kdash --session-report latest   %s(every tab + the full history as HTML)%s\n' "$qd" "$q0" "$SDIR" "$qd" "$q0" "$qd" "$q0"
@@ -1342,6 +1401,7 @@ cleanup() {
   fi
   [ "${SESSION_ON:-0}" = 1 ] && session_close
   [ -n "${IO_PID:-}" ] && kill "$IO_PID" 2>/dev/null
+  declare -F ui_tty_quiet >/dev/null && ui_tty_quiet restore      # the terminal echoes again
   rm -rf "$TMPD"
 }
 trap 'AUDIT_SIG=INT; cleanup; exit 0' INT
@@ -1386,19 +1446,34 @@ refresh_spec() {
     SPEC_OK=1
     # an empty answer replaces the spec only when the namespace really is empty
     # (first read, or every pod gone); a transient blank never blanks the frame
-    mv -f "$tmp" "$SPEC"; SPEC_AT=$(date +%s)
+    mv -f "$tmp" "$SPEC"; printf -v SPEC_AT '%(%s)T' -1
   else rm -f "$tmp"; fi            # keep last good spec
-  tmp="$TMPD/nodes.new"; err="$TMPD/nodes.err"
-  if "${KC[@]}" get nodes -o jsonpath="$NODE_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp" && [ -s "$tmp" ]; then
-    mv -f "$tmp" "$NODES"; date +%s > "$TMPD/nodes.updated"; NODES_STATE="ok"
-  else rm -f "$tmp"; NODES_STATE="$(_klass "$err")"; fi
+  # the other reads wait on the network, not on each other: once the pod read shows the
+  # login works they go out together (KDASH_PARALLEL_READS=0: one after the other)
+  local pn="" pv="" rc_ par=0 now_
+  [ "$SPEC_OK" != 1 ] || [ "${KDASH_PARALLEL_READS:-1}" = 0 ] || par=1
+  if [ "$par" = 1 ]; then
+    if [ "${TOP_WANT:-0}" = 1 ]; then [ "$TOPN_STATE" != forbidden ] || TOPN_STATE=unread; refresh_top_start; TOP_WANT=2; fi
+    ( "${KC[@]}" get nodes -o jsonpath="$NODE_TPL" 2>"$TMPD/nodes.err" | sed 's/^[[:space:]]*//' > "$TMPD/nodes.new"; printf '%s' "$?" > "$TMPD/nodes.rc" ) & pn=$!
+    ( "${KC[@]}" get services "${SCOPE[@]}" -o jsonpath="$SVC_TPL" 2>"$TMPD/svc.err" | sed 's/^[[:space:]]*//' > "$TMPD/svc.new"; printf '%s' "$?" > "$TMPD/svc.rc" ) & pv=$!
+  fi
   refresh_cluster
   [ "$WL_STATE" != forbidden ] || WL_STATE=unread
   refresh_workloads
+  tmp="$TMPD/nodes.new"; err="$TMPD/nodes.err"
+  if [ "$par" = 1 ]; then wait "$pn" 2>/dev/null; rc_="$(cat "$TMPD/nodes.rc" 2>/dev/null)"
+  else "${KC[@]}" get nodes -o jsonpath="$NODE_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; rc_=$?; fi
+  printf -v now_ '%(%s)T' -1
+  if [ "$rc_" = 0 ] && [ -s "$tmp" ]; then
+    mv -f "$tmp" "$NODES"; printf '%s\n' "$now_" > "$TMPD/nodes.updated"; NODES_STATE="ok"
+  else rm -f "$tmp"; NODES_STATE="$(_klass "$err")"; fi
   tmp="$TMPD/svc.new"; err="$TMPD/svc.err"
-  if "${KC[@]}" get services "${SCOPE[@]}" -o jsonpath="$SVC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; then
-    mv -f "$tmp" "$SVC"; date +%s > "$TMPD/svc.updated"; SVC_STATE="ok"
+  if [ "$par" = 1 ]; then wait "$pv" 2>/dev/null; rc_="$(cat "$TMPD/svc.rc" 2>/dev/null)"
+  else "${KC[@]}" get services "${SCOPE[@]}" -o jsonpath="$SVC_TPL" 2>"$err" | sed 's/^[[:space:]]*//' > "$tmp"; rc_=$?; fi
+  if [ "$rc_" = 0 ]; then
+    mv -f "$tmp" "$SVC"; printf '%s\n' "$now_" > "$TMPD/svc.updated"; SVC_STATE="ok"
   else rm -f "$tmp"; SVC_STATE="$(_klass "$err")"; fi
+  rm -f -- "$TMPD/nodes.rc" "$TMPD/svc.rc"
 }
 refresh_workloads() {    # namespace scope; a kind the server or RBAC refuses is dropped
   [ "$WL_STATE" = forbidden ] && return 0
@@ -1420,7 +1495,7 @@ refresh_cluster() {      # every namespace, or - without cluster rights - every 
   local tmp="$TMPD/cluster.new" err="$TMPD/cluster.err" now
   # --compare: exactly the namespaces asked for, read one by one
   if [ -n "$COMPARE_NS" ]; then
-    now=$(date +%s); [ $((now - ${NS_SCAN_AT:-0})) -lt "$NS_SCAN_EVERY" ] && [ -s "$CLUS" ] && return 0
+    printf -v now '%(%s)T' -1; [ $((now - ${NS_SCAN_AT:-0})) -lt "$NS_SCAN_EVERY" ] && [ -s "$CLUS" ] && return 0
     NS_SCAN_AT=$now; scan_namespaces; return 0
   fi
   if [ "$CLUSTER_STATE" != forbidden ] && [ "$CLUSTER_STATE" != partial ]; then
@@ -1437,7 +1512,7 @@ refresh_cluster() {      # every namespace, or - without cluster rights - every 
     [ "$CLUSTER_STATE" = forbidden ] || return 0
   fi
   # namespace-level rights only: read each namespace you may read (scan_namespaces)
-  now=$(date +%s)
+  printf -v now '%(%s)T' -1
   [ $((now - ${NS_SCAN_AT:-0})) -lt "$NS_SCAN_EVERY" ] && [ -s "$CLUS" ] && return 0
   NS_SCAN_AT=$now
   scan_namespaces
@@ -1452,7 +1527,7 @@ NS_SCAN_EVERY=60; NS_SCAN_AT=0; NS_READ_LIST=""; NS_DENY_FILE=""
 scan_namespaces() {
   local tmp="$TMPD/cluster.scan" d="$TMPD/scan" n=0 ns_ ok=0 tried=0 now list cand=() pick=() j
   NS_DENY_FILE="$TMPD/ns_deny"; [ -f "$NS_DENY_FILE" ] || : > "$NS_DENY_FILE"
-  now=$(date +%s)
+  printf -v now '%(%s)T' -1
   awk -F'\t' -v t="$now" '$2 + 600 > t' "$NS_DENY_FILE" > "$NS_DENY_FILE.t" 2>/dev/null && mv -f "$NS_DENY_FILE.t" "$NS_DENY_FILE"
   if [ -n "$COMPARE_NS" ]; then
     list="$( { [ "$ALL_NS" = 0 ] && printf '%s\n' "$NS"; printf '%s\n' "$COMPARE_NS" | tr ', ' '\n\n'; } | awk 'NF && !s[$0]++')"
@@ -1524,24 +1599,36 @@ remember_ns() {          # newest first, per context, 30 kept
 }
 recent_ns() { [ -r "$RECENT_NS_FILE" ] && awk -F'\t' -v c="$CTX_NAME" '$1 == c { print $2 }' "$RECENT_NS_FILE"; return 0; }
 
-refresh_top() {
-  local tmp="$TMPD/top.new" err="$TMPD/top.err"
-  if "${KC[@]}" top pod "${SCOPE[@]}" --containers --no-headers > "$tmp" 2>"$err"; then
-    cp -f "$TOPC" "$TOPP"; mv -f "$tmp" "$TOPC"; TOP_OK=1; TOP_AT=$(date +%s)
-  else rm -f "$tmp"; : > "$TOPC"; TOP_OK=0; fi
+refresh_top() { refresh_top_start; refresh_top_finish; }
+# the metrics reads, started in the background (refresh_top_finish waits for them)
+refresh_top_start() {
+  TOPJ_P=""; TOPJ_N=""
+  ( "${KC[@]}" top pod "${SCOPE[@]}" --containers --no-headers > "$TMPD/top.new" 2>"$TMPD/top.err"; printf '%s' "$?" > "$TMPD/top.rc" ) & TOPJ_P=$!
   if [ "$NODE_METRICS" = 1 ] && [ "$TOPN_STATE" != forbidden ]; then
-    tmp="$TMPD/topn.new"; err="$TMPD/topn.err"
-    if "${KC[@]}" top node --no-headers > "$tmp" 2>"$err" && [ -s "$tmp" ]; then
-      mv -f "$tmp" "$TOPN_F"; TOPN_OK=1; TOPN_STATE="ok"
-    else rm -f "$tmp"; TOPN_OK=0; TOPN_STATE="$(_klass "$err")"; fi
+    ( "${KC[@]}" top node --no-headers > "$TMPD/topn.new" 2>"$TMPD/topn.err"; printf '%s' "$?" > "$TMPD/topn.rc" ) & TOPJ_N=$!
   fi
+}
+refresh_top_finish() {
+  local tmp="$TMPD/top.new" rc_
+  [ -z "${TOPJ_P:-}" ] || wait "$TOPJ_P" 2>/dev/null; rc_="$(cat "$TMPD/top.rc" 2>/dev/null)"
+  if [ "$rc_" = 0 ]; then
+    cp -f "$TOPC" "$TOPP"; mv -f "$tmp" "$TOPC"; TOP_OK=1; printf -v TOP_AT '%(%s)T' -1
+  else rm -f "$tmp"; : > "$TOPC"; TOP_OK=0; fi
+  if [ -n "${TOPJ_N:-}" ]; then
+    tmp="$TMPD/topn.new"; wait "$TOPJ_N" 2>/dev/null; rc_="$(cat "$TMPD/topn.rc" 2>/dev/null)"
+    if [ "$rc_" = 0 ] && [ -s "$tmp" ]; then
+      mv -f "$tmp" "$TOPN_F"; TOPN_OK=1; TOPN_STATE="ok"
+    else rm -f "$tmp"; TOPN_OK=0; TOPN_STATE="$(_klass "$TMPD/topn.err")"; fi
+  fi
+  rm -f -- "$TMPD/top.rc" "$TMPD/topn.rc"; TOPJ_P=""; TOPJ_N=""
 }
 TOP_AT=0; FETCH_AT=0; FETCH_MS=0; PAUSED=0; PAUSED_AT=0
 _ms() { local t="${EPOCHREALTIME:-}"; if [ -n "$t" ]; then t="${t/[.,]/}"; printf '%s' "${t:0:${#t}-3}"; else printf '%s000' "$(date +%s)"; fi; }
 fetch_sync() {
-  local now t0; now=$(date +%s); t0=$(_ms)
+  local now t0; printf -v now '%(%s)T' -1; t0=$(_ms)
+  TOP_WANT=1
   [ $((now - SPEC_AT)) -ge "$SPEC_TTL" ] && refresh_spec
-  refresh_top
+  if [ "$TOP_WANT" = 2 ]; then refresh_top_finish; else refresh_top; fi; TOP_WANT=0
   io_tick
   build_model
   session_tick
@@ -1599,12 +1686,8 @@ function glyphs() {
 #   32 ok / this namespace      94 info / other namespaces      35 warning / requested
 #   1;31 critical               90 secondary text / free        1;35 titles   1 emphasis
 function palinit() {
-  PALOK = 1
-  if (theme == "dark") {          # brighter variants for black backgrounds
-    PAL["35"] = "95"; PAL["1;35"] = "1;95"; PAL["94"] = "96"; PAL["1;94"] = "1;96"; PAL["32"] = "92"
-  } else if (theme == "light") {  # darker variants for white backgrounds
-    PAL["94"] = "34"; PAL["1;94"] = "1;34"
-  } else if (theme == "mono") MONO = 1
+  PALOK = 1                       # colours are roles; ui_flush maps them to the theme
+  if (theme == "mono") MONO = 1
 }
 function C(k, s) {
   if (!color) return s
@@ -1649,7 +1732,7 @@ function fgi(mi, w) { return mi < 0 ? sprintf("%" (w) "s" "", "-") : sprintf("%"
 function hmem(mi)   { if (mi < 0) return "-"; if (mi >= 10240) return sprintf("%.1fGi", mi / 1024); return sprintf("%dMi", mi + 0.5) }
 function hcpu(m)    { if (m < 0) return "-"; if (m >= 10000) return sprintf("%.1fc", m / 1000); return sprintf("%dm", m + 0.5) }
 function z(v)       { return v > 0 ? v : -1 }
-function rule(ch, w,   i, s) { s = ""; for (i = 0; i < w; i++) s = s ch; return s }
+function rule(ch, w,   i, s, k) { k = ch SUBSEP w; if (k in RULEC) return RULEC[k]; s = ""; for (i = 0; i < w; i++) s = s ch; RULEC[k] = s; return s }
 function clip(s, w) { if (w < 2) return substr(s, 1, w); return length(s) <= w ? s : substr(s, 1, w - 1) "~" }
 function padr(s, w) { return sprintf("%-" (w) "s" "", clip(s, w)) }
 function padl(s, w) { return sprintf("%" (w) "s" "", clip(s, w)) }
@@ -1659,8 +1742,8 @@ function mkbar(p, w,   n, i, s) {
   if (w < 1) return ""
   if (p < 0) return C("90", sprintf("%-" (w) "s" "", "n/a"))
   n = int(p / 100 * w + 0.5); if (n > w) n = w; if (n < 0) n = 0
-  s = ""; for (i = 0; i < n; i++) s = s FILL; for (i = n; i < w; i++) s = s EMPTY
-  return C(heat(p), s)
+  if (!((n "," w) in BARC)) { s = ""; for (i = 0; i < n; i++) s = s FILL; for (i = n; i < w; i++) s = s EMPTY; BARC[n "," w] = s }
+  return C(heat(p), BARC[n "," w])
 }
 # composite node bar:  this namespace | other namespaces | free
 #   bk "used": other = whole-node usage minus this namespace (node metrics)   OTH, colour 94
@@ -2507,7 +2590,7 @@ build_model_core() {
   [ "${IO:-0}" = 1 ] && io_merge
   # live history for the memory view (namespace totals and per node)
   if [ "$TOP_OK" = 1 ]; then
-    local now; now=$(date +%s)
+    local now; printf -v now '%(%s)T' -1
     awk -F'\t' -v t="$now" '$1=="mem_used"{m=$2} $1=="cpu_used"{c=$2} END{if(m!="-") printf "%s\t%s\t%s\n", t, m, c}' "$MODEL/meta.tsv" >> "$HIST"
     awk -F'\t' -v t="$now" 'NR>1 && $2!="(unscheduled)" && $5 > 0 {printf "%s\t%s\t%s\t%s\n", t, $2, $13, $17}' "$MODEL/nodes.tsv" >> "$NHIST"
     tail -n "$HIST_N" "$HIST" > "$HIST.t" && mv -f "$HIST.t" "$HIST"
@@ -2640,7 +2723,7 @@ function podrow(r, ind,   f, rr, ok, stc, p, n, j, c, cn, mk, nm, vis, pad, q, c
     for (j = 1; j <= n; j++) {
       split(T_row["K", cl[j]], c, "\t")
       cn = clip(c[3], WNAME - 5 - length(ind)); mk = (j == n) ? ELL : TEE
-      nm = sprintf("%s  %s%s", ind, mk, cn); vis = length(ind) + 5 + length(cn); pad = ""; for (q = vis; q < WNAME; q++) pad = pad " "
+      nm = sprintf("%s  %s%s", ind, mk, cn); vis = length(ind) + 5 + length(cn); pad = (vis < WNAME) ? sprintf("%" (WNAME - vis) "s", "") : ""
       row((c[4] == "Y" ? nm pad : C("1;31", nm pad)), c[4], (c[4] == "Y"), c[5],
           nv(c[6]), nv(c[7]), nv(c[8]), nv(c[9]), nv(c[10]), nv(c[11]), nv(c[12]), nv(c[13]), bodyf)
       if (c[15] != "-" || c[14] != "-")
@@ -3277,7 +3360,9 @@ BEGIN { LINEW = W; if (LINEW > 220) LINEW = 220; header("", LINEW) }
 
 render_core() {
   local cols age prog spec_txt
-  cols="${KDASH_COLUMNS:-$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )}"
+  if [ -n "${KDASH_COLUMNS:-}" ]; then cols="$KDASH_COLUMNS"
+  elif [ -n "${PAINT_SZ:-}" ]; then cols="${PAINT_SZ#* }"
+  else cols="$( (tput cols 2>/dev/null || echo "${COLUMNS:-160}") )"; fi
   [ "${RENDER_COLS:-}" ] && cols="$RENDER_COLS"
   host_clock; age=$(( NOW_S - SPEC_AT ))
   # an invalidated spec (r, a filter change, a namespace switch) has no age yet:
@@ -3567,7 +3652,7 @@ session_tick() {
   [ "$SESSION_ON" = 1 ] || return 0
   [ "$TOP_OK" = 1 ] || [ -s "$MODEL/pods.tsv" ] || return 0
   local now prev="$SDIR/state.tsv" had=0
-  now=$(date +%s)
+  printf -v now '%(%s)T' -1
   [ -s "$prev" ] && had=1 || : > "$prev"
   awk -v t="$now" -v hadprev="$had" -v newstate="$SDIR/state.new" "$SESSION_EVENTS_AWK" \
       <(printf 'H\n'; cat "$prev") "$MODEL/pods.tsv" "$MODEL/nodes.tsv" >> "$SDIR/events.tsv" 2>/dev/null
@@ -3772,7 +3857,7 @@ io_detect() {
   # it can supply a hosting node or a discoverable service to probe.
   if [ -z "$PROM_URL" ] && [ -z "$PROM_SVC" ] && [ ! -s "$SVC" ] && [ ! -s "$MODEL/nodes.tsv" ]; then return 0; fi
   local cand p tried="" path err="$TMPD/io.err" nd
-  IO_DETECT_AT=$(date +%s); IO_REASON=""
+  printf -v IO_DETECT_AT '%(%s)T' -1; IO_REASON=""
   if [ -n "$PROM_URL" ]; then
     command -v curl >/dev/null 2>&1 && curl -sk --max-time 8 "${PROM_URL%/}/federate?match[]=$(_urlenc 'up')" > "$TMPD/io.probe" 2>/dev/null
     if grep -q '^up{' "$TMPD/io.probe" 2>/dev/null; then
@@ -3813,7 +3898,7 @@ _now_ms() { local t; t="$(date +%s%3N 2>/dev/null)"; case "$t" in *[!0-9]*|"") t
 # one sample of raw counters -> $TMPD/io/raw.<epoch>; run in the background
 io_collect() {
   local d="$TMPD/io" out t nd n=0
-  mkdir -p "$d"; t=$(date +%s); out="$d/raw.new"
+  mkdir -p "$d"; printf -v t '%(%s)T' -1; out="$d/raw.new"
   {
     printf '# T %s\n' "$t"
     case "$IO_STATE" in
@@ -3874,7 +3959,7 @@ FILENAME == lastf { LR[$1 FS $2 FS $3] = $4; next }
 
 io_tick() {     # start a background sample when due; turn a finished one into rates
   [ "$IO" = 1 ] || return 0
-  local d="$TMPD/io" now; now=$(date +%s); mkdir -p "$d"
+  local d="$TMPD/io" now; printf -v now '%(%s)T' -1; mkdir -p "$d"
   if [ "$IO_STATE" = off ] || { [ "$IO_STATE" = unavailable ] && [ $((now - IO_DETECT_AT)) -ge 600 ]; }; then io_detect; fi
   case "$IO_STATE" in prom-url|prom-svc|kubelet) ;; *) return 0 ;; esac
   if [ -f "$d/raw.ready" ]; then
@@ -3936,13 +4021,14 @@ END {
 io_merge() {
   local d="$TMPD/io" st="$IO_STATE" age="-"
   [ -f "$d/rates" ] || { mkdir -p "$d"; : > "$d/rates"; }
-  [ "$IO_SAMPLE_AT" -gt 0 ] && age=$(( $(date +%s) - IO_SAMPLE_AT ))
+  local t_; printf -v t_ '%(%s)T' -1
+  [ "$IO_SAMPLE_AT" -gt 0 ] && age=$(( t_ - IO_SAMPLE_AT ))
   case "$st" in prom-url|prom-svc|kubelet) [ -s "$d/rates" ] || st="warming-up" ;; off) [ "$IO" = 1 ] && st="not-sampled" ;; esac
   awk -v ratef="$d/rates" -v podsf="$MODEL/pods.tsv" -v nodesf="$MODEL/nodes.tsv" -v md="$MODEL" -v allns="$ALL_NS" \
       -v st="$st" -v src="$IO_SRC" -v why="$IO_REASON" -v age="$age" -v every="$IO_EVERY" \
       "$IO_MERGE_AWK" "$d/rates" "$MODEL/pods.tsv" "$MODEL/nodes.tsv" 2>/dev/null
   # namespace in/out history for the trend line
-  awk -F'\t' -v t="$(date +%s)" '$1 == "ns_net_rx" { r = $2 } $1 == "ns_net_tx" { x = $2 } END { if (r != "-" && r != "") print t "\t" r "\t" x }' "$MODEL/meta.tsv" >> "$TMPD/iohist" 2>/dev/null
+  awk -F'\t' -v t="$t_" '$1 == "ns_net_rx" { r = $2 } $1 == "ns_net_tx" { x = $2 } END { if (r != "-" && r != "") print t "\t" r "\t" x }' "$MODEL/meta.tsv" >> "$TMPD/iohist" 2>/dev/null
   tail -n "$HIST_N" "$TMPD/iohist" > "$TMPD/iohist.t" 2>/dev/null && mv -f "$TMPD/iohist.t" "$TMPD/iohist"
 }
 
@@ -5338,7 +5424,7 @@ snapshot_html_name() { printf '%s_%s_%s_%s.html' "$(snap_slug "$1")" "$(safe_nam
 # snapshot_view VIEW STAMP SIBLINGS -> prints the HTML path
 snapshot_view() {
   local v="$1" stamp="${2:-$(date '+%Y%m%d_%H%M%S')}" sib="${3:-}" dir html raw t0 sha c fcf=""
-  t0=$(date +%s); host_clock
+  printf -v t0 '%(%s)T' -1; host_clock
   [ -s "$TMPD/forecast.tsv" ] && fcf="$TMPD/forecast.tsv"
   dir="$REPORT_DIR"; mkdir -p "$dir" 2>/dev/null || { printf 'kdash: cannot create %s\n' "$dir" >&2; return 1; }
   html="$dir/$(snapshot_html_name "$v" "$stamp")"
@@ -5660,9 +5746,33 @@ make_report() {          # writes bundle + HTML, prints the paths
 # paint() runs CLIP_AWK once over header, body and footer: the body is cut to the
 # visible rows (b1..b2) and scrolled sideways (hoff); blank rows fill the gap before the footer
 CLIP_PRE_AWK='
-function kpad(   q) { if (!padded) { for (q = 0; q < npad; q++) printf "\033[K\n"; padded = 1 } }
+function kpad(   q) { if (!padded) { for (q = 0; q < npad; q++) printf "\033[K\n"; if (sbox != "") print sbox; padded = 1 } }
+# the search box (/): matches marked in reverse video (the current one also underlined);
+# escape codes inside the line stay whole, so the colours of the view are kept
+function hlx(s,   p, t, k, m, n, i, j, c, out, vis, r, inm, on, of) {
+  p = s; gsub(/\033\[[0-9;?]*[A-Za-z]/, "", p); t = (hic == "1") ? tolower(p) : p
+  m = 0; k = 1
+  while (k <= length(t) && match(substr(t, k), hq)) { if (RLENGTH < 1) break; m++; HS_[m] = k + RSTART - 1; HE_[m] = HS_[m] + RLENGTH - 1; k = HE_[m] + 1 }
+  if (!m) return s
+  on = (FNR == hcur) ? "\033[7;4m" : "\033[7m"; of = (FNR == hcur) ? "\033[27;24m" : "\033[27m"
+  out = ""; vis = 0; r = 1; inm = 0; n = length(s); i = 1
+  while (i <= n) {
+    c = substr(s, i, 1)
+    if (c == "\033") { j = i + 1; if (substr(s, j, 1) == "[") { j++; while (j <= n && substr(s, j, 1) !~ /[A-Za-z]/) j++ }
+      out = out substr(s, i, j - i + 1); if (inm) out = out on; i = j + 1; continue }
+    vis++
+    if (!inm && r <= m && vis == HS_[r]) { out = out on; inm = 1 }
+    out = out c
+    if (inm && vis == HE_[r]) { out = out of; inm = 0; r++ }
+    i++
+  }
+  if (inm) out = out of
+  return out
+}
+BEGIN { hp = ENVIRON["KD_HP"]; sbox = ENVIRON["KD_SBOX"]; hq = (hic == "1") ? tolower(hp) : hp }
 FNR == 1 { off = (FILENAME == bf) ? hoff : 0; if (FILENAME == ff) kpad() }
 FILENAME == bf && (FNR < b1 || FNR > b2) { next }
+FILENAME == bf && hp != "" { $0 = hlx($0) }
 END { kpad() }
 '
 CLIP_AWK='
@@ -5688,6 +5798,109 @@ BEGIN { E = sprintf("%c", 27) }
   printf "%s\033[0m\033[K\n", out
 }'
 SCROLL=0; HSCROLL=0; FLASH=""; FLASH_UNTIL=0; FLASH_BG=""
+# ---- the search box (/) of every dashboard view ---------------------------------------
+# Find: every line of the view that matches is highlighted (the current one underlined),
+# the view jumps to the first match, the box counts the matching lines of the WHOLE view
+# (not only the visible part); n / N step through them. A lowercase pattern ignores case;
+# the pattern is an extended regular expression. Tab: filter pods by name instead (the
+# filter of every pod view and report, applied with Enter). The search stays on while you
+# switch views - each view is searched as it is drawn.
+DS_PAT=""; DS_ON=0; DS_TYPING=0; DS_MODE="find"; DS_N=0; DS_I=0; DS_CUR=0; DS_MSG=""; DS_BAD=0
+declare -a DS_M=()
+ds_match() { # matching line numbers of the whole view body -> DS_M, DS_N
+  DS_M=(); DS_N=0; DS_BAD=0
+  [ -n "$DS_PAT" ] && [ "$DS_MODE" = find ] || return 0
+  if ! inspector_pattern_ok "$DS_PAT"; then DS_BAD=1; return 0; fi
+  mapfile -t DS_M < <(KD_PAT="$DS_PAT" LC_ALL=C awk -v ic="$(inspector_icase "$DS_PAT")" '
+    BEGIN { pat = ENVIRON["KD_PAT"]; if (ic == "1") pat = tolower(pat) }
+    { s = $0; gsub(/\033\[[0-9;?]*[A-Za-z]/, "", s); if (ic == "1") s = tolower(s); if (s ~ pat) print NR }' "$BODYF" 2>/dev/null)
+  DS_N=${#DS_M[@]}
+}
+ds_jump() { # first (from where the search started) | next | prev
+  local i
+  [ "$DS_N" -gt 0 ] || { DS_I=0; DS_CUR=0; return 0; }
+  case "$1" in
+    first) DS_I=0; for ((i = 0; i < DS_N; i++)); do [ "${DS_M[i]}" -le "${DS_ORIG:-0}" ] || { DS_I=$i; break; }; done ;;
+    next)  DS_I=$(( DS_I + 1 )); [ "$DS_I" -lt "$DS_N" ] || { DS_I=0; DS_MSG="continued from the top"; } ;;
+    prev)  DS_I=$(( DS_I - 1 )); [ "$DS_I" -ge 0 ] || { DS_I=$(( DS_N - 1 )); DS_MSG="continued from the bottom"; } ;;
+  esac
+  DS_CUR=${DS_M[DS_I]}
+  SCROLL=$(( DS_CUR > 3 ? DS_CUR - 3 : 0 ))         # the match with two lines of context above it
+}
+ds_box() { # width -> DS_BOX (three rows)
+  local w="$1" t ri ks cc=-1 tx
+  picker_colors
+  if [ "$DS_MODE" = filter ]; then
+    t="FILTER PODS BY NAME"; ri="regex, empty = all pods - applies to every pod view and report"
+    ks="Enter apply   Tab back to find   Esc close"
+  else
+    t="SEARCH"; ri="${DS_N} matching line$([ "$DS_N" = 1 ] || printf s) in this view"
+    [ "$DS_N" = 0 ] || ri="match $(( DS_I + 1 )) of $ri"
+    [ "$DS_BAD" = 0 ] || ri="not a valid pattern yet"
+    [ -n "$DS_PAT" ] || ri="type to search the whole view"
+    if [ "$DS_TYPING" = 1 ]; then ks="Enter keep   n/N next/prev   Up/Down earlier   Tab filter pods   Esc close"
+    else ks="n next   N prev   / edit   Esc close${DS_MSG:+   - $DS_MSG}"; fi
+  fi
+  tx="/ "; if [ "$DS_TYPING" = 1 ]; then ue_view $(( w - 8 )); tx+="$UE_VIS"; cc=$(( UE_CUR + 2 )); else tx+="$DS_PAT"; fi
+  ui_search_box "$w" "$t" "$ri" "$tx" "$cc" "$ks"; DS_BOX="$UI_SBOX"
+}
+qx_view_name() {
+  case "$VIEW" in
+    pods) printf 'PODS (1)' ;; nodes) printf 'NODE POOLS (2)' ;; workloads) printf 'WORKLOADS (3)' ;;
+    ip) printf 'IP POOL (4)' ;; mem) printf 'MEMORY (5)' ;; io) printf 'NET & DISK IO (6)' ;; alerts) printf 'ALERTS (7)' ;;
+    services) printf 'SERVICES (8)' ;; storage) printf 'STORAGE (9)' ;; events) printf 'EVENTS (E)' ;; explain) printf 'WHY (!)' ;;
+    certs) printf 'CERTIFICATES (C)' ;; runbook) printf 'RUNBOOKS (R)' ;; check) printf 'CHECK NOW (K)' ;;
+    secrets) printf 'SECRETS MAP (Y)' ;; fmea) printf 'FMEA (M)' ;; access) printf 'ACCESS (: access)' ;;
+    *) printf '%s' "$VIEW" | tr '[:lower:]' '[:upper:]' ;;
+  esac
+}
+# > on the dashboard: the screen, then every line of the current view (header cards are
+# on the screen part; the view itself in full width, also the rows scrolled away)
+qx_dashboard() {
+  local vn t
+  vn="$(qx_view_name)"
+  t="dashboard, view $vn | pod filter $(filter_desc) | sort ${SORT:-?}$([ "${SORT_REV:-0}" != 1 ] || printf ' reversed')"
+  [ "${DS_ON:-0}" != 1 ] || [ -z "${DS_PAT:-}" ] || t+=" | search /$DS_PAT"
+  [ "${PAUSED:-0}" != 1 ] || t+=" | PAUSED"
+  if quick_export "view-${VIEW}_${NS:-ns}" "$t" "$BODYF" "THE WHOLE ${vn% (*} VIEW"; then flash "$QX_MSG" 10
+  else flash "$QX_MSG" 8; FLASH_BG="41;97"; fi
+}
+dash_search() { # the box is open: type, Enter keeps the search, Esc closes it
+  local old_int intr=0
+  ue_begin dsearch "$DS_PAT"
+  DS_ON=1; DS_TYPING=1; DS_MSG=""; DS_ORIG=$SCROLL
+  old_int="$(trap -p INT)"; trap 'intr=1' INT
+  ds_match; [ "$DS_N" = 0 ] || ds_jump first
+  while :; do
+    if ! read -t 0 </dev/tty 2>/dev/null; then DASH_FL=0; paint; fi
+    ue_key
+    [ "$intr" = 0 ] || UE_ACT=cancel
+    case "$UE_ACT" in
+      enter)
+        if [ "$DS_MODE" = filter ]; then
+          local nf="${UE_T:-.*}"
+          printf '' | grep -E -- "$nf" >/dev/null 2>&1
+          if [ $? -le 1 ]; then ue_remember; FILTER="$nf"; : > "$HIST"; : > "$NHIST"; rm -f "$TMPD/forecast.tsv"; build_model; session_reset_state; NPODS=1; SCROLL=0
+            audit FILTER "filter=$FILTER"; flash "filter: $FILTER" 3
+          else flash "invalid regex: $nf" 4; continue; fi
+          DS_MODE="find"; DS_PAT=""; DS_ON=0
+        else
+          ue_remember; DS_PAT="$UE_T"; [ -n "$DS_PAT" ] || DS_ON=0
+          [ -z "$DS_PAT" ] || audit SEARCH "view=$VIEW pattern=$(printf '%s' "$DS_PAT" | head -c 120) matches=$DS_N"
+        fi
+        break ;;
+      cancel) DS_PAT=""; DS_ON=0; DS_MODE="find"; DS_N=0; DS_M=(); break ;;
+      tab) if [ "$DS_MODE" = find ]; then DS_MODE="filter"; DS_N=0; DS_M=()
+             [ -n "$UE_T" ] || { ue_begin dashfilter "${FILTER#.\*}"; [ "$FILTER" != '.*' ] || ue_begin dashfilter ""; }
+           else DS_MODE="find"; DS_PAT="$UE_T"; ds_match; ds_jump first; fi ;;
+      edit) if [ "$DS_MODE" = find ]; then DS_PAT="$UE_T"; DS_MSG=""
+              if ! read -t 0 </dev/tty 2>/dev/null; then ds_match; ds_jump first; fi; fi ;;
+    esac
+  done
+  if [ -n "$old_int" ]; then eval "$old_int"; else trap - INT; fi
+  DS_TYPING=0; [ "$DS_ON" = 1 ] || { DS_PAT=""; DS_CUR=0; }
+  DASH_FL=1
+}
 paint() {
   local rows cols hn fn bn budget max shown status pad="" ML="<" MR=">"
   [ "${BARCHR:-unicode}" = ascii ] || { ML=$'\342\200\271'; MR=$'\342\200\272'; }
@@ -5705,6 +5918,8 @@ paint() {
   local -a _pl=()
   mapfile -t _pl < "$HDRF"; hn=${#_pl[@]}; mapfile -t _pl < "$FTRF"; fn=${#_pl[@]}; mapfile -t _pl < "$BODYF"; bn=${#_pl[@]}; _pl=()
   budget=$(( rows - hn - fn - 1 ))
+  local dsb=""
+  if [ "${DS_ON:-0}" = 1 ]; then budget=$(( budget - 3 )); ds_box "$cols"; dsb="$DS_BOX"; fi
   [ "$budget" -lt 3 ] && budget=3
   max=$(( bn - budget )); [ "$max" -lt 0 ] && max=0
   [ "$SCROLL" -gt "$max" ] && SCROLL=$max
@@ -5712,7 +5927,7 @@ paint() {
   [ "$HSCROLL" -lt 0 ] && HSCROLL=0
   shown=$(( bn - SCROLL )); [ "$shown" -gt "$budget" ] && shown=$budget; [ "$shown" -lt 0 ] && shown=0
   local now age nxt spin live bg="7" lt speck
-  printf -v now '%(%s)T' -1 2>/dev/null || now=$(date +%s)
+  printf -v now '%(%s)T' -1
   printf -v lt '%(%H:%M:%S)T' "$now" 2>/dev/null || lt="$(date +%H:%M:%S)"
   if [ "${SPEC_AT:-0}" -gt 0 ]; then speck="$(( now - SPEC_AT ))"; else speck='-'; fi
   # live clock: data age, next refresh, spec age, fetch time; stale data turns the bar red,
@@ -5732,7 +5947,8 @@ paint() {
   [ "$HSCROLL" -gt 0 ] && hs=" | col +$HSCROLL (h/l)"
   if [ "$bn" -gt "$budget" ]; then view_seg="$VIEW | rows $((SCROLL+1))-$((SCROLL+shown))/$bn$hs"; else view_seg="$VIEW$hs"; fi
   local srev=""; [ "$SORT_REV" != 1 ] || srev=" rev"
-  keys=("? help" "1-9 view" "n ns" "s sort($SORT$srev)" "/ filter" "P pause" "x html" "q/Q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme" "8/9 svc" "E events" "! why" "i inspect" ": commands" "S/U/D attach")
+  local kn="n ns"; [ "${DS_ON:-0}" != 1 ] || [ -z "$DS_PAT" ] || kn="n/N match"
+  keys=("? help" "1-9 view" "$kn" "s sort($SORT$srev)" "/ search" "> export" "P pause" "x html" "q/Q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme" "8/9 svc" "E events" "! why" "i inspect" ": commands" "S/U/D attach")
   if [ -n "$FLASH" ] && [ "$now" -le "$FLASH_UNTIL" ]; then
     status=" $FLASH | $live"; [ -n "$FLASH_BG" ] && bg="$FLASH_BG"
   else FLASH_BG=""; status=" $live"; fi
@@ -5747,8 +5963,11 @@ paint() {
   # one awk clips header, the visible slice of the body and the footer; ui_flush then
   # sends the whole frame, or - after a scroll key or a clock tick - only what changed
   local frame
-  frame=$(LC_ALL=C awk -v w="$cols" -v off=0 -v hoff="$HSCROLL" -v ml="$ML" -v mr="$MR" -v bf="$BODYF" -v ff="$FTRF" \
-      -v b1="$((SCROLL + 1))" -v b2="$((SCROLL + budget))" -v npad="$((budget - shown))" "$CLIP_PRE_AWK$CLIP_AWK" "$HDRF" "$BODYF" "$FTRF"; printf x)
+  local hp="" hic=0
+  if [ "${DS_ON:-0}" = 1 ] && [ "$DS_MODE" = find ] && [ -n "$DS_PAT" ] && [ "${DS_BAD:-0}" = 0 ]; then hp="$DS_PAT"; hic="$(inspector_icase "$DS_PAT")"; fi
+  frame=$(KD_HP="$hp" KD_SBOX="$dsb" LC_ALL=C awk -v w="$cols" -v off=0 -v hoff="$HSCROLL" -v ml="$ML" -v mr="$MR" -v bf="$BODYF" -v ff="$FTRF" \
+      -v b1="$((SCROLL + 1))" -v b2="$((SCROLL + budget))" -v npad="$((budget - shown))" -v hic="$hic" -v hcur="${DS_CUR:-0}" \
+      "$CLIP_PRE_AWK$CLIP_AWK" "$HDRF" "$BODYF" "$FTRF"; printf x)
   frame=$'\033[H'"${frame%x}${status}"$'\033[K'
   # every 10 s the whole frame is sent anyway, so anything else that wrote to the screen cannot stay
   [ $((SECONDS - ${PAINT_FULL_AT:-0})) -lt 10 ] || DASH_FL=1
@@ -5789,7 +6008,7 @@ audit_key() {
     *) audit KEY "key=$(printf '%q' "$1")" ;;
   esac
 }
-flash() { FLASH="$1"; FLASH_BG=""; FLASH_UNTIL=$(( $(date +%s) + ${2:-4} )); }
+flash() { FLASH="$1"; FLASH_BG=""; printf -v FLASH_UNTIL '%(%s)T' -1; FLASH_UNTIL=$(( FLASH_UNTIL + ${2:-4} )); }
 # new critical session events (OOMKilled, CrashLoop, NotReady node ...) raise a red alert in the
 # status bar for 30 s; --bell / KDASH_BELL=1 also rings the terminal bell
 EV_SEEN=-1
@@ -5804,7 +6023,7 @@ check_alerts() {
   IFS='|' read -r c k o t <<< "$msg"
   printf -v t '%(%H:%M:%S)T' "$t" 2>/dev/null || t=""
   flash "ALERT $t $k $o$([ "$c" -gt 1 ] && printf ' (+%d more critical)' $((c - 1)))  - 5 MEMORY / x report" 30
-  FLASH_BG="41;97;1"; ALERTS=$(( ${ALERTS:-0} + c ))
+  FLASH_BG="41;97;1"; ALERTS=$(( ${ALERTS:-0} + c )); RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))
   audit ALERT "kind=$k object=$o new_critical=$c"
   [ "${KDASH_BELL:-0}" = 1 ] && printf '\a'
 }
@@ -5976,18 +6195,20 @@ H
   cat <<'H'
 
  KEYS
-   1-9 / Tab  switch view          n  pick another namespace     /  pod name filter (regex)
+   1-9 / Tab  switch view          n  pick another namespace     /  search box (n/N next/prev, Tab: pod filter)
    s          next sort key        o  reverse the sort order     w  PODS grouped / flat
    j k arrows scroll               h l arrows  pan left / right  g G  top / bottom
    d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
    x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
+   >          quick export: the screen and every line of the view to a log file - on every screen
+              (KDASH_EXPORT_DIR, default ~/kdash_reports/exports; latest.log = the newest export)
    P          pause / resume live  + -  poll interval 1..60 s
    T          colour theme         z  chart window (all/15m/1h/6h/24h)
    Z          NODE POOLS auto zoom / true scale     c  PODS timeline graphs on / off
    ?          this help            q  quit
    Enter / i  inspect a pod: s summary, d describe, e events, ! why, l current logs,
               p previous logs, c choose container, / find (& only matches), n N jumps,
-              L log level, f follow logs, w export the pane, ? keys, q back
+              L log level, f follow logs, w export the pane, > quick export, ? keys, q back
    :          command palette (fixed commands, never shell text)   F  structured filters
    L          OIDC login: runs the login helper in the foreground and shows its URL (with the
               ssh -L tunnel command when the callback is on this host); kdash continues afterwards.
@@ -6018,7 +6239,7 @@ H
   IFS= read -rsn1 _k </dev/tty || true
   printf '\033[2J'
 }
-cycle_theme() { case "$THEME" in safe) THEME=dark ;; dark) THEME=light ;; light) THEME=mono ;; *) THEME=safe ;; esac; }
+cycle_theme() { case "$THEME" in safe) THEME=dark ;; dark) THEME=light ;; light) THEME=mono ;; *) THEME=safe ;; esac; theme_map; }
 
 #-- namespace picker -------------------------------------------------------------
 # Full-screen list of namespaces (API list, or what kdash can infer when listing is
@@ -6091,7 +6312,7 @@ ns_pick() { # start|live -> PICKED (a namespace, or "*" for all); 1 = cancelled
   if [ -z "$cur" ]; then for ((i = 0; i < ${#items[@]}; i++)); do [ "${items[i]}" = "$saved" ] && { cur=$i; break; }; done; fi
   sel=${cur:-0}
   while :; do
-    picker_size; rows=$((PK_ROWS - 15)); [ "$rows" -ge 3 ] || rows=3      # bar, 2 info, frame (4), rule, panel (6)
+    picker_size; rows=$((PK_ROWS - 15)); [ "$typing" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3      # bar, 2 info, frame (4), rule, panel (6), search box (3)
     nok=0; nno=0; nunk=0
     for name in ${items[@]+"${items[@]}"}; do case "${NSACC[$name]:-?}" in yes) nok=$((nok + 1)) ;; no) nno=$((nno + 1)) ;; *) nunk=$((nunk + 1)) ;; esac; done
     V=(); for ((i = 0; i < ${#items[@]}; i++)); do [ -z "$q" ] || [[ "${items[i],,}" == *"${q,,}"* ]] && V+=("$i"); done
@@ -6162,12 +6383,16 @@ ns_pick() { # start|live -> PICKED (a namespace, or "*" for all); 1 = cancelled
     lw=$UI_VL; [ "$lw" -le $((PK_COLS - 30)) ] || { lt="${lt:0:$((PK_COLS - 30))}${PC_R}"; lw=$((PK_COLS - 30)); }
     rt="$((nv ? sel + 1 : 0)) / ${nv} ${PC_MID} audited"; ui_vlen "$rt"
     ui_rule "$((PK_COLS - 1))" "$lt" "$lw" "${PC_D}${rt}${PC_R}" "$UI_VL"
+    if [ "$typing" = 1 ]; then
+      ui_search_box "$PK_COLS" "FILTER NAMESPACES" "${#V[@]} of $total" "/ $q" $(( ${#q} + 2 )) "Enter keep   Esc clear   Backspace erase   type part of a name"
+      buf+="$UI_SBOX"$'\n'
+    fi
     buf+="$UI_RULE"$'\033[K\n'
     local ok_=0; [ -n "$name" ] && [ "${NSACC[$name]:-?}" != no ] && ok_=1
     xfer_panel "$PK_COLS" "MOVE" "FIND" "LEAVE" "CHOOSE" \
       "j/k ${PC_UP}${PC_DN}|move|1" "PgUp/PgDn|page|1" "g / G|first / last|1" "12|go to row 12|1" \
       "/|$([ -n "$q" ] && printf '"%s" - Esc clears' "$q" || printf 'filter by name')|1" "t|type a name not listed|1" "r|re-check access|1" "|$total namespaces|0" \
-      "q / Esc|$([ "$why" = start ] && printf 'cancel' || printf 'cancel, stay on %s' "${NS:-?}")|1" "Q|quit kdash|1" "|n reopens this list|0" "|from the dashboard|0" \
+      "q / Esc|$([ "$why" = start ] && printf 'cancel' || printf 'cancel, stay on %s' "${NS:-?}")|1" "Q|quit kdash|1" ">|export to a log|1" "|n reopens this list|0" \
       "Enter|$([ -n "$name" ] && printf 'open %s' "$name" || printf 'open')|$ok_" "A|all namespaces at once|1" \
       "d|$([ -n "$name" ] && printf 'open %s + always use it for %s' "$name" "$CTX_NAME" || printf 'open + always use it')|$ok_" \
       "x|$([ -n "$saved" ] && printf 'forget the default (%s)' "$saved" || printf 'forget the default (none saved)')|$([ -n "$saved" ] && echo 1 || echo 0)"
@@ -6199,8 +6424,8 @@ ns_pick() { # start|live -> PICKED (a namespace, or "*" for all); 1 = cancelled
          if [ "$num" -ge 1 ] && [ "$num" -le "$nv" ]; then sel=$((num - 1)); act="row $num"; else msg="no row $num"; fi ;;
       r) unset NSACC; declare -gA NSACC=(); printf '\033[%s;1H\033[K %schecking access ...%s' "$PK_ROWS" "$PC_D" "$PC_R"
          ns_access_probe "${items[@]:0:${KDASH_NS_PROBE_MAX:-80}}"; act="access checked again" ;;
-      t) printf '\033[%s;1H\033[K\033[?25h %snamespace name:%s ' "$PK_ROWS" "$PC_B" "$PC_R"
-         local tn=""; IFS= read -r tn </dev/tty || tn=""; printf '\033[?25l'; case "$tn" in *$'\e'*) tn="" ;; esac
+      t) printf '\033[%s;1H\033[K' "$PK_ROWS"
+         local tn=""; ui_edit_line tn " ${PC_B}namespace name:${PC_R} " nsname || tn=""; printf '\033[?25l'
          if [ -z "$tn" ]; then continue
          elif [[ "$tn" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] && [ "${#tn}" -le 63 ]; then
            ns_access_probe "$tn"
@@ -6208,6 +6433,16 @@ ns_pick() { # start|live -> PICKED (a namespace, or "*" for all); 1 = cancelled
            else PICKED="$tn"; return 0; fi
          else msg="\"$tn\" is not a valid namespace name"; fi ;;
       A) PICKED="*"; return 0 ;;
+      '>') local qf="$TMPD/qx-ns.tsv" jj nm_ at_ nt_
+           { printf '#\tNAMESPACE\tACCESS\tPODS\tNOTE\n'
+             for ((jj = 0; jj < nv; jj++)); do
+               nm_="${items[${V[jj]}]}"; nt_=""
+               case "${NSACC[$nm_]:-?}" in yes) at_="open" ;; no) at_="no access" ;; *) at_="not checked" ;; esac
+               [ "$nm_" != "${NS:-}" ] || nt_="current"; [ "${SEEN[$nm_]:-}" != r ] || nt_="${nt_:+$nt_, }recent"
+               [ "$nm_" != "$saved" ] || nt_="${nt_:+$nt_, }default for this context"
+               printf '%s\t%s\t%s\t%s\t%s\n' "$((jj + 1))" "$nm_" "$at_" "${PODS[$nm_]:--}" "$nt_"
+             done; } | qx_align > "$qf"
+           if quick_export "namespace-list_${CTX_NAME:-context}" "namespace list | $nv of $total${q:+ | filter \"$q\"}" "$qf" "THE WHOLE NAMESPACE LIST"; then act="$QX_MSG"; else msg="$QX_MSG"; fi ;;
       x) if [ -n "$saved" ]; then if ns_save_default ""; then act="forgot the default for $CTX_NAME"; saved=""; else msg="could not write ${USERCONF:-kdash.conf}"; fi
          else msg="no default saved for $CTX_NAME"; fi ;;
       '<ENTER>'|d)
@@ -6394,7 +6629,13 @@ filter_spec() {
     END { flush() }' "$1"
 }
 
+# what a model depends on besides the data read: a model the fetch worker built is used
+# only when this is unchanged (MODEL_GEN moves on every model built in the foreground)
+MODEL_GEN=0; RENDER_GEN=0
+model_sig() { printf '%s|' "${FILTER:-}" "${KDASH_LABEL_SELECTOR:-}" "${KDASH_STATUS_FILTER:-}" "${KDASH_NODE_FILTER:-}" "${KDASH_WORKLOAD_FILTER:-}" \
+  "${KDASH_UNHEALTHY:-0}" "${ALL_NS:-0}" "${NS:-}" "${POOL_LABEL:-}" "${COMPARE_NS:-}" "${CTX_NAME:-}" "${IO:-0}" "$MODEL_GEN"; }
 build_model() {
+    [ "${IN_WORKER:-0}" = 1 ] || MODEL_GEN=$((MODEL_GEN + 1))
     local original="$SPEC"
     filter_spec "$original" > "$TMPD/spec.filtered"
     SPEC="$TMPD/spec.filtered"; build_model_core; local rc=$?; SPEC="$original"
@@ -6412,20 +6653,34 @@ fetch_worker() (
     [ ! -d "$parent/io" ] || cp -a "$parent/io" "$job/io"
     TMPD="$job"; SPEC="$job/spec"; TOPC="$job/top"; TOPP="$job/topprev"
     NODES="$job/nodes"; TOPN_F="$job/topnode"; SVC="$job/svc"; CLUS="$job/cluster"; WLS="$job/workloads"
-    local now; now=$(date +%s)
+    local now topdue=0 phist="${HIST:-$parent/hist.tsv}" pnhist="${NHIST:-$parent/nodehist.tsv}"; printf -v now '%(%s)T' -1; IN_WORKER=1
+    rm -f -- "$job/model.ok" "$job/model.sig" "$job/model.err"
+    [ "$now" -lt "${METRICS_NEXT:-0}" ] || topdue=1
+    # due metrics go out beside the other reads once the pod read proved the login
+    TOP_WANT=$topdue
     if [ $((now - SPEC_AT)) -ge "$SPEC_TTL" ] || [ "$SPEC_OK" != 1 ]; then refresh_spec; fi
-    if [ "$now" -ge "${METRICS_NEXT:-0}" ]; then
-        [ "$TOPN_STATE" != forbidden ] || TOPN_STATE=unread
-        refresh_top
+    if [ "$topdue" = 1 ]; then
+        if [ "$TOP_WANT" = 2 ]; then refresh_top_finish
+        else [ "$TOPN_STATE" != forbidden ] || TOPN_STATE=unread; refresh_top; fi
         if [ "$TOP_OK" = 1 ]; then METRICS_NEXT=0; else METRICS_NEXT=$((now + 30)); fi
     fi
     IO_PID=""; io_tick
     if [ -n "$IO_PID" ]; then wait "$IO_PID" 2>/dev/null || true; IO_PID=""; io_tick; fi
     [ -z "$IO_PID" ] || { wait "$IO_PID" 2>/dev/null || true; IO_PID=""; }
-    for name in SPEC_OK SPEC_AT TOP_OK TOP_AT NODES_STATE SVC_STATE TOPN_STATE TOPN_OK CLUSTER_STATE WL_STATE WL_KINDS TOPA_STATE NS_SCAN_AT METRICS_NEXT IO_STATE IO_SRC IO_REASON IO_LAST IO_DETECT_AT IO_SAMPLE_AT IO_SRC_PATH; do
+    # the model is built here too, so the screen only swaps it in and never waits for it
+    # (KDASH_BG_MODEL=0: built in the foreground as before)
+    if [ "${KDASH_BG_MODEL:-1}" != 0 ]; then
+        MODEL="$job/model"; rm -rf -- "$MODEL"; mkdir -p "$MODEL"
+        HIST="$job/hist.tsv"; NHIST="$job/nodehist.tsv"
+        cp -f "$phist" "$HIST" 2>/dev/null || : > "$HIST"; cp -f "$pnhist" "$NHIST" 2>/dev/null || : > "$NHIST"
+        cp -f "$parent/iohist" "$job/iohist" 2>/dev/null || true
+        model_sig > "$job/model.sig"
+        if build_model > "$job/model.err" 2>&1; then : > "$job/model.ok"; fi
+    fi
+    for name in SPEC_OK SPEC_AT TOP_OK TOP_AT NODES_STATE SVC_STATE TOPN_STATE TOPN_OK CLUSTER_STATE WL_STATE WL_KINDS TOPA_STATE NS_SCAN_AT METRICS_NEXT IO_STATE IO_SRC IO_REASON IO_LAST IO_DETECT_AT IO_SAMPLE_AT IO_SRC_PATH NS_READ_LIST NS_SCAN_TRIED NS_NOACC; do
         printf '%s\t%s\n' "$name" "${!name:-}"
     done > "$job/state"
-    date +%s > "$job/finished"
+    printf '%(%s)T\n' -1 > "$job/finished"
 )
 
 fetch_adopt() {
@@ -6433,12 +6688,12 @@ fetch_adopt() {
     kill -0 "$FETCH_PID" 2>/dev/null && return 0
     wait "$FETCH_PID" 2>/dev/null || true; FETCH_PID=""
     local job="$TMPD/fetch-job" name value
-    [ -f "$job/finished" ] || { FETCH_NEXT=$(( $(date +%s) + 5 )); return 0; }
+    [ -f "$job/finished" ] || { printf -v FETCH_NEXT '%(%s)T' -1; FETCH_NEXT=$(( FETCH_NEXT + 5 )); return 0; }
     for name in spec top topprev nodes topnode svc cluster workloads; do [ ! -f "$job/$name" ] || mv -f "$job/$name" "$TMPD/$name"; done
     cp -f "$job"/*.updated "$TMPD/" 2>/dev/null || true
     if [ -d "$job/io" ]; then rm -rf "$TMPD/io"; mv "$job/io" "$TMPD/io"; fi
     while IFS=$'\t' read -r name value; do
-        case "$name" in SPEC_OK|SPEC_AT|TOP_OK|TOP_AT|NODES_STATE|SVC_STATE|TOPN_STATE|TOPN_OK|CLUSTER_STATE|WL_STATE|WL_KINDS|TOPA_STATE|NS_SCAN_AT|METRICS_NEXT|IO_STATE|IO_SRC|IO_REASON|IO_LAST|IO_DETECT_AT|IO_SAMPLE_AT|IO_SRC_PATH) printf -v "$name" '%s' "$value" ;; esac
+        case "$name" in SPEC_OK|SPEC_AT|TOP_OK|TOP_AT|NODES_STATE|SVC_STATE|TOPN_STATE|TOPN_OK|CLUSTER_STATE|WL_STATE|WL_KINDS|TOPA_STATE|NS_SCAN_AT|METRICS_NEXT|IO_STATE|IO_SRC|IO_REASON|IO_LAST|IO_DETECT_AT|IO_SAMPLE_AT|IO_SRC_PATH|NS_READ_LIST|NS_SCAN_TRIED|NS_NOACC) printf -v "$name" '%s' "$value" ;; esac
     done < "$job/state"
     if [ "$SPEC_OK" = 1 ]; then FETCH_SUCCESS=$(cat "$job/finished"); FETCH_FAILURES=0
       [ -z "${SPEC_REASON:-}" ] || { SPEC_REASON=""; declare -F flash >/dev/null && flash "API reads work again" 5; }
@@ -6457,8 +6712,14 @@ fetch_adopt() {
     fi
     local delay="$INTERVAL"
     [ "$FETCH_FAILURES" = 0 ] || delay=$(( 2 ** (FETCH_FAILURES > 5 ? 5 : FETCH_FAILURES) ))
-    FETCH_NEXT=$(( $(date +%s) + ${delay%.*} ))
-    build_model; session_tick; FETCH_AT=$(date +%s)
+    printf -v FETCH_NEXT '%(%s)T' -1; FETCH_NEXT=$(( FETCH_NEXT + ${delay%.*} ))
+    # the model the worker built is swapped in when nothing it depends on changed meanwhile
+    if [ -f "$job/model.ok" ] && [ "$(cat "$job/model.sig" 2>/dev/null)" = "$(model_sig)" ]; then
+        rm -rf -- "$MODEL.old"; mv -f -- "$MODEL" "$MODEL.old" 2>/dev/null; mv -f -- "$job/model" "$MODEL"; rm -rf -- "$MODEL.old"
+        mv -f -- "$job/hist.tsv" "${HIST:-$TMPD/hist.tsv}"; mv -f -- "$job/nodehist.tsv" "${NHIST:-$TMPD/nodehist.tsv}"; [ ! -f "$job/iohist" ] || mv -f -- "$job/iohist" "$TMPD/iohist"
+    else build_model; fi
+    rm -rf -- "$job/model" "$job/model.ok" "$job/model.sig" "$job/model.err" "$job/hist.tsv" "$job/nodehist.tsv" "$job/iohist"
+    session_tick; printf -v FETCH_AT '%(%s)T' -1; RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))
     declare -F certs_quick_poll >/dev/null && certs_quick_poll
     NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv" 2>/dev/null)
     # the first answer from the API decides the "no pods" hint (the start screen has none yet)
@@ -6473,7 +6734,7 @@ fetch() {
     fetch_adopt
     [ -z "${FETCH_PID:-}" ] || return 0
     [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0      # no reads until the login is done (key L)
-    [ "$(date +%s)" -ge "${FETCH_NEXT:-0}" ] || return 0
+    local t_; printf -v t_ '%(%s)T' -1; [ "$t_" -ge "${FETCH_NEXT:-0}" ] || return 0
     fetch_worker & FETCH_PID=$!
 }
 
@@ -6483,13 +6744,14 @@ toolkit_tick() {
         if [ -d "$TMPD/toolkit-next" ]; then
             rm -rf "$TOOLKIT_DIR"; mv "$TMPD/toolkit-next" "$TOOLKIT_DIR"
         fi
+        RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))
         FMEA_BADGE="$(fmea_badge)"
-        TOOLKIT_NEXT=$(( $(date +%s) + 30 ))
+        printf -v TOOLKIT_NEXT '%(%s)T' -1; TOOLKIT_NEXT=$(( TOOLKIT_NEXT + 30 ))
     fi
     [ "${TOOLKIT_REQUESTED:-0}" = 1 ] || return 0
     [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0
     [ -z "${TOOLKIT_PID:-}" ] || return 0
-    [ "$(date +%s)" -ge "${TOOLKIT_NEXT:-0}" ] || return 0
+    local t_; printf -v t_ '%(%s)T' -1; [ "$t_" -ge "${TOOLKIT_NEXT:-0}" ] || return 0
     (
         trap - EXIT INT TERM HUP
         local next="$TMPD/toolkit-next"
@@ -6509,6 +6771,7 @@ toolkit_tick() {
         fi
         TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}" doctor_run > "$TOOLKIT_DIR/doctor.txt"
     ) & TOOLKIT_PID=$!
+    RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))      # the panels say "collecting" now
 }
 
 toolkit_cancel() {
@@ -6531,7 +6794,9 @@ toolkit_panel() {
     # Standard header (tab bar, clock, context, health line, warnings), then the panel body.
     HEADER_ONLY=1 render_core
     # tables fit the window and carry colour markers (made into escapes after cleaning)
-    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}"
+    local panel_size="${PAINT_SZ:-}"
+    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-${panel_size#* }}" TK_GLYPH="${BARCHR:-unicode}"
+    [ -n "$TK_COLS" ] || TK_COLS="$(tput cols 2>/dev/null || echo 160)"
     export TK_COLOR TK_COLS TK_GLYPH
     # read commands shown in this view, by finding number: Enter runs them (check_run_prompt)
     RB_CAPTURE="$TOOLKIT_DIR/run-$view.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="Enter runs the read commands of a finding now"
@@ -6549,18 +6814,32 @@ toolkit_panel() {
     RB_CAPTURE=""; RB_RUN_HINT=""
     export -n TK_COLOR TK_COLS TK_GLYPH
     case "$view" in
-      secrets) printf 'Y secrets | Enter run checks | r re-read | C certs (endpoints, nodes) | M fmea | K check | j/k scroll | h/l pan (wide tables) | : commands | q quit\n' > "$FTRF" ;;
-      fmea|access) printf 'M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
-      *) printf 'K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF" ;;
+      secrets) printf 'Y secrets | / search | > export | Enter run checks | r re-read | C certs (endpoints, nodes) | M fmea | K check | j/k scroll | h/l pan (wide tables) | : commands | q quit\n' > "$FTRF" ;;
+      fmea|access) printf 'M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
+      *) printf 'K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF" ;;
     esac
 }
 
+# a view drawn moments ago is shown again from its copy when nothing changed since: only
+# after a view key (1-7, Tab, v, the panel keys); new data, a theme or size change and any
+# other key (sort, filter, zoom, ...) make every copy old. KDASH_VIEW_CACHE=0 turns it off.
+declare -A RC_SIG=(); RC_GEN=0; RC_USE=0
+render_cached() {
+    local sig="$RENDER_GEN|$MODEL_GEN|$RC_GEN|${PAINT_SZ:-}|$THEME|$COLOR|${KDASH_COLUMNS:-}" d="$TMPD/rc/$VIEW"
+    case "$VIEW" in pods|nodes|workloads|ip|mem|io|alerts) ;; *) render; return ;; esac
+    if [ "$RC_USE" = 1 ] && [ "${KDASH_VIEW_CACHE:-1}" != 0 ] && [ "${RC_SIG[$VIEW]:-}" = "$sig" ] && [ -f "$d/${BODYF##*/}" ]; then
+        cp -f -- "$d/${HDRF##*/}" "$d/${BODYF##*/}" "$d/${FTRF##*/}" "${BODYF%/*}/" && return 0
+    fi
+    render
+    mkdir -p -- "$d" && cp -f -- "$HDRF" "$BODYF" "$FTRF" "$d/" && RC_SIG[$VIEW]="$sig"
+}
 render() {
     case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access|secrets) toolkit_panel "$VIEW" ;;
         *) render_core ;;
     esac
     local age=never status=not-collected
-    [ "${SPEC_AT:-0}" = 0 ] || age="$(( $(date +%s) - SPEC_AT ))s"
+    local t_; printf -v t_ '%(%s)T' -1
+    [ "${SPEC_AT:-0}" = 0 ] || age="$(( t_ - SPEC_AT ))s"
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
     # status strip: how fresh the data is (dot: green = fresh with metrics), then the shortcuts as chips
@@ -6573,7 +6852,7 @@ render() {
     # the certificate and FMEA badges come first: they are findings, the rest are shortcuts
     local sp=" ${sd}${sv}${sr} "
     strip=" ${sb}DATA${sr} ${sdot} pods ${sb}${status}${sr} ${sd}${age} old${sr}  metrics ${sb}${smet}${sr}${sp}${sb}C${sr} certs${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+  ${sb}M${sr} fmea ($FMEA_BADGE)}"
-    strip+="${sp}${sb}K${sr} check now${sp}${sb}i${sr} inspect${sp}${sb}8${sr} services  ${sb}9${sr} storage  ${sb}E${sr} events  ${sb}!${sr} explain${sp}${sb}:${sr} commands"
+    strip+="${sp}${sb}/${sr} search${sp}${sb}K${sr} check${sp}${sb}i${sr} inspect${sp}${sb}8${sr} services  ${sb}9${sr} storage  ${sb}E${sr} events  ${sb}!${sr} explain${sp}${sb}:${sr} commands"
     hdrall="$(< "$HDRF")"
     if [[ "$hdrall" == *$'\001DATASTRIP\001'* ]]; then printf '%s\n' "${hdrall/$'\001DATASTRIP\001'/$strip}" > "$HDRF"
     else printf '%s\n' "$strip" >> "$HDRF"; fi
@@ -6582,8 +6861,8 @@ render() {
     for source in nodes svc; do
         updated="$(cat "$TMPD/$source.updated" 2>/dev/null || printf 0)"
         case "$updated" in ''|*[!0-9]*) updated=0 ;; esac
-        if [ "$updated" != 0 ] && [ $(( $(date +%s) - updated )) -gt "$SPEC_TTL" ]; then
-            printf 'STALE %s: last successful read %ss ago\n' "$source" "$(( $(date +%s) - updated ))" >> "$HDRF"
+        if [ "$updated" != 0 ] && [ $(( t_ - updated )) -gt "$SPEC_TTL" ]; then
+            printf 'STALE %s: last successful read %ss ago\n' "$source" "$(( t_ - updated ))" >> "$HDRF"
         fi
     done
 }
@@ -6638,6 +6917,30 @@ function cut(s, w,   t, n) {
   return t "~"
 }
 function pad(s, w, right,   g) { g = w - vl(s); if (g < 0) g = 0; return right ? sprintf("%" g "s", "") s : s sprintf("%" g "s", "") }
+# A cell wider than its column continues on the next line of the row (nothing is cut):
+# the break goes after a space, / , ; : = - ) or | when one is in the last 60% of the
+# line, otherwise at the column edge. Colour markers stay whole. -> SG[1..n], returns n
+function wrap(s, w,   n, i, L, ch, cw, cur, curw, lastb, k, rest) {
+  if (w < 1) w = 1
+  if (vl(s) <= w || !WRAP) { SG[1] = (WRAP ? s : cut(s, w)); return 1 }
+  n = 0; cur = ""; curw = 0; lastb = 0; i = 1; L = length(s)
+  while (i <= L) {
+    ch = substr(s, i, 1)
+    if (ch == "~" && substr(s, i + 1, 1) == "[") { rest = substr(s, i); if (match(rest, /^~\[[0-9;]*m/)) { cur = cur substr(rest, 1, RLENGTH); i += RLENGTH; continue } }
+    cw = ch; i++
+    if (VLB) while (i <= L && substr(s, i, 1) ~ /[\200-\277]/) { cw = cw substr(s, i, 1); i++ }
+    if (curw >= w) {
+      if (lastb > 0 && lastb * 10 >= w * 4) { n++; SG[n] = substr(cur, 1, lastb); cur = substr(cur, lastb + 1) }
+      else { n++; SG[n] = cur; cur = "" }
+      sub(/^ +/, "", cur); curw = vl(cur); lastb = 0
+      for (k = length(cur); k > 0; k--) if (substr(cur, k, 1) ~ /[ \/,;:=)|-]/) { lastb = k; break }
+    }
+    cur = cur cw; curw++
+    if (cw ~ /^[ \/,;:=)|-]$/) lastb = length(cur)
+  }
+  n++; SG[n] = cur
+  return n
+}
 function sev(s,   t) { t = tolower(s)
   if (t ~ /fail|error|forbidden|denied|mismatch|missing|crash|oomkill|lost|critical|unbound|not ready|notready|unready|no endpoints|no match|evicted|auth-error|tls-error|unreachable|timeout/) return "1;31"
   if (t ~ /warn|pending|unknown|stale|waitfor|resiz|terminat|degraded|collecting|partial|no-data|unavailable|selectorless|released|info/) return "35"
@@ -6645,7 +6948,7 @@ function sev(s,   t) { t = tolower(s)
   return "90" }
 function own(s) { if (s ~ /^\{[rygbd]\}/) { OC = substr(s, 2, 1); return substr(s, 4) } OC = ""; return s }
 function occ(c) { return c == "r" ? "1;31" : c == "y" ? "35" : c == "g" ? "32" : c == "b" ? "1" : c == "d" ? "90" : "" }
-BEGIN { FS = "\t"; TKC = (ENVIRON["TK_COLOR"] == "1"); W = ENVIRON["TK_COLS"] + 0
+BEGIN { FS = "\t"; TKC = (ENVIRON["TK_COLOR"] == "1"); W = ENVIRON["TK_COLS"] + 0; WRAP = (ENVIRON["KDASH_TABLE_WRAP"] != "0")
   VLB = (length("\342\226\210") != 1); DOT = (ENVIRON["TK_GLYPH"] == "ascii") ? "*" : "\342\227\217"; HR = (ENVIRON["TK_GLYPH"] == "ascii") ? "-" : "\342\224\200" }
 NR == 1 { nc = split($0, H, "\t")
   for (i = 1; i <= nc; i++) { RA[i] = (substr(H[i], 1, 1) == ">"); if (RA[i]) H[i] = substr(H[i], 2)
@@ -6671,15 +6974,17 @@ END {
   else { BTL = "\342\224\214"; BTR = "\342\224\220"; BBL = "\342\224\224"; BBR = "\342\224\230"; BLT = "\342\224\234"; BRT = "\342\224\244"
          BTT = "\342\224\254"; BBT = "\342\224\264"; BX = "\342\224\274"; BH = "\342\224\200"; BV = "\342\224\202" }
   print K("90", hline(BTL, BTT, BTR))
-  h = K("90", BV); for (i = 1; i <= nc; i++) h = h " " K("1", pad(cut(H[i], WD[i]), WD[i], RA[i])) " " K("90", BV)
-  print h
+  # header and rows: a cell that does not fit wraps onto further lines of the same row
+  mx = 1; for (i = 1; i <= nc; i++) { m = wrap(H[i], WD[i]); HN[i] = m; for (k = 1; k <= m; k++) HS[i, k] = SG[k]; if (m > mx) mx = m }
+  for (k = 1; k <= mx; k++) { h = K("90", BV); for (i = 1; i <= nc; i++) h = h " " K("1", pad(k <= HN[i] ? HS[i, k] : "", WD[i], RA[i])) " " K("90", BV); print h }
   print K("90", hline(BLT, BX, BRT))
-  for (n = 1; n <= nr; n++) { line = K("90", BV)
-    for (i = 1; i <= nc; i++) { v = cut(CE[n, i], WD[i]); c = occ(CL[n, i])
-      if (ST[i] && c == "") { c = sev(substr(CE[n, i], length(DOT) + 2)) }
-      if (c == "" && DM[i]) c = "90"
-      line = line " " K(c, pad(v, WD[i], RA[i])) " " K("90", BV) }
-    print line }
+  for (n = 1; n <= nr; n++) { mx = 1
+    for (i = 1; i <= nc; i++) { m = wrap(CE[n, i], WD[i]); RN[i] = m; for (k = 1; k <= m; k++) RW[i, k] = SG[k]; if (m > mx) mx = m
+      c = occ(CL[n, i]); if (ST[i] && c == "") { c = sev(substr(CE[n, i], length(DOT) + 2)) }
+      if (c == "" && DM[i]) c = "90"; CC[i] = c }
+    for (k = 1; k <= mx; k++) { line = K("90", BV)
+      for (i = 1; i <= nc; i++) line = line " " K(CC[i], pad(k <= RN[i] ? RW[i, k] : "", WD[i], RA[i])) " " K("90", BV)
+      print line } }
   print K("90", hline(BBL, BBT, BBR))
 }
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
@@ -6726,6 +7031,15 @@ toolkit_once() { # view [renderer arguments]
     esac
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
+# epoch -> UTC date in awk (one "date" process per certificate made 1,000 Secrets slow)
+SM_UTC_AWK='
+function smutc(e, iso,   q, z, era, doe, yoe, y, doy, mp, d, m, t) {
+  if (e !~ /^-?[0-9]+$/) return "-"; e += 0; q = int(e / 86400); if (q * 86400 > e) q--; t = e - q * 86400; z = q + 719468
+  era = int(z / 146097); if (era * 146097 > z) era--; doe = z - era * 146097; yoe = int((doe - int(doe / 1460) + int(doe / 36524) - int(doe / 146096)) / 365)
+  y = yoe + era * 400; doy = doe - (365 * yoe + int(yoe / 4) - int(yoe / 100)); mp = int((5 * doy + 2) / 153)
+  d = doy - int((153 * mp + 2) / 5) + 1; m = mp + (mp < 10 ? 3 : -9); if (m <= 2) y++
+  return iso ? sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", y, m, d, int(t / 3600), int((t % 3600) / 60), t % 60) : sprintf("%04d-%02d-%02d %02d:%02d", y, m, d, int(t / 3600), int((t % 3600) / 60)) }
+'
 TK_TIME_AWK='
 function epoch(s,   y, m, d, H, M, S, era, yoe, doy, doe) {
   if (s !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/) return -1
@@ -7047,6 +7361,9 @@ health__failure() {
   elif grep -qiE 'connection refused|was refused|no route|unable to connect|connection reset|no such host|dial tcp|i/o timeout' "$err"; then
     state=unreachable; detail='API or metrics endpoint unreachable; source unknown'
   fi
+  # the reason, so "error" is never all an operator sees (one line, no control bytes)
+  local why; why="$(grep -v '^[[:space:]]*$' "$err" 2>/dev/null | head -1 | LC_ALL=C tr -d '\000-\037\177' | cut -c1-140)"
+  case "$state" in error|timeout) [ -z "$why" ] || detail="${detail%; source unknown}: $why" ;; esac
   health__status "$source" "$state" "$detail"
 }
 
@@ -7150,7 +7467,7 @@ health_collect() {
 
 health__sources() { # source... -> a table of where the data came from and how old it is
   local source state epoch detail now age
-  now=$(date +%s)
+  printf -v now '%(%s)T' -1
   {
     printf 'SOURCE\tSTATE*\t>READ\tDETAIL~\n'
     for source in "$@"; do
@@ -7396,7 +7713,7 @@ inspector_identity_ok() {
 
 inspector_limits() {
   # Logs are read in full up to these limits (+ reads 4x more, A reads everything the
-  # kubelet still has, up to KDASH_LOG_MAX_BYTES). Nothing is cut sideways: long lines
+  # kubelet has - the older rotated files too, see nodelog_older - up to KDASH_LOG_MAX_BYTES). Nothing is cut sideways: long lines
   # wrap (W toggles), so a JSON or stack-trace line is shown completely.
   INSPECTOR_TAIL="${INSPECTOR_TAIL_SET:-${KDASH_LOG_TAIL:-5000}}"
   INSPECTOR_BYTES="${INSPECTOR_BYTES_SET:-${KDASH_LOG_LIMIT_BYTES:-8388608}}"
@@ -7443,6 +7760,134 @@ inspector_summary() { # ns pod output-file
   inspector_query "$3" get pod "$2" -n "$1" -o 'jsonpath=Name: {.metadata.name}{"\n"}Namespace: {.metadata.namespace}{"\n"}UID: {.metadata.uid}{"\n"}Created: {.metadata.creationTimestamp}{"\n"}Phase: {.status.phase}{"\n"}Reason: {.status.reason}{"\n"}Message: {.status.message}{"\n"}Node: {.spec.nodeName}{"\n"}Pod IP: {.status.podIP}{"\n"}Service account: {.spec.serviceAccountName}{"\n"}{range .metadata.ownerReferences[*]}Owner: {.kind}/{.name}{"\n"}{end}{"\nCONDITIONS\n"}{range .status.conditions[*]}{.type}{"\t"}{.status}{"\t"}{.reason}{"\t"}{.message}{"\n"}{end}{"\nCONTAINERS (requests / limits)\n"}{range .spec.containers[*]}{.name}{"\t"}{.image}{"\n"}  CPU: {.resources.requests.cpu} / {.resources.limits.cpu}{"\t"}Memory: {.resources.requests.memory} / {.resources.limits.memory}{"\n"}{end}{"\nCONTAINER STATUS\n"}{range .status.containerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\n"}  Waiting: {.state.waiting.reason} {.state.waiting.message}{"\n"}  Running since: {.state.running.startedAt}{"\n"}  Terminated: {.state.terminated.reason} exit={.state.terminated.exitCode}{"\n"}  Previous: {.lastState.terminated.reason} exit={.lastState.terminated.exitCode}{"\n"}{end}{"\nINIT CONTAINER STATUS\n"}{range .status.initContainerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\t"}{.state.waiting.reason}{.state.terminated.reason}{"\n"}{end}'
 }
 
+# ---- older log files (rotated by the kubelet) -------------------------------------------
+# kubectl logs returns only the NEWEST log file of a container. The kubelet rotates that
+# file at containerLogMaxSize (RKE2: 10 MiB) and keeps containerLogMaxFiles of them in
+# /var/log/pods/<ns>_<pod>_<uid>/<container>/: <n>.log (being written), <n>.log.<date-time>
+# (the newest older one) and <n>.log.<date-time>.gz (older still); <n> = the restart count.
+# The older files are read through the API server's node proxy - GET
+# /api/v1/nodes/<node>/proxy/logs/pods/... (the kubelet's /logs/ file listing) - when your
+# RBAC allows "get nodes/proxy". That is asked once a session with kubectl auth can-i, so a
+# user without it causes no failed (403) requests. Read-only; .gz files are unpacked here.
+# KDASH_NODE_LOGS=0: never read them.
+nodelog_can() { # -> 0 when older files can be read, else NODELOG_WHY says why
+  local f="$TMPD/nodelog.can" a
+  NODELOG_WHY=""
+  [ "${KDASH_NODE_LOGS:-1}" != 0 ] || { NODELOG_WHY="rotated files not read (KDASH_NODE_LOGS=0)"; return 1; }
+  if [ ! -s "$f" ]; then
+    a="$(KDASH_CMD_TIMEOUT=15 "${KC[@]}" auth can-i get nodes --subresource=proxy 2>/dev/null | head -1)"
+    case "$a" in yes|no) printf '%s\n' "$a" > "$f" ;;
+      *) NODELOG_WHY="rotated files: nodes/proxy access could not be checked"; return 1 ;; esac
+  fi
+  [ "$(cat "$f" 2>/dev/null)" = yes ] && return 0
+  NODELOG_WHY="rotated files need get nodes/proxy (your RBAC: no)"
+  return 1
+}
+# CRI log lines (containerd, CRI-O): TIME STREAM TAG MESSAGE - TAG P = a partial line that
+# goes on in the next one, F = the end of a line; docker json-file lines {"log":..,"time":..}.
+# Out: "TIME MESSAGE", as kubectl logs --timestamps prints them.
+NODELOG_AWK='
+function unj(s,   o, i, c, n) {
+  o = ""; n = length(s)
+  for (i = 1; i <= n; i++) { c = substr(s, i, 1)
+    if (c != "\\") { o = o c; continue }
+    i++; c = substr(s, i, 1)
+    if (c == "n") o = o "\n"; else if (c == "t") o = o "\t"; else if (c == "u") { o = o "?"; i += 4 } else if (c != "r") o = o c }
+  return o }
+function jval(s, key,   p, i, c, n, v) {
+  p = index(s, "\"" key "\":\""); if (!p) return ""
+  s = substr(s, p + length(key) + 4); n = length(s); v = ""
+  for (i = 1; i <= n; i++) { c = substr(s, i, 1); if (c == "\\") { v = v c substr(s, i + 1, 1); i++; continue }; if (c == "\"") break; v = v c }
+  return v }
+substr($0, 1, 8) == "{\"log\":\"" {
+  m = unj(jval($0, "log")); t = jval($0, "time"); st = jval($0, "stream")
+  if (m ~ /\n$/) { sub(/\n$/, "", m); if (st in pt) { m = pd[st] m; t = pt[st]; delete pd[st]; delete pt[st] }; gsub(/\n/, " ", m); print t " " m }
+  else { if (!(st in pt)) pt[st] = t; pd[st] = pd[st] m }
+  next }
+{ a = index($0, " "); if (!a) next; t = substr($0, 1, a - 1); r = substr($0, a + 1)
+  b = index(r, " "); if (!b) next; st = substr(r, 1, b - 1); r = substr(r, b + 1)
+  c = index(r, " "); if (c) { tag = substr(r, 1, c - 1); m = substr(r, c + 1) } else { tag = r; m = "" }
+  if (tag ~ /P/) { if (!(st in pt)) pt[st] = t; pd[st] = pd[st] m; next }
+  if (st in pt) { m = pd[st] m; t = pt[st]; delete pd[st]; delete pt[st] }
+  print t " " m }
+END { for (st in pt) print pt[st] " " pd[st] }'
+nodelog_older() { # node pod-dir container instance out [cap] -> out = the older lines, oldest first
+  # sets NODELOG_N (files read), NODELOG_ALL (files there), NODELOG_BYTES, NODELOG_WHY; 1 = nothing read
+  local node="$1" pdir="$2" c="$3" inst="$4" out="$5" cap="${6:-268435456}" base f n=0 k tot=0 sz rc=0 lt bad="" budget
+  lt="${KDASH_LOG_TIMEOUT:-300}"; case "$lt" in ''|*[!0-9]*|0) lt=300 ;; esac
+  case "$cap" in ''|*[!0-9]*) cap=268435456 ;; esac
+  base="/api/v1/nodes/$node/proxy/logs/pods/$pdir/$c"
+  NODELOG_N=0; NODELOG_ALL=0; NODELOG_BYTES=0; NODELOG_CAPPED=0; NODELOG_WHY=""; : > "$out"
+  KDASH_CMD_TIMEOUT=30 "${KC[@]}" get --raw "$base/" --request-timeout=25s > "$out.lst" 2> "$out.err" || rc=$?
+  if [ "$rc" != 0 ]; then
+    if grep -qi forbidden "$out.err"; then NODELOG_WHY="rotated files on node $node: no access (nodes/proxy)"
+    else NODELOG_WHY="rotated files on node $node could not be listed ($(head -1 "$out.err" | inspector_clean | cut -c1-90))"; fi
+    rm -f -- "$out.lst" "$out.err"; return 1
+  fi
+  # this instance's older files, newest first: <instance>.log.<YYYYmmdd-HHMMSS>[.gz]
+  grep -o 'href="[^"]*"' "$out.lst" | sed 's/^href="//; s/"$//' | grep -E "^${inst}\\.log\\.[0-9]{8}-[0-9]{6}(\\.gz)?\$" | LC_ALL=C sort -r > "$out.names"
+  NODELOG_ALL=$(awk 'END { print NR }' "$out.names")
+  if [ "$NODELOG_ALL" = 0 ]; then rm -f -- "$out.lst" "$out.err" "$out.names"; return 1; fi
+  # newest first until KDASH_LOG_MAX_BYTES, so a cap drops the oldest lines, never the newest
+  while IFS= read -r f; do
+    [ "$tot" -lt "$cap" ] || break
+    budget=$((cap - tot))
+    case "$f" in
+      *.gz) KDASH_CMD_TIMEOUT=$((lt + 5)) "${KC[@]}" get --raw "$base/$f" --request-timeout="${lt}s" 2>> "$out.err" | gzip -dc 2>> "$out.err" | LC_ALL=C awk "$NODELOG_AWK" | tail -c "$((budget + 1))" > "$out.$n"
+            [ "${PIPESTATUS[0]}${PIPESTATUS[1]}" = 00 ] || bad="${bad:+$bad, }$f" ;;
+      *)    KDASH_CMD_TIMEOUT=$((lt + 5)) "${KC[@]}" get --raw "$base/$f" --request-timeout="${lt}s" 2>> "$out.err" | LC_ALL=C awk "$NODELOG_AWK" | tail -c "$((budget + 1))" > "$out.$n"
+            [ "${PIPESTATUS[0]}" = 0 ] || bad="${bad:+$bad, }$f" ;;
+    esac
+    sz=$(wc -c < "$out.$n" | tr -d ' ')
+    if [ "$sz" -gt "$budget" ]; then
+      # Retain the newest complete lines of the oldest selected file. In
+      # particular one unusually large rotation must not bypass the byte cap.
+      tail -c "$((budget + 1))" "$out.$n" | LC_ALL=C awk 'NR > 1' > "$out.trim"
+      mv -f -- "$out.trim" "$out.$n"
+      sz=$(wc -c < "$out.$n" | tr -d ' '); NODELOG_CAPPED=1
+    fi
+    tot=$((tot + sz)); n=$((n + 1))
+    [ "$NODELOG_CAPPED" = 0 ] || break
+  done < "$out.names"
+  for ((k = n - 1; k >= 0; k--)); do cat -- "$out.$k" >> "$out"; rm -f -- "$out.$k"; done
+  NODELOG_N=$n; NODELOG_BYTES=$tot
+  [ -z "$bad" ] || NODELOG_WHY="not read in full: $bad ($(head -1 "$out.err" | inspector_clean | cut -c1-80))"
+  rm -f -- "$out.lst" "$out.err" "$out.names"
+  [ "$n" -gt 0 ]
+}
+# Summarize a completed proxy read independently of the current log's exit code.
+# Permission to try the node proxy is not evidence that any older files were read.
+nodelog_result() { # metadata-file -> NODELOG_RESULT, NODELOG_READ
+  local on=0 oa=0 capped=0 why=""
+  NODELOG_READ=0; NODELOG_RESULT="rotated history not searched"
+  [ -s "$1" ] || return 0
+  IFS=$'\t' read -r on oa capped why < "$1" || true
+  NODELOG_READ="${on:-0}"
+  if [ -n "$why" ]; then NODELOG_RESULT="rotated history incomplete: $why"
+  elif [ "$NODELOG_READ" -gt 0 ]; then
+    NODELOG_RESULT="with $NODELOG_READ older file$([ "$NODELOG_READ" = 1 ] || printf s) from the node"
+    [ "$NODELOG_READ" -ge "${oa:-0}" ] || NODELOG_RESULT+=" ($((oa - NODELOG_READ)) oldest not read)"
+  elif [ "${oa:-0}" = 0 ]; then NODELOG_RESULT="no rotated files found on node"
+  else NODELOG_RESULT="rotated history not read"; fi
+  [ "${capped:-0}" != 1 ] || NODELOG_RESULT+=", oldest lines omitted at byte cap"
+}
+inspector_older() { # ns pod container current|previous out -> the older lines of that container instance
+  local ns="$1" pod="$2" c="$3" mode="$4" out="$5" info uid node rs inst
+  NODELOG_N=0; NODELOG_ALL=0; NODELOG_CAPPED=0; NODELOG_NODE=""
+  nodelog_can || return 1
+  info="$(KDASH_CMD_TIMEOUT=20 "${KC[@]}" get pod "$pod" -n "$ns" -o 'jsonpath={.metadata.uid}{"\t"}{.spec.nodeName}{"\t"}{range .status.containerStatuses[*]}{.name}{"="}{.restartCount}{" "}{end}{range .status.initContainerStatuses[*]}{.name}{"="}{.restartCount}{" "}{end}' 2>/dev/null)"
+  IFS=$'\t' read -r uid node rs <<< "$info"
+  if [ -z "$uid" ] || [ -z "$node" ]; then NODELOG_WHY="rotated files: the node or uid of the pod is not known"; return 1; fi
+  inst="$(printf '%s\n' $rs | awk -F '=' -v c="$c" '$1 == c { print $2; exit }')"
+  case "$inst" in ''|*[!0-9]*) inst=0 ;; esac
+  [ "$mode" != previous ] || inst=$((inst - 1))
+  [ "$inst" -ge 0 ] || return 1
+  NODELOG_NODE="$node"
+  nodelog_older "$node" "${ns}_${pod}_${uid}" "$c" "$inst" "$out" "${INSPECTOR_BYTES:-${KDASH_LOG_MAX_BYTES:-268435456}}"
+}
+# the time of the first line of a log ("2026-11-18 09:12:01"), for "since ..."
+log_since() { LC_ALL=C awk 'NR == 1 { if ($1 ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/) print substr($1, 1, 10) " " substr($1, 12, 8); exit }' "$1" 2>/dev/null; }
+
 inspector_logs() { # ns pod container current|previous output-file
   local ns="$1" pod="$2" container="$3" mode="$4" dest="$5" rc=0
   local flags=()
@@ -7451,16 +7896,56 @@ inspector_logs() { # ns pod container current|previous output-file
     printf 'Choose a valid container before reading logs.\n' > "$dest"; return 2;
   }
   inspector_limits
-  INSPECTOR_QUERY_CAP="$INSPECTOR_BYTES" INSPECTOR_QUERY_NOTE=logs inspector_query "$dest.body" logs "$pod" -n "$ns" -c "$container" \
-    --tail="$INSPECTOR_TAIL" --limit-bytes="$INSPECTOR_BYTES" --timestamps=true "${flags[@]}" || rc=$?
-  # what was read, for the status rule: lines, bytes, whether a limit was reached
-  local nl nb; nl=$(awk 'END { print NR }' "$dest.body"); nb=$(wc -c < "$dest.body" | tr -d ' ')
-  INSPECTOR_LOGINFO="$nl lines $(xfer_hsize "$nb")"
-  if [ "$INSPECTOR_TAIL" = -1 ]; then INSPECTOR_LOGINFO+=", all the kubelet keeps"
-  elif [ "$nl" -ge "$INSPECTOR_TAIL" ]; then INSPECTOR_LOGINFO+=", newest only (+ more, A all)"
-  else INSPECTOR_LOGINFO+=", complete"; fi
-  [ ! -f "$dest.body.capped" ] || { INSPECTOR_LOGINFO+=", $(xfer_hsize "$INSPECTOR_BYTES") cap reached (A reads more)"; rm -f -- "$dest.body.capped"; }
+  # A log is a stream that can take long over a slow link: the general request timeout
+  # (seconds) and the 12 s command cap would cut it off and leave a log without its
+  # newest lines. Log reads get their own limit (KDASH_LOG_TIMEOUT, default 300 s).
+  local lt="${KDASH_LOG_TIMEOUT:-300}"; case "$lt" in ''|*[!0-9]*|0) lt=300 ;; esac
+  # the whole log: first the older files the kubelet rotated (on the node), then the current one
+  local older=0 since more=0 oldcut=0
+  NODELOG_WHY=""; NODELOG_N=0; NODELOG_ALL=0; NODELOG_CAPPED=0; NODELOG_NODE=""
+  if [ "$INSPECTOR_TAIL" = -1 ] && inspector_older "$ns" "$pod" "$container" "$mode" "$dest.older"; then older=1; fi
+  KDASH_CMD_TIMEOUT=$((lt + 5)) INSPECTOR_QUERY_CAP="$INSPECTOR_BYTES" INSPECTOR_QUERY_NOTE=logs inspector_query "$dest.body" logs "$pod" -n "$ns" -c "$container" \
+    --tail="$INSPECTOR_TAIL" --limit-bytes="$INSPECTOR_BYTES" --timestamps=true "${flags[@]}" --request-timeout="${lt}s" || rc=$?
+  if [ "$older" = 1 ]; then
+    cat -- "$dest.older" "$dest.body" > "$dest.merged"
+    # The cap applies to the combined history, rather than once per file. The
+    # current file stays newest; trim only the older end and whole text lines.
+    if [ "$(wc -c < "$dest.merged")" -gt "$INSPECTOR_BYTES" ]; then
+      tail -c "$((INSPECTOR_BYTES + 1))" "$dest.merged" | LC_ALL=C awk 'NR > 1' > "$dest.body"; oldcut=1
+      rm -f -- "$dest.merged"
+    else mv -f -- "$dest.merged" "$dest.body"; fi
+  fi
+  rm -f -- "$dest.older"
+  # what was read, for the status rule: lines, bytes, since when, whether a limit was reached
+  local nl nb; nl=$(awk '/^Read failed \(exit [0-9]+\)\. Verify the namespace/ { exit } { n++ } END { print n + 0 }' "$dest.body"); nb=$(wc -c < "$dest.body" | tr -d ' ')
+  since="$(log_since "$dest.body")"
+  INSPECTOR_LOGINFO="$nl lines $(xfer_hsize "$nb")${since:+ since $since}"
+  if [ "$rc" != 0 ] && [ "$nl" -gt 0 ]; then
+    # the read stopped part way: say so - the newest lines are the ones missing
+    case "$rc" in 124|137) INSPECTOR_LOGINFO+=", INCOMPLETE: stopped after ${lt}s (KDASH_LOG_TIMEOUT), newest lines missing - r retries" ;;
+                  *) INSPECTOR_LOGINFO+=", INCOMPLETE: the read failed (exit $rc), newest lines may be missing - r retries" ;; esac
+  elif [ -f "$dest.body.capped" ]; then
+    # kubectl cuts at the byte limit from the start of what was asked: the end is missing
+    INSPECTOR_LOGINFO+=", $(xfer_hsize "$INSPECTOR_BYTES") cap reached - the newest lines are missing (A reads more)"; more=1
+  elif [ "$rc" != 0 ]; then :
+  elif [ "$INSPECTOR_TAIL" = -1 ]; then
+    if [ "$older" = 1 ]; then
+      if [ "$NODELOG_CAPPED" = 0 ] && [ "$oldcut" = 0 ] && [ "$NODELOG_N" -ge "$NODELOG_ALL" ] && [ -z "$NODELOG_WHY" ]; then INSPECTOR_LOGINFO+=", whole log: "
+      else INSPECTOR_LOGINFO+=", retained history: "; fi
+      INSPECTOR_LOGINFO+="$NODELOG_N rotated file$([ "$NODELOG_N" = 1 ] || printf s) from $NODELOG_NODE + $([ "$mode" = previous ] && printf 'its last file' || printf 'the current file')"
+      [ "$NODELOG_N" -ge "$NODELOG_ALL" ] || INSPECTOR_LOGINFO+=" ($((NODELOG_ALL - NODELOG_N)) oldest not read: KDASH_LOG_MAX_BYTES)"
+      if [ "$NODELOG_CAPPED" = 1 ] || [ "$oldcut" = 1 ]; then INSPECTOR_LOGINFO+=", oldest lines omitted at $(xfer_hsize "$INSPECTOR_BYTES") cap"; fi
+      [ -z "$NODELOG_WHY" ] || INSPECTOR_LOGINFO+=" - $NODELOG_WHY"
+      declare -F audit >/dev/null && audit LOG_OLDER_FILES "namespace=$ns pod=$pod container=$container node=$NODELOG_NODE files=$NODELOG_N bytes=$NODELOG_BYTES"
+    elif [ -n "$NODELOG_WHY" ]; then INSPECTOR_LOGINFO+=", current file only - $NODELOG_WHY"
+    else INSPECTOR_LOGINFO+=", whole log (nothing rotated yet)"; fi
+  elif [ "$nl" -ge "$INSPECTOR_TAIL" ]; then INSPECTOR_LOGINFO+=", newest only (+ more, A all)"; more=1
+  # fewer lines than asked: the whole CURRENT file - the kubelet may have rotated older ones
+  elif nodelog_can; then INSPECTOR_LOGINFO+=", current file (/ and A also read the rotated ones)"; more=1
+  else INSPECTOR_LOGINFO+=", current file only - $NODELOG_WHY"; fi
+  rm -f -- "$dest.body.capped"
   printf '%s' "$INSPECTOR_LOGINFO" > "$dest.info"
+  if [ "$more" = 1 ]; then : > "$dest.more"; else rm -f -- "$dest.more"; fi
   cat "$dest.body" > "$dest"; rm -f -- "$dest.body"
   [ "$mode" != previous ] || [ "$rc" = 0 ] || printf '\nPrevious logs require a previously terminated instance of this container.\n' >> "$dest"
   return "$rc"
@@ -7587,12 +8072,16 @@ inspector_search_prompt() {  # pane name [only]; sets INSPECTOR_SEARCH and INSPE
     ui_screen "$([ "$mode" = only ] && printf 'SHOW ONLY MATCHES' || printf 'FIND') | $(printf '%s' "$pane" | tr '[:lower:]' '[:upper:]')" "${POD_PICK:-}${KDASH_INSPECT_CONTAINER:+ / $KDASH_INSPECT_CONTAINER}"
     printf ' Extended regular expression. A lowercase pattern ignores case.\n Examples: error   OOMKilled   FailedMount|MountVolume  127.0.0.1  ^2026-10-29T1\n\n'
     printf ' %s\n' "$([ "$mode" = only ] && printf 'The pane will show only the lines that match (press / for context again).' || printf 'Every line stays visible: matches are highlighted, n and N jump between them.')"
-    printf ' Empty Enter clears the search; q cancels; Enter applies what you typed.\n Current: %s%s\n%s\n\033[?25h %s ' \
-      "${INSPECTOR_SEARCH:-none}" "$([ "${INSPECTOR_ONLY:-0}" = 1 ] && printf ' (only matches)' || printf '')" "$msg" \
-      "$([ "$mode" = only ] && printf '&' || printf '/')"
-    IFS= read -r line </dev/tty || { printf '\033[?25l'; return 1; }
+    printf ' Empty Enter clears the search; Esc cancels; Enter applies what you typed.\n'
+    printf ' Up / Down recall earlier searches; Left / Right / Home / End edit the text.\n'
+    case "$pane" in current|previous)
+      [ "${KDASH_SEARCH_ALL_LINES:-1}" = 0 ] || printf ' The whole log is searched: if only the newest lines are loaded, the whole log is read first.\n' ;;
+    esac
+    printf ' F in the pane searches every container and pod (this pod, its workload or the namespace).\n Current: %s%s\n%s\n' \
+      "${INSPECTOR_SEARCH:-none}" "$([ "${INSPECTOR_ONLY:-0}" = 1 ] && printf ' (only matches)' || printf '')" "$msg"
+    ui_edit_line line " $([ "$mode" = only ] && printf '&' || printf '/') " search || { printf '\033[?25l'; return 1; }
     printf '\033[?25l'
-    case "$line" in q|Q|*$'\e'*) return 1 ;; esac
+    case "$line" in q|Q) return 1 ;; esac
     if [ -z "$line" ]; then INSPECTOR_SEARCH=""; INSPECTOR_ONLY=0; return 0; fi
     if inspector_pattern_ok "$line"; then
       INSPECTOR_SEARCH="$line"; INSPECTOR_JUMPED=""
@@ -7620,8 +8109,9 @@ inspector_view_build() { # body view matches [width]
   local body="$1" view="$2" matchf="$3" icase=0 w="${4:-0}"
   [ -z "${INSPECTOR_SEARCH:-}" ] || icase="$(inspector_icase "$INSPECTOR_SEARCH")"
   [ "${INSPECTOR_WRAP:-1}" = 1 ] || w=0
-  awk -v pat="${INSPECTOR_SEARCH:-}" -v icase="$icase" -v lvl="${INSPECTOR_LEVEL_PAT:-}" \
+  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v icase="$icase" -v lvl="${INSPECTOR_LEVEL_PAT:-}" \
       -v only="${INSPECTOR_ONLY:-0}" -v matchf="$matchf" -v metaf="$view.meta" -v w="$w" -v json="${INSPECTOR_JSON:-0}" '
+    BEGIN { pat = ENVIRON["KD_PAT"] }
     function hit(line) {
       if (pat == "") return 0
       return (icase ? (tolower(line) ~ tolower(pat)) : (line ~ pat))
@@ -7636,14 +8126,15 @@ inspector_view_build() { # body view matches [width]
         if (c == "\\") { i++; c = substr(s, i, 1); if (c == "n" || c == "t" || c == "r") c = " "; out = out c; continue }
         if (c == "\"") break; out = out c }
       return out }
-    function readable(line,   ts, rest, m, lv, sp) {
+    function readable(line,   ts, rest, m, lv, sp, tag, q) {
       sp = index(line, " "); if (sp < 2) return line
-      ts = substr(line, 1, sp - 1); rest = substr(line, sp + 1)
+      ts = substr(line, 1, sp - 1); rest = substr(line, sp + 1); tag = ""
+      if (substr(rest, 1, 1) == "[" && (q = index(rest, "] ")) > 0) { tag = substr(rest, 1, q + 1); rest = substr(rest, q + 2) }
       if (substr(rest, 1, 1) != "{") return line
       m = jstr(rest, "message"); if (m == "") m = jstr(rest, "msg"); if (m == "") return line
       lv = jstr(rest, "severity"); if (lv == "") lv = jstr(rest, "level")
       if (ts ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T/) ts = substr(ts, 6, 5) " " substr(ts, 12, 12)
-      return ts "  " sprintf("%-7s", toupper(lv == "" ? "-" : lv)) "  " m }
+      return ts "  " tag sprintf("%-7s", toupper(lv == "" ? "-" : lv)) "  " m }
     { line = (json == "1") ? readable($0) : $0
       if (lvl != "" && line !~ lvl) next
       m = hit(line)
@@ -7666,8 +8157,8 @@ inspector_view_build() { # body view matches [width]
 inspector_show() { # view first last cols color [horizontal offset]
   local icase="" view="$1" hoff="${6:-0}"
   [ -z "${INSPECTOR_SEARCH:-}" ] || icase="$(inspector_icase "$INSPECTOR_SEARCH")"
-  awk -v first="$2" -v last="$3" -v w="$4" -v color="$5" -v hoff="$hoff" \
-      -v pat="${INSPECTOR_SEARCH:-}" -v icase="$icase" '
+  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v first="$2" -v last="$3" -v w="$4" -v color="$5" -v hoff="$hoff" -v icase="$icase" '
+    BEGIN { pat = ENVIRON["KD_PAT"]; if (icase == "1") pat = tolower(pat) }
     function hl(s, p,   out, rest, hay, at, len) {
       if (p == "" || color != "1") return s
       out = ""; rest = s
@@ -7714,11 +8205,30 @@ inspector_container_rows() { # ns pod spec-file status-file -> TYPE NAME READY R
 # data, the highlighted row is a full-width bar, and the title says what Enter does
 # (INSPECTOR_PICK_PURPOSE: shell | up | down | inspect). Returns the chosen name in
 # INSPECTOR_CONTAINER (plus INSPECTOR_PANE for l/p when inspecting).
+# The find box of the container list: the cursor goes to the first container whose name,
+# type, state, last exit or image matches (a lowercase pattern ignores case). Uses the
+# arrays of inspector_container_picker; cnm = how many match, cbad = 1 for a bad pattern.
+ctr_find() { # first|next [pattern]
+  local i k h re="${2-$UE_T}" ic=0 first=-1 start="$cfrom"
+  cnm=0; cbad=0
+  [ -n "$re" ] || { [ "${1:-first}" = next ] || chosen=$cfrom; return 0; }
+  [ "$re" != "${re,,}" ] || ic=1
+  [[ "" =~ $re ]]; [ $? != 2 ] || { cbad=1; return 0; }
+  [ "${1:-first}" != next ] || start=$((chosen + 1))
+  for ((k = 0; k < n; k++)); do
+    i=$(( (start + k) % n ))
+    h="${N[i]} ${T[i]} ${ST[i]} ${LX[i]} ${IM[i]}"; [ "$ic" = 0 ] || h="${h,,}"
+    if [[ "$h" =~ $re ]]; then cnm=$((cnm + 1)); [ "$first" -ge 0 ] || first=$i; fi
+  done
+  [ "$first" -lt 0 ] || chosen=$first
+}
+
 inspector_container_picker() { # ns pod dir
   local ns="$1" pod="$2" d="$3" purpose="${INSPECTOR_PICK_PURPOSE:-inspect}" chosen=0 top=0 i n line k
   local -a T N RD RS ST LX IM
   local w_n=9 w_t=4 w_r=9 w_s=5 w_l=9 type name ready rst state last image remembered
   local buf pad len rows banner sel stc pr pst prd prs pnd napp=0 ninit=0 ndbg=0 msg="" nrun=0
+  local ctyp=0 cfrom=0 cnm=0 cbad=0 cq=""      # the find box (/)
   INSPECTOR_CONTAINER=""; INSPECTOR_PANE=""
   if [ -n "${INSPECTOR_PICKER_ROWS:-}" ] && [ -r "$INSPECTOR_PICKER_ROWS" ]; then
     cp -f "$INSPECTOR_PICKER_ROWS" "$d/rows"        # caller already read (and narrowed) the list
@@ -7761,7 +8271,7 @@ inspector_container_picker() { # ns pod dir
   # terminal) must not pick a container the operator has not seen yet
   while IFS= read -rsn1 -t 0.05 _k </dev/tty; do :; done
   while :; do
-    picker_size; rows=$((PK_ROWS - 15)); [ "$rows" -ge 3 ] || rows=3     # bar, 2 info + blank, frame (4), rule, panel (6)
+    picker_size; rows=$((PK_ROWS - 15)); [ "$ctyp" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3     # bar, 2 info + blank, frame (4), rule, panel (6), find box (3)
     [ "$chosen" -ge "$top" ] || top=$chosen
     [ "$chosen" -lt $((top + rows)) ] || top=$((chosen - rows + 1))
     # title bar, the pod, the containers
@@ -7823,6 +8333,15 @@ inspector_container_picker() { # ns pod dir
     done
     bx_sep "$W" b "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_BL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_BR}${BX_R}"$'\033[K\n'
     for ((i = shown; i < rows; i++)); do buf+=$'\033[K\n'; done
+    if [ "$ctyp" = 1 ]; then
+      local cbr="$cnm of $n containers match"
+      [ -n "$UE_T" ] || cbr="type: name, type, state or image"
+      [ "$cbad" = 0 ] || cbr="not a valid pattern yet"
+      [ -z "$UE_T" ] || [ "$cbad" = 1 ] || [ "$cnm" != 0 ] || cbr="no container matches"
+      ue_view $((PK_COLS - 9))
+      ui_search_box "$PK_COLS" "FIND CONTAINER" "$cbr" "/ $UE_VIS" $((UE_CUR + 2)) "Enter keep   Tab next match   Up/Down earlier   Esc back"
+      buf+="$UI_SBOX"$'\n'
+    fi
     # status rule: a message when there is one, otherwise where the cursor is
     if [ -n "$msg" ]; then ui_vlen "$msg"; [ "$UI_VL" -le $((PK_COLS - 8)) ] || { msg="${msg:0:$((PK_COLS - 10))}~"; ui_vlen "$msg"; }
       ui_rule "$((PK_COLS - 1))" "${PC_WARN}${msg}${PC_R}" "$UI_VL" "" 0
@@ -7832,20 +8351,34 @@ inspector_container_picker() { # ns pod dir
     local okc=1; [ -n "$banner" ] && [ "${ST[chosen]}" != Running ] && okc=0
     if [ -n "$banner" ]; then
       bx_panel "$PK_COLS" 4 MOVE CHOOSE "$([ "$purpose" = shell ] && echo 'IN THE SHELL' || echo 'NEXT')" LEAVE \
-        "j/k ${PC_UP}${PC_DN}|move|1" "g / G|first / last|1" "1-9|pick by number|1" "|$n containers|0" \
+        "j/k ${PC_UP}${PC_DN}|move|1" "g / G|first / last|1" "1-9|pick by number|1" "/ n|find, next match|1" \
         "Enter|${act}|$okc" "|only running ones can be used|0" "|$napp app$([ "$ninit" = 0 ] || echo ", $ninit init")$([ "$ndbg" = 0 ] || echo ", $ndbg debug")|0" "|runs with your RBAC, audited|0" \
         "$([ "$purpose" = shell ] && echo exit)|$([ "$purpose" = shell ] && echo 'back to kdash' || echo 'browse the container')|1" "$([ "$purpose" = shell ] && echo kdswitch)|$([ "$purpose" = shell ] && echo 'related pods' || echo 'pick files, review')|1" \
         "$([ "$purpose" = shell ] && echo kdquit)|$([ "$purpose" = shell ] && echo 'leave kdash' || echo 'then confirm or cancel')|1" "||0" \
-        "q / Esc|back|1" "Q|quit kdash|1" "||0" "||0"
+        "q / Esc|back|1" "Q|quit kdash|1" ">|export to a log|1" "||0"
     else
       bx_panel "$PK_COLS" 4 MOVE INSPECT LOGS LEAVE \
-        "j/k ${PC_UP}${PC_DN}|move|1" "g / G|first / last|1" "1-9|open by number|1" "|$n containers|0" \
+        "j/k ${PC_UP}${PC_DN}|move|1" "g / G|first / last|1" "1-9|open by number|1" "/ n|find, next match|1" \
         "Enter / i|summary of it|1" "|$napp app$([ "$ninit" = 0 ] || echo ", $ninit init")$([ "$ndbg" = 0 ] || echo ", $ndbg debug")|0" "||0" "||0" \
         "l|logs|1" "p|previous logs|1" "||0" "||0" \
-        "q / Esc|back|1" "Q|quit kdash|1" "||0" "||0"
+        "q / Esc|back|1" "Q|quit kdash|1" ">|export to a log|1" "||0"
     fi
     buf+="$BX_PANEL"
-    ui_flush "$buf" "ctrpick:$PK_COLS:$PK_ROWS" "${CTP_FL:-1}"; CTP_FL=1
+    ui_flush "$buf" "ctrpick:$PK_COLS:$PK_ROWS:$ctyp" "${CTP_FL:-1}"; CTP_FL=1
+    if [ "$ctyp" = 1 ]; then
+      # keys of the find box; keys typed ahead are taken together, then the list is drawn once
+      while :; do
+        ue_key
+        case "$UE_ACT" in edit) ctr_find first ;; tab) ctr_find next ;; enter|cancel) break ;; esac
+        read -t 0 </dev/tty 2>/dev/null || break
+      done
+      CTP_FL=0
+      case "$UE_ACT" in
+        enter) ctyp=0; ue_remember; cq="$UE_T"; [ -z "$cq" ] || [ "$cbad" = 1 ] || msg="$cnm of $n containers match /$cq - n next match" ;;
+        cancel) ctyp=0; chosen=$cfrom; msg="find cancelled" ;;
+      esac
+      continue
+    fi
     picker_key 60 || continue
     case "$PK_KEY_IN" in j|k|g|G|'<UP>'|'<DN>'|'<HOME>'|'<END>') CTP_FL=0 ;; esac
     msg=""
@@ -7861,6 +8394,11 @@ inspector_container_picker() { # ns pod dir
       j|'<DN>') chosen=$(((chosen + 1) % n)) ;;
       k|'<UP>') chosen=$(((chosen + n - 1) % n)) ;;
       g|'<HOME>') chosen=0 ;; G|'<END>') chosen=$((n - 1)) ;;
+      /) cfrom=$chosen; cnm=0; cbad=0; ctyp=1; ue_begin ctrfind "" ;;
+      '>') { printf 'TYPE\tCONTAINER\tREADY\tRESTARTS\tSTATE\tLAST EXIT\tIMAGE\n'; cat -- "$d/rows"; } | qx_align > "$d/qx.tsv"
+           quick_export "containers_$pod" "container list | pod $ns/$pod | $n containers" "$d/qx.tsv" "EVERY CONTAINER OF THE POD"; msg="$QX_MSG" ;;
+      n) if [ -n "$cq" ]; then cfrom=$chosen; ctr_find next "$cq"; msg="$cnm of $n containers match /$cq"; [ "$cnm" != 0 ] || msg="no container matches /$cq"
+         else msg="/ finds a container by name, type, state or image"; fi ;;
       l|p) [ -z "$banner" ] || continue
            INSPECTOR_CONTAINER="${N[chosen]}"
            [ "$PK_KEY_IN" = l ] && INSPECTOR_PANE=current || INSPECTOR_PANE=previous
@@ -7907,15 +8445,21 @@ inspector_help() {
   printf '  L  log level: all, ERROR,    !  why (event hypotheses)    g G Home End  top/bottom\n'
   printf '     WARN, INFO, DEBUG         l  current logs             c  choose container\n'
   printf '  f  follow logs               p  previous logs            r  reload now\n'
-  printf '  w  export what you see       q Esc  back                ?  this help\n\n'
+  printf '  w  export what you see       q Esc  back                ?  this help\n'
+  printf '  >  quick export to a log file: the screen and the whole pane (KDASH_EXPORT_DIR)\n\n'
   printf ' LONG AND MANY LINES\n'
   printf '  W  wrap on/off: on (default) shows every line in full; off cuts at the edge, <- -> pan\n'
   printf '  J  readable JSON: time, level and message of JSON log lines; J again shows them raw\n'
-  printf '  +  read 4x more lines        A  read every line the kubelet keeps (KDASH_LOG_MAX_BYTES)\n'
-  printf '     the rule shows what was read: "5000 lines, 3.1 MiB - complete" or "- newest 5000 only"\n\n'
+  printf '  +  read 4x more lines        A  read the whole log, the older files the kubelet rotated too (KDASH_LOG_MAX_BYTES)\n'
+  printf '     older files are on the node: read with get nodes/proxy when your RBAC allows it (KDASH_NODE_LOGS=0: never)\n'
+  printf '     the rule shows what was read and since when: "newest only", "current file", "whole log: 3 rotated files + the current file"\n\n'
   printf ' S  shell in the container    U  upload a file             D  download a file\n'
   printf ' S/U/D need --allow-interactive: they run in your name and are audited writes.\n'
   printf ' / keeps the context around every match and highlights it; & hides everything else.\n'
+  printf ' A search covers the whole log: / reads all of it first (the rotated files too, with get nodes/proxy), so the count covers every line.\n'
+  printf ' F searches the logs of every container of this pod, its workload or the namespace (and the\n'
+  printf ' previous instance of restarted containers); matches of all logs are merged in time order.\n'
+  printf ' Prompts: Up / Down recall earlier entries, Left / Right / Home / End edit, Esc cancels.\n'
   printf ' A lowercase pattern ignores case: /error finds ERROR and error.\n'
   printf ' n and N wrap around and put the match at the top of the pane.\n'
   printf ' c lists every container with readiness, restarts, state and last exit: pick one\n'
@@ -7928,7 +8472,7 @@ inspector_help() {
 inspector_pane_title() { # pane -> title shown in the bar
   case "$1" in
     summary) printf SUMMARY ;; describe) printf DESCRIBE ;; events) printf EVENTS ;; explain) printf 'WHY (EVENT HYPOTHESES)' ;;
-    current) printf 'LOGS' ;; previous) printf 'PREVIOUS LOGS' ;; *) printf '%s' "$1" | tr '[:lower:]' '[:upper:]' ;;
+    current) printf 'LOGS' ;; previous) printf 'PREVIOUS LOGS' ;; found) printf 'FIND IN LOGS' ;; *) printf '%s' "$1" | tr '[:lower:]' '[:upper:]' ;;
   esac
 }
 # The pod detail key rows: three groups (PANES, READ, MOVE) of whole "<key> label"
@@ -7940,21 +8484,21 @@ inspector_keylines() {
   # wide, tall screens: one framed panel, seven aligned columns; otherwise the wrapped rows
   if [ "${INSPECTOR_COLS:-100}" -ge 128 ] && [ "${INSPECTOR_ROWS:-24}" -ge 30 ] && [ "${KDASH_KEYS:-panel}" != compact ]; then
     local ln
-    bx_panel "$INSPECTOR_COLS" 7 "PANES" "LOGS" "ATTACH" "READ" "MOVE" "FIND" "LEAVE" \
+    bx_panel "$INSPECTOR_COLS" 7 "PANES" "LOGS" "ATTACH" "READ" "MOVE" "FIND" "OTHER" \
       "s|summary|1" "d|describe|1" "e|events|1" "!|why|1" \
       "l|logs|1" "p|prev logs|1" "c|container|1" "f|follow $s_f|1" \
-      "S|shell|1" "U|upload|1" "D|download|1" "w|export|1" \
+      "S|shell|1" "U|upload|1" "D|download|1" ">|export log|1" \
       "W|wrap $s_w|1" "J|JSON $s_j|1" "L|level ${INSPECTOR_LEVEL_NAME:-all}|1" "+|4x lines|1" \
       "j/k|scroll|1" "g/G|top / end|1" "left/right|pan|1" "A|all lines|1" \
-      "/|find|1" "&|only matches|1" "n/N|next / prev|1" "r|reload|1" \
-      "?|keys|1" "q|back|1" "Q|quit|1" "||1"
+      "/|find|1" "&|only matches|1" "n/N|next / prev|1" "F|all pods' logs|1" \
+      "r|reload|1" "?|keys|1" "q|back|1" "Q|quit|1"
     while IFS= read -r ln; do IK_LINES+=("${ln%$'\033[K'}"); done <<< "$BX_PANEL"
     return 0
   fi
   _ik_group PANES s summary d describe e events "!" why l logs p "prev logs" c container S shell U upload D download
   _ik_group READ W "wrap $s_w" J "JSON $s_j" \
-    "+" "4x lines" A "all lines" "left/right" pan f "follow $s_f" L "level ${INSPECTOR_LEVEL_NAME:-all}" w export
-  _ik_group MOVE / find "&" "only matches" "n/N" "next / prev" "j/k" scroll g/G "top / end" r reload "?" keys q back Q quit
+    "+" "4x lines" A "all lines" "left/right" pan f "follow $s_f" L "level ${INSPECTOR_LEVEL_NAME:-all}" ">" "export log" w "export text"
+  _ik_group MOVE / find "&" "only matches" "n/N" "next / prev" F "all pods' logs" "j/k" scroll g/G "top / end" r reload "?" keys q back Q quit
 }
 _ik_group() { # title pairs...
   local w=$((${INSPECTOR_COLS:-100} - 1)) line used=7 k a add
@@ -7967,6 +8511,175 @@ _ik_group() { # title pairs...
   done
   IK_LINES+=("$line")
 }
+# F in pod detail: search the logs of every container - this pod, every pod of its
+# workload, or every pod of the namespace. Each container's current log is read in full
+# (KDASH_LOG_MAX_BYTES, KDASH_LOG_TIMEOUT), plus the previous instance of a container
+# that restarted. Reads run in parallel (KDASH_FIND_PARALLEL, default 4); Esc stops and
+# keeps what was found. The result is a pane: a table of what was read (lines, matches,
+# result per log - "no access" when RBAC forbids pods/log) and the matching lines of all
+# logs merged in time order, each tagged [pod/container]. Read-only, like every log read.
+inspector_find_all() { # ns pod dir -> d/found, d/found.info; 0 = a result was written
+  local ns="$1" pod="$2" d="$3" fd="$3/find" key="" scope="" pat="" icase=0 lt mx per par
+  local pl="$3/find.pods" owner="" wl="" n_pod=0 n_wl=0 n_ns=0 l_pod=0 l_wl=0 l_ns=0 i n run done_ hits t0 c kk label stopped=0 t_
+  lt="${KDASH_LOG_TIMEOUT:-300}"; case "$lt" in ''|*[!0-9]*|0) lt=300 ;; esac
+  mx="${KDASH_LOG_MAX_BYTES:-268435456}"; case "$mx" in ''|*[!0-9]*) mx=268435456 ;; esac
+  per="${KDASH_FIND_MAX_LINES:-5000}"; case "$per" in ''|*[!0-9]*|0) per=5000 ;; esac
+  par="${KDASH_FIND_PARALLEL:-4}"; case "$par" in ''|*[!0-9]*|0) par=4 ;; esac; [ "$par" -le 16 ] || par=16
+  ui_screen "FIND IN LOGS" "$ns/$pod"
+  printf ' %sreading the pod list of %s ...%s\n' "$PC_D" "$ns" "$PC_R"
+  # name, owner, containers, restart count per container: one list read for all scopes
+  "${KC[@]}" get pods -n "$ns" -o 'jsonpath={range .items[*]}{.metadata.name}{"\t"}{.metadata.ownerReferences[0].kind}{"/"}{.metadata.ownerReferences[0].name}{"\t"}{range .spec.containers[*]}{.name}{" "}{end}{"\t"}{range .status.containerStatuses[*]}{.name}{"="}{.restartCount}{" "}{end}{"\t"}{.metadata.uid}{"\t"}{.spec.nodeName}{"\n"}{end}' \
+    2> "$pl.err" | inspector_clean > "$pl.raw" || true
+  # the workload of a ReplicaSet pod is its Deployment (the ReplicaSet name less the hash)
+  awk -F '\t' '
+    NF >= 3 { o = $2; if (o ~ /^ReplicaSet\//) { sub(/^ReplicaSet\//, "Deployment/", o); sub(/-[a-z0-9]+$/, "", o) }
+      if (o == "/") o = ""
+      n = split($3, C, " "); cs = ""
+      for (i = 1; i <= n; i++) if (C[i] != "") cs = cs (cs == "" ? "" : " ") C[i]
+      m = split($4, R, " "); rs = ""
+      for (i = 1; i <= m; i++) if (R[i] ~ /=[1-9][0-9]*$/) { sub(/=.*/, "", R[i]); rs = rs " " R[i] " " }
+      print $1 "\t" o "\t" cs "\t" rs "\t" $4 "\t" $5 "\t" $6 }' "$pl.raw" > "$pl"
+  owner="$(awk -F '\t' -v p="$pod" '$1 == p { print $2; exit }' "$pl")"
+  # logs per scope: one per container, plus one per restarted container (previous)
+  _ifa_count() { awk -F '\t' -v sel="$1" -v p="$pod" -v o="$owner" '
+      (sel == "pod" && $1 == p) || (sel == "wl" && o != "" && $2 == o) || (sel == "wl" && o == "" && $1 == p) || sel == "ns" {
+        np++; n = split($3, C, " "); for (i = 1; i <= n; i++) { nl++; if (index($4, " " C[i] " ")) nl++ } }
+      END { print np + 0, nl + 0 }' "$pl"; }
+  read -r n_pod l_pod <<< "$(_ifa_count pod)"; read -r n_wl l_wl <<< "$(_ifa_count wl)"; read -r n_ns l_ns <<< "$(_ifa_count ns)"
+  if [ "$n_pod" = 0 ]; then          # the list could not be read: this pod and its known container only
+    printf '%s\t\t%s\t\n' "$pod" "${KDASH_INSPECT_CONTAINER:-}" > "$pl"; n_pod=1; l_pod=1; n_wl=1; l_wl=1; n_ns=1; l_ns=1
+  fi
+  while :; do
+    ui_screen "FIND IN LOGS" "$ns/$pod"
+    printf ' Search the full current log of every container, and the previous log of each container that restarted.\n\n'
+    printf '   %sp%s  this pod        %-44s %4s container log(s)\n' "$PC_B" "$PC_R" "$pod" "$l_pod"
+    if [ -n "$owner" ]; then printf '   %sw%s  its workload    %-44s %4s pod(s), %s log(s)\n' "$PC_B" "$PC_R" "${owner/\// }" "$n_wl" "$l_wl"
+    else printf '   %sw%s  its workload    %s(no owner - the same as p)%s\n' "$PC_D" "$PC_R" "$PC_D" "$PC_R"; fi
+    printf '   %sn%s  the namespace   %-44s %4s pod(s), %s log(s)\n\n' "$PC_B" "$PC_R" "$ns" "$n_ns" "$l_ns"
+    [ ! -s "$pl.err" ] || printf ' %spod list: %s%s\n\n' "$PC_WARN" "$(head -c 160 "$pl.err" | tr '\n' ' ')" "$PC_R"
+    if nodelog_can; then printf ' %sOlder log files will also be requested from the nodes (get nodes/proxy, read-only); results show what was accessible.%s\n' "$PC_D" "$PC_R"
+    else printf ' %sNot searched: the older log files the kubelet rotated - %s.%s\n' "$PC_D" "$NODELOG_WHY" "$PC_R"; fi
+    printf ' %sEsc cancels.%s\n\n\033[?25h > ' "$PC_D" "$PC_R"
+    key=""; IFS= read -rsn1 key </dev/tty || return 1
+    case "$key" in
+      p|P) scope=pod; label="pod $pod"; break ;;
+      w|W) scope=wl; if [ -n "$owner" ]; then label="${owner/\// }"; else label="pod $pod"; fi; break ;;
+      n|N) scope=ns; label="namespace $ns"; break ;;
+      $'\033'|q) IFS= read -rsn2 -t 0.05 _ </dev/tty || true; printf '\033[?25l'; return 1 ;;
+    esac
+  done
+  printf '%s\n\n' "$label"
+  printf ' Extended regular expression; a lowercase pattern ignores case. Up / Down recall earlier searches.\n'
+  while :; do
+    ui_edit_line pat " find / " search "${INSPECTOR_SEARCH:-}" || { printf '\033[?25l'; return 1; }
+    [ -n "$pat" ] || { printf '\033[?25l'; return 1; }
+    inspector_pattern_ok "$pat" && break
+    printf ' %sThat is not a valid regular expression - try again.%s\n' "$PC_WARN" "$PC_R"
+  done
+  icase="$(inspector_icase "$pat")"
+  # the list of logs to read: pod TAB container TAB current|previous TAB instance TAB uid TAB node
+  # (instance = the restart count: the number of the container's log files on the node)
+  rm -rf -- "$fd"; mkdir -p "$fd"
+  awk -F '\t' -v sel="$scope" -v p="$pod" -v o="$owner" '
+    (sel == "pod" && $1 == p) || (sel == "wl" && o != "" && $2 == o) || (sel == "wl" && o == "" && $1 == p) || sel == "ns" {
+      delete RC; m = split($5, M, " "); for (j = 1; j <= m; j++) { q = index(M[j], "="); if (q) RC[substr(M[j], 1, q - 1)] = substr(M[j], q + 1) + 0 }
+      n = split($3, C, " "); for (i = 1; i <= n; i++) { r = (C[i] in RC) ? RC[C[i]] : 0
+        print $1 "\t" C[i] "\tcurrent\t" r "\t" $6 "\t" $7; if (index($4, " " C[i] " ")) print $1 "\t" C[i] "\tprevious\t" (r - 1) "\t" $6 "\t" $7 } }' "$pl" > "$fd/list"
+  n=$(awk 'END { print NR }' "$fd/list")
+  [ "$n" -gt 0 ] || { printf ' nothing to read\n'; sleep 1; return 1; }
+  declare -F audit >/dev/null && audit LOG_FIND "namespace=$ns pod=$pod scope=$scope logs=$n pattern=$(printf '%s' "$pat" | head -c 120)"
+  local -a LP=() LC=() LM=() LI=() LU=() LN=() JP=()
+  local ff=1 frame live nlok=0 e_ u_ n_
+  while IFS=$'\t' read -r a b c_ e_ u_ n_; do LP+=("$a"); LC+=("$b"); LM+=("$c_"); LI+=("${e_:-0}"); LU+=("${u_:-}"); LN+=("${n_:-}"); done < "$fd/list"
+  ! nodelog_can || nlok=1     # older (rotated) log files from the nodes too
+  i=0; t0=$SECONDS
+  printf '\033[?25l'
+  while :; do
+    # start reads while fewer than KDASH_FIND_PARALLEL run
+    # only this search's own readers count (the dashboard has background jobs too)
+    live=(); for c in "${JP[@]}"; do kill -0 "$c" 2>/dev/null && live+=("$c"); done; JP=("${live[@]}"); run=${#JP[@]}
+    while [ "$stopped" = 0 ] && [ "$i" -lt "$n" ] && [ "$run" -lt "$par" ]; do
+      local src="${LP[i]}/${LC[i]}" fl=()
+      [ "${LM[i]}" = previous ] && { src+=" previous"; fl=(--previous); }
+      (
+        { if [ "$nlok" = 1 ] && [ -n "${LU[i]}" ] && [ -n "${LN[i]}" ] && [ "${LI[i]}" -ge 0 ] 2>/dev/null; then
+            ! nodelog_older "${LN[i]}" "${ns}_${LP[i]}_${LU[i]}" "${LC[i]}" "${LI[i]}" "$fd/$i.older" "$mx" || cat -- "$fd/$i.older"
+            printf '%s\t%s\t%s\t%s\n' "$NODELOG_N" "$NODELOG_ALL" "$NODELOG_CAPPED" "$NODELOG_WHY" > "$fd/$i.oldn"; rm -f -- "$fd/$i.older"
+          elif [ "$nlok" = 1 ]; then
+            printf '0\t0\t0\tpod uid, node or container instance unavailable\n' > "$fd/$i.oldn"
+          fi
+          KDASH_CMD_TIMEOUT=$((lt + 5)) "${KC[@]}" logs "${LP[i]}" -n "$ns" -c "${LC[i]}" "${fl[@]}" --tail=-1 --limit-bytes="$mx" \
+            --timestamps=true --request-timeout="${lt}s" 2> "$fd/$i.err"; } |
+          KD_PAT="$pat" awk -v icase="$icase" -v src="$src" -v hf="$fd/$i.hits" -v mx="$per" -v mf="$fd/$i.meta" '
+            BEGIN { pat = ENVIRON["KD_PAT"]; if (icase == "1") pat = tolower(pat) }
+            { n++; l = (icase == "1") ? tolower($0) : $0
+              if (l ~ pat) { h++
+                if (h <= mx) { sp = index($0, " "); if (sp < 2) sp = 0
+                  print (sp ? substr($0, 1, sp - 1) : "-") " [" src "] " (sp ? substr($0, sp + 1) : $0) > hf } } }
+            END { printf "%d %d\n", n + 0, h + 0 > mf }'
+        printf '%s\n' "${PIPESTATUS[0]}" > "$fd/$i.rc"
+      ) &
+      JP+=("$!"); i=$((i + 1)); run=$((run + 1))
+    done
+    done_=$(ls "$fd" 2>/dev/null | grep -c '\.rc$')
+    hits=$(cat "$fd"/*.meta 2>/dev/null | awk '{ h += $2 } END { print h + 0 }')
+    if [ "${#JP[@]}" = 0 ] && { [ "$i" -ge "$n" ] || [ "$stopped" = 1 ]; }; then break; fi
+    # progress: one frame, only changed lines are sent
+    picker_colors; picker_size
+    ui_bar "$PK_COLS" " KDASH ${PC_SEP} FIND IN LOGS ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $label "
+    frame=$'\033[H'"$UI_BAR"$'\033[K\n\033[K\n'
+    frame+=" /${PC_B}${pat}${PC_R}   $([ "$icase" = 1 ] && printf '(ignore case)' || printf '(case sensitive)')"$'\033[K\n\033[K\n'
+    frame+=" ${PC_B}${done_} / ${n}${PC_R} logs read   $((i - done_)) reading   ${PC_B}${hits}${PC_R} matching lines so far   $((SECONDS - t0))s"$'\033[K\n\033[K\n'
+    if [ "$stopped" = 1 ]; then frame+=" ${PC_WARN}stopping - reads under way are ended${PC_R}"$'\033[K\n'
+    else frame+=" ${PC_D}Esc or q stops: what was found so far is kept.${PC_R}"$'\033[K\n'; fi
+    ui_flush "$frame" "find:$PK_COLS:$PK_ROWS" "$ff"; ff=0
+    kk=""; IFS= read -rsn1 -t 0.3 kk </dev/tty || true
+    if [ "$kk" = $'\033' ]; then             # Esc stops; an arrow key (Esc [ A) does not
+      t_=""; IFS= read -rsn1 -t 0.15 t_ </dev/tty || t_=""
+      if [ "$t_" = '[' ] || [ "$t_" = O ]; then while IFS= read -rsn1 -t 0.15 t_ </dev/tty; do case "$t_" in [@-~]) break ;; esac; done; kk=""; fi
+    fi
+    case "$kk" in
+      $'\033'|q|Q) stopped=1; for c in "${JP[@]}"; do xfer_stop_tree "$c"; done ;;
+    esac
+  done
+  for c in "${JP[@]}"; do wait "$c" 2>/dev/null; done
+  # the result: what was read, then the matching lines of every log in time order
+  local nread=0 nlines=0 nhit=0 r ln_ hi_ st w1=6 rc_ olderfiles=0
+  for ((c = 0; c < n; c++)); do r="${LP[c]}/${LC[c]}"; [ "${LM[c]}" = current ] || r+=" (previous)"; [ "${#r}" -le "$w1" ] || w1=${#r}; done
+  {
+    printf '%-*s  %10s  %7s  %s\n' "$w1" "LOG" "LINES" "MATCH" "RESULT"
+    for ((c = 0; c < n; c++)); do
+      r="${LP[c]}/${LC[c]}"; [ "${LM[c]}" = current ] || r+=" (previous)"
+      ln_=-; hi_=-; st="not read (stopped)"
+      if [ -f "$fd/$c.rc" ]; then
+        read -r ln_ hi_ < "$fd/$c.meta" 2>/dev/null || { ln_=0; hi_=0; }
+        rc_=$(cat "$fd/$c.rc")
+        if [ "$rc_" = 0 ]; then st=ok; [ "$hi_" -le "$per" ] || st="ok - first $per matches kept (KDASH_FIND_MAX_LINES)"
+        elif grep -qi 'forbidden' "$fd/$c.err"; then st="no access (RBAC: pods/log)"
+        elif grep -qiE 'waiting to start|ContainerCreating|PodInitializing' "$fd/$c.err"; then st="not started"
+        elif grep -qi 'previous terminated container' "$fd/$c.err"; then st="no previous instance"
+        else case "$rc_" in 124|137) st="INCOMPLETE: stopped after ${lt}s" ;; 143) st="INCOMPLETE: stopped" ;; *) st="failed: $(head -1 "$fd/$c.err" | head -c 70)" ;; esac
+        fi
+        nread=$((nread + 1)); nlines=$((nlines + ${ln_:-0})); nhit=$((nhit + ${hi_:-0}))
+        [ "$rc_" = 0 ] || [ "${ln_:-0}" != 0 ] || { ln_=-; hi_=-; }
+      fi
+      if [ "$nlok" = 1 ]; then
+        nodelog_result "$fd/$c.oldn"; st+=", $NODELOG_RESULT"; olderfiles=$((olderfiles + NODELOG_READ))
+      fi
+      printf '%-*s  %10s  %7s  %s\n' "$w1" "$r" "$ln_" "$hi_" "$st"
+    done
+    if [ "$nlok" = 1 ]; then printf '\nRotated history: %s file(s) read from nodes; per-log coverage and failures appear above.\n' "$olderfiles"
+    else nodelog_can || true; printf '\nNot searched: the older log files the kubelet rotated - %s.\n' "$NODELOG_WHY"; fi
+    printf 'Matching lines of all logs, oldest first (G jumps to the newest); each line is tagged [pod/container]:\n'
+    printf -- '----------------------------------------------------------------------------------------------------\n'
+    cat "$fd"/*.hits 2>/dev/null | LC_ALL=C sort -s -k1,1
+    [ "$nhit" -gt 0 ] || printf '(no line matched)\n'
+  } > "$d/found"
+  printf '%s' "/$pat in $label: $nread of $n logs read, $nlines lines, $nhit matching$([ "$stopped" = 0 ] || printf ' - STOPPED EARLY')" > "$d/found.info"
+  INSPECTOR_SEARCH="$pat"; INSPECTOR_ONLY=0; INSPECTOR_JUMPED=""
+  declare -F audit >/dev/null && audit LOG_FIND_END "namespace=$ns scope=$scope logs=$nread/$n lines=$nlines matches=$nhit stopped=$stopped"
+  return 0
+}
 inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   local ns="$1" pod="$2" d="$3" pane="${INSPECTOR_PANE:-summary}" loaded="" reload=1 viewdirty=1 rows_stale=1
   local body="$3/body" view="$3/view" matchf="$3/matches"
@@ -7975,18 +8688,26 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   local container file="" target=0 idx=0 cline="" pinfo=""
   # speed: one frame per key through ui_flush (only changed lines are sent, no screen clear),
   # and what a scroll key cannot change is not looked up again
-  local ifl=1 ptitle="" ptitle_for="" crow="" crow_key="" rgen=0 frame btxt nb t_
+  local ifl=1 ptitle="" ptitle_for="" crow="" crow_key="" rgen=0 frame btxt nb t_ lnote="" wrapped=0
+  # n / N step from the match they jumped to (ijl), as long as the pane was not scrolled
+  # since (ijo = the offset shown after that jump) - a match on the last screen is not
+  # at the top, so the offset alone would find the same match again
+  local ijl="" ijo="" ijn=0
+  # the search box (/ find, & only matching lines): typed in place, matches update as you type
+  local ityping=0 ibad=0 sv_search="" sv_only=0
+  local iopen="" iwas_t="" iwas_b="" icancel=0    # / waits for the whole log to be read (iopen = / or &)
   container="$(inspect_container_for "$ns" "$pod")"     # never a container of another pod
   local INSPECTOR_REFRESH_EVENTS=0
   INSPECTOR_PANE=""
   inspector_limits          # tail/bytes/follow defaults must exist in this shell too
   while :; do
     # bar + framed header (4), the key rows (3, more when a narrow screen wraps them), 1 message row
-    inspector_size; picker_colors; inspector_keylines; rows=$((INSPECTOR_ROWS - 6 - ${#IK_LINES[@]})); [ "$rows" -ge 3 ] || rows=3
+    inspector_size; picker_colors; inspector_keylines; rows=$((INSPECTOR_ROWS - 6 - ${#IK_LINES[@]})); [ "$ityping" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3
     if [ "$loaded" != "$pane" ] || [ "$reload" = 1 ]; then
       picker_colors
       ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $(inspector_pane_title "$pane") "
       printf '\033[H\033[2J%s\n %spod%s        %s%s%s\n\n %sreading %s ...  q / Esc cancels%s\n' "$UI_BAR" "$PC_D" "$PC_R" "$PC_B" "$pod" "$PC_R" "$PC_D" "$pane" "$PC_R"
+      [ -z "$lnote" ] || printf ' %s%s%s\n' "$PC_D" "$lnote" "$PC_R"; lnote=""
       # Keep navigation available during a slow read. KC supplies request-timeout.
       (
         trap 'for inspector_child in $(jobs -pr); do kill "$inspector_child" 2>/dev/null || true; done; exit 130' TERM INT
@@ -8004,20 +8725,41 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
           current|previous)
             if [ -z "$container" ]; then container="$(awk -F '\t' 'NF >= 2 {print $2; exit}' "$d/rows" 2>/dev/null)"; fi
             inspector_logs "$ns" "$pod" "$container" "$pane" "$body" ;;
+          found) if [ -s "$d/found" ]; then cat "$d/found" > "$body"; else printf 'No search yet: F searches the logs of every container of this pod, its workload or the namespace.\n' > "$body"; fi ;;
         esac
       ) & pid=$!
       while kill -0 "$pid" 2>/dev/null; do
         INSPECTOR_KEY=""; IFS= read -rsn1 -t 0.1 INSPECTOR_KEY </dev/tty || true
+        # an arrow or page key pressed while the read runs is not Esc: drop the sequence
+        if [ "$INSPECTOR_KEY" = $'\033' ]; then
+          t_=""; IFS= read -rsn1 -t 0.15 t_ </dev/tty || t_=""
+          if [ "$t_" = '[' ] || [ "$t_" = O ]; then
+            while IFS= read -rsn1 -t 0.15 t_ </dev/tty; do case "$t_" in [@-~]) break ;; esac; done
+            INSPECTOR_KEY=""
+          fi
+        fi
         case "$INSPECTOR_KEY" in
           q|b|$'\033')
             kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
+            # the whole-log read that / started: stop it, keep the loaded lines, open the box
+            if [ -n "$iopen" ]; then icancel=1; break; fi
             return 0 ;;
           Q) kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; kdash_quit "loading" ;;
           X) interactive_toggle; msg="$INTERACTIVE_MSG" ;;
         esac
       done
       wait "$pid" 2>/dev/null || true
+      if [ "$icancel" = 1 ]; then
+        INSPECTOR_TAIL_SET="$iwas_t"; INSPECTOR_BYTES_SET="$iwas_b"; [ -n "$iwas_t" ] || unset INSPECTOR_TAIL_SET; [ -n "$iwas_b" ] || unset INSPECTOR_BYTES_SET
+        msg="whole-log read stopped - the search covers the $(cat "$body.info" 2>/dev/null)"
+      fi
       INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; viewdirty=1; ifl=1; rgen=$((rgen + 1))
+      if [ -n "$iopen" ]; then         # the read / asked for is done (or stopped): open the box now
+        sv_search="${INSPECTOR_SEARCH:-}"; sv_only="${INSPECTOR_ONLY:-0}"; ityping=1; ibad=0
+        if [ "$iopen" = '&' ]; then INSPECTOR_ONLY=1; else INSPECTOR_ONLY=0; fi
+        ue_begin search ""; INSPECTOR_SEARCH=""; iopen=""; icancel=0
+        continue                         # the rows are counted again with the box (3 rows) in them
+      fi
       [ "$pane" != summary ] || rows_stale=1      # the summary pane shows per-container state
       if [ -z "$container" ]; then container="$(awk -F '\t' 'NF >= 2 {print $2; exit}' "$d/rows" 2>/dev/null)"; fi
       [ "$keep_offset" = 1 ] || offset=0
@@ -8032,12 +8774,22 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       # A new search starts at its first match, which is what an operator expects.
       # Only when the search text changes: reloads, follow and resizes keep the position.
       if [ -n "${INSPECTOR_SEARCH:-}" ] && [ "$matches" -gt 0 ] && [ "$INSPECTOR_SEARCH" != "${INSPECTOR_JUMPED:-}" ]; then
-        cur=1; offset=$(($(awk 'NR == 1 {print $1}' "$matchf") - 1)); msg="match 1/$matches"
+        cur=1; ijl=$(awk 'NR == 1 {print $1}' "$matchf"); offset=$((ijl - 1)); ijn=1; msg="match 1/$matches"
+      elif [ -n "${INSPECTOR_SEARCH:-}" ] && [ "$matches" = 0 ] && [ "$INSPECTOR_SEARCH" != "${INSPECTOR_JUMPED:-}" ]; then
+        # say what was searched, so "0" is not mistaken for "everything was searched"
+        case "$pane" in
+          current|previous) t_="$(cat "$body.info" 2>/dev/null)"
+            msg="no match for /$INSPECTOR_SEARCH in ${t_%%,*} of ${container:-the container} - F searches every container and pod"
+            case "$t_" in *"current file only - "*) msg+=" (${t_##*current file only - })" ;; esac ;;
+          found) msg="no match for /$INSPECTOR_SEARCH" ;;
+          *) msg="no match for /$INSPECTOR_SEARCH in this pane ($total lines) - l searches the log, F every container and pod" ;;
+        esac
       fi
       INSPECTOR_JUMPED="${INSPECTOR_SEARCH:-}"
     fi
     [ "$offset" -lt 0 ] && offset=0
     [ "$offset" -le "$((count > rows ? count - rows : 0))" ] || offset=$((count > rows ? count - rows : 0))
+    [ "$ijn" = 0 ] || { ijo=$offset; ijn=0; }
     picker_colors
     # title bar, pod, container, then a rule that says where in the pane we are
     local c_n="" c_rd="" c_rs="" c_st="" c_lx="" c_im="" stc hdr
@@ -8066,15 +8818,16 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     pinfo="rows $((count ? offset + 1 : 0))-$((offset + rows < count ? offset + rows : count)) / $count"
     # what was read (log panes: lines, size, complete or not); wrap and JSON state is on the READ key line
     [ "${INSPECTOR_VIEW_LOGICAL:-$total}" = "$total" ] || pinfo="$pinfo ${PC_MID} ${INSPECTOR_VIEW_LOGICAL} shown"
-    case "$pane" in
-      current|previous) if [ -s "$body.info" ]; then pinfo="$pinfo ${PC_MID} $(< "$body.info")"; else pinfo="$pinfo ${PC_MID} $total lines"; fi ;;
-      *) pinfo="$pinfo ${PC_MID} $total lines" ;;
-    esac
-    [ -z "${INSPECTOR_SEARCH:-}" ] || {
+    [ -z "${INSPECTOR_SEARCH:-}" ] || [ "$pane" = found ] || {
       if [ "${INSPECTOR_ONLY:-0}" = 1 ]; then pinfo="$pinfo ${PC_MID} only /$INSPECTOR_SEARCH ($matches)"
       else pinfo="$pinfo ${PC_MID} /$INSPECTOR_SEARCH ($matches matching)"; fi; }
     [ "${INSPECTOR_WRAP:-1}" = 1 ] || [ "$hoff" = 0 ] || pinfo="$pinfo ${PC_MID} pan +$hoff"
     case "${INSPECTOR_LEVEL_NAME:-all}" in all) ;; *) pinfo="$pinfo ${PC_MID} level $INSPECTOR_LEVEL_NAME" ;; esac
+    case "$pane" in
+      current|previous) if [ -s "$body.info" ]; then pinfo="$pinfo ${PC_MID} $(< "$body.info")"; else pinfo="$pinfo ${PC_MID} $total lines"; fi ;;
+      found) pinfo="$pinfo ${PC_MID} $(cat "$d/found.info" 2>/dev/null)" ;;
+      *) pinfo="$pinfo ${PC_MID} $total lines" ;;
+    esac
     ui_vlen "$pinfo"; [ "$UI_VL" -le $((INSPECTOR_COLS - 12)) ] || { pinfo="${pinfo:0:$((INSPECTOR_COLS - 14))}~"; }
     bx_bot "$IW" "${PC_B}${pinfo}${PC_R}" ""
     frame=$'\033[H'"${hdr}${BX_LINE}"$'\033[K\n'
@@ -8085,9 +8838,59 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     for ((; nb < rows; nb++)); do frame+=$'\033[K\n'; done
     # k9s-style hints: panes, reading tools, moving / leaving (framed panel, or wrapped rows on small screens)
     local kl
+    if [ "$ityping" = 1 ]; then
+      local sbt="SEARCH" sbr sbk="Enter keep   Tab only matching lines   Up/Down earlier   Esc cancel"
+      [ "${INSPECTOR_ONLY:-0}" != 1 ] || { sbt="SHOW ONLY MATCHING LINES"; sbk="Enter keep   Tab all lines with the matches marked   Up/Down earlier   Esc cancel"; }
+      sbr="$matches matching line$([ "$matches" = 1 ] || printf s) of $total"
+      [ -n "$UE_T" ] || sbr="type to search this pane ($total lines)"
+      [ "$ibad" = 0 ] || sbr="not a valid pattern yet"
+      case "$pane" in current|previous)
+        [ "${KDASH_SEARCH_ALL_LINES:-1}" = 0 ] || [ ! -f "$body.more" ] || sbk="Enter keep (reads every line of the log first)   ${sbk#Enter keep   }" ;;
+      esac
+      ue_view $(( INSPECTOR_COLS - 9 ))
+      ui_search_box "$INSPECTOR_COLS" "$sbt" "$sbr" "/ $UE_VIS" $(( UE_CUR + 2 )) "$sbk"
+      frame+="$UI_SBOX"$'\n'
+    fi
     for kl in "${IK_LINES[@]}"; do frame+="${kl}"$'\033[K\n'; done
     if [ -n "$msg" ]; then frame+=$'\033[1;33m'" ${msg:0:$((INSPECTOR_COLS - 2))}"$'\033[0m\033[K'; else frame+=$'\033[K'; fi
-    ui_flush "$frame" "detail:$INSPECTOR_COLS:$INSPECTOR_ROWS" "$ifl"; ifl=1
+    ui_flush "$frame" "detail:$INSPECTOR_COLS:$INSPECTOR_ROWS:$ityping" "$ifl"; ifl=1
+    if [ "$ityping" = 1 ]; then
+      # keys of the search box; keys typed ahead are taken together, then the pane is drawn once
+      while :; do
+        ue_key
+        case "$UE_ACT" in
+          edit)
+            if [ -z "$UE_T" ]; then INSPECTOR_SEARCH=""; ibad=0
+            elif inspector_pattern_ok "$UE_T"; then INSPECTOR_SEARCH="$UE_T"; ibad=0
+            else ibad=1; fi
+            INSPECTOR_JUMPED="" ;;
+          tab) INSPECTOR_ONLY=$(( 1 - ${INSPECTOR_ONLY:-0} )); offset=0 ;;
+          enter|cancel) break ;;
+        esac
+        read -t 0 </dev/tty 2>/dev/null || break
+      done
+      case "$UE_ACT" in
+        enter)
+          ityping=0; ue_remember
+          if [ -z "$UE_T" ]; then INSPECTOR_SEARCH=""; INSPECTOR_ONLY=0; msg="search cleared"
+          elif [ "$ibad" = 1 ]; then INSPECTOR_SEARCH="$sv_search"; INSPECTOR_ONLY=$sv_only; msg="not a valid regular expression: $UE_T"
+          else
+            INSPECTOR_SEARCH="$UE_T"
+            declare -F audit >/dev/null && audit INSPECT_SEARCH "namespace=$ns pod=$pod pane=$pane only=${INSPECTOR_ONLY:-0} pattern=$(printf '%s' "$UE_T" | head -c 120)"
+            # a search covers the whole log: when only the newest lines (or a byte cap's
+            # worth) are loaded, the whole log is read first
+            case "$pane" in current|previous)
+              if [ "${KDASH_SEARCH_ALL_LINES:-1}" != 0 ] && [ -f "$body.more" ]; then
+                INSPECTOR_TAIL_SET=-1; INSPECTOR_BYTES_SET="${KDASH_LOG_MAX_BYTES:-268435456}"; reload=1; INSPECTOR_JUMPED=""
+                lnote="searching the whole log: reading all of it first, older rotated files too when allowed (up to $(xfer_hsize "$INSPECTOR_BYTES_SET"))"
+              fi ;;
+            esac
+          fi ;;
+        cancel) ityping=0; INSPECTOR_SEARCH="$sv_search"; INSPECTOR_ONLY=$sv_only; INSPECTOR_JUMPED="$sv_search"; msg="search unchanged" ;;
+      esac
+      viewdirty=1; [ "$ityping" = 1 ] && ifl=0 || ifl=1
+      continue
+    fi
     if [ "$follow" = 1 ] && { [ "$pane" = current ] || [ "$pane" = previous ]; }; then
       [ "$offset" -lt "$((count > rows ? count - rows : 0))" ] && atbottom=0 || atbottom=1
       if ! inspector_key "${INSPECTOR_FOLLOW_SECS:-5}"; then
@@ -8117,17 +8920,36 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
       X) interactive_toggle; msg="$INTERACTIVE_MSG"; rows_stale=1 ;;
       j) offset=$((offset + 1)) ;; k) offset=$((offset - 1)) ;; ' ') offset=$((offset + rows)) ;; b) offset=$((offset - rows)) ;;
       g) offset=0 ;; G) offset=999999 ;;
-      '/') if inspector_search_prompt "$pane" find; then viewdirty=1; fi ;;
-      '&') if inspector_search_prompt "$pane" only; then viewdirty=1; fi ;;
+      '/'|'&') # the search box opens in place; Up recalls the earlier searches
+         # a log pane with only the newest lines loaded: the whole log is read first, so the
+         # count as you type covers every line (Esc while it reads: search the loaded lines)
+         case "$pane" in current|previous)
+           if [ "${KDASH_SEARCH_ALL_LINES:-1}" != 0 ] && [ -f "$body.more" ]; then
+             iwas_t="${INSPECTOR_TAIL_SET:-}"; iwas_b="${INSPECTOR_BYTES_SET:-}"; iopen="$INSPECTOR_KEY"
+             INSPECTOR_TAIL_SET=-1; INSPECTOR_BYTES_SET="${KDASH_LOG_MAX_BYTES:-268435456}"; reload=1
+             lnote="reading the whole log first, so the search covers every line (older rotated files too when allowed) - Esc searches the loaded lines"
+             continue
+           fi ;;
+         esac
+         sv_search="${INSPECTOR_SEARCH:-}"; sv_only="${INSPECTOR_ONLY:-0}"; ityping=1; ibad=0; ifl=1
+         if [ "$INSPECTOR_KEY" = '&' ]; then INSPECTOR_ONLY=1; else INSPECTOR_ONLY=0; fi
+         ue_begin search ""; INSPECTOR_SEARCH=""; viewdirty=1 ;;
+      F) if inspector_find_all "$ns" "$pod" "$d"; then pane=found; reload=1; viewdirty=1; offset=0; fi ;;
       n|N) if [ "$matches" -gt 0 ] && [ -s "$matchf" ]; then
-             read -r target idx <<< "$(awk -v cur="$offset" -v back="$([ "$INSPECTOR_KEY" = N ] && printf 1 || printf 0)" '
+             if [ -n "$ijl" ] && [ "$offset" = "$ijo" ]; then t_=$((ijl - 1)); else t_=$offset; fi
+             read -r target idx <<< "$(awk -v cur="$t_" -v back="$([ "$INSPECTOR_KEY" = N ] && printf 1 || printf 0)" '
                { L[NR] = $1 }
                END { if (NR == 0) { print "0 0"; exit }
-                 if (!back) { for (k = 1; k <= NR; k++) if (L[k] > cur + 1) { print L[k], k; exit }
-                              print L[1], 1; exit }
-                 for (k = NR; k >= 1; k--) if (L[k] < cur + 1) { print L[k], k; exit }
-                 print L[NR], NR }' "$matchf")"
-             if [ "${target:-0}" -gt 0 ]; then offset=$((target - 1)); msg="match $idx/$matches"; fi
+                 if (!back) { for (k = 1; k <= NR; k++) if (L[k] > cur + 1) { print L[k], k, 0; exit }
+                              print L[1], 1, 1; exit }
+                 for (k = NR; k >= 1; k--) if (L[k] < cur + 1) { print L[k], k, 0; exit }
+                 print L[NR], NR, 1 }' "$matchf")"
+             read -r target idx wrapped <<< "$target $idx"
+             if [ "${target:-0}" -gt 0 ]; then offset=$((target - 1)); ijl=$target; ijn=1; msg="match $idx/$matches"
+               if [ "${wrapped:-0}" = 1 ] && [ "$matches" -gt 1 ]; then
+                 if [ "$INSPECTOR_KEY" = N ]; then msg+=" - continued from the bottom"; else msg+=" - continued from the top"; fi
+               fi
+             fi
            else msg="no match for /${INSPECTOR_SEARCH:-} (press / to search)"; fi ;;
       L) inspector_level_cycle; viewdirty=1; offset=0; msg="log level: $INSPECTOR_LEVEL_NAME" ;;
       W) if [ "${INSPECTOR_WRAP:-1}" = 1 ]; then INSPECTOR_WRAP=0; msg="wrap off - <- and -> pan sideways, > marks a longer line"
@@ -8143,7 +8965,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
                   reload=1; msg="reading the newest $INSPECTOR_TAIL_SET lines"; fi ;;
            *) msg="+ applies to the log panes (l, p)" ;; esac ;;
       A) case "$pane" in current|previous)
-             INSPECTOR_TAIL_SET=-1; INSPECTOR_BYTES_SET="${KDASH_LOG_MAX_BYTES:-268435456}"; reload=1; msg="reading every line the kubelet keeps (up to $(xfer_hsize "$INSPECTOR_BYTES_SET"))" ;;
+             INSPECTOR_TAIL_SET=-1; INSPECTOR_BYTES_SET="${KDASH_LOG_MAX_BYTES:-268435456}"; reload=1; msg="reading the whole log, older rotated files too when allowed (up to $(xfer_hsize "$INSPECTOR_BYTES_SET"))" ;;
            *) msg="A applies to the log panes (l, p)" ;; esac ;;
       f) case "$pane" in
            current|previous) follow=$((1 - follow)); reload=1; keep_offset=1; viewdirty=1
@@ -8157,6 +8979,17 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
            msg="exported $xn complete line(s) to $file"
            declare -F audit >/dev/null && audit INSPECT_EXPORT "namespace=$ns pod=$pod container=${container:--} pane=$pane lines=$xn search=${INSPECTOR_SEARCH:-none} level=${INSPECTOR_LEVEL_NAME:-all} file=$file"
          else msg='export failed: is the report directory writable?'; fi ;;
+      '>') # quick export: the screen, then the whole pane in whole lines (search / level as shown)
+         inspector_view_build "$body" "$view.x" "$matchf.x" 0
+         INSPECTOR_VIEW_LINES="$count"; INSPECTOR_MATCHES="$matches"
+         local xt="pod detail, pane $pane | pod $ns/$pod | container ${container:-(none)}"
+         case "$pane" in current|previous) [ ! -s "$body.info" ] || xt+=" | read: $(< "$body.info")" ;;
+                         found) [ ! -s "$d/found.info" ] || xt+=" | $(< "$d/found.info")" ;; esac
+         [ -z "${INSPECTOR_SEARCH:-}" ] || xt+=" | search /$INSPECTOR_SEARCH$([ "${INSPECTOR_ONLY:-0}" != 1 ] || printf ' (only matching lines)')"
+         [ "${INSPECTOR_LEVEL_NAME:-all}" = all ] || xt+=" | level $INSPECTOR_LEVEL_NAME"
+         quick_export "${pod}_${pane}" "$xt" "$view.x" "THE WHOLE $(printf '%s' "$pane" | tr '[:lower:]' '[:upper:]') PANE" \
+           "logs and describe output can hold sensitive values (tokens, addresses, payloads) - review before sharing"
+         msg="$QX_MSG" ;;
       '?') inspector_help ;;
       r) if [ "$pane" = events ] || [ "$pane" = explain ]; then
            # Collection runs in the same cancellable worker on the next pass.
@@ -8229,6 +9062,28 @@ END {
   for (k in CNT) printf "%d\t%d\t%s\n", SEV[k], CNT[k], k > sumf
 }'
 
+# rows of the pod list (sorted) -> one file per column for picker_load. A row is split as
+# bash "read" with IFS=tab splits it: runs of tabs are one break, the last field keeps
+# the rest of the line.
+PICKER_COLS_AWK='
+BEGIN { split("KEY CLS ATT RST ML SRCH A B C1 C2 C3 C4 C5 TNS TPOD TST TRD TRS TCPU TMEM TLIM TND", NM, " ")
+  for (i = 1; i <= 22; i++) { F[i] = d "/pk." NM[i]; printf "" > F[i] }
+  wns = 9; wst = 6; wnd = 4; wpod = 3 }
+{ ln = $0; gsub(/\t+/, "\t", ln); sub(/^\t/, "", ln); sub(/\t$/, "", ln)
+  n = split(ln, x, "\t"); for (i = n + 1; i <= 15; i++) x[i] = ""
+  for (i = 16; i <= n; i++) x[15] = x[15] "\t" x[i]
+  st = x[10]; sub(/ +$/, "", st); rd = x[11]; gsub(/ /, "", rd); rs = x[12]; gsub(/ /, "", rs)
+  c3 = x[13]; sub(/^[ \t]+/, "", c3); sub(/[ \t]+$/, "", c3); p = index(c3, " ")
+  if (p) { cu = substr(c3, 1, p - 1); mu = substr(c3, p + 1); sub(/^[ \t]+/, "", mu) } else { cu = c3; mu = "" }
+  lm = x[14]; gsub(/ /, "", lm)
+  v[1] = x[2] "/" x[3]; v[2] = x[4]; v[3] = x[5]; v[4] = x[6]; v[5] = x[7]; v[6] = x[8]; v[7] = x[9]; v[8] = x[10]
+  v[9] = x[11]; v[10] = x[12]; v[11] = x[13]; v[12] = x[14]; v[13] = x[15]
+  v[14] = x[2]; v[15] = x[3]; v[16] = st; v[17] = rd; v[18] = rs; v[19] = cu; v[20] = mu; v[21] = lm; v[22] = x[15]
+  for (i = 1; i <= 22; i++) print v[i] > F[i]
+  if (length(x[2]) > wns) wns = length(x[2]); if (length(st) > wst) wst = length(st)
+  if (length(x[15]) > wnd) wnd = length(x[15]); if (length(x[3]) > wpod) wpod = length(x[3]) }
+END { for (i = 1; i <= 22; i++) close(F[i]); print wns, wst, wnd, wpod > (d "/pk.widths") }'
+
 picker_colors() {
   if [ "${COLOR:-1}" = 1 ]; then
     PC_R=$'\033[0m'; PC_B=$'\033[1m'; PC_D=$'\033[90m'; PC_INV=$'\033[7m'; PC_OK=$'\033[32m'; PC_BAD=$'\033[1;31m'
@@ -8260,7 +9115,151 @@ ui_vlen() { # text -> UI_VL (visible characters; no escape codes in the text)
 # what the terminal shows, only the lines that differ are sent - a cursor move repaints
 # two rows instead of the whole screen, which is what makes scrolling quick over SSH.
 # full=1 (or another key, or KDASH_REDRAW=full) sends everything.
+# While kdash owns the screen the terminal does not echo: a key pressed while a slow
+# read runs must not print "^[[A" into the frame (only changed lines are repainted, so
+# it would stay). Prompts read through ui_edit_line, which draws what is typed itself.
+UI_STTY0=""; UI_QUIET=0
+ui_tty_quiet() { # on | off | restore
+  [ -t 0 ] || [ -r /dev/tty ] || return 0
+  case "$1" in
+    on)  [ -n "$UI_STTY0" ] || UI_STTY0="$(stty -g </dev/tty 2>/dev/null)"
+         stty -echo </dev/tty 2>/dev/null && UI_QUIET=1 ;;
+    off) stty echo </dev/tty 2>/dev/null; UI_QUIET=0 ;;
+    restore) [ -z "$UI_STTY0" ] || stty "$UI_STTY0" </dev/tty 2>/dev/null; UI_QUIET=0 ;;
+  esac
+  return 0
+}
+# One-line editor for every prompt. The arrow keys move inside the text and never type
+# escape bytes into it; Up / Down recall the earlier entries of the same prompt (this
+# session only); Home / End / Ctrl-A / Ctrl-E, Delete, Backspace, Ctrl-U (to the start),
+# Ctrl-W (word). Enter accepts (0), Esc, Ctrl-C or Ctrl-D on an empty line cancel (1).
+# The text is drawn after PROMPT on the current row and scrolls sideways when long.
+declare -A UI_HIST=()
+# One key of the line editor shared by every prompt and search box. State: UE_T (text),
+# UE_POS (cursor), UE_H (history of this prompt), UE_HI (position in it). After a key,
+# UE_ACT says what happened: edit, move, enter, cancel, tab. ue_begin KEY TEXT starts.
+UE_T=""; UE_POS=0; UE_HI=0; UE_ACT=""; UE_KEY=""; declare -a UE_H=()
+ue_begin() { # history-key [initial text]
+  UE_KEY="${1:-}"; UE_T="${2:-}"; UE_POS=${#UE_T}; UE_H=()
+  [ -z "$UE_KEY" ] || [ -z "${UI_HIST[$UE_KEY]:-}" ] || mapfile -t UE_H <<< "${UI_HIST[$UE_KEY]}"
+  UE_HI=${#UE_H[@]}
+}
+ue_remember() { # store UE_T in the history of this prompt (session only)
+  local x
+  [ -n "$UE_KEY" ] && [ -n "$UE_T" ] && [ "$UE_T" != "${UE_H[${#UE_H[@]}-1]:-}" ] || return 0
+  UE_H+=("$UE_T"); [ "${#UE_H[@]}" -le 50 ] || UE_H=("${UE_H[@]:1}")
+  printf -v x '%s\n' "${UE_H[@]}"; UI_HIST[$UE_KEY]="${x%$'\n'}"
+}
+ue_key() { # [timeout] -> reads one key (an escape sequence whole) and applies it; 1 = no key
+  local c q k2 x t="${1:-}"
+  UE_ACT=""
+  if [ -n "$t" ]; then IFS= read -rsn1 -t "$t" c </dev/tty || return 1; else IFS= read -rsn1 c </dev/tty || { UE_ACT=cancel; return 0; }; fi
+  case "$c" in
+    '') UE_ACT=enter ;;
+    $'\033') q=""
+       if IFS= read -rsn1 -t 0.15 k2 </dev/tty; then
+         q="$k2"
+         if [ "$k2" = '[' ] || [ "$k2" = O ]; then
+           while IFS= read -rsn1 -t 0.15 k2 </dev/tty; do q+="$k2"; case "$k2" in [@-~]) [ "${#q}" -gt 1 ] && break ;; esac; done
+         fi
+       fi
+       UE_ACT=move
+       case "$q" in
+         '') UE_ACT=cancel ;;
+         '[D'|OD) [ "$UE_POS" -le 0 ] || UE_POS=$((UE_POS - 1)) ;;
+         '[C'|OC) [ "$UE_POS" -ge "${#UE_T}" ] || UE_POS=$((UE_POS + 1)) ;;
+         '[H'|OH|'[1~'|'[7~') UE_POS=0 ;;
+         '[F'|OF|'[4~'|'[8~') UE_POS=${#UE_T} ;;
+         '[3~') UE_T="${UE_T:0:UE_POS}${UE_T:UE_POS+1}"; UE_ACT=edit ;;
+         '[A'|OA) if [ "$UE_HI" -gt 0 ]; then UE_HI=$((UE_HI - 1)); UE_T="${UE_H[UE_HI]}"; UE_POS=${#UE_T}; UE_ACT=edit; fi ;;
+         '[B'|OB) if [ "$UE_HI" -lt "${#UE_H[@]}" ]; then UE_HI=$((UE_HI + 1)); UE_T="${UE_H[UE_HI]:-}"; UE_POS=${#UE_T}; UE_ACT=edit; fi ;;
+         '[Z') UE_ACT=tab ;;                                   # Shift-Tab
+         b|B) while [ "$UE_POS" -gt 0 ] && [ "${UE_T:UE_POS-1:1}" = ' ' ]; do UE_POS=$((UE_POS - 1)); done
+              while [ "$UE_POS" -gt 0 ] && [ "${UE_T:UE_POS-1:1}" != ' ' ]; do UE_POS=$((UE_POS - 1)); done ;;
+         f|F) while [ "$UE_POS" -lt "${#UE_T}" ] && [ "${UE_T:UE_POS:1}" = ' ' ]; do UE_POS=$((UE_POS + 1)); done
+              while [ "$UE_POS" -lt "${#UE_T}" ] && [ "${UE_T:UE_POS:1}" != ' ' ]; do UE_POS=$((UE_POS + 1)); done ;;
+       esac ;;
+    $'\t') UE_ACT=tab ;;
+    $'\177'|$'\b') [ "$UE_POS" -le 0 ] || { UE_T="${UE_T:0:UE_POS-1}${UE_T:UE_POS}"; UE_POS=$((UE_POS - 1)); }; UE_ACT=edit ;;
+    $'\001') UE_POS=0; UE_ACT=move ;; $'\005') UE_POS=${#UE_T}; UE_ACT=move ;;
+    $'\002') [ "$UE_POS" -le 0 ] || UE_POS=$((UE_POS - 1)); UE_ACT=move ;; $'\006') [ "$UE_POS" -ge "${#UE_T}" ] || UE_POS=$((UE_POS + 1)); UE_ACT=move ;;
+    $'\025') UE_T="${UE_T:UE_POS}"; UE_POS=0; UE_ACT=edit ;;
+    $'\013') UE_T="${UE_T:0:UE_POS}"; UE_ACT=edit ;;
+    $'\027') x="${UE_T:0:UE_POS}"; while [ -n "$x" ] && [ "${x: -1}" = ' ' ]; do x="${x%?}"; done; x="${x%"${x##* }"}"
+             UE_T="$x${UE_T:UE_POS}"; UE_POS=${#x}; UE_ACT=edit ;;
+    $'\003') UE_ACT=cancel ;;
+    $'\004') if [ -z "$UE_T" ]; then UE_ACT=cancel; else UE_T="${UE_T:0:UE_POS}${UE_T:UE_POS+1}"; UE_ACT=edit; fi ;;
+    [[:cntrl:]]) UE_ACT=move ;;
+    *) UE_T="${UE_T:0:UE_POS}$c${UE_T:UE_POS}"; UE_POS=$((UE_POS + 1)); UE_ACT=edit ;;
+  esac
+  return 0
+}
+ue_view() { # width -> UE_VIS (the part of the text that fits) and UE_CUR (cursor column in it)
+  local av="$1" ofs=0
+  [ "$av" -ge 8 ] || av=8
+  if [ "${#UE_T}" -gt "$av" ]; then ofs=$(( UE_POS > av ? UE_POS - av : 0 )); fi
+  UE_VIS="${UE_T:ofs:av}"; UE_CUR=$(( UE_POS - ofs ))
+}
+# One-line prompt on the current row (the editor above; Tab is ignored here).
+ui_edit_line() { # var prompt [history-key] [initial text]
+  local __v="$1" pr="$2" pl x w rc=0 old_int intr=0
+  x="$pr"; while [[ "$x" =~ $'\033'\[[0-9\;?]*[A-Za-z] ]]; do x="${x/"${BASH_REMATCH[0]}"/}"; done; pl=${#x}
+  w=$(stty size </dev/tty 2>/dev/null); w=${w#* }; case "$w" in ''|*[!0-9]*) w=${KDASH_COLUMNS:-80} ;; esac
+  ue_begin "${3:-}" "${4:-}"
+  old_int="$(trap -p INT)"; trap 'intr=1' INT
+  printf '\033[?25h'
+  while :; do
+    if ! read -t 0 </dev/tty 2>/dev/null; then          # a paste is drawn once, not per character
+      ue_view $(( w - pl - 2 ))
+      printf '\r%s%s\033[K\r' "$pr" "$UE_VIS"; [ $(( pl + UE_CUR )) -le 0 ] || printf '\033[%dC' $(( pl + UE_CUR ))
+    fi
+    ue_key
+    [ "$intr" = 0 ] || { rc=1; break; }
+    case "$UE_ACT" in enter) break ;; cancel) rc=1; break ;; esac
+  done
+  if [ -n "$old_int" ]; then eval "$old_int"; else trap - INT; fi
+  ue_view $(( w - pl - 2 )); printf '\r%s%s\033[K\n' "$pr" "$UE_VIS"
+  [ "$rc" != 0 ] || ue_remember
+  printf -v "$__v" '%s' "$UE_T"
+  return "$rc"
+}
+# The search box: three framed rows. Title and count in the top border, the text with
+# its cursor in the middle, the keys in the bottom border.
+ui_search_box() { # width title right-info text cursor-col(-1 = none) keys -> UI_SBOX
+  local w="$1" t="$2" ri="$3" tx="$4" cc="$5" ks="$6" hz="─" tl="┌" tr="┐" bl="└" br="┘" vb="│" d="" b="" r="" rv="" x n mid
+  [ "${BARCHR:-unicode}" != ascii ] || { hz="-"; tl="+"; tr="+"; bl="+"; br="+"; vb="|"; }
+  if [ "${COLOR:-1}" = 1 ]; then d=$'\033[90m'; b=$'\033[1m'; r=$'\033[0m'; rv=$'\033[7m'; fi
+  [ "$w" -ge 30 ] || w=30
+  ui_vlen "$t"; x=$UI_VL; ui_vlen "$ri"; n=$(( w - 8 - x - UI_VL )); [ -n "$ri" ] || n=$(( w - 6 - x ))
+  [ "$n" -ge 1 ] || { ri=""; n=$(( w - 6 - x )); }
+  printf -v mid '%*s' "$n" ''; mid="${mid// /$hz}"
+  UI_SBOX="${d}${tl}${hz}${r} ${b}${t}${r} ${d}${mid}${r}${ri:+ $ri }${d}${hz}${tr}${r}"$'\033[K\n'
+  # middle: "/ text" with a block cursor
+  local body="$tx"
+  if [ "$cc" -ge 0 ] 2>/dev/null; then body="${tx:0:cc}${rv}${tx:cc:1}"; [ -n "${tx:cc:1}" ] || body+=" "; body+="${r}${b}${tx:cc+1}"; fi
+  ui_vlen "$tx"; n=$(( w - 4 - UI_VL )); [ "$cc" -lt 0 ] 2>/dev/null || [ "$cc" -lt "${#tx}" ] || n=$((n - 1)); [ "$n" -ge 0 ] || n=0
+  printf -v x '%*s' "$n" ''
+  UI_SBOX+="${d}${vb}${r} ${b}${body}${r}${x} ${d}${vb}${r}"$'\033[K\n'
+  ui_vlen "$ks"; n=$(( w - 5 - UI_VL )); [ -n "$ks" ] || n=$(( w - 3 ))
+  [ "$n" -ge 1 ] || { ks=""; n=$(( w - 3 )); }
+  printf -v mid '%*s' "$n" ''; mid="${mid// /$hz}"
+  UI_SBOX+="${d}${bl}${hz}${r}${ks:+ ${d}${ks}${r} }${d}${mid}${br}${r}"$'\033[K'
+}
 UI_FL_KEY=""; UI_FL_PREV=()
+# The module is also sourced on its own by integrations. Core initializes the
+# theme mapping before embedding this file; preserve that map when it exists.
+if ! declare -p UI_MAPK >/dev/null 2>&1; then
+  declare -a UI_MAPK=() UI_MAPV=()
+fi
+# one line, colour roles -> theme colours (UI_ML); per line, as bash 4.4 is slow on a
+# replace over the whole frame
+ui_mapl() {
+  UI_ML="$1"; [[ "$UI_ML" == *$'\033['* ]] || return 0
+  local j
+  for ((j = 0; j < ${#UI_MAPK[@]}; j++)); do
+    [[ "$UI_ML" != *"${UI_MAPK[j]}"* ]] || UI_ML="${UI_ML//"${UI_MAPK[j]}"/"${UI_MAPV[j]}"}"
+  done
+}
 ui_flush() { # buffer key [full]
   local key="$2" i n pn out=""
   local -a L
@@ -8268,7 +9267,12 @@ ui_flush() { # buffer key [full]
   n=${#L[@]}; [ "$n" = 0 ] || [ -n "${L[n-1]}" ] || { unset 'L[n-1]'; n=$((n - 1)); }
   pn=${#UI_FL_PREV[@]}
   if [ "${3:-0}" = 1 ] || [ "$key" != "$UI_FL_KEY" ] || [ "${KDASH_REDRAW:-diff}" = full ] || [ "$pn" = 0 ]; then
-    printf '%s\033[J' "$1"
+    if [ "${#UI_MAPK[@]}" = 0 ]; then printf '%s\033[J' "$1"
+    else
+      for ((i = 0; i < n; i++)); do ui_mapl "${L[i]}"; out+="$UI_ML"$'\n'; done
+      [[ "$1" == *$'\n' ]] || out="${out%$'\n'}"
+      printf '%s\033[J' "$out"
+    fi
   else
     # a list that moved by one row: let the terminal scroll that band, then only the
     # rows that really differ (the cursor row, the new row) are sent
@@ -8289,12 +9293,73 @@ ui_flush() { # buffer key [full]
       fi
     fi
     for ((i = 0; i < n; i++)); do
-      [ "${L[i]}" = "${UI_FL_PREV[i]-}" ] || out+=$'\033['"$((i + 1))"';1H'"${L[i]#$'\033[H'}"
+      [ "${L[i]}" != "${UI_FL_PREV[i]-}" ] || continue
+      if [ "${#UI_MAPK[@]}" = 0 ]; then out+=$'\033['"$((i + 1))"';1H'"${L[i]#$'\033[H'}"
+      else ui_mapl "${L[i]#$'\033[H'}"; out+=$'\033['"$((i + 1))"';1H'"$UI_ML"; fi
     done
     out+=$'\033['"$((n + 1))"';1H'; [ "$n" -ge "$pn" ] || out+=$'\033[J'
     printf '%s' "$out"
   fi
   UI_FL_KEY="$key"; UI_FL_PREV=("${L[@]}")
+}
+
+# ---- quick export (>) ------------------------------------------------------------------
+# One key on every kdash screen - dashboard views, pod detail panes (logs, describe,
+# events, found), the pod / namespace / container lists and the file browser: what is on
+# the screen now AND the whole content behind it (every line and column of the view, the
+# pane or the list - nothing cut) go to one plain-text log file. Colours and cursor codes
+# are removed, trailing blanks trimmed. One file per press in KDASH_EXPORT_DIR (default
+# <report dir>/exports, mode 600); every export of the session is also appended to
+# kdash_session_<id>.log there, so one file holds them all, and latest.log points to the
+# newest. File names: kdash_<what>_<date-time>.log. Nothing is run against the
+# cluster for it; each export is audited (QUICK_EXPORT). QX_NOSCREEN=1: no screen part.
+qx_dir() { printf '%s' "${KDASH_EXPORT_DIR:-${KDASH_REPORT_DIR:-${HOME:-/tmp}/kdash_reports}/exports}"; }
+qx_safe() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-60; }
+qx_plain() { LC_ALL=C awk '{ gsub(/\033\[[0-9;?]*[A-Za-z]/, ""); gsub(/\033[()][0-9A-Za-z]/, ""); gsub(/\033[=>78DEMc]/, ""); gsub(/\r/, ""); sub(/[ \t]+$/, ""); print }'; }
+qx_align() { # TSV on stdin -> aligned plain columns (no column is cut)
+  LC_ALL=C awk -F '\t' '{ n[NR] = NF; for (i = 1; i <= NF; i++) { c[NR, i] = $i; if (length($i) > w[i]) w[i] = length($i) } }
+    END { for (r = 1; r <= NR; r++) { s = ""; for (i = 1; i <= n[r]; i++) s = s (i < n[r] ? sprintf("%-" w[i] "s  ", c[r, i]) : c[r, i]); sub(/ +$/, "", s); print s } }'
+}
+quick_export() { # what title [whole-file] [whole-title] [note] -> QX_FILE, QX_DISP, QX_MSG; 1 = failed
+  local what="$1" title="$2" full="${3:-}" ftitle="${4:-}" note="${5:-}" dir f base ts k=1 sn sl nl=0 hr
+  QX_FILE=""; QX_DISP=""; dir="$(qx_dir)"
+  if ! (umask 077; mkdir -p -- "$dir") 2>/dev/null || [ ! -w "$dir" ]; then
+    QX_MSG="export failed: $dir is not writable (KDASH_EXPORT_DIR names another folder)"; return 1
+  fi
+  printf -v ts '%(%Y%m%d-%H%M%S)T' -1
+  base="$dir/kdash_$(qx_safe "$what")_$ts"
+  f="$base.log"; while [ -e "$f" ]; do k=$((k + 1)); f="${base}_$k.log"; done
+  sl=${#UI_FL_PREV[@]}; [ "${QX_NOSCREEN:-0}" != 1 ] || sl=0
+  [ -z "$full" ] || [ ! -r "$full" ] || nl=$(LC_ALL=C awk 'END { print NR }' "$full")
+  hr="================================================================================"
+  if ! ( umask 077
+    {
+      printf '# kdash %s - quick export (key >)\n' "${KDASH_VERSION:-}"
+      printf '# screen   : %s\n' "$title"
+      printf '# context  : %s    namespace: %s\n' "${CTX_NAME:-current}" "${NS:-?}"
+      printf '# taken    : %s by %s on %s (session %s)\n' "$(date '+%Y-%m-%d %H:%M:%S %z')" "${USER:-$(id -un 2>/dev/null)}" "$(hostname 2>/dev/null)" "${AUDIT_SID:-?}"
+      [ -z "$note" ] || printf '# note     : %s\n' "$note"
+      printf '# a copy of what kdash showed - nothing was run against the cluster to make it\n'
+      if [ "$sl" -gt 0 ]; then
+        printf '\n%s\n ON THE SCREEN (%s rows, as you saw it)\n%s\n' "$hr" "$sl" "$hr"
+        printf '%s\n' "${UI_FL_PREV[@]}" | qx_plain
+      fi
+      if [ -n "$full" ]; then
+        printf '\n%s\n %s (%s lines, every line and column - nothing cut)\n%s\n' "$hr" "$ftitle" "$nl" "$hr"
+        qx_plain < "$full"
+      fi
+      printf '\n# end of export\n'
+    } > "$f" ) 2>/dev/null; then
+    rm -f -- "$f"; QX_MSG="export failed: could not write $f"; return 1
+  fi
+  sn="$dir/kdash_session_$(qx_safe "${AUDIT_SID:-$$}").log"
+  ( umask 077; { printf '\n'; cat -- "$f"; } >> "$sn" ) 2>/dev/null || true
+  ln -sfn -- "${f##*/}" "$dir/latest.log" 2>/dev/null || true     # the newest export, whatever its name
+  QX_FILE="$f"; QX_DISP="$f"
+  if [ -n "${HOME:-}" ] && [ "$HOME" != / ]; then case "$f" in "$HOME"/*) QX_DISP="~/${f#"$HOME"/}" ;; esac; fi
+  QX_MSG="exported to $QX_DISP"
+  declare -F audit >/dev/null && audit QUICK_EXPORT "screen=$what rows=$sl lines=$nl file=$f"
+  return 0
 }
 ui_bar() { # width left right [chip] -> UI_BAR
   local w="$1" l="$2" r="$3" chip="${4:-}" lv rv cv gap sp
@@ -8395,31 +9460,20 @@ picker_load() { # dir
   case "$PK_SORT" in restarts|cpu|mem|mempct) order=(-k1,1nr -k2,2 -k3,3) ;; esac
   PK_KEY=(); PK_CLS=(); PK_ATT=(); PK_RST=(); PK_ML=(); PK_SRCH=(); PK_A=(); PK_B=(); PK_C1=(); PK_C2=(); PK_C3=(); PK_C4=(); PK_C5=()
   : > "$d/pick.hdr"; : > "$d/pick.sum"
-  if [ -r "${MODEL:?}/pods.tsv" ]; then
-    while IFS=$'\t' read -r sk ns pod c att rst ml s a b r1 r2 r3 r4 r5; do
-      PK_KEY+=("$ns/$pod"); PK_CLS+=("$c"); PK_ATT+=("$att"); PK_RST+=("$rst"); PK_ML+=("$ml")
-      PK_SRCH+=("$s"); PK_A+=("$a"); PK_B+=("$b"); PK_C1+=("$r1"); PK_C2+=("$r2"); PK_C3+=("$r3"); PK_C4+=("$r4"); PK_C5+=("$r5")
-    done < <(awk -v cols="$PK_COLS" -v allns="${ALL_NS:-0}" -v mode="$PK_SORT" -v hdrf="$d/pick.hdr" -v sumf="$d/pick.sum" \
-               "$PICKER_ROWS_AWK" "$MODEL/pods.tsv" | inspector_clean | LC_ALL=C sort -t $'\t' "${order[@]}")
-  fi
-  IFS= read -r PK_HDR < "$d/pick.hdr" || PK_HDR=""
   # plain cells for the framed table: namespace, pod, status, ready, restarts, cpu,
-  # memory, % of limit, node (+ last exit); widths from the data
+  # memory, % of limit, node (+ last exit); widths from the data. One awk pass writes a
+  # file per column and mapfile reads each in one go (a read loop per pod was slow)
   PK_TNS=(); PK_TPOD=(); PK_TST=(); PK_TRD=(); PK_TRS=(); PK_TCPU=(); PK_TMEM=(); PK_TLIM=(); PK_TND=()
   unset PK_RCACHE; declare -gA PK_RCACHE=()          # formatted rows, per row and width
   PK_WNS=9; PK_WST=6; PK_WND=4; PK_WPOD=3
-  local k x y
-  for ((k = 0; k < ${#PK_KEY[@]}; k++)); do
-    x="${PK_KEY[k]}"; PK_TNS+=("${x%%/*}"); PK_TPOD+=("${x#*/}")
-    y="${PK_B[k]}"; y="${y%"${y##*[! ]}"}"; PK_TST+=("$y")
-    y="${PK_C1[k]// /}"; PK_TRD+=("$y"); y="${PK_C2[k]// /}"; PK_TRS+=("$y")
-    read -r x y <<< "${PK_C3[k]}"; PK_TCPU+=("$x"); PK_TMEM+=("$y")
-    y="${PK_C4[k]// /}"; PK_TLIM+=("$y"); PK_TND+=("${PK_C5[k]}")
-    [ "${#PK_TNS[k]}" -le "$PK_WNS" ] || PK_WNS=${#PK_TNS[k]}
-    [ "${#PK_TST[k]}" -le "$PK_WST" ] || PK_WST=${#PK_TST[k]}
-    [ "${#PK_TND[k]}" -le "$PK_WND" ] || PK_WND=${#PK_TND[k]}
-    [ "${#PK_TPOD[k]}" -le "$PK_WPOD" ] || PK_WPOD=${#PK_TPOD[k]}
-  done
+  local k
+  if [ -r "${MODEL:?}/pods.tsv" ]; then
+    awk -v cols="$PK_COLS" -v allns="${ALL_NS:-0}" -v mode="$PK_SORT" -v hdrf="$d/pick.hdr" -v sumf="$d/pick.sum" \
+        "$PICKER_ROWS_AWK" "$MODEL/pods.tsv" | inspector_clean | LC_ALL=C sort -t $'\t' "${order[@]}" | LC_ALL=C awk -v d="$d" "$PICKER_COLS_AWK"
+    for k in KEY CLS ATT RST ML SRCH A B C1 C2 C3 C4 C5 TNS TPOD TST TRD TRS TCPU TMEM TLIM TND; do mapfile -t "PK_$k" < "$d/pk.$k"; done
+    read -r PK_WNS PK_WST PK_WND PK_WPOD < "$d/pk.widths"
+  fi
+  IFS= read -r PK_HDR < "$d/pick.hdr" || PK_HDR=""
   [ "$PK_WNS" -le 24 ] || PK_WNS=24; [ "$PK_WST" -le 18 ] || PK_WST=18; [ "$PK_WND" -le 40 ] || PK_WND=40
   # status summary, worst first: "Running 120  Succeeded 20  Failed 2"
   PK_SUM=""; PK_SUMV=(); PK_NBAD=0; PK_NWARN=0
@@ -8451,7 +9505,7 @@ picker_filter() {
 
 picker_draw() {
   local nv=${#PK_V[@]} rows top i j a b c ml rc line len pad buf banner mode sel_key title right status_col
-  rows=$((PK_ROWS - 14)); [ "$rows" -ge 3 ] || rows=3       # bar, 2 info lines, frame (4), rule, key panel (6)
+  rows=$((PK_ROWS - 14)); [ "$PK_TYPING" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3       # bar, 2 info lines, frame (4), rule, key panel (6), search box (3)
   [ "$PK_SEL" -lt "$nv" ] || PK_SEL=$((nv > 0 ? nv - 1 : 0)); [ "$PK_SEL" -ge 0 ] || PK_SEL=0
   [ "$PK_SEL" -ge "$PK_TOP" ] || PK_TOP=$PK_SEL
   [ "$PK_SEL" -lt $((PK_TOP + rows)) ] || PK_TOP=$((PK_SEL - rows + 1))
@@ -8491,8 +9545,8 @@ picker_draw() {
     [ -z "${PK_NUM:-}" ] || { cl+="   ${PC_INFO}go to #${PK_NUM}${PC_R}"; pl+="   go to #${PK_NUM}"; }
     if [ -n "${PK_MSG:-}" ]; then
       len=$((PK_COLS - ${#pl} - 4))
-      if [ "$len" -ge 12 ]; then msg="$PK_MSG"; [ "${#msg}" -le "$len" ] || msg="${msg:0:$((len - 1))}~"; cl+="   ${PC_WARN}${msg}${PC_R}"
-      else cl=" ${PC_WARN}${PK_MSG:0:$((PK_COLS - 2))}${PC_R}"; fi     # narrow window: the message wins
+      if [ "${#PK_MSG}" -le "$len" ]; then cl+="   ${PC_WARN}${PK_MSG}${PC_R}"
+      else cl=" ${PC_WARN}${PK_MSG:0:$((PK_COLS - 2))}${PC_R}"; fi     # no room beside the rest: the message wins
     fi
     pk_fit "$cl" "$((PK_COLS - 1))"; buf+="$PK_FIT"
   fi
@@ -8560,6 +9614,10 @@ picker_draw() {
   done
   bx_sep "$W" b "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_BL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_BR}${BX_R}"$'\033[K\n'
   for ((i = shown; i < rows; i++)); do buf+=$'\033[K\n'; done
+  if [ "$PK_TYPING" = 1 ]; then
+    ui_search_box "$PK_COLS" "FILTER PODS" "$nv of ${#PK_KEY[@]} pods" "/ $PK_Q" $(( ${#PK_Q} + 2 )) "Enter keep   Esc clear   ^U erase   words AND: pod, status or node"
+    buf+="$UI_SBOX"$'\n'
+  fi
   # ---- position / last action, then the key panel
   local up=$top dn=$((nv - top - rows)) lp=() rp=()
   [ "$dn" -ge 0 ] || dn=0
@@ -8581,14 +9639,14 @@ picker_draw() {
       "j/k ${PC_UP}${PC_DN}|move|1" "PgUp/PgDn|page|1" "g / G|first / last|1" "12|go to row 12|1" \
       "/|search pod / status / node|1" "u|needs attention only|1" "Esc|clear the search|1" "|${nv} of ${#PK_KEY[@]} pods|0" \
       "exit|back to this list|1" "kdswitch|related pods|1" "kdquit|leave kdash|1" "|runs with your RBAC|0" \
-      "Enter|${mode} the highlighted pod|$on" "|then: pick the container|0" "q|back to the dashboard|1" "Q|quit kdash|1"
+      "Enter|${mode} the highlighted pod|$on" "|then: pick the container|0" "q / Q|back / quit|1" ">|export to a log|1"
   else
     bx_panel "$PK_COLS" 5 MOVE FIND INSPECT "SHELL ${PC_MID} FILES" LEAVE \
       "j/k ${PC_UP}${PC_DN}|move|1" "PgUp/PgDn|page|1" "g / G|first / last|1" "12|go to row 12|1" \
       "/|search|1" "u|needs attention|1" "s|sort: ${PK_SORT}|1" "F|filters|1" \
       "Enter|summary|$on" "l / p|logs / previous logs|$on" "d / e|describe / events|$on" "w / c|why / containers|$on" \
       "S|shell|$ion" "U|upload|$ion" "D|download|$ion" "X|$xl|1" \
-      "q|back|1" "Q|quit kdash|1" "r|refresh now|1" "?|all keys|1"
+      "q / Q|back / quit|1" ">|export to a log|1" "r|refresh now|1" "?|all keys|1"
   fi
   buf+="$BX_PANEL"
   ui_flush "$buf" "podpick:$PK_COLS:$PK_ROWS" "${PK_FL:-1}"; PK_FL=1
@@ -8633,6 +9691,7 @@ picker_help() {
               X                  interactive mode on / off (asks first; also: kdx, kdash -X)
   OTHER       r                  re-read now (the list also refreshes every poll)
               q                  back to the dashboard     Q  quit kdash (from any screen)
+              >                  export the screen and the whole list to a log file
 
   Colours: green running and ready, magenta pending / starting / terminating,
   red failing / not ready / >= 90% of memory limit, grey completed.
@@ -8759,6 +9818,7 @@ inspector_open() { # optional explicit ns/pod; otherwise the pod picker
       F) inspector_filter_prompt; declare -F toolkit_filters_changed >/dev/null && toolkit_filters_changed
          picker_load "$d"; printf '\033[?25l\033[2J' ;;
       '?') picker_help; printf '\033[2J' ;;
+      '>') qx_podlist ;;
       X) interactive_toggle; PK_MSG="$INTERACTIVE_MSG"; printf '\033[2J' ;;
       *)
         [ "${#PK_V[@]}" -gt 0 ] || continue
@@ -8785,6 +9845,18 @@ inspector_open() { # optional explicit ns/pod; otherwise the pod picker
   rm -rf -- "$d"
   printf '\033[2J'
   return 0
+}
+
+# > in the pod list: the screen and every pod of the list (its filter and sort), full names
+qx_podlist() {
+  local f="$TMPD/qx-pods.tsv" j t
+  { [ "${ALL_NS:-0}" != 1 ] || printf 'NAMESPACE\t'; printf 'POD\tSTATUS\tREADY\tRESTARTS\tCPU\tMEM\t%%LIMIT\tNODE\n'
+    for j in ${PK_V[@]+"${PK_V[@]}"}; do
+      [ "${ALL_NS:-0}" != 1 ] || printf '%s\t' "${PK_TNS[j]}"
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "${PK_TPOD[j]}" "${PK_TST[j]}" "${PK_TRD[j]}" "${PK_TRS[j]}" "${PK_TCPU[j]}" "${PK_TMEM[j]}" "${PK_TLIM[j]}" "${PK_TND[j]}"
+    done; } | qx_align > "$f"
+  t="pod list | ${#PK_V[@]} of ${#PK_KEY[@]} pods${PK_Q:+ | filter \"$PK_Q\"}$([ "${PK_ATTN:-0}" != 1 ] || printf ' | needs attention only') | sort ${PK_SORT:-name}"
+  quick_export "pod-list_${NS:-ns}" "$t" "$f" "THE WHOLE POD LIST"; PK_MSG="$QX_MSG"
 }
 
 inspector_filter_apply() { # semicolon separated fields, atomically assigned
@@ -8828,9 +9900,9 @@ inspector_filter_prompt() {
     printf ' label=%s\n status=%s\n node=%s\n workload=%s\n unhealthy=%s\n\n' \
       "${KDASH_LABEL_SELECTOR:-}" "${KDASH_STATUS_FILTER:-}" "${KDASH_NODE_FILTER:-}" "${KDASH_WORKLOAD_FILTER:-}" "${KDASH_UNHEALTHY:-0}"
     printf ' Enter semicolon-separated fields; omitted fields stay unchanged.\n Example: label=app in (api,worker);status=Pending|CrashLoop;unhealthy=1\n Node uses an exact match; status and workload use extended regex.\n Empty value clears a field. Type clear to reset all; Enter or Esc cancels.\n%s\n\033[?25h filters > ' "$msg"
-    IFS= read -r line </dev/tty || { printf '\033[?25l'; return 1; }
+    ui_edit_line line " > " podfilters || { printf '\033[?25l'; return 1; }
     printf '\033[?25l'
-    # Esc, q or an empty line cancels (Esc arrives as a raw byte in a line read).
+    # Esc, q or an empty line cancels.
     case "$line" in ''|q|Q|*$'\e'*) return 1 ;; esac
     if msg="$(inspector_filter_apply "$line" 2>&1)"; then
       # Apply in this shell too: command substitution above isolated assignments.
@@ -8845,8 +9917,7 @@ inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
   printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n secrets                 Certificates and keys in Secrets: expiry, users, paths (also Y)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
-  IFS= read -r command </dev/tty || { printf '\033[?25l'; return 1; }; printf '\033[?25l'
-  case "$command" in *$'\e'*) return 0 ;; esac
+  ui_edit_line command " : " palette || { printf '\033[?25l'; return 0; }; printf '\033[?25l'
   case "$command" in
     '') return 0 ;; inspect|i) inspector_open ;; filter|F) inspector_filter_prompt ;;
     quit|exit|Q) kdash_quit palette ;;
@@ -8874,6 +9945,11 @@ inspector_palette() {
 #   * nothing they produce enters the model, a report, a session or an export.
 # The command is built from the audited KC argv array on the host side: the
 # dashboard never evaluates shell text.
+# Login helpers are also used with this source module on its own. In that case
+# there is no screen theme to map; retain the original ANSI role unchanged.
+if ! declare -F ui_mapl >/dev/null 2>&1; then
+  ui_mapl() { UI_ML="$1"; }
+fi
 # Q, anywhere: leave kdash at once. The EXIT trap (cleanup) restores the screen,
 # writes the audit END record and removes temporary files.
 kdash_quit() { # where
@@ -8969,8 +10045,7 @@ interactive_audit_path() {
 
 interactive_ask() { # prompt [default] -> INTERACTIVE_ANSWER
     local ans=""
-    printf '%s' "$1"
-    IFS= read -r ans </dev/tty || return 1
+    ui_edit_line ans "$1" ask || return 1
     INTERACTIVE_ANSWER="${ans:-${2:-}}"
     return 0
 }
@@ -9012,6 +10087,7 @@ interactive_run() { # cmd...   (INTERACTIVE_BANNER is printed once the real scre
     fi
     printf '\033[?25l'
     [ "${ALTSCR:-1}" = 1 ] && printf '\033[?1049h'
+    [ "${UI_QUIET:-0}" != 1 ] || stty -echo </dev/tty 2>/dev/null      # stty sane above turned echo on for the child
     return "$rc"
 }
 
@@ -9700,7 +10776,7 @@ xfer_browse() { # side mode title ns pod container start
   picker_colors
   printf '\033[?25l\033[2J'
   while :; do
-    picker_size; bx_init; rows=$((PK_ROWS - 14)); [ "$rows" -ge 3 ] || rows=3
+    picker_size; bx_init; rows=$((PK_ROWS - 14)); [ "$typing" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3
     if [ "$reload" = 1 ]; then
       ui_bar "$PK_COLS" " KDASH ${PC_SEP} ${title} ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $([ "$side" = remote ] && printf '%s %s %s' "$pod" "$PC_SEP" "$c" || printf 'this host %s %s' "$PC_SEP" "$(hostname 2>/dev/null)") "
       printf '\033[H%s\033[K\n\033[K\n %sreading%s %s ...\033[J' "$UI_BAR" "$PC_D" "$PC_R" "$dir"
@@ -9834,15 +10910,20 @@ xfer_browse() { # side mode title ns pod container start
     [ -n "$tgt" ] && o1=1 || o1=0
     if [ "$side" = remote ] && [ "$mode" = pick ]; then
       t4="DOWNLOAD"; [ -n "$tgt" ] && l1="download $tgt" || l1="download"
-      c4=("d|$l1|$o1" "|then: review, confirm or cancel|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      c4=("d|$l1|$o1" "|then: review, confirm or cancel|0" "q Esc / Q|cancel / quit|1" ">|export to a log|1")
     elif [ "$mode" = pick ]; then
       t4="UPLOAD  step 1 of 2"; [ -n "$tgt" ] && l1="next: destination for $tgt" || l1="next: destination"
-      c4=("u|$l1|$o1" "|nothing is copied yet|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      c4=("u|$l1|$o1" "|nothing is copied yet|0" "q Esc / Q|cancel / quit|1" ">|export to a log|1")
     else
       t4="UPLOAD  step 2 of 2"
-      c4=("u|upload ${XFER_UPN:-the items} into ${dir##*/}/|1" "|then: review, confirm or cancel|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      c4=("u|upload ${XFER_UPN:-the items} into ${dir##*/}/|1" "|then: review, confirm or cancel|0" "q Esc / Q|cancel / quit|1" ">|export to a log|1")
     fi
     xfer_panel "$PK_COLS" "MOVE" "OPEN ${PC_MID} VIEW" "$t3" "$t4" "${c1[@]}" "${c2[@]}" "${c3[@]}" "${c4[@]}"
+    if [ "$typing" = 1 ]; then
+      if [ "$mode" = dir ] || [ -z "$q" ]; then t=open; else t=keep; fi
+      ui_search_box "$PK_COLS" "FILTER NAMES" "$nv of $n in ${dir##*/}/" "/ $q" $(( ${#q} + 2 )) "Enter $t   ${PC_UP}${PC_DN} move   Backspace erase   Esc clear"
+      buf+="$UI_SBOX"$'\n'
+    fi
     buf+="$XFER_PANEL"
     ui_flush "$buf" "xfer:$side:$mode:$PK_COLS:$PK_ROWS" "$fl"; fl=1
     picker_key 120 || continue
@@ -9879,11 +10960,15 @@ xfer_browse() { # side mode title ns pod container start
       '<PGUP>') sel=$((sel - rows)) ;;
       g|'<HOME>') sel=0 ;; G|'<END>') sel=$((nv - 1)) ;;
       /) typing=1; qd=0 ;;
+      '>') local qi
+           { printf 'TYPE\tSIZE\tMODIFIED\tNAME\n'; for qi in ${V[@]+"${V[@]}"}; do printf '%s\t%s\t%s\t%s\n' "${T[qi]}" "${H[qi]}" "${M[qi]}" "${N[qi]}"; done; } | qx_align > "$d/qx.tsv"
+           if quick_export "files_$([ "$side" = remote ] && printf '%s' "$pod" || printf 'local')" "file browser | $([ "$side" = remote ] && printf '%s/%s' "$pod" "$c" || printf 'this host %s' "$hn") | $dir | $nv of $n entries${q:+ | filter \"$q\"}" "$d/qx.tsv" "EVERY ENTRY OF $dir"
+           then act="$QX_MSG"; else msg="$QX_MSG"; fi ;;
       r) reload=1; act="reloaded" ;;
       h|'<LEFT>'|$'\177'|$'\b'|-) if [ "$dir" = / ]; then msg="already at /"; else dir="${dir%/*}"; [ -n "$dir" ] || dir=/; reload=1; act="up to $dir"; fi ;;
       l|'<RIGHT>') [ -n "$k" ] && [[ "${T[k]}" == d* ]] && { dir="${dir%/}/${N[k]}"; reload=1; act="opened ${N[k]}/"; } ;;
-      p|:) printf '\033[%s;1H\033[K\033[?25h %spath%s (absolute, or relative to %s): ' "$PK_ROWS" "$PC_B" "$PC_R" "$dir"
-           local np=""; IFS= read -r np </dev/tty || np=""; printf '\033[?25l'; case "$np" in *$'\e'*) np="" ;; esac
+      p|:) printf '\033[%s;1H\033[K' "$PK_ROWS"
+           local np=""; ui_edit_line np " ${PC_B}path${PC_R} (absolute, or relative to $dir): " "path-$side" || np=""; printf '\033[?25l'
            if [ -n "$np" ] && interactive_valid_path "$np"; then
              [ "$side" = local ] && np="$(interactive_expand "$np")"
              case "$np" in /*) dir="$np" ;; *) dir="${dir%/}/$np" ;; esac; reload=1; act="went to $np"
@@ -10343,11 +11428,11 @@ xfer_download_once() { # ns pod container
               break ;;
       f|F) case "$fmt" in files) if [ -n "$zt" ]; then fmt=zip; else fmt=tgz; fi ;; zip) fmt=tgz ;; *) fmt=files ;; esac
            XFER_NOTE="format is now $(case "$fmt" in zip) echo "zip ($base.zip)";; tgz) echo "tar.gz ($base.tar.gz)";; *) echo 'the same names as in the container';; esac)" ;;
-      l|L) printf '\n local directory: '; local nd=""; IFS= read -r nd </dev/tty || nd=""; case "$nd" in *$'\e'*) nd="" ;; esac; nd="$(interactive_expand "$nd")"
+      l|L) printf '\n'; local nd=""; ui_edit_line nd " local directory: " localdir || nd=""; nd="$(interactive_expand "$nd")"
            if [ -n "$nd" ] && [ -d "$nd" ]; then outdir="$(cd -- "$nd" && pwd)"; XFER_NOTE="local directory is now $outdir"
            elif [ -n "$nd" ]; then XFER_NOTE="$nd is not a directory - unchanged"; fi ;;
       n|N) [ "$fmt" = files ] && { XFER_NOTE="plain files keep their names - f switches to zip or tar.gz"; continue; }
-           printf '\n archive name without extension [%s]: ' "$base"; local nb=""; IFS= read -r nb </dev/tty || nb=""; case "$nb" in *$'\e'*) nb="" ;; esac
+           printf '\n'; local nb=""; ui_edit_line nb " archive name without extension [$base]: " archive || nb=""
            [ -z "$nb" ] || { base="${nb%.zip}"; base="${base%.tar.gz}"; base="${base//\//_}"; XFER_NOTE="archive name is now $base"; } ;;
       b|B) XFER_BACK="$src"; return 3 ;;
       q|$'\033') audit CP_CANCEL "dir=down pod=$ns/$pod container=${c:--} at=summary"; return 1 ;;
@@ -10961,6 +12046,40 @@ certs__local() {
   return 0
 }
 
+# Certificates inside Secrets (the services' own TLS certificates - Ericsson SIP-TLS,
+# cert-manager or by hand): the same read as the secrets map (Y), one row per
+# certificate with its expiry, where it is mounted and who uses it.
+certs__secrets() {
+  if [ "${KDASH_CERTS_FROM_SECRETS:-1}" = 0 ]; then health__status cert-secrets disabled 'KDASH_CERTS_FROM_SECRETS=0'; return 0; fi
+  declare -F sm_collect >/dev/null || return 0
+  [ "$(sm_age)" -lt "${KDASH_SECRETS_CHECK_TTL:-300}" ] || sm_collect > /dev/null 2>&1
+  local st det
+  st="$(health__state sm-secrets)"; det="$(cut -f3 "$TOOLKIT_DIR/health-sm-secrets.status" 2>/dev/null)"
+  if [ "$st" != ok ]; then
+    case "$st" in error|timeout) det="certificates in Secrets not listed: ${det:-not read}" ;; *) det="certificates in Secrets not listed (Secrets read $st)" ;; esac
+    health__status cert-secrets "$st" "$det"; return 0
+  fi
+  LC_ALL=C awk -F'\t' -v all="${ALL_NS:-0}" '
+    BEGIN { OFS = "\t" }
+    FILENAME ~ /sm-uses/ { if ($4 == "-" || $4 == "") next
+      k = $1 "/" $2; p = ($7 != "" && $7 != "-") ? $7 : $3
+      u = $4 (($6 != "" && $6 != "-") ? " (" $6 ")" : "") (p != "" && p != "-" ? " " p : "")
+      if (!((k, u) in SEEN)) { SEEN[k, u] = 1; U[k] = U[k] (U[k] == "" ? "" : "; ") u; NU[k]++ }
+      next }
+    { e = $10 + 0; if (e <= 0) next          # NOTAFTER is epoch seconds in sm-certs.tsv
+      k = $1 "/" $2
+      what = ($5 == "CA" || $5 == "chain CA") ? "CA " $6 : ($5 == "chain" ? "chain: " $6 : $6)
+      obj = (all == "1" ? $1 "/" : "") $2 " " $3 ($4 > 1 ? " #" $4 : "")
+      where = (U[k] != "") ? U[k] : "not used by any pod you can read"
+      note = "issuer " ($13 == "self" ? "(self-signed)" : $8)
+      if ($14 ~ /MISSING/) note = note "; tls.key MISSING"
+      if ($15 ~ /NOT signed|out of order|does not sign/) { c = $15; sub(/^\{.\}/, "", c); note = note "; chain: " c }
+      print "SECRETS", what, obj, where, e, "ok", note, "secret"; n++ }
+    END { printf "%d\n", n + 0 > "/dev/stderr" }' "$TOOLKIT_DIR/sm-uses.tsv" "$TOOLKIT_DIR/sm-certs.tsv" 2> "$CERTS_DIR/secrets.n" >> "$CERTS_ROWS"
+  local n m; n="$(cat "$CERTS_DIR/secrets.n" 2>/dev/null)"; m="$(awk 'END { print NR }' "$TOOLKIT_DIR/sm-secrets.tsv" 2>/dev/null)"
+  health__status cert-secrets ok "${n:-0} certificates in ${m:-0} Secrets (the same read as Y)"
+}
+
 certs_collect() { # quick (kubeconfig + API endpoint + CA bundles) | full (adds nodes, ingress, this host)
   local mode="${1:-full}"
   [ -n "${TOOLKIT_DIR:-}" ] || return 1
@@ -10973,6 +12092,7 @@ certs_collect() { # quick (kubeconfig + API endpoint + CA bundles) | full (adds 
   certs__api "$mode"
   certs__probe_all
   [ "$mode" != full ] || certs__local
+  [ "$mode" != full ] || certs__secrets
   printf 'mode=%s\nrke2=%s\nnodes_cut=%s\nat=%s\n' "$mode" "${CERTS_RKE2:-0}" "${CERTS_NODES_CUT:-0}" "$(date +%s)" > "$CERTS_DIR/meta"
   rm -rf "$TOOLKIT_DIR/certs"; mv "$CERTS_DIR" "$TOOLKIT_DIR/certs"
   certs_summary > "$TOOLKIT_DIR/certs.summary"
@@ -11035,7 +12155,7 @@ certs_render() {
     return 0
   fi
   mode="$(sed -n 's/^mode=//p' "$d/meta")"; rke2="$(sed -n 's/^rke2=//p' "$d/meta")"; cut="$(sed -n 's/^nodes_cut=//p' "$d/meta")"
-  health__sources cert-kubeconfig cert-tls cert-webhooks cert-apiservices cert-manager $([ "$mode" = full ] && printf 'cert-nodes cert-ingress') $([ -f "$TOOLKIT_DIR/health-cert-host.status" ] && printf cert-host)
+  health__sources cert-kubeconfig cert-tls cert-webhooks cert-apiservices cert-manager $([ "$mode" = full ] && printf 'cert-nodes cert-ingress cert-secrets') $([ -f "$TOOLKIT_DIR/health-cert-host.status" ] && printf cert-host)
   local all="$d/graded.tsv" sum
   certs__graded > "$all"
   sum="$(certs_summary)"
@@ -11046,8 +12166,8 @@ certs_render() {
     awk -F'\t' '$3 != "-"' "$all" | cut -f1-7
   } | tk_table "EXPIRY" "soonest first - warning under $CERT_WARN_DAYS days, critical under $CERT_CRIT_DAYS days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)" \
       "$(awk -F'\t' '$3 == "-" { f = 1 } END { exit !f }' "$all" && printf 'no expiry dates could be read - see NOT CHECKED below' || printf 'nothing to check: no TLS endpoint, client certificate, token or CA bundle was found')" item items
-  { awk -F'\t' -v host="$(hostname -s 2>/dev/null || hostname)" '
-      function hint(   o, a) {
+  { awk -F'\t' -v host="$(hostname -s 2>/dev/null || hostname)" -v ns="${NS:-}" '
+      function hint(   o, a, b) {
         if ($9 ~ /^node-/) return "cert-node||" $5 "|" (($5 in SRV) ? "server" : "agent")
         if ($9 == "rke2") return "cert-rke2file||" host "|server"
         if ($9 == "ca") return "cert-ca||" host
@@ -11059,6 +12179,7 @@ certs_render() {
         if ($8 == "CERT-MANAGER") return "cert-manager|" a[1] "|" a[2]
         if ($8 == "INGRESS") return "cert-ingress|" a[1] "|" a[2]
         if ($8 == "LOGIN") return "login"
+        if ($8 == "SECRETS") { split($5, a, " "); o = a[1]; if (index(o, "/")) { split(o, b, "/"); return "sm-expiring|" b[1] "|" b[2] "|" a[2] } return "sm-expiring|" ns "|" o "|" a[2] }
         return "" }
       NR == FNR { if ($9 == "node-api" || $9 == "node-rke2") SRV[$5] = 1; next }
       { s = $1; sub(/^\{.\}/, "", s) }
@@ -11115,10 +12236,10 @@ certs_badge() { # summary line -> short text for the header ("" when nothing is 
 # then hourly; it only sets the header badge and flashes once when something is due.
 certs_quick_poll() {
   [ "${KDASH_CERT_CHECK:-1}" = 1 ] || return 0
-  local now; now=$(date +%s)
+  local now; printf -v now '%(%s)T' -1
   if [ -n "${CERTQ_PID:-}" ] && ! kill -0 "$CERTQ_PID" 2>/dev/null; then
     wait "$CERTQ_PID" 2>/dev/null || true; CERTQ_PID=""; CERTQ_NEXT=$((now + 3600))
-    CERT_BADGE="$(certs_badge "$(cat "$TMPD/certq/certs.summary" 2>/dev/null)")"
+    CERT_BADGE="$(certs_badge "$(cat "$TMPD/certq/certs.summary" 2>/dev/null)")"; RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))
   fi
   # once per session, and never over another message (it waits until that one ends)
   if [ -n "${CERT_BADGE:-}" ] && [ "${CERTQ_FLASHED:-0}" = 0 ] && [ -s "$TMPD/certq/certs.summary" ] && [ "$now" -ge "${FLASH_UNTIL:-0}" ]; then
@@ -11781,7 +12902,7 @@ check_run() { # finding-number capture-file output-file
     esac
     case " ${rest[*]} " in *" --raw "*|*" -w "*|*" --watch "*|*" -f "*|*" --follow "*) verb="" ;; esac
     if [ -z "$verb" ]; then printf '(not run: only get, describe, logs, top, rollout history/status and auth whoami/can-i run from here)\n' >> "$out"; skipped=$((skipped + 1)); continue; fi
-    t0=$(date +%s)
+    printf -v t0 '%(%s)T' -1
     timeout "${KDASH_CHECK_TIMEOUT:-30}" "${KC[@]}" "${rest[@]}" < /dev/null 2>&1 | head -c "${KDASH_CHECK_BYTES:-262144}" | inspector_clean >> "$out"
     rc="${PIPESTATUS[0]}"
     [ "$rc" = 0 ] || printf '(exit %s%s)\n' "$rc" "$([ "$rc" = 124 ] && printf ' - timed out after %ss' "${KDASH_CHECK_TIMEOUT:-30}")" >> "$out"
@@ -11800,9 +12921,9 @@ check_run_prompt() {
   [ -s "$cap" ] || paint 2>/dev/null
   first="$(awk -F'\t' '$1 ~ /^[0-9]+$/ { print $1; exit }' "$cap" 2>/dev/null)"
   [ -n "$first" ] || { flash "no read commands to run in this view" 4; return 0; }
-  printf '\033[%s;1H\033[K\033[?25h run the read commands of finding # (Enter = %s, Esc cancels): ' "$(tput lines 2>/dev/null || echo 24)" "$first"
-  IFS= read -r n </dev/tty || n=""; printf '\033[?25l'
-  case "$n" in *$'\e'*|q|Q) return 0 ;; '') n="$first" ;; esac
+  printf '\033[%s;1H\033[K' "$(tput lines 2>/dev/null || echo 24)"
+  ui_edit_line n " run the read commands of finding # (Enter = $first, Esc cancels): " finding || { printf '\033[?25l'; return 0; }; printf '\033[?25l'
+  case "$n" in q|Q) return 0 ;; '') n="$first" ;; esac
   case "$n" in \#*) n="${n#\#}" ;; esac
   case "$n" in *[!0-9]*) flash "not a finding number: $n" 4; return 0 ;; esac
   flash "running the read commands of #$n ..." 30; paint 2>/dev/null
@@ -11812,7 +12933,9 @@ check_run_prompt() {
   { printf '(q returns to kdash)\n\n'; cat "$out"; } | LESS='-R -K -S' "$pager"
   [ "${pager##*/}" != cat ] || { printf '\n any key returns'; IFS= read -rsn1 _ </dev/tty; }
   printf '\033[?25l\033[2J'
-  flash "#$n: ran ${CHECK_RAN:-0}, left to you ${CHECK_SKIPPED:-0} - output kept in $out" 8
+  if QX_NOSCREEN=1 quick_export "check-run-${n}_${NS:-ns}" "read commands of finding #$n (view $(qx_view_name))" "$out" "OUTPUT OF THE READ COMMANDS OF #$n"; then
+    flash "#$n: ran ${CHECK_RAN:-0}, left to you ${CHECK_SKIPPED:-0} - output saved to $QX_DISP" 10
+  else flash "#$n: ran ${CHECK_RAN:-0}, left to you ${CHECK_SKIPPED:-0} - output kept in $out ($QX_MSG)" 10; fi
 }
 
 # ---- OIDC / exec-plugin login (startup check, key L) ----------------------------
@@ -11897,7 +13020,7 @@ login__cache_state() {
     if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then newest="$f"; fi
   done
   [ -n "$newest" ] || { printf none; return 0; }
-  now=$(date +%s)
+  printf -v now '%(%s)T' -1
   idt="$(LC_ALL=C grep -o '"id_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
   rt="$(LC_ALL=C grep -o '"refresh_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
   e="$(certs__jwt "$idt" 2>/dev/null | cut -f1)"
@@ -12108,14 +13231,14 @@ login_interactive() { # start | session [auto]
     printf '\033[1;7m KDASH | OIDC LOGIN | context %s \033[0m\n\n' "$CTX_NAME" > /dev/tty
     printf '  Your login for context %s %s%s. The login helper starts now and shows a URL:\n' "$CTX_NAME" "$([ -n "$auto" ] && printf 'has expired - kdash opened the login for you' || printf 'is needed')" "$([ "$when" = start ] && printf ' before kdash can read anything' || printf ' - the dashboard keeps its last data meanwhile')" > /dev/tty
     printf '  open it, sign in, and kdash continues by itself.\n' > /dev/tty
-    [ -z "$iss" ] || printf '\n  \033[2missuer   %s%s\033[0m\n' "$iss" "${cid:+   client $cid}" > /dev/tty
+    ui_mapl $'\033[2m'; [ -z "$iss" ] || printf '\n  %sissuer   %s%s\033[0m\n' "$UI_ML" "$iss" "${cid:+   client $cid}" > /dev/tty
     audit LOGIN_START "context=$CTX_NAME when=$when${auto:+ auto=1}"
     login__browser_dir "$bdir" 2>/dev/null
     ( i=0; hinted=0; while [ "$i" -lt 3000 ]; do
         u="$(login_urls_of "$f")"; if [ -n "$u" ]; then sleep 0.3; login__box $(login_urls_of "$f"); exit 0; fi
         # a helper that opened a "browser" instead of printing the URL: the stand-in recorded it
         if [ -s "$bdir/url" ]; then sleep 0.3; [ -n "$(login_urls_of "$f")" ] && { login__box $(login_urls_of "$f"); exit 0; }
-          printf '\n  \033[2m(the login helper tried to open a browser on this host - its URL was caught instead)\033[0m\n' > /dev/tty
+          ui_mapl $'\033[2m'; printf '\n  %s(the login helper tried to open a browser on this host - its URL was caught instead)\033[0m\n' "$UI_ML" > /dev/tty
           login__box $(awk '!s[$0]++' "$bdir/url" | head -n 3); exit 0; fi
         if [ "$hinted" = 0 ] && [ "$i" -ge $(( ${KDASH_LOGIN_NOURL_HINT:-8} * 5 )) ]; then hinted=1
           { printf '\n  The login helper has not printed a URL yet. It may have opened a browser on this host\n'
@@ -12154,13 +13277,13 @@ login_interactive() { # start | session [auto]
     fi
     if [ "$rc" = 0 ]; then
       LOGIN_USER="$(awk '/^Username/ { $1 = ""; sub(/^ +/, ""); print; exit }' "$out")"
-      printf '\n\033[1;32m  Logged in%s.\033[0m kdash continues ...\n' "${LOGIN_USER:+ as $LOGIN_USER}" > /dev/tty
+      ui_mapl $'\033[1;32m'; printf '\n%s  Logged in%s.\033[0m kdash continues ...\n' "$UI_ML" "${LOGIN_USER:+ as $LOGIN_USER}" > /dev/tty
       rm -f "${TOOLKIT_DIR:-/nonexistent}/fmea-access.tsv" 2>/dev/null
       audit LOGIN_OK "context=$CTX_NAME user=${LOGIN_USER:-?} seconds=$((SECONDS - t0))$([ "$elsewhere" = 1 ] && printf ' via=poll')$([ -s "$bdir/url" ] && printf ' url=captured')"
       ok=1; sleep 1; break
     fi
     audit LOGIN_FAILED "context=$CTX_NAME rc=$rc"
-    printf '\n\033[1;31m  The login did not complete (rc=%s).\033[0m Last messages:\n' "$rc" > /dev/tty
+    ui_mapl $'\033[1;31m'; printf '\n%s  The login did not complete (rc=%s).\033[0m Last messages:\n' "$UI_ML" "$rc" > /dev/tty
     tail -n 4 "$f" | sed 's/^/    /' > /dev/tty
     if grep -qiE 'discovery error|openid-configuration' "$f" && grep -qiE 'dial tcp|no such host|timeout|refused|x509|certificate' "$f"; then
       printf '\n  \033[1mThe identity provider%s cannot be reached from this host\033[0m (network, proxy, DNS or its certificate) -
@@ -12178,6 +13301,7 @@ login_interactive() { # start | session [auto]
     FETCH_NEXT=0; FETCH_FAILURES=0; SPEC_AT=0; LAST=0; TOOLKIT_NEXT=0
     CERTQ_NEXT=0; CERT_BADGE=""
   fi
+  [ "${UI_QUIET:-0}" != 1 ] || stty -echo </dev/tty 2>/dev/null   # back to a screen that draws typed keys itself
   if [ "$when" != start ]; then
     printf '\033[?25l' > /dev/tty
     [ "${ALTSCR:-1}" = 1 ] && printf '\033[?1049h' > /dev/tty
@@ -12358,7 +13482,7 @@ fmea__perm_args() { # perm -> can-i words; NS scope from the dashboard
 fmea_access() { # [force] -> $TOOLKIT_DIR/fmea-access.tsv
   local f="$TOOLKIT_DIR/fmea-access.tsv" key now perms p i=0 user groups w d
   local -a args pids
-  key="${CTX_NAME:-?}|${NS:-?}|${ALL_NS:-0}"; now=$(date +%s)
+  key="${CTX_NAME:-?}|${NS:-?}|${ALL_NS:-0}"; printf -v now '%(%s)T' -1
   if [ "${1:-}" != force ] && [ -s "$f" ]; then
     IFS=$'\t' read -r _ k at < "$f"
     if [ "$k" = "$key" ] && [ $((now - ${at:-0})) -lt "${KDASH_FMEA_ACCESS_TTL:-300}" ]; then return 0; fi
@@ -13018,7 +14142,37 @@ sm__x509() { # < one PEM certificate
   out="$(openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 2>/dev/null)" || return 1
   printf '%s\n' "$out" | LC_ALL=C awk "$TK_TIME_AWK$SM_X509_AWK"
 }
+# the same for the Secrets scan, with no subshell: PEM file, work file prefix -> SM_X509
+sm__x509f() {
+  SM_X509=""
+  { openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 -ext subjectAltName,basicConstraints \
+      -text -certopt no_header,no_version,no_serial,no_signame,no_validity,no_subject,no_issuer,no_sigdump,no_aux,no_extensions < "$1" > "$2.x" 2>/dev/null ||
+    openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 < "$1" > "$2.x" 2>/dev/null; } || return 1
+  LC_ALL=C awk "$TK_TIME_AWK$SM_X509_AWK" "$2.x" > "$2.l" && IFS= read -r SM_X509 < "$2.l"
+}
 
+sm__kindv() { # type key header24 -> SM_KIND (no subshell)
+  case "$3" in
+    LS0tLS1CRUdJTiBDRVJUSUZJ|LS0tLS1CRUdJTiBUUlVTVEVE) SM_KIND=cert ;;
+    LS0tLS1CRUdJTiBQUklWQVRF) SM_KIND='private key (PKCS8)' ;;
+    LS0tLS1CRUdJTiBSU0EgUFJJ) SM_KIND='private key (RSA)' ;;
+    LS0tLS1CRUdJTiBFQyBQUklW) SM_KIND='private key (EC)' ;;
+    LS0tLS1CRUdJTiBEU0EgUFJJ) SM_KIND='private key (DSA)' ;;
+    LS0tLS1CRUdJTiBPUEVOU1NI) SM_KIND='private key (OpenSSH)' ;;
+    LS0tLS1CRUdJTiBFTkNSWVBU) SM_KIND='private key (encrypted)' ;;
+    LS0tLS1CRUdJTiBQVUJMSUMg) SM_KIND='public key' ;;
+    LS0tLS1CRUdJ*) SM_KIND='PEM' ;;
+    *) case "$1" in
+         kubernetes.io/dockerconfigjson|kubernetes.io/dockercfg) SM_KIND='registry credentials' ;;
+         kubernetes.io/service-account-token) SM_KIND='service-account token' ;;
+         kubernetes.io/basic-auth|kubernetes.io/ssh-auth) SM_KIND='credentials' ;;
+         *) case "$2" in
+              *.jks|*.p12|*.pfx|*.keystore|*.truststore|*keystore*|*truststore*) SM_KIND='keystore (binary, not parsed)' ;;
+              *) SM_KIND=value ;;
+            esac ;;
+       esac ;;
+  esac
+}
 sm__kind() { # first 24 base64 characters of a PEM value -> what it is
   case "$1" in
     LS0tLS1CRUdJTiBDRVJUSUZJ) printf cert ;;
@@ -13053,8 +14207,10 @@ sm__read_secrets() {
   rm -rf "$w"; mkdir -p "$w"; : > "$d/sm-secrets.tsv"; : > "$d/sm-certs.tsv"
   # values: only PEM certificate values pass the template; every other value is reduced to its length
   # (a PEM value: its 18-byte header). Helm release payloads are left out at the API.
-  "${KC[@]}" get secrets "${SCOPE[@]}" --field-selector 'type!=helm.sh/release.v1' --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" -o 'go-template={{range .items}}{{$o := .}}S|{{.metadata.namespace}}|{{.metadata.name}}|{{.type}}|{{.metadata.creationTimestamp}}|{{.immutable}}|{{with .metadata.annotations}}{{index . "cert-manager.io/certificate-name"}}{{end}}|{{with .metadata.annotations}}{{index . "cert-manager.io/issuer-name"}}{{end}}|{{with .metadata.annotations}}{{index . "meta.helm.sh/release-name"}}{{end}}|{{with .metadata.labels}}{{index . "app.kubernetes.io/managed-by"}}{{end}}|{{range .metadata.ownerReferences}}{{.kind}}/{{.name}}{{end}}|{{with .metadata.annotations}}{{index . "kubernetes.io/service-account.name"}}{{end}}{{"\n"}}{{range $k, $v := .data}}K|{{$k}}|{{len $v}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 12) "LS0tLS1CRUdJ"}}{{slice $v 0 24}}{{end}}{{end}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 28) "LS0tLS1CRUdJTiBDRVJUSUZJQ0FU"}}{{$v}}{{end}}{{end}}{{"\n"}}{{end}}E|{{"\n"}}{{end}}' 2> "$err" |
-  { local sns="" sname="" stype="" screated="" simm="" mgr=""
+  local stt="${KDASH_SECRETS_TIMEOUT:-120}"; case "$stt" in ''|*[!0-9]*|0) stt=120 ;; esac
+  KDASH_CMD_TIMEOUT=$((stt + 5)) "${KC[@]}" get secrets "${SCOPE[@]}" --field-selector 'type!=helm.sh/release.v1' --request-timeout="${stt}s" -o 'go-template={{range .items}}{{$o := .}}S|{{.metadata.namespace}}|{{.metadata.name}}|{{.type}}|{{.metadata.creationTimestamp}}|{{.immutable}}|{{with .metadata.annotations}}{{index . "cert-manager.io/certificate-name"}}{{end}}|{{with .metadata.annotations}}{{index . "cert-manager.io/issuer-name"}}{{end}}|{{with .metadata.annotations}}{{index . "meta.helm.sh/release-name"}}{{end}}|{{with .metadata.labels}}{{index . "app.kubernetes.io/managed-by"}}{{end}}|{{range .metadata.ownerReferences}}{{.kind}}/{{.name}}{{end}}|{{with .metadata.annotations}}{{index . "kubernetes.io/service-account.name"}}{{end}}{{"\n"}}{{range $k, $v := .data}}K|{{$k}}|{{len $v}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 12) "LS0tLS1CRUdJ"}}{{slice $v 0 24}}{{end}}{{end}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 28) "LS0tLS1CRUdJTiBDRVJUSUZJQ0FU"}}{{$v}}{{end}}{{end}}{{"\n"}}{{end}}E|{{"\n"}}{{end}}' 2> "$err" > "$w/api.txt"
+  rc=$?
+  { local sns="" sname="" stype="" screated="" simm="" mgr="" sf
     while IFS='|' read -r rec a b c e f g h i line ks pem; do
       case "$rec" in
         S) sns="$a"; sname="$b"; stype="$c"; screated="$e"; simm="$f"; keys=""; ncert=0
@@ -13066,34 +14222,38 @@ sm__read_secrets() {
            elif [ -n "${pem#<no value>}" ]; then mgr="service account: $pem"
            elif [ -n "${line#<no value>}" ]; then mgr="$line"; fi ;;
         K) # a = key, b = base64 length, c = PEM header (24 chars), e = certificate value (base64) or empty
-           kind="$(sm__kind "$c")"; [ -n "$kind" ] || kind="$(sm__kind_by_name "$stype" "$a")"
+           sm__kindv "$stype" "$a" "$c"; kind="$SM_KIND"
            if [ -n "$e" ] && [ "$n" -lt "$max" ]; then
              # only CERTIFICATE blocks are kept: anything else in the value is dropped in the pipe
              f="$w/$(( n + 1 ))"
-             printf '%s' "$e" | base64 -d 2>/dev/null | LC_ALL=C awk -v p="$f" '
+             printf '%s' "$e" > "$f.b"; base64 -d < "$f.b" 2>/dev/null | LC_ALL=C awk -v p="$f" '
                /-----BEGIN (TRUSTED )?CERTIFICATE-----/ { c++; o = p "." c ".pem" }
                /-----BEGIN .*PRIVATE KEY-----/ { pk = 1 }
                o != "" { print > o }
                /-----END (TRUSTED )?CERTIFICATE-----/ { if (o != "") close(o); o = "" }
                END { print c + 0, pk + 0 }' > "$f.n"
-             read -r g h < "$f.n"; rm -f "$f.n"
-             [ "${h:-0}" = 1 ] && kind="cert + private key in one file"
+             read -r g h < "$f.n"
+             sf=""; [ "${h:-0}" != 1 ] || { kind="cert + private key in one file"; sf=samefile; }
              i=1
              while [ "$i" -le "${g:-0}" ]; do
-               if line="$(sm__x509 < "$f.$i.pem")"; then
-                 n=$(( n + 1 )); ncert=$(( ncert + 1 ))
-                 printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$a" "$i" "$line" "$([ "${h:-0}" = 1 ] && echo samefile)" >> "$d/sm-certs.raw"
-                 cp -f "$f.$i.pem" "$w/fp-$(printf '%s' "$line" | cut -f5).pem" 2>/dev/null
+               if sm__x509f "$f.$i.pem" "$f.$i"; then
+                 line="$SM_X509"; n=$(( n + 1 )); ncert=$(( ncert + 1 ))
+                 printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$a" "$i" "$line" "$sf" >> "$d/sm-certs.raw"
+                 e="${line#*$'\t'}"; e="${e#*$'\t'}"; e="${e#*$'\t'}"; e="${e#*$'\t'}"; e="${e%%$'\t'*}"   # field 5: fingerprint
+                 mv -f "$f.$i.pem" "$w/fp-$e.pem" 2>/dev/null
                fi
-               rm -f "$f.$i.pem"; i=$(( i + 1 ))
+               i=$(( i + 1 ))
              done
            fi
            keys="$keys${keys:+; }$a [$kind, $(( b * 3 / 4 )) B]" ;;
-        E) [ -z "$sname" ] || printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$stype" "$screated" "$mgr" "${keys:-(no data)}" "$ncert" "$([ "$simm" = true ] && echo immutable)" >> "$d/sm-secrets.tsv"
+        E) if [ -n "$sname" ]; then
+             if [ "$simm" = true ]; then sf=immutable; else sf=""; fi
+             printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$stype" "$screated" "$mgr" "${keys:-(no data)}" "$ncert" "$sf" >> "$d/sm-secrets.tsv"
+           fi
            sname="" ;;
       esac
-    done; }
-  rc="${PIPESTATUS[0]}"
+    done < "$w/api.txt"; }
+  rm -f -- "$w/api.txt"
   if [ "$rc" = 0 ]; then health__status sm-secrets ok 'successful API read'; else : > "$d/sm-secrets.tsv"; rm -f "$d/sm-certs.raw"; health__failure sm-secrets "$err"; fi
   # per certificate: role in its file (first = the certificate, further ones = its chain) and the key beside it
   if [ -s "$d/sm-certs.raw" ]; then
@@ -13347,7 +14507,7 @@ sm_render() {
   [ "${ALL_NS:-0}" != 1 ] || one=0     # one namespace: its name is in the header, not in every row
   tk_title "SECRETS" "certificates and keys in Secrets: expiry, who manages them, who uses them and where the files are - values are never read"
   if [ ! -s "$d/sm.summary" ]; then printf '\nReading Secrets (names, types, certificates) and every reference to them ...\n'; return 0; fi
-  IFS=$'\t' read -r ns nc ex cr wa fc fw u st < "$d/sm.summary"; now="$(date +%s)"
+  IFS=$'\t' read -r ns nc ex cr wa fc fw u st < "$d/sm.summary"; printf -v now '%(%s)T' -1
   printf '\n '
   if [ "$st" = ok ]; then
     sm__chip EXPIRED "$ex" '41;97'; sm__chip "CRITICAL (<= ${CERT_CRIT_DAYS:-7} d)" "$cr" '41;97'; sm__chip "WARNING (<= ${CERT_WARN_DAYS:-30} d)" "$wa" '43;30'
@@ -13366,15 +14526,18 @@ sm_render() {
     TK_COUNT=0 tk_table "ACCESS" "user $u, scope $([ "${ALL_NS:-0}" = 1 ] && echo 'all namespaces' || echo "${NS:-?}") - only what your RBAC allows is read"
   if [ "$st" != ok ]; then
     tk_note "Secrets cannot be read here ($st): certificates and expiry are not visible to you. References from pods and ingresses are still shown below."
+    local why_; why_="$(cut -f3 "$TOOLKIT_DIR/health-sm-secrets.status" 2>/dev/null)"
+    [ -z "$why_" ] || tk_note "reason: $why_"
+    case "$st" in timeout|error) tk_note "a large namespace over a slow link needs time: KDASH_SECRETS_TIMEOUT (now ${KDASH_SECRETS_TIMEOUT:-120} s) raises the limit; r reads again" ;; esac
     tk_note "To see them, ask for: verbs get, list on resource secrets in this namespace (read-only)."
   fi
   # 1. certificates: the list (what expires when, who uses it), then the details by the same #
-  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" -v one="$one" 'BEGIN { OFS = "\t" }
+  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" -v one="$one" "$SM_UTC_AWK"'BEGIN { OFS = "\t" }
       FILENAME ~ /sm-secrets/ { MG[$1 "/" $2] = $5; next }
       FILENAME ~ /sm-uses/ { s = $1 "/" $2; if (!((s, $4) in seen)) { seen[s, $4] = 1; UB[s] = UB[s] (UB[s] == "" ? "" : ", ") $4 }; next }
       { s = $1 "/" $2; dl = int(($10 - now) / 86400)
         stt = ($10 < now) ? "{r}EXPIRED" : (dl <= crit) ? "{r}CRITICAL" : (dl <= warn) ? "{y}WARNING" : "{g}OK"
-        cmd = "date -u -d @" $10 " +%Y-%m-%d\\ %H:%M 2>/dev/null"; t = "-"; cmd | getline t; close(cmd)
+        t = smutc($10, 0)
         san = $7; gsub(/,/, ", ", san)
         print $10, stt, dl, t, (one ? $2 : s), $3 ($4 > 1 ? " #" $4 : ""), ($13 == "self" && $5 == "certificate" ? "self-signed" : $5), $6, ($13 == "self" ? "(self)" : $8),
               ($4 > 1 ? "{d}(with the certificate above it)" : (UB[s] == "" ? (PODS_OK ? "{y}no pod or ingress" : "{d}not visible (pods)") : UB[s] (PODS_OK ? "" : " (+ pods not visible)"))), $11, $14, MG[s], $12, san, ($15 == "" ? "-" : $15) }' \
@@ -13465,7 +14628,7 @@ sm_export() { # csv|tsv|json
           printf "{\"context\":%s,\"namespace\":%s,\"generated\":%s,\"user\":%s,\"secrets_access\":%s,\"counts\":{\"secrets\":%d,\"certificates\":%d,\"expired\":%d,\"critical\":%d,\"warning\":%d},\"secrets\":[%s],\"referenced_but_not_readable_or_missing\":[%s],\"findings\":[%s]}\n", j(ctx), j(ns), j(at), j(M[8]), j(M[9]), M[1], M[2], M[3], M[4], M[5], S, X, F }' \
         "$d/sm-svc.tsv" "$d/sm-certs.tsv" "$d/sm-uses.tsv" "$d/sm-findings.tsv" "$d/sm-secrets.tsv" 2>/dev/null ;;
     *) { printf 'NAMESPACE\tSECRET\tTYPE\tKEY\tINDEX\tROLE\tSUBJECT\tSAN\tISSUER\tNOT_BEFORE\tNOT_AFTER\tDAYS_LEFT\tVALIDITY\tALGORITHM\tSHA256_PREFIX\tPRIVATE_KEY\tCHAIN\tMANAGED_BY\tUSED_BY\tPOD\tSERVICES\tHOW\tCONTAINER\tPATH_IN_CONTAINER\tNODE\tHOST_PATH\tAFTER_ROTATION\tTHIS_HOST\n'
-         sm__flat | awk -F'\t' 'BEGIN { OFS = "\t" } { for (i = 10; i <= 11; i++) if ($i != "") { cmd = "date -u -d @" $i " +%Y-%m-%dT%H:%M:%SZ 2>/dev/null"; cmd | getline t; close(cmd); $i = t } print }'; } |
+         sm__flat | awk -F'\t' "$SM_UTC_AWK"'BEGIN { OFS = "\t" } { for (i = 10; i <= 11; i++) if ($i != "") $i = smutc($i, 1); print }'; } |
        if [ "$1" = csv ]; then awk -F'\t' '{ for (i = 1; i <= NF; i++) { v = $i; if (v ~ /[",]/) { gsub(/"/, "\"\"", v); v = "\"" v "\"" } printf "%s%s", v, (i < NF ? "," : "\n") } }'; else cat; fi ;;
   esac
   audit SECRETS_EXPORT "format=$1"
@@ -13572,13 +14735,13 @@ report_bundle_extras() { # dir: the same data as files in the report bundle
 }
 
 sm__tables_tsv() { # the four tables as "@@TITLE" + TSV (for the HTML report)
-  local d="$TOOLKIT_DIR" now; now="$(date +%s)"
+  local d="$TOOLKIT_DIR" now; printf -v now '%(%s)T' -1
   printf '@@Certificates in Secrets|soonest expiry first; CHAIN = is it signed by the ca.crt or the intermediates stored with it\n'
   printf 'STATE\t>DAYS\tEXPIRES (UTC)\tSECRET\tKEY\tROLE\tSUBJECT\tSAN\tISSUER\tALGO\tPRIVATE KEY\tCHAIN (signatures)\tMANAGED BY\tSHA-256 (prefix)\n'
-  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" 'BEGIN { OFS = "\t" }
+  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" "$SM_UTC_AWK"'BEGIN { OFS = "\t" }
     FILENAME ~ /sm-secrets/ { MG[$1 "/" $2] = $5; next }
     { s = $1 "/" $2; dl = int(($10 - now) / 86400); stt = ($10 < now) ? "{r}EXPIRED" : (dl <= crit) ? "{r}CRITICAL" : (dl <= warn) ? "{y}WARNING" : "{g}OK"
-      cmd = "date -u -d @" $10 " +%Y-%m-%d\\ %H:%M 2>/dev/null"; cmd | getline t; close(cmd)
+      t = smutc($10, 0)
       print $10, stt, dl, t, s, $3 ($4 > 1 ? " #" $4 : ""), $5 ($13 == "self" && $5 != "CA" ? ", self-signed" : ""), $6, $7, ($13 == "self" ? "(self)" : $8), $11, $14, ($15 == "" ? "-" : $15), MG[s], $12 }' "$d/sm-secrets.tsv" "$d/sm-certs.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1n | cut -f2-
   printf '@@Where each Secret is used|one row per pod and way of use; volumes follow a rotation by themselves, env and subPath need a restart\n'
   printf 'SECRET\tUSED BY\tPOD\tSERVICE\tHOW\tCONTAINER\tPATH IN THE CONTAINER\tNODE\tPATH ON THE NODE (kubelet)\tAFTER A ROTATION\tTHIS HOST\n'
@@ -13689,6 +14852,7 @@ esac
 [ "$DO_SREP" = 1 ] && { session_report_main "$SREP_ARG"; exit 0; }
 if [ "$PICK_NS" = 1 ]; then
   [ "$ALTSCR" = 1 ] && printf '\033[?1049h'
+  ui_tty_quiet on
   # a pick is only taken when its pods can be read; otherwise back to the list with the reason
   picked_ok=0
   while ns_pick start; do
@@ -13789,8 +14953,9 @@ ALERT_STATE="$TMPD/alerts.state"; : > "$ALERT_STATE"
 while IFS= read -rsn1 -t 0.01 _flush; do :; done
 exec 3>&2 2>"$ERRLOG"
 [ "$ALTSCR" = 1 ] && printf '\033[?1049h'
+ui_tty_quiet on
 printf '\033[?25l\033[2J'
-LAST=$(date +%s); check_alerts
+printf -v LAST '%(%s)T' -1; check_alerts
 case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access|secrets) TOOLKIT_REQUESTED=1 ;; esac
 if [ "${SHELL_PICKER:-0}" = 1 ]; then      # kdsh [FILTER]: pod list in shell mode, one match opens it
   case "$FILTER" in
@@ -13802,7 +14967,7 @@ if [ "${SHELL_PICKER:-0}" = 1 ]; then      # kdsh [FILTER]: pod list in shell mo
 fi
 DASH_FAST=0; DASH_FL=1
 while :; do
-  printf -v now '%(%s)T' -1 2>/dev/null || now=$(date +%s)
+  printf -v now '%(%s)T' -1
   if [ "$DASH_FAST" = 1 ]; then
     # the last key only scrolled: the rendered view is still valid - paint the new slice now;
     # polling and rendering go on with the next tick (at most 0.4 s later)
@@ -13812,10 +14977,20 @@ while :; do
     fetch_adopt; toolkit_filters_changed; toolkit_tick
     [ -n "${key-x}" ] || DASH_FL=0        # a clock tick (no key): the screen is still ours
     ! login_auto_maybe || DASH_FL=1       # ... unless the login screen was just shown
-    render; paint
+    # the view is drawn again only when what it shows can have changed: a key, new data
+    # (pods, metrics, a toolkit read started or finished), another window size, or
+    # KDASH_REDRAW_MAX (10) s gone by; a quiet tick repaints only the status line (clock,
+    # data age). KDASH_REDRAW_MAX=0 draws on every tick as before.
+    _rs="$RENDER_GEN|$MODEL_GEN|${PAINT_SZ:-}|$VIEW|$THEME"
+    if [ -n "${key-x}" ] || [ "$_rs" != "${RENDERED_SIG:-}" ] || [ $((now - ${RENDERED_AT:-0})) -ge "${KDASH_REDRAW_MAX:-10}" ]; then
+      render_cached; RENDERED_SIG="$_rs"; RENDERED_AT=$now
+      [ "${DS_ON:-0}" != 1 ] || ds_match  # the view was drawn again: count its matches again
+    fi
+    paint
   fi
   if [ "${BASH_VERSINFO[0]:-3}" -lt 4 ]; then sleep "$INTERVAL"; continue; fi
   if IFS= read -rsn1 -t 0.4 key; then [ -n "$key" ] || key=$'\n'; else key=""; fi
+  case "$key" in 1|2|3|4|5|6|7|8|9|E|'!'|C|R|K|Y|M|$'\t'|v) RC_USE=1 ;; ''|j|k) RC_USE=0 ;; *) RC_USE=0; RC_GEN=$((RC_GEN + 1)) ;; esac
   out=""; AK_NS="$NS"
   case "$key" in
     1) VIEW=pods; SCROLL=0; HSCROLL=0 ;; 2) VIEW=nodes; SCROLL=0; HSCROLL=0 ;; 3) VIEW=workloads; SCROLL=0; HSCROLL=0 ;;
@@ -13872,9 +15047,8 @@ while :; do
     x) flash "writing namespace report (all tabs + history) ..." 30; paint
        if out="$(namespace_report "$SDIR" 2>&1)"; then flash "report: $(printf '%s\n' "$out" | tail -1)" 12
        else flash "report failed: $(printf '%s' "$out" | tail -1)" 8; fi ;;
-    e) printf '\033[%d;1H\033[K\033[?25h\033[7m HTML: Enter = one file, all tabs + history | c current view (%s) | 1-6 views (e.g. 256) | a all 6 separate | b full bundle > \033[0m' \
-         "${KDASH_LINES:-$(tput lines 2>/dev/null || echo 40)}" "$VIEW"
-       IFS= read -r sel </dev/tty || sel=""; case "$sel" in *$'\e'*) sel="" ;; esac
+    e) printf '\033[%d;1H\033[K' "${KDASH_LINES:-$(tput lines 2>/dev/null || echo 40)}"
+       sel=""; ui_edit_line sel $'\033[7m'" HTML: Enter = one file, all tabs + history | c current view ($VIEW) | 1-6 views (e.g. 256) | a all 6 separate | b full bundle > "$'\033[0m' html || sel=""
        printf '\033[?25l'
        sel="$(printf '%s' "$sel" | tr -d ' ')"
        if [ -z "$sel" ] || [ "$sel" = n ]; then
@@ -13893,15 +15067,12 @@ while :; do
            else flash "snapshot: $(printf '%s\n' "$out" | tail -1)" 10; fi
          else flash "snapshot failed: $(printf '%s' "$out" | tail -1)" 8; fi
        fi ;;
-    /) printf '\033[%d;1H\033[K\033[?25h filter (pod regex, empty = all): ' "${KDASH_LINES:-$(tput lines 2>/dev/null || echo 40)}"
-       IFS= read -r nf </dev/tty || nf=""
-       printf '\033[?25l'
-       case "$nf" in *$'\e'*) flash "filter unchanged" 2; continue ;; esac
-       [ -n "$nf" ] || nf='.*'
-       printf '' | grep -E -- "$nf" >/dev/null 2>&1; rc=$?
-       if [ "$rc" -le 1 ]; then FILTER="$nf"; : > "$HIST"; : > "$NHIST"; rm -f "$TMPD/forecast.tsv"; build_model; session_reset_state; NPODS=1; SCROLL=0; flash "filter: $FILTER" 3
-       else flash "invalid regex: $nf" 4; fi ;;
-    n) while ns_pick live; do
+    /) dash_search; printf '\033[?25l' ;;                     # the search box (Tab in it: filter pods)
+    '>') qx_dashboard ;;                                        # quick export: screen + whole view to a log file
+    N) if [ "${DS_ON:-0}" = 1 ] && [ -n "$DS_PAT" ]; then ds_match; DS_MSG=""; ds_jump prev; DASH_FAST=1
+       else flash "N steps back through the matches of a search - / opens the search box" 4; fi ;;
+    n) if [ "${DS_ON:-0}" = 1 ] && [ -n "$DS_PAT" ]; then ds_match; DS_MSG=""; ds_jump next; DASH_FAST=1; continue; fi
+       while ns_pick live; do
          flash "opening namespace ${PICKED/#\*/all namespaces} ..." 30; printf '\033[2J'; paint
          if switch_ns "$PICKED"; then SCROLL=0; HSCROLL=0; flash "namespace $NS - ${NPODS:-0} pods (history restarted for this namespace)" 8; break; fi
          [ "$PICKED" != "*" ] && NSACC["$PICKED"]=no
@@ -13911,13 +15082,14 @@ while :; do
     a) ALL_NODES=$((1 - ALL_NODES)); SCROLL=0
        flash "NODE POOLS: $([ "$ALL_NODES" = 1 ] && echo 'every node' || echo 'only nodes running this namespace')" 4 ;;
     P) if [ "$PAUSED" = 1 ]; then PAUSED=0; LAST=0; flash "live again - refreshing every ${INTERVAL}s" 4
-       else PAUSED=1; PAUSED_AT=$(date +%s); flash "paused - data frozen at $(date +%H:%M:%S); P resumes (views, sort, scroll and reports still work)" 6; fi ;;
+       else PAUSED=1; printf -v PAUSED_AT '%(%s)T' -1; flash "paused - data frozen at $(date +%H:%M:%S); P resumes (views, sort, scroll and reports still work)" 6; fi ;;
     +|=) set_interval up; flash "poll every ${INTERVAL}s" 3 ;;
     -|_) set_interval down; flash "poll every ${INTERVAL}s" 3 ;;
     Z) ZOOM=$((1 - ZOOM)); flash "NODE POOLS bars: $([ "$ZOOM" = 1 ] && echo 'auto zoom (small shares magnified, % values true)' || echo 'true scale')" 5 ;;
     c) POD_GRAPHS=$(( 1 - ${POD_GRAPHS:-1} )); flash "PODS graphs $([ "$POD_GRAPHS" = 1 ] && echo on || echo off) (c toggles)" 3 ;;
     z) cycle_window; [ "${SESSION_ON:-0}" = 1 ] && heat_build "$SDIR" "$TMPD/heat.tsv" "$WIN_S"; flash "chart window: $( [ "$TWIN" = all ] && echo 'all since kdash started' || echo "last $TWIN" )" 4 ;;
-    T) cycle_theme; printf '\033[2J'; flash "colour theme: $THEME" 4 ;;
+    T) cycle_theme; printf '\033[2J'
+       flash "colour theme: $THEME - $(case "$THEME" in safe) echo 'reads on black and white backgrounds' ;; dark) echo 'for black backgrounds' ;; light) echo 'for white backgrounds' ;; *) echo 'no colour, bold and reverse only' ;; esac) (T: next)" 5 ;;
     '?') show_help ;;
     q) audit QUIT "key q"; cleanup; exit 0 ;;
     Q) kdash_quit dashboard ;;
@@ -13925,6 +15097,8 @@ while :; do
              IFS= read -rsn1 -t 0.15 seq || seq=""
              case "$seq" in '['|O) IFS= read -rsn1 -t 0.15 _k2 || _k2=""; seq="[$_k2" ;; esac
              case "$seq" in '[5'|'[6') IFS= read -rsn1 -t 0.15 _k2 || true ;; esac      # the closing ~
+             # Esc alone closes the search box
+             if [ -z "$seq" ] || [ "$seq" = '[' ]; then [ "${DS_ON:-0}" = 1 ] && { DS_ON=0; DS_PAT=""; DS_CUR=0; DS_N=0; flash "search closed" 2; }; fi
              case "$seq" in '[A') SCROLL=$((SCROLL-1)); DASH_FAST=1 ;; '[B') SCROLL=$((SCROLL+1)); DASH_FAST=1 ;;
                             '[C') HSCROLL=$((HSCROLL+20)); DASH_FAST=1 ;; '[D') HSCROLL=$((HSCROLL-20)); DASH_FAST=1 ;;
                             '[5') SCROLL=$((SCROLL-10)); DASH_FAST=1 ;; '[6') SCROLL=$((SCROLL+10)); DASH_FAST=1 ;; esac ;;
@@ -14014,6 +15188,7 @@ KDASH_NS_MAP="example-cluster-1=demo-namespace-0001 example-cluster-2=demo-names
 #KDASH_HISTORY=60                # samples kept for memory sparklines
 #KDASH_NODE_METRICS=1            # 0 = never call kubectl top node
 #KDASH_REPORT_DIR=$HOME/kdash_reports
+#KDASH_EXPORT_DIR=$HOME/kdash_reports/exports   # key >: quick export of a screen to a log file
 
 # Force frame size instead of asking the terminal
 #KDASH_COLUMNS=160
@@ -14049,6 +15224,12 @@ KDASH_NS_MAP="example-cluster-1=demo-namespace-0001 example-cluster-2=demo-names
 #KDASH_SECRETS_IN_CHECK=1        # 0 = K check, FMEA and the report do not read Secrets (the Y view still does)
 #KDASH_SECRETS_CHECK_TTL=300     # K check / FMEA reuse the secrets map for N s (r re-reads at once)
 #KDASH_REPORT_EXTRAS=1           # 0 = the namespace report (x) has no FMEA and SECRETS tabs
+#KDASH_LOG_TAIL=5000             # pod detail reads the newest N log lines first (+ reads 4x more, A all)
+#KDASH_LOG_MAX_BYTES=268435456   # A and a search read at most this much of one log
+#KDASH_LOG_TIMEOUT=300           # seconds a log read may take (a slow link must not cut a log short)
+#KDASH_SEARCH_ALL_LINES=1        # 0 = / searches only the lines already loaded
+#KDASH_FIND_PARALLEL=4           # F (find in all pods' logs): logs read at the same time
+#KDASH_FIND_MAX_LINES=5000        # F: matching lines kept per log
 #KDASH_SHELL_HEADER=scroll      # pinned = keep the shell header fixed at the top (in the shell: kdpin toggles, kdheader prints it)
 #KDASH_HEADER=panel             # compact = one-line status header instead of the framed cards (saves 2 rows)
 #KDASH_KEYS=panel               # compact = pod detail key hints as wrapped rows instead of the framed panel
@@ -14316,5 +15497,5 @@ say "DISCLAIMER: provided as is. The person running kdash is solely responsible 
 say "for having authorisation to read the clusters / namespaces. Every run, user action, report and"
 say "kubectl call is audited (~/kdash_reports/audit, /var/log/kdash when present, syslog)."
 say "keys: K check now  L login  1-9/Tab view (7 ALERTS, 8 SERVICES, 9 STORAGE)  E events  ! explain  C certificates  R runbooks  M fmea  Y secrets  Enter/i inspect  : palette  F filters"
-say "      ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / filter  h/l pan  j/k scroll  q quit"
+say "      ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / search  > export  h/l pan  j/k scroll  q quit"
 exit "$PROBE_RC"

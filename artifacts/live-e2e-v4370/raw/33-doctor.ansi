@@ -1,0 +1,50 @@
+[1;7m KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [38;5;243m 3 WORKLOADS [39m [38;5;243m 4 IP POOL [39m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [38;5;243m 8 SVCS [39m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-19 21:13:11[0m[38;5;243m IST[39m
+[38;5;243m┌─ [1m[39mSCOPE[0m[38;5;243m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[38;5;243m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[38;5;243m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[38;5;243m ───────┐
+│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msort cpu ▼ high first[0m                      [38;5;243m│[39m [1m[38;5;196m! pods 13/17 ready[0m[38;5;243m   restarts [38;5;163m381[39m           [38;5;243m│[39m [38;5;243mcpu [39m    60m [38;5;29m░░░░░░░░[39m [38;5;29m  4%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m13               [38;5;243m│
+│[39m [38;5;243mpoll 2s  spec 6s/30s   session [39m21:10:37[38;5;243m up [39m2m34s      [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    5Mi [38;5;29m░░░░░░░░[39m [38;5;29m  1%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;29m^ 0[39m        [38;5;243m│
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+[39m [1mDATA[0m [38;5;29m●[39m pods [1mfresh[0m [38;5;243m6s old[39m  metrics [1mavailable[0m [38;5;243m│[39m [1mC[0m certs (1 expiring) [38;5;243m│[39m [1m/[0m search [38;5;243m│[39m [1mK[0m check [38;5;243m│[39m [1mi[0m inspect [38;5;243m│[39m [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain [38;5;243m│[39m [1m:[0m commands
+[1;7m KDASH 4.37.0 DOCTOR [0m  [38;5;243mread-only capability checks - no cluster changes are made[39m
+
+[1mCONNECTION[0m
+[38;5;243m┌──────────────┬──────────────────────────────────────────────────────────────────┐[39m
+[38;5;243m│[39m [1mSETTING     [0m [38;5;243m│[39m [1mVALUE                                                           [0m [38;5;243m│[39m
+[38;5;243m├──────────────┼──────────────────────────────────────────────────────────────────┤[39m
+[38;5;243m│[39m context      [38;5;243m│[39m kdash-local                                                      [38;5;243m│[39m
+[38;5;243m│[39m namespace    [38;5;243m│[39m kdash-e2e                                                        [38;5;243m│[39m
+[38;5;243m│[39m kubeconfig   [38;5;243m│[39m /var/tmp/kdash-validation.kubeconfig                             [38;5;243m│[39m
+[38;5;243m│[39m API endpoint [38;5;243m│[39m https://localhost:10093                                          [38;5;243m│[39m
+[38;5;243m│[39m audit log    [38;5;243m│[39m /workspace/kdash/artifacts/live-e2e-v4370/audit/audit_202611.log [38;5;243m│[39m
+[38;5;243m└──────────────┴──────────────────────────────────────────────────────────────────┘[39m
+
+[1mCHECKS[0m  [38;5;243m9 checks   all required checks passed[39m
+[38;5;243m┌─────────────────────────────────┬───────────┬──────────────────────────────────────────────────────────┬───────────────────────────┐[39m
+[38;5;243m│[39m [1mCHECK                          [0m [38;5;243m│[39m [1mRESULT   [0m [38;5;243m│[39m [1mDETAIL                                                  [0m [38;5;243m│[39m [1mNEXT STEP                [0m [38;5;243m│[39m
+[38;5;243m├─────────────────────────────────┼───────────┼──────────────────────────────────────────────────────────┼───────────────────────────┤[39m
+[38;5;243m│[39m pods                            [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m readable (an empty namespace is valid)                   [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m nodes                           [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m readable                                                 [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m services                        [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m readable                                                 [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m endpointslices.discovery.k8s.io [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m readable                                                 [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m persistentvolumeclaims          [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m readable                                                 [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m events                          [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m readable                                                 [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m metrics                         [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m pod CPU / memory readable                                [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m certificates                    [38;5;243m│[39m [38;5;163m● WARNING[39m [38;5;243m│[39m 1 expiring - soonest: cert-manager certificate (kdash-   [38;5;243m│[39m [38;5;243mkdash --certs  (or key C)[39m [38;5;243m│[39m
+[38;5;243m│[39m                                 [38;5;243m│[39m [38;5;163m         [39m [38;5;243m│[39m e2e/functionality-certificate) in 24 d                   [38;5;243m│[39m [38;5;243m                         [39m [38;5;243m│[39m
+[38;5;243m│[39m local reports                   [38;5;243m│[39m [38;5;29m● PASS   [39m [38;5;243m│[39m writable: /workspace/kdash/artifacts/live-e2e-v4370/     [38;5;243m│[39m [38;5;243m-                        [39m [38;5;243m│[39m
+[38;5;243m│[39m                                 [38;5;243m│[39m [38;5;29m         [39m [38;5;243m│[39m reports                                                  [38;5;243m│[39m [38;5;243m                         [39m [38;5;243m│[39m
+[38;5;243m└─────────────────────────────────┴───────────┴──────────────────────────────────────────────────────────┴───────────────────────────┘[39m
+
+  [38;5;243mRead-only checks complete; no cluster changes made.[39m
+
+
+
+
+
+
+
+
+
+
+K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l[38;5;243m›
+[7m[39m ● LIVE 21:13:12  next 1s  data 1s old  spec 7/30s  fetch 0.0s  poll 2s  AUDITED | doctor | ? help  1-9 view  n ns  s sort(cpu)  / search  > export  P pause  x html    [0m

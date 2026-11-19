@@ -1,0 +1,50 @@
+ KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:18:55 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 382           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 26s/30s   session 21:18:29 up 26s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 27s old  metrics available │ C certs (3 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ CHECK NOW   everything kdash can see that is wrong right now - most severe first, with the commands to check and fix it
+
+  6 CRITICAL   8 WARNING   checked 4s ago - r re-checks now
+
+AREAS  8 areas
+┌──────────────┬───────────────┬──────────┬──────────────────────────────────────────────────────────────────┐
+│ AREA         │ STATUS        │ FINDINGS │ DETAIL                                                           │
+├──────────────┼───────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
+│ api          │ ● OK          │        0 │ pods read 27s ago                                                │
+│ nodes        │ ● OK          │        0 │ 1 of 1 Ready                                                     │
+│ pods         │ ● CRITICAL    │        4 │ 17 pods in the dashboard scope                                   │
+│ services     │ ● CRITICAL    │        3 │ services ok, endpoints ok, ingresses ok                          │
+│ storage      │ ● CRITICAL    │        2 │ claims ok, volumes ok                                            │
+│ certificates │ ● WARNING     │        3 │ full check 18s ago                                               │
+│ secrets      │ ● WARNING     │        2 │ 3 certificates in 3 Secrets - Y shows who uses them and where    │
+│ etcd         │ ● not visible │        0 │ snapshots: unavailable - on a server: sudo rke2 etcd-snapshot ls │
+└──────────────┴───────────────┴──────────┴──────────────────────────────────────────────────────────────────┘
+
+FINDINGS  14 findings   critical first - Enter runs the read commands of one now (CHANGE commands are never run)
+┌────┬────────────┬──────────────┬─────────────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ #  │ SEVERITY   │ AREA         │ OBJECT                              │ FINDING                                                                                         │
+├────┼────────────┼──────────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1  │ ● CRITICAL │ pods         │ z-crash                             │ CrashLoopBackOff, 341 restarts (last: Error)                                                    │
+│ 2  │ ● CRITICAL │ pods         │ z-imagepull                         │ ImagePullBackOff - the image cannot be pulled                                                   │
+│ 3  │ ● CRITICAL │ services     │ missing-backend                     │ selector app=does-not-exist matches no pod in this scope                                        │
+│ 4  │ ● CRITICAL │ services     │ web-loadbalancer                    │ selector app=app-server matches no pod in this scope                                            │
+│ 5  │ ● CRITICAL │ services     │ web-nodeport                        │ selector app=app-server matches no pod in this scope                                            │
+│ 6  │ ● CRITICAL │ storage      │ z-unbound                           │ claim is Pending - not bound to a volume                                                        │
+│ 7  │ ● WARNING  │ pods         │ z-pending                           │ Pending                                                                                         │
+│ 8  │ ● WARNING  │ pods         │ z-unschedulable                     │ Pending                                                                                         │
+│ 9  │ ● WARNING  │ storage      │ z-unbound                           │ storage class kdash-e2e-intentionally-missing does not exist                                    │
+│ 10 │ ● WARNING  │ certificates │ functionality-tls ca.crt            │ functionality.local.test expires in 24 d (2026-12-14 09:16 UTC)                                 │
+│ 11 │ ● WARNING  │ certificates │ functionality-tls tls.crt           │ functionality.local.test expires in 24 d (2026-12-14 09:16 UTC)                                 │
+│ 12 │ ● WARNING  │ certificates │ kdash-e2e/functionality-certificate │ cert-manager certificate expires in 24 d (2026-12-14 09:16 UTC)                                 │
+│ 13 │ ● WARNING  │ secrets      │ functionality-tls                   │ certificate functionality.local.test (ca.crt) expires in 24 d; cert-manager: functionality-     │
+│    │            │              │                                     │ certificate (issuer functionality-selfsigned) should renew it                                   │
+│ 14 │ ● WARNING  │ secrets      │ functionality-tls                   │ certificate functionality.local.test (tls.crt) expires in 24 d; cert-manager: functionality-    │
+│    │            │              │                                     │ certificate (issuer functionality-selfsigned) should renew it                                   │
+└────┴────────────┴──────────────┴─────────────────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now
+K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
+ ● LIVE 21:18:56  next 1s  data 1s old  spec 27/30s  fetch 0.0s  poll 2s  AUDITED | check | rows 1-41/101 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export

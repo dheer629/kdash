@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                               PREVIOUS LOGS
+┌─ PREVIOUS LOGS ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        z-crash                                                                                                                                                    │
+│ CONTAINER  crash   ● CrashLoopBackOff   not-ready   restarts 353   last exit Error exit=42   busybox:1.36                                                             │
+└─ rows 1-1 / 1 · 1 lines 76 B since 2026-11-19 16:46:15, whole log (nothing rotated yet) ──────────────────────────────────────────────────────────────────────────────┘
+2026-11-19T16:46:15.671553353Z ERROR intentional validation failure exit=42
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
+│ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
+│ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │
+│ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
+│ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
+└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
+ reading the whole log, older rotated files too when allowed (up to 256.0 MiB)

@@ -1,0 +1,50 @@
+ KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e                                                                                 18 of 18 pods
+ pods    ● CrashLoopBackOff 1  ● ImagePullBackOff 1  ● Pending 2  ● Running 9  ● Succeeded 5
+ exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_pod-list_kdash-e2e_20261119-221618.log
+┌────────────────────────────────────────────────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┬──────────────────────────┐
+│ POD                                                                            │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │ NODE                     │
+├────────────────────────────────────────────────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┼──────────────────────────┤
+│ app-server-8fb4699bc-cx5vz                                                     │ Running          │ 2/2   │  14 │     3m │     3Mi │    3% │ dev  last-exit Unknown   │
+│ app-server-8fb4699bc-t7zxj                                                     │ Running          │ 2/2   │  14 │     3m │     0Mi │    0% │ dev  last-exit Unknown   │
+│ completed-check-m9swm                                                          │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ db-stateful-0                                                                  │ Running          │ 1/1   │   0 │     1m │     0Mi │    0% │ dev                      │
+│ db-stateful-1                                                                  │ Running          │ 1/1   │   0 │     1m │     0Mi │    0% │ dev                      │
+│ functionality-legacy-67ks7                                                     │ Running          │ 1/1   │   0 │     1m │     0Mi │    0% │ dev                      │
+│ kdash-secrets-live-consumer                                                    │ Running          │ 1/1   │   0 │     0m │     0Mi │    0% │ dev                      │
+│ nightly-report-29918435-9cljn                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ nightly-report-29918440-xxv6v                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ nightly-report-29918445-cf9m2                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ node-agent-ctvg6                                                               │ Running          │ 1/1   │   0 │     1m │     1Mi │    3% │ dev                      │
+│ sync-pod                                                                       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ test-sts-0                                                                     │ Running          │ 1/1   │  14 │     0m │     0Mi │     - │ dev  last-exit Completed │
+│ z-crash                                                                        │ CrashLoopBackOff │ 0/1   │ 352 │      - │       - │     - │ dev  last-exit Error     │
+│ z-imagepull                                                                    │ ImagePullBackOff │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ z-oom                                                                          │ Running          │ 1/1   │   0 │    50m │     1Mi │    6% │ dev                      │
+│ z-pending                                                                      │ Pending          │ 0/1   │   0 │      - │       - │     - │ (unscheduled)            │
+│ z-unschedulable                                                                │ Pending          │ 0/1   │   0 │      - │       - │     - │ (unscheduled)            │
+└────────────────────────────────────────────────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┴──────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── 1 / 18   2 failing   2 pending / starting ─────────────────────────────────────────────────────────────────────────────────────────────────────── live · refresh 2s ──
+┌─ MOVE ──────────────────┬─ FIND ─────────────┬─ INSPECT ───────────────────┬─ SHELL · FILES ─────┬─ LEAVE ────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ /  search          │ Enter  summary              │ S  shell            │ q / Q  back / quit                                                 │
+│ PgUp/PgDn  page         │ u  needs attention │ l / p  logs / previous logs │ U  upload           │ >      export to a log                                             │
+│ g / G      first / last │ s  sort: name      │ d / e  describe / events    │ D  download         │ r      refresh now                                                 │
+│ 12         go to row 12 │ F  filters         │ w / c  why / containers     │ X  enable S / U / D │ ?      all keys                                                    │
+└─────────────────────────┴────────────────────┴─────────────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────────────┘

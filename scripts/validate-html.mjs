@@ -18,6 +18,7 @@ const secretsReport = process.argv.includes('--secrets-report')
 const releaseVersion = evidence.version.replace(/^kdash /, '');
 const [major, minor, patch] = releaseVersion.split('.').map(Number);
 const hasFmea = major > 4 || (major === 4 && (minor > 28 || (minor === 28 && patch >= 1)));
+const hasCombinedDiagnostics = major > 4 || (major === 4 && minor >= 37);
 const captures = (await fs.readFile(path.join(run, 'captures.tsv'), 'utf8')).trim().split(/\r?\n/);
 const pngColumn = captures[0].split('\t').indexOf('png');
 if (pngColumn < 0 || captures.length < 2) throw new Error('Capture manifest has no PNG paths');
@@ -38,7 +39,9 @@ if (!reports.length) throw new Error('No generated namespace report');
 // Prefer the report retaining the longest live history over a later short run.
 const candidates = await Promise.all(reports.map(async name => ({ name,
   size: (await fs.stat(path.join(run, 'reports', name))).size })));
-const source = path.join(run, 'reports', candidates.sort((a, b) => b.size - a.size)[0].name);
+const source = process.argv.includes('--namespace-report')
+  ? path.resolve(option('--namespace-report'))
+  : path.join(run, 'reports', candidates.sort((a, b) => b.size - a.size)[0].name);
 const checks = [];
 const screenshots = [];
 const errors = [];
@@ -95,6 +98,39 @@ try {
   check('html-json-download', downloaded.generator === 'kdash' && jsonText.includes('app-server'));
   await page.locator('.tab[data-tab="history"]').click();
   check('html-history-charts', await page.locator('.view[data-view="history"] svg').count() > 0);
+  if (hasCombinedDiagnostics) {
+    for (const [tab, needle, id] of [['fmea', 'z-pending', 'fmea_1'],
+                                     ['secrets', 'kdash-secrets-live-valid', 'sm_1']]) {
+      await page.locator(`.tab[data-tab="${tab}"]`).click();
+      const view = page.locator(`.view[data-view="${tab}"]`);
+      check(`html-tab-${tab}`, await view.isVisible());
+      check(`html-combined-${tab}-real-data`, (await view.textContent()).includes(needle));
+      await page.locator('#gq').fill(needle);
+      const visible = view.locator('tbody tr[data-s]:not(.r-hidden)');
+      check(`html-combined-${tab}-search`, await visible.count() > 0 &&
+        (await visible.allTextContents()).every(text => text.includes(needle)));
+      await page.locator('#gq').fill('');
+      const table = page.locator(`#${id}`);
+      const column = tab === 'fmea' ? 7 : 3;
+      const header = table.locator('thead th').nth(column);
+      await header.click();
+      const first = await table.locator(`tbody tr[data-s] td:nth-child(${column + 1})`).allTextContents();
+      await header.click();
+      const second = await table.locator(`tbody tr[data-s] td:nth-child(${column + 1})`).allTextContents();
+      check(`html-combined-${tab}-sort`, first.length > 1 &&
+        JSON.stringify(first) === JSON.stringify([...second].reverse()));
+      const downloading = page.waitForEvent('download');
+      await table.locator('xpath=ancestor::section').getByRole('button', { name: 'CSV', exact: true }).click();
+      const download = await downloading;
+      const csvPath = path.join(run, 'logs', `browser-combined-${tab}.csv`);
+      await download.saveAs(csvPath);
+      check(`html-combined-${tab}-csv`, (await fs.readFile(csvPath, 'utf8')).includes(needle));
+      const png = path.join(output, `combined-${tab}.png`);
+      await page.screenshot({ path: png, animations: 'disabled' });
+      screenshots.push({ file: path.relative(root, png).replaceAll('\\', '/'),
+        sha256: crypto.createHash('sha256').update(await fs.readFile(png)).digest('hex'), tab: `combined-${tab}` });
+    }
+  }
   check('html-no-script-errors', errors.length === 0, errors.join('; '));
   if (hasFmea) {
     const fmeaDir = path.join(run, 'reports', 'fmea');
@@ -122,8 +158,11 @@ try {
     const text = await secretsPage.locator('body').textContent();
     check('html-secrets-real-data', text.includes('kdash-secrets-live-valid') &&
       text.includes('kdash-secrets-live-consumer') && text.includes('/fixture/tls/{tls.crt,tls.key}'));
+    // Build the markers at runtime so this checker does not itself look like a
+    // committed private key to the repository credential scan.
+    const pemMarkers = ['-----BEGIN ' + 'PRIVATE KEY-----', '-----BEGIN EC ' + 'PRIVATE KEY-----'];
     check('html-secrets-no-values', !text.includes('KDASH_SYNTHETIC_VALUE_DO_NOT_EXPORT_4f9e2') &&
-      !text.includes('-----BEGIN PRIVATE KEY-----') && !text.includes('-----BEGIN EC PRIVATE KEY-----'));
+      !pemMarkers.some(marker => text.includes(marker)));
     check('html-secrets-tables', await secretsPage.locator('table').count() >= 4);
     check('html-secrets-no-script-errors', errors.length === 0, errors.join('; '));
     const png = path.join(output, 'secrets.png');

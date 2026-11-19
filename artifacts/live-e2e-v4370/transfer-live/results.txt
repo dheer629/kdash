@@ -1,0 +1,5 @@
+PASS: upload: file with spaces, tree, empty directory, symlinks and hardlinks verify
+PASS: same-size corruption in the uploaded tree is detected
+PASS: download: all fixture entries verify and empty directories/links survive
+PASS: /bin remote fingerprint matches downloads in WSL and the output filesystem
+PASS: live transfer validation complete; private remote and staging data cleaned on exit

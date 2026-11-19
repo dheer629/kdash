@@ -31,6 +31,9 @@ health__failure() {
   elif grep -qiE 'connection refused|was refused|no route|unable to connect|connection reset|no such host|dial tcp|i/o timeout' "$err"; then
     state=unreachable; detail='API or metrics endpoint unreachable; source unknown'
   fi
+  # the reason, so "error" is never all an operator sees (one line, no control bytes)
+  local why; why="$(grep -v '^[[:space:]]*$' "$err" 2>/dev/null | head -1 | LC_ALL=C tr -d '\000-\037\177' | cut -c1-140)"
+  case "$state" in error|timeout) [ -z "$why" ] || detail="${detail%; source unknown}: $why" ;; esac
   health__status "$source" "$state" "$detail"
 }
 
@@ -134,7 +137,7 @@ health_collect() {
 
 health__sources() { # source... -> a table of where the data came from and how old it is
   local source state epoch detail now age
-  now=$(date +%s)
+  printf -v now '%(%s)T' -1
   {
     printf 'SOURCE\tSTATE*\t>READ\tDETAIL~\n'
     for source in "$@"; do

@@ -1,0 +1,8 @@
+context=kdash-local
+namespace=kdash-e2e
+pod=app-server-8fb4699bc-cx5vz
+container=app
+started_utc=2026-11-19T17:08:21Z
+remote_bin_seconds=0.833
+local_bin_seconds=0.023 path=/tmp/kdash-transfer-live.TX2lSsej/bin-stage
+local_bin_seconds=0.944 path=/workspace/kdash/artifacts/live-e2e-v4370/transfer-live/.bin-stage.PzIGex50

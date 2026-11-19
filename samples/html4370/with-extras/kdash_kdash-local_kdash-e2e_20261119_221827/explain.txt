@@ -1,0 +1,74 @@
+WHY - INCIDENT EVIDENCE  -  warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context kdash-local
+┌────────┬───────┬────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │   READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 2s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴────────┴───────────┴────────────────┘
+
+PODS NEEDING ATTENTION  4 pods   14 other pods are Running and ready - from the dashboard model
+┌─────────────────┬────────────────────┬───────┬──────────┬───────────────┐
+│ POD             │ STATUS             │ READY │ RESTARTS │ NODE          │
+├─────────────────┼────────────────────┼───────┼──────────┼───────────────┤
+│ z-crash         │ ● CrashLoopBackOff │   0/1 │      353 │ dev           │
+│ z-imagepull     │ ● ImagePullBackOff │   0/1 │        0 │ dev           │
+│ z-pending       │ ● Pending          │   0/1 │        0 │ (unscheduled) │
+│ z-unschedulable │ ● Pending          │   0/1 │        0 │ (unscheduled) │
+└─────────────────┴────────────────────┴───────┴──────────┴───────────────┘
+
+WARNING EVIDENCE  5 items   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────────────────────────┬────────────────────┬───────┬────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT                          │ REASON             │ COUNT │ CATEGORY   │ MESSAGE                                                                                                                                                                                                                                                                                  │
+├───┼───────────┼─────────────────────────────────┼────────────────────┼───────┼────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 5s        │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │  6341 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                                                                                                                                                  │
+│ 2 │ 34s       │ Pod/z-crash                     │ BackOff            │  7220 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)                                                                                                                                                                                │
+│ 3 │ 28m       │ Pod/z-unschedulable             │ FailedScheduling   │   164 │ scheduling │ 0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.                                                                                                                           │
+│ 4 │ 29m       │ Pod/z-pending                   │ FailedScheduling   │   318 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.                                                                                                                              │
+│ 5 │ 30m       │ Pod/z-imagepull                 │ Failed             │   165 │ image      │ Failed to pull image "busybox:does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/library/busybox:does-not-exist": failed to resolve reference "docker.io/library/busybox:does-not-exist": docker.io/library/busybox:does-not-exist: not found │
+└───┴───────────┴─────────────────────────────────┴────────────────────┴───────┴────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+POSSIBLE EXPLANATIONS  4 categories   hypotheses to check, not conclusions
+┌────────────┬──────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY   │ EVIDENCE │ POSSIBLE EXPLANATION                                                                                   │
+├────────────┼──────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ storage    │ #1       │ volume binding, provisioning, attachment or mounting may block startup - not evidence of a full volume │
+│ restart    │ #2       │ a container may be exiting repeatedly - the event alone does not say why                               │
+│ scheduling │ #3, #4   │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
+│ image      │ #5       │ image reference, registry access or pull credentials may prevent the container from starting           │
+└────────────┴──────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
+
+  #1    evidence #1  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe persistentvolumeclaim z-unbound
+      read   kubectl --context kdash-local -n kdash-e2e get pvc
+
+  #2    evidence #2  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash
+      read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100
+
+  #3    evidence #3  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-unschedulable
+
+  #4    evidence #4  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-pending
+
+  #5    evidence #5  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-imagepull
+
+  >   storage  volume problems  see key 9 STORAGE: its findings carry their own next commands
+
+  >   restart  crash loop  what usually fixes it
+      note   the previous logs (above) show the exit reason; a config or Secret change is the usual cause - compare with the last rollout:
+      read   kubectl --context kdash-local -n kdash-e2e rollout history deployment/DEPLOYMENT  # what changed and when
+
+  >   scheduling  pods not placed  what usually fixes it
+      read   kubectl --context kdash-local describe nodes | grep -A 8 'Allocated resources'  # free capacity per node
+      note   reduce requests, add capacity, or fix the nodeSelector / affinity / taint tolerations the scheduler message names
+
+  >   image  pull failures  what usually fixes it
+      read   kubectl --context kdash-local -n kdash-e2e get pods -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[*].image} pullSecrets={.spec.imagePullSecrets[*].name}{"\n"}{end}'  # the image references and pull secrets
+      note   check the tag exists in the registry and the pull secret is valid; the registry must be reachable from the nodes
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.

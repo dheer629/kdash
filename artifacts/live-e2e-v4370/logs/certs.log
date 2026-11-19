@@ -1,0 +1,68 @@
+CERTIFICATES AND LOGINS  -  expiry of the TLS certificates and logins this cluster and your access depend on - TLS handshakes only, nothing is changed
+
+DATA SOURCES
+┌──────────────────┬───────┬────────┬─────────────────────────────────────────────────────────────────────┐
+│ SOURCE           │ STATE │   READ │ DETAIL                                                              │
+├──────────────────┼───────┼────────┼─────────────────────────────────────────────────────────────────────┤
+│ cert-kubeconfig  │ ● ok  │ 5s ago │ context kdash-local read locally (tokens are never shown or stored) │
+│ cert-tls         │ ● ok  │ 1s ago │ 2 of 4 TLS endpoints answered from this host                        │
+│ cert-webhooks    │ ● ok  │ 5s ago │ read succeeded                                                      │
+│ cert-apiservices │ ● ok  │ 5s ago │ read succeeded                                                      │
+│ cert-manager     │ ● ok  │ 4s ago │ read succeeded                                                      │
+│ cert-nodes       │ ● ok  │ 4s ago │ read succeeded                                                      │
+│ cert-ingress     │ ● ok  │ 4s ago │ read succeeded                                                      │
+│ cert-secrets     │ ● ok  │ 0s ago │ 3 certificates in 3 Secrets (the same read as Y)                    │
+└──────────────────┴───────┴────────┴─────────────────────────────────────────────────────────────────────┘
+
+EXPIRY  9 items   soonest first - warning under 30 days, critical under 7 days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)
+┌───────────┬───────┬──────────────────┬──────────────────────────┬─────────────────────────────────────┬─────────────────────────────────────────────┬────────────────────────────────────────────────────────────────┐
+│ STATUS    │  LEFT │ EXPIRES UTC      │ WHAT                     │ OBJECT                              │ WHERE                                       │ NOTE                                                           │
+├───────────┼───────┼──────────────────┼──────────────────────────┼─────────────────────────────────────┼─────────────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
+│ ● WARNING │  24 d │ 2026-12-14 09:16 │ cert-manager certificate │ kdash-e2e/functionality-certificate │ secret functionality-tls                    │ Ready True Ready; renews 2026-12-07                            │
+│ ● WARNING │  24 d │ 2026-12-14 09:16 │ functionality.local.test │ functionality-tls ca.crt            │ not used by any pod you can read            │ issuer (self-signed)                                           │
+│ ● WARNING │  24 d │ 2026-12-14 09:16 │ functionality.local.test │ functionality-tls tls.crt           │ not used by any pod you can read            │ issuer (self-signed)                                           │
+│ ● OK      │  84 d │ 2027-02-12 04:31 │ CA demo.kdash.local      │ demo-tls tls.crt                    │ ingress/web-ingress hosts: demo.kdash.local │ issuer (self-signed)                                           │
+│ ● OK      │ 191 d │ 2027-05-30 02:59 │ kubelet                  │ dev                                 │ 172.18.0.2:10250                            │ logs, exec and metrics go through it; issuer kubernetes        │
+│ ● OK      │ 191 d │ 2027-05-30 03:03 │ client certificate       │ kubernetes-super-admin              │ kdash-local                                 │ issued by kubernetes - kubectl stops working when it expires   │
+│ ● OK      │ 318 d │ 2027-10-04 06:06 │ webhook CA (mutating)    │ cert-manager-webhook                │ cert-manager/cert-manager-webhook           │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
+│ ● OK      │ 318 d │ 2027-10-04 06:06 │ webhook CA (validating)  │ cert-manager-webhook                │ cert-manager/cert-manager-webhook           │ CA cert-manager-webhook-ca - calls fail (x509) once it expires │
+│ ● OK      │ 359 d │ 2027-11-13 16:31 │ API endpoint             │ kdash-local                         │ localhost:10093                             │ what kubectl connects to; issuer kubernetes                    │
+└───────────┴───────┴──────────────────┴──────────────────────────┴─────────────────────────────────────┴─────────────────────────────────────────────┴────────────────────────────────────────────────────────────────┘
+
+FINDINGS  3 findings   critical first; includes x509 errors in Kubernetes events - next commands below
+┌───┬───────────┬─────────────────────────────────────┬─────────────────────────────────────────────────────────────────┐
+│ # │ SEVERITY  │ OBJECT                              │ FINDING                                                         │
+├───┼───────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────┤
+│ 1 │ ● WARNING │ functionality-tls ca.crt            │ functionality.local.test expires in 24 d (2026-12-14 09:16 UTC) │
+│ 2 │ ● WARNING │ functionality-tls tls.crt           │ functionality.local.test expires in 24 d (2026-12-14 09:16 UTC) │
+│ 3 │ ● WARNING │ kdash-e2e/functionality-certificate │ cert-manager certificate expires in 24 d (2026-12-14 09:16 UTC) │
+└───┴───────────┴─────────────────────────────────────┴─────────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)
+
+  #1  WARNING  functionality-tls ca.crt  functionality.local.test expires in 24 d (2026-12-14 09:16 UTC)
+      read   kubectl --context kdash-local -n kdash-e2e describe secret functionality-tls  # type, key names and sizes (never the values)
+      read   kubectl --context kdash-local -n kdash-e2e get secret functionality-tls -o custom-columns=NAME:.metadata.name,TYPE:.type,OWNER:.metadata.ownerReferences[*].name,CREATED:.metadata.creationTimestamp  # type, owner and age
+      note   inspect the certificate: kubectl --context kdash-local -n kdash-e2e get secret functionality-tls -o jsonpath='{.data.ca\.crt}' | base64 -d | openssl x509 -noout -subject -issuer -dates
+      note   cert-manager: cmctl renew <certificate> -n kdash-e2e (or delete the Secret: it is issued again). By hand: replace it with the next line
+      CHANGE kubectl --context kdash-local -n kdash-e2e create secret tls functionality-tls --cert=NEW.crt --key=NEW.key --dry-run=client -o yaml | kubectl apply -f -  # then restart the workloads marked "restart needed" in WHERE USED
+
+  #2  WARNING  functionality-tls tls.crt  functionality.local.test expires in 24 d (2026-12-14 09:16 UTC)
+      note   same object as #1 - the commands listed there apply
+
+  #3  WARNING  kdash-e2e/functionality-certificate  cert-manager certificate expires in 24 d (2026-12-14 09:16 UTC)
+      read   kubectl --context kdash-local -n kdash-e2e describe certificate functionality-certificate  # status, conditions and the last failure
+      read   kubectl --context kdash-local -n kdash-e2e get certificaterequests,orders.acme.cert-manager.io,challenges.acme.cert-manager.io 2>/dev/null  # where issuance is stuck
+      read   kubectl --context kdash-local get clusterissuers,issuers -A -o wide  # is the issuer Ready?
+      CHANGE cmctl renew -n kdash-e2e functionality-certificate  # trigger a renewal once the issuer works (or: kubectl cert-manager renew)
+
+
+NOT CHECKED  3 items   no expiry date could be read for these from this host
+┌───────────────┬────────────────────────────────┬────────────────────────┬────────────────────────────┬──────────────────────────────────────────────────────────┐
+│ STATE         │ WHAT                           │ OBJECT                 │ WHERE                      │ WHY                                                      │
+├───────────────┼────────────────────────────────┼────────────────────────┼────────────────────────────┼──────────────────────────────────────────────────────────┤
+│ ● skip verify │ API service CA                 │ v1beta1.metrics.k8s.io │ kube-system/metrics-server │ insecureSkipTLSVerify - no expiry to check (True Passed) │
+│ ● unreachable │ ingress TLS (demo.kdash.local) │ kdash-e2e/web-ingress  │ demo.kdash.local:443       │ Name or service not known from this host                 │
+│ ● unreachable │ kube-apiserver                 │ dev                    │ 172.18.0.2:6443            │ Connection refused from this host                        │
+└───────────────┴────────────────────────────────┴────────────────────────┴────────────────────────────┴──────────────────────────────────────────────────────────┘
+

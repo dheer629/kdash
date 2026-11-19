@@ -1,0 +1,147 @@
+
+# kdash 4.37.0 - quick export (key >)
+# screen   : file browser | this host Dheeraj | /workspace/kdash/artifacts/live-e2e-v4370/extended/work | 2 of 2 entries
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-19 22:19:40 +0530 by dheer on Dheeraj (session 20261119-221929-91034)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (49 rows, as you saw it)
+================================================================================
+ KDASH │ UPLOAD │ 1 SELECT LOCAL FILES │ kdash-local │ kdash-e2e                                                                                      this host ► Dheeraj
+ THIS HOST  /workspace/kdash/artifacts/live-e2e-v4370/extended/work                                                                                            2 entries
+┌─────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬────────────┬──────────────────┐
+│ SEL │ TYPE  │ NAME                                                                                                                    │       SIZE │ MODIFIED         │
+├─────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼────────────┼──────────────────┤
+│ [ ] │ dir   │ upload-tree/                                                                                                            │          - │ 2026-11-19 22:14 │
+│ [ ] │ file  │ upload.txt                                                                                                              │       89 B │ 2026-11-19 22:13 │
+└─────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴────────────┴──────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── ready ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 1 / 2 · local · audited ──
+┌─ MOVE ──────────────────┬─ OPEN · VIEW ───────────────┬─ SELECT ──────────────────┬─ UPLOAD  step 1 of 2 ─────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ Enter     open upload-tree/ │ Space  mark upload-tree   │ u          next: destination for upload-tree                                      │
+│ PgUp/PgDn  page         │ h / Bksp  up to extended/   │ a      mark all files (1) │            nothing is copied yet                                                  │
+│ g / G      first / last │ p         go to a path      │ n      clear 0 marks      │ q Esc / Q  cancel / quit                                                          │
+│ /          filter names │ v         view (files only) │ r      reload this list   │ >          export to a log                                                        │
+└─────────────────────────┴─────────────────────────────┴───────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+ EVERY ENTRY OF /workspace/kdash/artifacts/live-e2e-v4370/extended/work (3 lines, every line and column - nothing cut)
+================================================================================
+TYPE  SIZE  MODIFIED          NAME
+d     -     2026-11-19 22:14  upload-tree
+f     89 B  2026-11-19 22:13  upload.txt
+
+# end of export
+
+# kdash 4.37.0 - quick export (key >)
+# screen   : file browser | app-server-8fb4699bc-cx5vz/app | / | 13 of 13 entries
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-19 22:19:51 +0530 by dheer on Dheeraj (session 20261119-221929-91034)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (49 rows, as you saw it)
+================================================================================
+ KDASH │ DOWNLOAD │ kdash-local │ kdash-e2e                                                                                              app-server-8fb4699bc-cx5vz ► app
+ CONTAINER  /                                                                                                                                                 13 entries
+┌─────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬────────────┬──────────────────┐
+│ SEL │ TYPE  │ NAME                                                                                                                    │       SIZE │ MODIFIED         │
+├─────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼────────────┼──────────────────┤
+│ [ ] │ dir   │ bin/                                                                                                                    │          - │ 2023-05-19 04:04 │
+│ [ ] │ dir   │ data/                                                                                                                   │          - │ 2026-11-13 22:02 │
+│ [ ] │ dir   │ dev/                                                                                                                    │          - │ 2026-11-13 22:02 │
+│ [ ] │ dir   │ etc/                                                                                                                    │          - │ 2026-11-13 22:02 │
+│ [ ] │ dir   │ home/                                                                                                                   │          - │ 2023-05-19 04:04 │
+│ [ ] │ dir   │ lib/                                                                                                                    │          - │ 2023-05-19 04:04 │
+│ [ ] │ link  │ lib64/                                                                                                                  │          - │ 2023-05-19 04:04 │
+│ [ ] │ dir   │ proc/                                                                                                                   │          - │ 2026-11-13 22:02 │
+│ [ ] │ dir   │ root/                                                                                                                   │          - │ 2026-11-13 23:07 │
+│ [ ] │ dir   │ sys/                                                                                                                    │          - │ 2026-11-13 22:02 │
+│ [ ] │ dir   │ tmp/                                                                                                                    │          - │ 2026-11-19 21:14 │
+│ [ ] │ dir   │ usr/                                                                                                                    │          - │ 2023-05-19 04:04 │
+│ [ ] │ dir   │ var/                                                                                                                    │          - │ 2026-11-13 22:02 │
+└─────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴────────────┴──────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── ready ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── 1 / 13 · remote · audited ──
+┌─ MOVE ──────────────────┬─ OPEN · VIEW ───────────────┬─ SELECT ──────────────────┬─ DOWNLOAD ────────────────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ Enter     open bin/         │ Space  mark bin           │ d          download bin                                                           │
+│ PgUp/PgDn  page         │ h / Bksp  up (already at /) │ a      mark all files (0) │            then: review, confirm or cancel                                        │
+│ g / G      first / last │ p         go to a path      │ n      clear 0 marks      │ q Esc / Q  cancel / quit                                                          │
+│ /          filter names │ v         view (files only) │ r      reload this list   │ >          export to a log                                                        │
+└─────────────────────────┴─────────────────────────────┴───────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+ EVERY ENTRY OF / (14 lines, every line and column - nothing cut)
+================================================================================
+TYPE  SIZE  MODIFIED          NAME
+d     -     2023-05-19 04:04  bin
+d     -     2026-11-13 22:02  data
+d     -     2026-11-13 22:02  dev
+d     -     2026-11-13 22:02  etc
+d     -     2023-05-19 04:04  home
+d     -     2023-05-19 04:04  lib
+dl    -     2023-05-19 04:04  lib64
+d     -     2026-11-13 22:02  proc
+d     -     2026-11-13 23:07  root
+d     -     2026-11-13 22:02  sys
+d     -     2026-11-19 21:14  tmp
+d     -     2023-05-19 04:04  usr
+d     -     2026-11-13 22:02  var
+
+# end of export

@@ -1,0 +1,50 @@
+ KDASH │ UPLOAD │ 1 SELECT LOCAL FILES │ kdash-local │ kdash-e2e                                                                                      this host ► Dheeraj
+ THIS HOST  /workspace/kdash/artifacts/live-e2e-v4370/extended/work                                                                                            2 entries
+┌─────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬────────────┬──────────────────┐
+│ SEL │ TYPE  │ NAME                                                                                                                    │       SIZE │ MODIFIED         │
+├─────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼────────────┼──────────────────┤
+│ [ ] │ dir   │ upload-tree/                                                                                                            │          - │ 2026-11-19 22:14 │
+│ [ ] │ file  │ upload.txt                                                                                                              │       89 B │ 2026-11-19 22:13 │
+└─────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴────────────┴──────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── ► exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_files_local_20261119-221940.log ────────────────────────────────────────────── 1 / 2 · local · audited ──
+┌─ MOVE ──────────────────┬─ OPEN · VIEW ───────────────┬─ SELECT ──────────────────┬─ UPLOAD  step 1 of 2 ─────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ Enter     open upload-tree/ │ Space  mark upload-tree   │ u          next: destination for upload-tree                                      │
+│ PgUp/PgDn  page         │ h / Bksp  up to extended/   │ a      mark all files (1) │            nothing is copied yet                                                  │
+│ g / G      first / last │ p         go to a path      │ n      clear 0 marks      │ q Esc / Q  cancel / quit                                                          │
+│ /          filter names │ v         view (files only) │ r      reload this list   │ >          export to a log                                                        │
+└─────────────────────────┴─────────────────────────────┴───────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+

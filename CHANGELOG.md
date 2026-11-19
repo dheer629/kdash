@@ -7,7 +7,33 @@ the detailed per-release notes.
 
 ## [Unreleased]
 
-### Fixed
+## [4.37.0] - 2026-11-19
+
+### Added
+- Whole-view dashboard search with highlighted matches, `n`/`N` navigation and
+  a separate pod-name filter selected with Tab in the search box.
+- In-place search boxes, a shared cursor-aware prompt editor and session-only
+  prompt history across dashboard, inspector and file operations.
+- `F` in pod detail searches every regular container of the pod, its workload
+  or namespace, including previous instances of restarted containers, with
+  parallel reads, coverage/results per log and matches merged in time order.
+- Older kubelet-rotated log files, including gzip files, are included by `A`
+  and full log searches when `get nodes/proxy` permits access. Dedicated log
+  timeout and byte limits remain explicit in the coverage rule.
+- `>` exports the screen and whole view/pane/list to a private plain-text log,
+  appends a session log and updates `latest.log`; each export is audited.
+- Fixed 256-colour theme roles with a 16-colour fallback, changed-line redraws,
+  terminal scroll regions, quiet ticks, view caching, background model builds
+  and parallel inventory reads, with configuration fallbacks.
+- The Certificates view includes certificate expiry and usage from Secrets.
+  Secrets scans exclude Helm release-history Secrets, have their own timeout
+  and format expiry dates in UTC.
+- Live combined namespace HTML includes FMEA and Secrets tabs with sortable,
+  searchable tables and CSV downloads; report bundles include their worksheet
+  files. `KDASH_REPORT_EXTRAS=0` disables the additions. Offline session
+  regeneration keeps saved resource history without new diagnostic reads.
+
+### Retained regression repairs from 4.32.0
 - Downloads of BusyBox directories reuse checksums for hardlinked files and batch
   metadata reads, avoiding repeated hashing in CPU-limited containers.
 - Completed copies show 100%; checksum verification has its own cancellable view.
@@ -28,7 +54,14 @@ the detailed per-release notes.
   preserve UTF-8 glyph widths in both C and UTF-8 locales.
 
 ### Validation
-- All 18 fixture suites pass. A fresh WSL cluster run passes 199 live checks,
+- `live-e2e-v4370` on the local WSL cluster passed 303 live checks (200 baseline
+  plus 103 search/log/export extensions), 30 Secrets checks, 33 browser checks
+  and all 19 fixture suites. It published 125 CLI screenshots and read a real
+  kubelet-rotated log (94,906 lines, 10.2 MiB) alongside the current file.
+  Source and installed SHA-256 matched. See `docs/VALIDATION-4.37.0.md`.
+
+### Historical 4.32.0 validation
+- The previous 4.32.0 run recorded all 18 fixture suites passing and 199 live checks,
   96 published CLI replay screenshots (91 dashboard flows plus 5 Secrets-map
   screens) and all 23 browser report checks. Native xterm grabs remain in the
   private workspace; the public screenshots are re-rendered from redacted ANSI.

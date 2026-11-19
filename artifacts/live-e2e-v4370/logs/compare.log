@@ -1,0 +1,41 @@
+ KDASH 4.37.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   21:08:53 IST
+ match .*   sort cpu ▼ high first
+ ! pods 13/17 ready rst 380 oom 0 oomk 0 nolim 1 cpu 61m 4% lim mem 5Mi 1% lim
+    wl 13
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ NODE POOLS   this namespace vs the selected namespaces (--compare), per pool and worker node
+ namespace  17 pods on 1 of 1 nodes   mem used 5Mi  req 244Mi  lim 848Mi   cpu used 61m  req 265m  lim 1550m
+ cluster    1 nodes  2 pools   alloc mem 7524Mi  cpu 24.0c   used mem 2600Mi (34.6%)  cpu 684m (2.9%)
+ selected   19 pods in 2 namespaces   requested mem 1048Mi (13.9% of cluster)  cpu 650m (2.7%)   used mem 492Mi  cpu 156m (pod metrics)   (kdash-e2e default)
+            namespace share of the selected namespaces   mem used    1.0%  req   23.3%   cpu used   39.1%  req   40.8%   pods   89.5%
+            namespace share of cluster   mem used 0.1%  req 3.2%   cpu used 0.3%  req 1.1%   pool label node-role
+ i comparing with the namespaces given by --compare / KDASH_COMPARE_NS (2 readable)
+────────────────────────────────────────────────────────────────────────────────
+► NAMESPACE vs SELECTED NAMESPACES  share of pool allocatable:   █ used   ▒ requested, not used   ░ free    zoom x20  left bars magnified, % values true - Z: true scale
+POOL [ns nodes/all]                    ALLOC │ THIS NA~     used / req  │ SELECTE~     used / req
+role:control-plane,master [1/~ mem    7524Mi │ █▒▒▒░░░░   0.1% /  2.8% │ █▒░░░░░░   6.5% / 13.0%
+                               cpu     24.0c │ █▒░░░░░░   0.3% /  0.9% │ █▒░░░░░░   0.7% /  2.3%
+────────────────────────────────────────────────────────────────────────────────
+CLUSTER TOTAL                  mem    7524Mi │ █▒▒▒▒░░░   0.1% /  3.2% │ █▒░░░░░░   6.5% / 13.9%
+                               cpu     24.0c │ █▒░░░░░░   0.3% /  1.1% │ █▒░░░░░░   0.7% /  2.7%
+
+► WORKER NODES RUNNING THIS NAMESPACE  grouped by pool
+                                             │       CPU millicores       │                   MEMORY GiB                  
+POOL [ns nodes/all] /~ STATUS    PODS ns/all │ nsUsed  nsReq  alloc   %al │  nsUsed   nsReq   nsLim   alloc   %al node% clReq%
+────────────────────────────────────────────────────────────────────────────────
+► role:control-plane,~                 15/16 │     61    210  24000   0.3 │     0.0     0.2     0.7     7.3   0.1  34.6   13.0
+  dev                  Ready           15/16 │     61    210  24000   0.3 │     0.0     0.2     0.7     7.3   0.1  34.6   13.0
+      ip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 13/15   ns-restarts 380   namespaces 2   readable-req mem 980Mi cpu 545m   node-cpu 684m (3%)   node-mem 2600Mi of 7524Mi
+
+► unscheduled pods                       2/3 │      -     55      -     - │       -     0.0     0.2       -     -     -      -
+  (unscheduled)        -                 2/3 │      -     55      -     - │       -     0.0     0.2       -     -     -      -
+      ip -   podCIDR -   roles -   ns-ready 0/2   ns-restarts 0   namespaces 2   readable-req mem 68Mi cpu 105m
+
+► SELECTED NAMESPACES  usage and requests of each namespace compared - bar: share of the memory used by all of them
+  NAMESPACE                           PODS rdy  WKLD NODES  CPU used   CPU req  MEM used   MEM req   MEM lim   %used  %clMem │ share of memory used
+  default                                  5/7     7     1       97m      420m     485Mi     856Mi    2864Mi    98.6    11.4 │ ██████████████████████████████
+  ► kdash-e2e                             8/12    10     1       59m      230m       7Mi     192Mi     720Mi     1.4     2.5 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+────────────────────────────────────────────────────────────────────────────────
+NAMESPACE (1 nodes)                       17 │     61    265  24000   0.3 │     0.0     0.2     0.8     7.3   0.1  34.6      -
+ legend nsUsed/nsReq/nsLim = this namespace.  alloc = allocatable.  %al = namespace share.  node% = whole node used.  clReq% = requested by the namespaces you can read.

@@ -62,15 +62,36 @@ class LiveE2E:
         self.xserver = None
         self.display = None
         if args.native_screenshots:
+            # Some WSL images leave /tmp/.X11-unix in a mode where an unprivileged
+            # Xvfb cannot create its socket. Listen on localhost TCP instead: the
+            # display is private to this validation process, uses -ac only for its
+            # short lifetime, and is verified with a real X client before use.
             for number in range(177, 200):
-                if not Path(f"/tmp/.X11-unix/X{number}").exists():
-                    self.display = f":{number}"
+                display = f"127.0.0.1:{number}"
+                server = subprocess.Popen(["Xvfb", f":{number}", "-screen", "0", "1920x1200x24",
+                                           "-nolisten", "unix", "-listen", "tcp", "-ac"],
+                                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                time.sleep(0.5)
+                ready = False
+                for _ in range(20):
+                    if server.poll() is not None:
+                        break
+                    probe = subprocess.run(["xwininfo", "-display", display, "-root"],
+                                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    if probe.returncode == 0:
+                        ready = True
+                        break
+                    time.sleep(0.1)
+                if ready:
+                    self.display, self.xserver = display, server
                     break
+                server.terminate()
+                try:
+                    server.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    server.kill()
             if self.display is None:
-                raise RuntimeError("No unused local X display for native screenshots")
-            self.xserver = subprocess.Popen(["Xvfb", self.display, "-screen", "0", "1920x1200x24", "-nolisten", "tcp"],
-                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(0.5)
+                raise RuntimeError("No usable local X display for native screenshots")
         self.version = subprocess.check_output([str(self.binary), "-V"], env=self.env, text=True).strip().split()[-1]
         self.source_sha256 = hashlib.sha256((self.repo / "kdash").read_bytes()).hexdigest()
         self.installed_sha256 = hashlib.sha256(self.binary.read_bytes()).hexdigest()
@@ -737,10 +758,10 @@ spec:
             self.capture(s, stem, title)
         self.text(s, "doctor", delay=5)
         self.capture(s, "33-doctor", "Live connection, TLS, RBAC and metrics checks", "DOCTOR")
-        self.key(s, "1", "/")
+        self.key(s, "1", "/", "Tab")
         self.text(s, "app-server", delay=3)
         self.capture(s, "34-pod-filter", "Dashboard pod regular expression applied")
-        self.key(s, "/")
+        self.key(s, "/", "Tab")
         self.text(s, ".*", delay=2)
         self.key(s, "F")
         self.capture(s, "35-structured-filters", "Atomic label, status, node, workload and unhealthy filters")

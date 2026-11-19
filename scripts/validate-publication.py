@@ -273,6 +273,23 @@ def validate_e2e(repo: Path) -> tuple[str, str, int, int]:
         file = within(repo, shot["file"])
         validate_png(file)
         require(hashlib.sha256(file.read_bytes()).hexdigest() == shot["sha256"], "browser screenshot bytes changed")
+    if tuple(int(n) for n in version.split('.')) >= (4, 37, 0):
+        require({'extended-installed-source-identical', 'extended-dashboard-live-search',
+                 'extended-dashboard-search-navigation', 'extended-line-editor-insert-arrow',
+                 'extended-log-coverage-truthful', 'extended-real-rotated-log-read',
+                 'extended-previous-log-coverage', 'extended-log-scope-pod',
+                 'extended-log-scope-workload', 'extended-log-scope-namespace',
+                 'extended-combined-extra-tab-data', 'extended-combined-extra-tabs-opt-out',
+                 'extended-session-export-aggregation', 'extended-latest-export-link',
+                 'extended-legacy-render-fallbacks'}.issubset(names),
+                '4.37 search, full logs, exports or compatibility coverage is incomplete')
+        require(all(c.get('native_png') for c in captures),
+                '4.37 screenshots must include actual live terminal grabs')
+        for tab in ('fmea', 'secrets'):
+            require({f'html-tab-{tab}', f'html-combined-{tab}-real-data',
+                     f'html-combined-{tab}-search', f'html-combined-{tab}-sort',
+                     f'html-combined-{tab}-csv'}.issubset(browser_checks),
+                    f'combined {tab} report browser coverage is incomplete')
     return pointer, version, len(checks), len(actual_pngs)
 
 

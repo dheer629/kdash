@@ -1,0 +1,69 @@
+# kdash 4.37.0 - quick export (key >)
+# screen   : dashboard, view RUNBOOKS (R) | pod filter .* | sort cpu
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-19 22:15:46 +0530 by dheer on Dheeraj (session 20261119-221439-77772)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 22:15:45 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 394           │ cpu     61m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 6s/30s   session 22:14:39 up 1m06s      │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 1        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 6s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ RUNBOOK - etcd-restore   printed procedures with your cluster's names filled in - kdash never runs them
+runbooks:  [1 etcd-restore]   2 cert-rotate    3 node-notready    4 api-unreachable    5 oidc-login    [ ] previous / next   (kdash --runbook NAME)
+
+Reading snapshots and nodes in the background...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
+ exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_view-certs_kdash-e2e_20261119-221541.log | ● LIVE 22:15:46  next 1s  data 1s old  fetch 0.0s  AUDITED
+
+================================================================================
+ THE WHOLE RUNBOOKS VIEW (4 lines, every line and column - nothing cut)
+================================================================================
+ RUNBOOK - etcd-restore   printed procedures with your cluster's names filled in - kdash never runs them
+runbooks:  [1 etcd-restore]   2 cert-rotate    3 node-notready    4 api-unreachable    5 oidc-login    [ ] previous / next   (kdash --runbook NAME)
+
+Reading snapshots and nodes in the background...
+
+# end of export

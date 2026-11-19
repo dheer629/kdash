@@ -1,0 +1,152 @@
+# kdash 4.37.0 - quick export (key >)
+# screen   : dashboard, view MEMORY (5) | pod filter .* | sort cpu
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-19 22:15:06 +0530 by dheer on Dheeraj (session 20261119-221439-77772)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 22:15:05 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort mem ▼ high first                      │ ! pods 14/18 ready   restarts 394           │ cpu     60m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 26s/30s   session 22:14:39 up 26s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 26s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ MEMORY   live namespace memory dashboard
+┌─ USAGE and RISK ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ MEMORY used      5Mi  req    276Mi  lim    976Mi   used/req    1.8%  used/lim    0.5%  ░░░░░░░░░░░░░░░░░░░░░░░░                                                        │
+│ window 22:14:39 -> 22:15:05 IST (UTC+05:30)   26s, all since kdash started   samples 13 every 2s   z: 15m 1h 6h 24h all                                                │
+│ CPU    used      60m  req     315m  lim    1750m   used/req   19.0%  used/lim    3.4%  █________████                                                                   │
+│ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 394                                                                               │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+► TIMELINE  22:14:39 -> 22:15:05 IST  (all since kdash started, host clock) ─────────────────────────────────────────────────────────────────────────────────────────────
+  MEMORY used - namespace                                                               CPU used - namespace                                              zoomed: from 58m
+     6Mi┤                 ·                   ·                 ·                          61m┤                 ·                   ·                 ·
+        │           ████████████████████████████████████████████████████████████████          │                 ·                   ·                 ·
+        │           ████████████████████████████████████████████████████████████████          │                 ·                   ·                 ·
+        │           ████████████████████████████████████████████████████████████████          │                 ·                   ·                 · ██████████████████
+     3Mi┤           ████████████████████████████████████████████████████████████████       60m┤                 ·                   ·                 · ██████████████████
+        │           ████████████████████████████████████████████████████████████████          │           ████████████████████████████████████████████████████████████████
+        │           ████████████████████████████████████████████████████████████████          │           ████████████████████████████████████████████████████████████████
+        │           ████████████████████████████████████████████████████████████████          │           ████████████████████████████████████████████████████████████████
+     0Mi└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴       58m└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         22:14:39                         22:14:52                          22:15:05           22:14:39                         22:14:52                          22:15:05
+  events                                                                                events
+  now 5Mi  min 5Mi  avg 5Mi  max 5Mi @ 22:15:05                                         now 60m  min 59m  avg 59m  max 60m @ 22:15:05
+  request 276Mi (above)  limit 976Mi (above)  1% of limit                               request 315m (above)  limit 1750m (above)  3% of limit
+  EVENTS 1 in window   ! 0 critical   ^ 0 warning
+  22:14:39       - SESSION          kdash-e2e                                kdash 4.37.0 started on Dheeraj by dheer - filter .*
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (22:14:39 -> 22:15:05 IST) ───────────────────────────────────────────────────────────────────────────────────
+  z-oom                         │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   6.0 now
+  app-server-8fb4699bc-cx5vz    │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   3.0 now
+  node-agent-ctvg6              │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   3.0 now
+  app-server-8fb4699bc-t7zxj    │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  completed-check-m9swm         │                                                                                                                  │   0.0 now
+  db-stateful-0                 │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  db-stateful-1                 │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  functionality-legacy-67ks7    │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  kdash-secrets-live-consumer   │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  nightly-report-29918430-6fwn6 │                                                                                                                  │   0.0 now
+  nightly-report-29918435-9cljn │                                                                                                                  │   0.0 now
+  nightly-report-29918440-xxv6v │                                                                                                                  │   0.0 now
+  z-crash                       │                                                                                                                  │   0.0 now
+  z-imagepull                   │                                                                                                                  │   0.0 now
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 13 polls.  metrics refresh about every 15 s.
+ exported to /var/tmp/kdash-extended-exports-6q1uf5jd/kdash_view-ip_kdash-e2e_20261119-221501.log | ○ LIVE 22:15:05  next 2s  data 0s old  fetch 0.0s  AUDITED | ? help
+
+================================================================================
+ THE WHOLE MEMORY VIEW (87 lines, every line and column - nothing cut)
+================================================================================
+► TIMELINE  22:14:39 -> 22:15:05 IST  (all since kdash started, host clock) ─────────────────────────────────────────────────────────────────────────────────────────────
+  MEMORY used - namespace                                                               CPU used - namespace                                              zoomed: from 58m
+     6Mi┤                 ·                   ·                 ·                          61m┤                 ·                   ·                 ·
+        │           ████████████████████████████████████████████████████████████████          │                 ·                   ·                 ·
+        │           ████████████████████████████████████████████████████████████████          │                 ·                   ·                 ·
+        │           ████████████████████████████████████████████████████████████████          │                 ·                   ·                 · ██████████████████
+     3Mi┤           ████████████████████████████████████████████████████████████████       60m┤                 ·                   ·                 · ██████████████████
+        │           ████████████████████████████████████████████████████████████████          │           ████████████████████████████████████████████████████████████████
+        │           ████████████████████████████████████████████████████████████████          │           ████████████████████████████████████████████████████████████████
+        │           ████████████████████████████████████████████████████████████████          │           ████████████████████████████████████████████████████████████████
+     0Mi└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴       58m└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         22:14:39                         22:14:52                          22:15:05           22:14:39                         22:14:52                          22:15:05
+  events                                                                                events
+  now 5Mi  min 5Mi  avg 5Mi  max 5Mi @ 22:15:05                                         now 60m  min 59m  avg 59m  max 60m @ 22:15:05
+  request 276Mi (above)  limit 976Mi (above)  1% of limit                               request 315m (above)  limit 1750m (above)  3% of limit
+  EVENTS 1 in window   ! 0 critical   ^ 0 warning
+  22:14:39       - SESSION          kdash-e2e                                kdash 4.37.0 started on Dheeraj by dheer - filter .*
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (22:14:39 -> 22:15:05 IST) ───────────────────────────────────────────────────────────────────────────────────
+  z-oom                         │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   6.0 now
+  app-server-8fb4699bc-cx5vz    │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   3.0 now
+  node-agent-ctvg6              │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   3.0 now
+  app-server-8fb4699bc-t7zxj    │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  completed-check-m9swm         │                                                                                                                  │   0.0 now
+  db-stateful-0                 │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  db-stateful-1                 │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  functionality-legacy-67ks7    │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  kdash-secrets-live-consumer   │                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  nightly-report-29918430-6fwn6 │                                                                                                                  │   0.0 now
+  nightly-report-29918435-9cljn │                                                                                                                  │   0.0 now
+  nightly-report-29918440-xxv6v │                                                                                                                  │   0.0 now
+  z-crash                       │                                                                                                                  │   0.0 now
+  z-imagepull                   │                                                                                                                  │   0.0 now
+  z-pending                     │                                                                                                                  │   0.0 now
+                                 22:14:39                                            22:14:52                                             22:15:05
+                                 ░ < 50%  ▒ < 75%  ▓ < 90%  █ >= 90% of limit  ! restart   1 more pod(s) (--top N)   2 pod(s) without memory limit not shown
+
+► MEMORY BY WORKER NODE ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory                           ns trend
+  dev                          role:contro~      5Mi   7524Mi   0.1  34.7  █▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░  ░░░░░░░░░░░░░
+
+► PODS BY MEMORY USED  (top 15, --top N) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD                           NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  app-server-8fb4699bc-cx5vz    dev                             3Mi     12Mi     96Mi  25.0   3.1 ░░░░░░░░  14
+  node-agent-ctvg6              dev                             1Mi     16Mi     32Mi   6.2   3.1 ░░░░░░░░   0
+  z-oom                         dev                             1Mi      8Mi     16Mi  12.5   6.2 ░░░░░░░░   0
+  app-server-8fb4699bc-t7zxj    dev                             0Mi     12Mi     96Mi   0.0   0.0 ░░░░░░░░  14
+  db-stateful-0                 dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   0
+  db-stateful-1                 dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   0
+  functionality-legacy-67ks7    dev                             0Mi      8Mi     32Mi   0.0   0.0 ░░░░░░░░   0
+  kdash-secrets-live-consumer   dev                             0Mi     32Mi    128Mi   0.0   0.0 ░░░░░░░░   0
+  test-sts-0                    dev                             0Mi        -        -     -     - n/a       14  NO_LIMIT
+  completed-check-m9swm         dev                               -      4Mi     32Mi     -     - n/a        0
+  nightly-report-29918430-6fwn6 dev                               -     16Mi     32Mi     -     - n/a        0
+  nightly-report-29918435-9cljn dev                               -     16Mi     32Mi     -     - n/a        0
+  nightly-report-29918440-xxv6v dev                               -     16Mi     32Mi     -     - n/a        0
+  sync-pod                      dev                               -        -        -     -     - n/a        0
+  z-crash                       dev                               -      4Mi     32Mi     -     - n/a      352
+
+► OOM RISK  (>= 90% of memory limit) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► MEMORY GROWTH FORECAST  (linear trend of the last 30m, a restart starts the trend again) ──────────────────────────────────────────────────────────────────────────────
+  no pod memory is growing  (0 pod(s) with enough samples since 21:45:05)
+
+► RECENT OOMKilled  (last container termination) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► NO MEMORY LIMIT  (unbounded containers) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  test-sts-0
+
+► MEMORY BY WORKLOAD ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  KIND        WORKLOAD                         PODS     USED      REQ      LIM  %LIM MEM/LIM
+  Deployment  app-server                          2      3Mi     24Mi    192Mi   1.6 ░░░░░░░░
+  DaemonSet   node-agent                          1      1Mi     16Mi     32Mi   3.1 ░░░░░░░░
+  Pod         z-oom                               1      1Mi      8Mi     16Mi   6.2 █░░░░░░░
+  Pod         kdash-secrets-live-consumer         1      0Mi     32Mi    128Mi   0.0 ░░░░░░░░
+  Replicatio~ functionality-legacy                1      0Mi      8Mi     32Mi   0.0 ░░░░░░░░
+  StatefulSet db-stateful                         2      0Mi     64Mi    128Mi   0.0 ░░░░░░░░
+  StatefulSet test-sts                            1      0Mi        -        -     - n/a
+  CronJob     nightly-report                      3        -     48Mi     96Mi     - n/a
+  Job         completed-check                     1        -      4Mi     32Mi     - n/a
+  Pod         sync-pod                            1        -        -        -     - n/a
+  Pod         z-crash                             1        -      4Mi     32Mi     - n/a
+  Pod         z-imagepull                         1        -     32Mi    128Mi     - n/a
+  Pod         z-pending                           1        -      4Mi     32Mi     - n/a
+  Pod         z-unschedulable                     1        -     32Mi    128Mi     - n/a
+
+# end of export

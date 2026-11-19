@@ -1,10 +1,27 @@
 # kdash validation artifacts
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4320` records **199 passed live checks**, **23 passed browser checks** and **96 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
-[Inspect the recorded checks](live-e2e-v4320/checks.tsv).
+Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser checks** and **125 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.37.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](live-e2e-v4370/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
-\nThe current **4.32.0** live validation is named by
+
+
+
+The run combines 200 baseline checks with 103 search/log/export extension checks,
+30 Secrets checks, 19 fixture suites and 33 browser checks. It includes one real
+rotated kubelet log (94,906 lines, 10.2 MiB) plus the current file. Representative
+quick-export logs are under `reports/exports/`; multi-megabyte full-log dumps are
+summarized by their checks and raw captures instead of being committed.
+
+Published text replaces the validation host operator identity with
+`operator@validation-host`; `REDACTION.md` records this. The hash-chained audit log
+is unchanged and still verifies, and `audit-verify-before-redaction.txt` records
+that result.
+
+
+
+
+The current **4.37.0** live validation is named by
 [`latest-e2e.txt`](latest-e2e.txt), pointing to `live-e2e-<timestamp>/`.
 That run records the installed utility against the local WSL Kubernetes cluster,
 using the dedicated `kdash-e2e` namespace. Its files include:
@@ -23,21 +40,21 @@ using the dedicated `kdash-e2e` namespace. Its files include:
 | `REDACTION.md`, `audit-verify-before-redaction.txt` | publication substitutions and the audit-chain result recorded before redaction |
 
 The current screenshots are in
-[`../samples/cli_4320/`](../samples/cli_4320/README.md) and report samples in
-[`../samples/html4320/`](../samples/html4320/README.md). Every published terminal
-image is a faithful ANSI replay of a captured live screen; actual xterm grabs stay
-in the private workspace because their pixels cannot be redacted. Their SHA-256
-hashes and the installed CLI hash are recorded in `results.json`. Workstation
-home and repository paths were redacted before rendering; workload names, metrics,
-addresses and timestamps are actual. Missing metrics or denied reads remain
-visible as unavailable.
+[`../samples/cli_4370/`](../samples/cli_4370/README.md) and report samples in
+[`../samples/html4370/`](../samples/html4370/README.md). The terminal gallery
+publishes actual live xterm screenshots alongside faithful ANSI replays of the
+captured screens. Their SHA-256 hashes and the installed CLI hash are recorded
+in `results.json`. Actual cluster context, workload and namespace names, metrics,
+addresses and timestamps are preserved. Personal workstation paths are removed
+where needed. Missing metrics or denied reads remain visible as unavailable.
 
-Version 4.32.0 adds the SECRETS MAP (`Y`, `--secrets`) and restores the
-interactive-mode toggle (`X`) in the dashboard and pod detail, the pod-detail
-mode indicator, and CSV/TSV export for the services, storage, events and explain
-views. Its FMEA priority scores are project heuristics; inspect the recorded
-checks and command output for the signals actually exercised. A missing
-permission or metric is a coverage gap.
+Version 4.37.0 adds dashboard search, multi-container log searches, older
+kubelet log reads when permitted, quick plain-text exports, editable prompts
+and terminal rendering improvements. It retains the Secrets map, FMEA/access
+review, existing resource views, reports, guarded shell/file operations and
+audit trail. Inspect the recorded checks for coverage and limitations.
+The [4.32.0 terminal gallery](../samples/cli_4320/README.md) and
+[HTML reports](../samples/html4320/README.md) remain historical evidence.
 
 The release-time [4.27.4 run](live-e2e-20261107-083145/results.json),
 [terminal gallery](../samples/cli_4274/README.md) and

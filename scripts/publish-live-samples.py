@@ -74,17 +74,15 @@ The original [results]({src}/results.json), [checks]({src}/checks.tsv),
 retain the evidence behind each image. Context: `{results['context']}`.
 The [browser results]({src}/browser-results.json) cover the generated report controls.
 
-The published PNGs are faithful ANSI replays of live terminal captures. Native
-xterm screenshots remain in the private validation workspace.
-The operator identity, host and context are redacted for publication. Test workload
-names and measured values are preserved.
-The published audit-log bytes are redacted, so their original hash chain cannot
-be verified from this public copy.
+The gallery includes actual live xterm screenshots in `native/` and companion
+ANSI replays. Test workload names, cluster context and measured values are
+preserved. Personal paths are removed from public text evidence where needed;
+the original audit verification result records the check before publication.
 
 The companion replay PNGs render actual `tmux capture-pane -e -p` screens with
 [`capture-terminal.py`](../../scripts/capture-terminal.py), using the dimensions in
 the manifest. The dashboard supplied every value and character. These are faithful
-terminal renders, separate from any private native screenshots. Text/ANSI sources
+terminal renders, separate from the native screenshots. Text/ANSI sources
 remain linked below so the visible result can be inspected and reproduced.
 
 The dedicated local `kdash-e2e` namespace contains real workload and diagnostic
@@ -103,7 +101,9 @@ for row in rows:
     if (root / row['png']).parent.resolve() != gallery:
         shutil.copy2(root / row['png'], gallery / png)
         (gallery / 'native').mkdir(exist_ok=True)
-        shutil.copy2((root / row['png']).parent / native, gallery / native)
+        native_source = (root / row['png']).parent / native
+        if native_source.exists():
+            shutil.copy2(native_source, gallery / native)
     # The native xterm grab is best-effort; link it only when the file exists.
     native_link = f'[native]({native}) / ' if (gallery / native).exists() else ''
     t += f'| {native_link}[ANSI replay]({png}) | {row["title"].replace("|", "/")} | {row["columns"]} x {row["rows"]} | [capture]({src}/{row["file"]}) |\n'
@@ -134,13 +134,13 @@ if (run / 'logs/fmea-json.log').is_file():
     for source, target in [('csv-fmea.log', 'worksheet.csv'), ('tsv-fmea.log', 'worksheet.tsv'),
                            ('fmea-json.log', 'worksheet.json')]:
         shutil.copy2(run / 'logs' / source, html / 'fmea' / target)
-    fmea_note = '\nFMEA has a separate static HTML worksheet and CSV, TSV and JSON exports in\n`fmea/`; it is separate from the namespace report tabs. The browser checks\ninclude its real worksheet rows and screenshot.\n'
+    fmea_note = '\nFMEA has a static HTML worksheet and CSV, TSV and JSON exports in\n`fmea/`. Current combined namespace reports also include a searchable, sortable\nFMEA tab. Browser checks cover both forms with actual failure-mode rows.\n'
 secrets_note = ''
 secrets_reports = run / 'secrets' / 'reports'
 if secrets_reports.is_dir():
     shutil.copytree(secrets_reports, html / 'secrets', dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns('sessions', 'inspector', '*.lock'))
-    secrets_note = '\nThe Secrets map is a separate static HTML report under `secrets/`. Its live\n' \
+    secrets_note = '\nThe Secrets map has a static HTML report under `secrets/` and a tab in current\ncombined namespace reports. Its live\n' \
                    'fixture and browser checks verify certificate metadata and workload usage;\n' \
                    'secret values and private-key material are not included.\n'
 for screenshot in browser.get('screenshots', []):
@@ -156,9 +156,11 @@ The files in this directory come from the generated reports of
 Kubernetes. The [results]({src}/results.json) and [checks]({src}/checks.tsv)
 record export validation; the [terminal gallery](../{gallery.name}/README.md) records
 the corresponding live interface.
-The operator identity, host and context are redacted; measured workload data is preserved.
+Actual local workload names, cluster context and measured values are preserved.
 
-The namespace report includes Overview, six resource tabs and recorded History.
+The namespace report includes Overview, six resource tabs and recorded History,
+plus FMEA and Secrets map tabs when live diagnostic extras are enabled. Offline
+session reconstruction omits these live extras.
 CLI Alerts appear in the Overview; Services, Storage, Events and explanations are
 preserved in the evidence bundle's diagnostic text/tables rather than extra
 namespace HTML tabs. Missing metrics remain unavailable instead of becoming zero.

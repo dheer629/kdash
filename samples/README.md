@@ -1,72 +1,35 @@
 # kdash samples
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4320` records **199 passed live checks**, **23 passed browser checks** and **96 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
-[Inspect the recorded checks](../artifacts/live-e2e-v4320/checks.tsv).
+Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser checks** and **125 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.37.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](../artifacts/live-e2e-v4370/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
 
+The 125 published screenshots comprise 91 baseline views, 29 extension scenarios
+(search, full logs, exports, themes, compatibility and file browsers) and 5
+Secrets-map screens. Every capture links its raw ANSI screen and native xterm grab.
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-The current **4.32.0** terminal gallery is [`cli_4320/`](cli_4320/README.md),
+The current **4.37.0** terminal gallery is [`cli_4370/`](cli_4370/README.md),
 captured from the installed utility against real Kubernetes workloads in local WSL.
 Its raw ANSI/plain-text screens and verification results are indexed by
 [`../artifacts/latest-e2e.txt`](../artifacts/latest-e2e.txt). The corresponding
-report files are in [`html4320/`](html4320/README.md). The `native/` gallery contains
+report files are in [`html4370/`](html4370/README.md). The `native/` gallery contains
 actual live WSL xterm screenshots; companion PNGs replay saved ANSI captures.
 Current values and local namespace names are preserved unchanged.
 
-Version 4.32.0 adds the SECRETS MAP (`Y`, `--secrets`) and restores the
-interactive-mode toggle (`X`) in the dashboard and pod detail, the pod-detail
-mode indicator, and CSV/TSV export for the services, storage, events and explain
-views. It retains the FMEA and ACCESS views plus separate FMEA worksheet exports.
-Use the recorded checks to assess which signals and actions were exercised;
-priority scores are project heuristics and coverage gaps remain visible.
+Version 4.37.0 adds dashboard search, multi-container log searches, older
+kubelet log reads when permitted, quick plain-text exports, editable prompts
+and terminal rendering improvements. It retains the Secrets map, FMEA/access
+review, existing resource views, reports, guarded shell/file operations and
+audit trail. Inspect the recorded checks for coverage and limitations.
+The [4.32.0 terminal gallery](cli_4320/README.md) and
+[HTML reports](html4320/README.md) remain historical evidence.
 
 The release-time **4.27.4** [terminal gallery](cli_4274/README.md),
 [HTML reports](html4274/README.md) and

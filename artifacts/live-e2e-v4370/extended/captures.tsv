@@ -1,0 +1,30 @@
+file	columns	rows	title	png
+raw/100-dashboard-search.ansi	170	50	kdash 4.37.0 | In-place dashboard search counts real matching lines	samples/cli_4370/100-dashboard-search.png
+raw/101-search-other-view.ansi	170	50	kdash 4.37.0 | Search retained while switching to live workloads	samples/cli_4370/101-search-other-view.png
+raw/102-export-searched-workloads.ansi	170	50	kdash 4.37.0 | Quick export includes the screen and every workload line	samples/cli_4370/102-export-searched-workloads.png
+raw/103-invalid-search.ansi	170	50	kdash 4.37.0 | Invalid search expressions remain editable	samples/cli_4370/103-invalid-search.png
+raw/104-search-no-match.ansi	170	50	kdash 4.37.0 | A valid unmatched search reports zero matching lines	samples/cli_4370/104-search-no-match.png
+raw/105-search-history.ansi	170	50	kdash 4.37.0 | Shared editor recalls this session's earlier search	samples/cli_4370/105-search-history.png
+raw/106-search-editor-delete.ansi	170	50	kdash 4.37.0 | Cursor Home/Delete/End/Backspace leaves the intended search text	samples/cli_4370/106-search-editor-delete.png
+raw/107-export-access.ansi	170	50	kdash 4.37.0 | Access view exports its complete permission review	samples/cli_4370/107-export-access.png
+raw/108-export-namespaces.ansi	170	50	kdash 4.37.0 | Namespace picker quick export retains every namespace name	samples/cli_4370/108-export-namespaces.png
+raw/109-export-pods.ansi	170	50	kdash 4.37.0 | Pod picker quick export retains full names and resource columns	samples/cli_4370/109-export-pods.png
+raw/110-container-find.ansi	170	50	kdash 4.37.0 | Container picker finds a real sidecar by name	samples/cli_4370/110-container-find.png
+raw/111-export-containers.ansi	170	50	kdash 4.37.0 | Container picker exports every regular container and image	samples/cli_4370/111-export-containers.png
+raw/112-whole-log-coverage.ansi	170	50	kdash 4.37.0 | Whole current log displays read coverage and node proxy capability	samples/cli_4370/112-whole-log-coverage.png
+raw/113-log-find-in-place.ansi	170	50	kdash 4.37.0 | Whole log search counts case-insensitive real warnings	samples/cli_4370/113-log-find-in-place.png
+raw/114-log-search-scope.ansi	170	50	kdash 4.37.0 | Full log search offers this pod, workload and namespace scopes	samples/cli_4370/114-log-search-scope.png
+raw/115-log-search-invalid-pattern.ansi	170	50	kdash 4.37.0 | Invalid full-log search patterns can be corrected before reads begin	samples/cli_4370/115-log-search-invalid-pattern.png
+raw/116-log-search-pod.ansi	170	50	kdash 4.37.0 | Merged timestamped matching lines from real pod container logs	samples/cli_4370/116-log-search-pod.png
+raw/117-log-search-workload.ansi	170	50	kdash 4.37.0 | Merged timestamped matching lines from real workload container logs	samples/cli_4370/117-log-search-workload.png
+raw/118-log-search-namespace.ansi	170	50	kdash 4.37.0 | Merged timestamped matching lines from real namespace container logs	samples/cli_4370/118-log-search-namespace.png
+raw/119-whole-previous-log.ansi	170	50	kdash 4.37.0 | Full previous instance of a real restarted container	samples/cli_4370/119-whole-previous-log.png
+raw/120-certs-secret-public-certificate.ansi	170	50	kdash 4.37.0 | Certificate view includes real generated Secret public certificate expiry	samples/cli_4370/120-certs-secret-public-certificate.png
+raw/121-certs-secret-search.ansi	170	50	kdash 4.37.0 | Certificate search finds the generated Secret certificate	samples/cli_4370/121-certs-secret-search.png
+raw/122-theme-safe.ansi	170	50	kdash 4.37.0 | Live dashboard theme safe	samples/cli_4370/122-theme-safe.png
+raw/123-theme-dark.ansi	170	50	kdash 4.37.0 | Live dashboard theme dark	samples/cli_4370/123-theme-dark.png
+raw/124-theme-light.ansi	170	50	kdash 4.37.0 | Live dashboard theme light	samples/cli_4370/124-theme-light.png
+raw/125-theme-mono.ansi	170	50	kdash 4.37.0 | Live dashboard theme mono	samples/cli_4370/125-theme-mono.png
+raw/126-fallback-16-colours.ansi	170	50	kdash 4.37.0 | Live compatibility mode with sequential reads and 16 ANSI colours	samples/cli_4370/126-fallback-16-colours.png
+raw/127-export-local-files.ansi	170	50	kdash 4.37.0 | Quick export from the actual local files browser	samples/cli_4370/127-export-local-files.png
+raw/128-export-remote-files.ansi	170	50	kdash 4.37.0 | Quick export from the actual remote files browser	samples/cli_4370/128-export-remote-files.png

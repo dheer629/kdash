@@ -1,0 +1,50 @@
+ KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:11:21 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                      │ ! pods 13/17 ready   restarts 381           │ cpu     61m ░░░░░░░░   4% lim       │ workloads 13               │
+│ poll 2s  spec 14s/30s   session 21:10:37 up 44s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 14s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ WHY - INCIDENT EVIDENCE   warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context kdash-local
+┌────────┬───────┬─────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │    READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼─────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 15s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴─────────┴───────────┴────────────────┘
+
+PODS NEEDING ATTENTION  4 pods   13 other pods are Running and ready - from the dashboard model
+┌─────────────────┬────────────────────┬───────┬──────────┬───────────────┐
+│ POD             │ STATUS             │ READY │ RESTARTS │ NODE          │
+├─────────────────┼────────────────────┼───────┼──────────┼───────────────┤
+│ z-crash         │ ● CrashLoopBackOff │   0/1 │      340 │ dev           │
+│ z-imagepull     │ ● ImagePullBackOff │   0/1 │        0 │ dev           │
+│ z-pending       │ ● Pending          │   0/1 │        0 │ (unscheduled) │
+│ z-unschedulable │ ● Pending          │   0/1 │        0 │ (unscheduled) │
+└─────────────────┴────────────────────┴───────┴──────────┴───────────────┘
+
+WARNING EVIDENCE  13 items   one row per object and category, newest first, up to 20
+┌────┬───────────┬──────────────────────────────────────────────┬──────────────────────────────┬───────┬────────────┬────────────────────────────────────────────────────┐
+│ #  │ LAST SEEN │ OBJECT                                       │ REASON                       │ COUNT │ CATEGORY   │ MESSAGE                                            │
+├────┼───────────┼──────────────────────────────────────────────┼──────────────────────────────┼───────┼────────────┼────────────────────────────────────────────────────┤
+│ 1  │ 2m        │ PersistentVolumeClaim/z-unbound              │ ProvisioningFailed           │  6061 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-            │
+│    │           │                                              │                              │       │            │ intentionally-missing" not found                   │
+│ 2  │ 3m        │ Pod/z-crash                                  │ BackOff                      │  6903 │ restart    │ Back-off restarting failed container crash in pod  │
+│    │           │                                              │                              │       │            │ z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-         │
+│    │           │                                              │                              │       │            │ 41038ddd13a3)                                      │
+│ 3  │ 15m       │ Job/nightly-report-29918365                  │ FailedCreate                 │     1 │ other      │ Error creating: Unauthorized                       │
+│ 4  │ 16m       │ Pod/app-server-8fb4699bc-t7zxj               │ Unhealthy                    │     3 │ probe      │ Readiness probe failed: Get "http://10.244.0.138:  │
+│    │           │                                              │                              │       │            │ 8080/": context deadline exceeded (Client.Timeout  │
+│    │           │                                              │                              │       │            │ exceeded while awaiting headers)                   │
+│ 5  │ 16m       │ Service/app-server                           │ FailedToUpdateEndpointSlices │     1 │ other      │ Error updating Endpoint Slices for Service kdash-  │
+│    │           │                                              │                              │       │            │ e2e/app-server: failed to update app-server-hgvwd  │
+│    │           │                                              │                              │       │            │ EndpointSlice for Service kdash-e2e/app-server:    │
+│    │           │                                              │                              │       │            │ Unauthorized                                       │
+│ 6  │ 16m       │ Endpoints/app-server                         │ FailedToUpdateEndpoint       │     1 │ other      │ Failed to update endpoint kdash-e2e/app-server:    │
+│    │           │                                              │                              │       │            │ Unauthorized                                       │
+│ 7  │ 16m       │ Pod/app-server-8fb4699bc-hn9wd               │ Unhealthy                    │     1 │ probe      │ Readiness probe failed: Get "http://10.244.0.9:    │
+│    │           │                                              │                              │       │            │ 8080/": context deadline exceeded (Client.Timeout  │
+│    │           │                                              │                              │       │            │ exceeded while awaiting headers)                   │
+K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
+ ● LIVE 21:11:22  next 1s  data 1s old  spec 15/30s  fetch 0.0s  poll 2s  AUDITED | explain | rows 1-41/131 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export

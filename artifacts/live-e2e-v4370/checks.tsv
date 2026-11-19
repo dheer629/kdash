@@ -1,0 +1,304 @@
+check	status	detail
+installed-source-identical	PASS	installed binary and repository CLI have the same SHA-256
+fixture-apply	PASS	isolated namespace, healthy and failing workloads, services, ingress, bound/unbound PVC
+fixture-ready	PASS	deployment "app-server" successfully rolled out
+real-cluster-inventory	PASS	38 Kubernetes objects; pod app-server-8fb4699bc-cx5vz
+view-pods	PASS	exit 0; 10767 bytes
+view-nodes	PASS	exit 0; 6911 bytes
+view-workloads	PASS	exit 0; 6822 bytes
+view-ip	PASS	exit 0; 6313 bytes
+view-mem	PASS	exit 0; 6827 bytes
+view-io	PASS	exit 0; 6163 bytes
+view-alerts	PASS	exit 0; 5344 bytes
+view-services	PASS	exit 0; 10753 bytes
+view-storage	PASS	exit 0; 14909 bytes
+view-events	PASS	exit 0; 34241 bytes
+view-explain	PASS	exit 0; 13433 bytes
+tsv-pods	PASS	exit 0; 4758 bytes
+tsv-nodes	PASS	exit 0; 1999 bytes
+tsv-workloads	PASS	exit 0; 2554 bytes
+tsv-ip	PASS	exit 0; 2722 bytes
+tsv-mem	PASS	exit 0; 2386 bytes
+tsv-services	PASS	exit 0; 3458 bytes
+tsv-storage	PASS	exit 0; 2938 bytes
+tsv-events	PASS	exit 0; 11294 bytes
+tsv-explain	PASS	exit 0; 6342 bytes
+csv-pods	PASS	exit 0; 4650 bytes
+csv-nodes	PASS	exit 0; 1979 bytes
+csv-workloads	PASS	exit 0; 2468 bytes
+csv-ip	PASS	exit 0; 2711 bytes
+csv-mem	PASS	exit 0; 2340 bytes
+csv-services	PASS	exit 0; 3796 bytes
+csv-storage	PASS	exit 0; 3300 bytes
+csv-events	PASS	exit 0; 12770 bytes
+csv-explain	PASS	exit 0; 6605 bytes
+all-views	PASS	exit 0; 44173 bytes
+doctor	PASS	exit 0; 4847 bytes
+events	PASS	exit 0; 34241 bytes
+explain	PASS	exit 0; 4854 bytes
+inspect-summary	PASS	exit 0; 895 bytes
+inspect-logs	PASS	exit 0; 479554 bytes
+filter-label	PASS	exit 0; 2811 bytes
+filter-status	PASS	exit 0; 6034 bytes
+filter-workload	PASS	exit 0; 2813 bytes
+filter-unhealthy	PASS	exit 0; 3822 bytes
+filter-regex	PASS	exit 0; 2801 bytes
+ascii-no-color	PASS	exit 0; 9908 bytes
+flat-pods	PASS	exit 0; 7068 bytes
+no-cluster-metrics-io	PASS	exit 0; 10767 bytes
+compare	PASS	exit 0; 5192 bytes
+inspect-previous	PASS	exit 0; 136 bytes; previous-log retries=0
+snapshot-combined	PASS	exit 0; 239 bytes
+snapshot-all	PASS	exit 0; 850 bytes
+snapshot-selection	PASS	exit 0; 362 bytes
+report-bundle	PASS	exit 0; 284 bytes
+all-namespaces	PASS	exit 0; 7467 bytes
+empty-filter	PASS	exit 3; 1278 bytes
+invalid-option	PASS	exit 2; 58 bytes
+version	PASS	exit 0; 13 bytes
+help	PASS	exit 0; 17132 bytes
+completion	PASS	exit 0; 2756 bytes
+about	PASS	exit 0; 2456 bytes
+real-data-pods	PASS	observed app-server in installed CLI output
+real-data-services	PASS	observed missing-backend in installed CLI output
+real-data-storage	PASS	observed z-unbound in installed CLI output
+certs	PASS	exit 1; 12631 bytes
+check-summary	PASS	exit 2; 13011 bytes
+check-real-finding-selected	PASS	selected a numbered unhealthy fixture finding from actual --check output
+check-run-finding	PASS	exit 0; 2724 bytes
+check-run-read-commands-only	PASS	captured finding executed only guarded kubectl reads
+runbook-etcd-restore	PASS	exit 0; 4791 bytes
+runbook-cert-rotate	PASS	exit 0; 1453 bytes
+runbook-node-notready	PASS	exit 0; 2319 bytes
+runbook-api-unreachable	PASS	exit 0; 1719 bytes
+runbook-oidc-login	PASS	exit 0; 978 bytes
+runbook-real-node-inventory	PASS	node runbook includes the actual cluster node inventory
+fmea-summary	PASS	exit 0; 25319 bytes
+csv-fmea	PASS	exit 0; 9745 bytes
+tsv-fmea	PASS	exit 0; 9631 bytes
+fmea-json	PASS	exit 0; 18616 bytes
+fmea-json-real-rows	PASS	real worksheet rows retain numeric scores, AP, access and namespace
+fmea-html	PASS	exit 0; 103 bytes
+fmea-access	PASS	exit 0; 6909 bytes
+fmea-fail-on-high	PASS	exit 2; 25319 bytes
+fmea-trend	PASS	exit 0; 774 bytes
+fmea-real-finding-selected	PASS	selected a real failing pod row's numbered read commands
+fmea-run-finding	PASS	exit 0; 2730 bytes
+fmea-run-read-commands-only	PASS	FMEA row execution ran only the captured guarded reads
+capture-01-pods	PASS	PODS live requests, limits and measured usage
+capture-02-nodes	PASS	NODE POOLS real allocatable capacity and namespace share
+capture-03-workloads	PASS	WORKLOADS live replicas and placement
+capture-04-ip	PASS	IP POOL real pod, node and service addresses
+capture-05-mem	PASS	MEMORY live history and pod usage
+capture-06-io	PASS	NETWORK AND DISK IO capability and live samples
+capture-07-alerts	PASS	ALERTS real unhealthy fixture workloads
+capture-08-services	PASS	SERVICES ingress, ready endpoints and missing backend
+capture-09-storage	PASS	STORAGE bound volume and pending claim
+capture-10-events	PASS	EVENTS real Kubernetes scheduler and kubelet events
+capture-11-explain	PASS	INCIDENT EVIDENCE from actual failing workloads
+capture-12-namespace-picker	PASS	Framed namespace picker with access and persistent default controls
+capture-13-namespace-filter	PASS	Live namespace search and context-sensitive action panel
+namespace-save-default	PASS	d writes the selected namespace into the isolated user's context mapping
+capture-67-namespace-saved-default	PASS	A subsequent launch opens the namespace saved with d
+namespace-default-next-launch	PASS	new process with no -n selected the persisted namespace
+namespace-clear-default	PASS	x removes the saved mapping without changing other settings
+capture-68-namespace-typed	PASS	t opens an explicitly typed namespace
+namespace-typed-name	PASS	typed namespace opened the real workload
+capture-14-pod-picker	PASS	Framed live pod picker with CPU, memory, restarts and attention state
+capture-15-pod-picker-help	PASS	Pod picker navigation, filters and action keys
+capture-16-container-picker	PASS	Framed multi-container picker with resource/state columns
+capture-17-inspector-summary	PASS	Inspector summary of a real running pod
+capture-75-detail-shell-blocked	PASS	Read-only inspector refuses shell actions and explains X
+capture-76-detail-confirmation	PASS	X opens confirmation directly from pod detail
+capture-77-detail-cancel	PASS	Declining keeps pod detail read-only
+capture-78-detail-interactive-on	PASS	Whole yes answer enables the inspector without leaking keys
+capture-79-detail-shell	PASS	Actual container shell opened after enabling X in detail
+capture-80-detail-interactive-off	PASS	X disables interactive actions immediately in the inspector
+capture-81-detail-shell-blocked-again	PASS	Shell is refused again after disabling X
+capture-18-inspector-logs	PASS	Bounded timestamped logs from the live app container
+capture-62-inspector-expand	PASS	Expanded bounded log read from the live container
+capture-63-inspector-all	PASS	All available live container logs within the byte cap
+capture-64-inspector-nowrap	PASS	Unwrapped logs with horizontal navigation
+capture-65-inspector-json	PASS	Readable JSON log formatting enabled
+capture-66-inspector-follow	PASS	Live follow periodically refreshes actual container logs
+capture-19-inspector-find	PASS	Log search highlighting with context retained
+capture-20-inspector-only-matches	PASS	Only matching warning lines from real logs
+capture-21-inspector-help	PASS	Inspector help for log filtering and export
+capture-22-inspector-export	PASS	Visible log pane exported locally
+capture-32-command-palette	PASS	Fixed-command palette
+capture-33-doctor	PASS	Live connection, TLS, RBAC and metrics checks
+capture-34-pod-filter	PASS	Dashboard pod regular expression applied
+capture-35-structured-filters	PASS	Atomic label, status, node, workload and unhealthy filters
+capture-36-detail-lines	PASS	Toggle container detail lines
+capture-37-pods-only	PASS	Pod totals without container rows
+capture-38-sort-order	PASS	Sort key and reverse direction
+capture-39-paused-interval	PASS	Paused collection and changed polling interval
+capture-40-theme-dark	PASS	Dark colour theme
+capture-41-theme-light	PASS	Light colour theme
+capture-42-theme-mono	PASS	Monochrome colour theme
+capture-43-node-scale	PASS	Node scope and true-scale resource bars
+capture-44-history-window	PASS	Memory history with changed chart window
+capture-45-html-menu	PASS	Local HTML report selection menu
+capture-46-html-report-written	PASS	All-tabs report generated from live session
+capture-47-dashboard-help	PASS	Dashboard navigation and interactive controls
+capture-48-session-summary	PASS	Completed live session and retained history
+capture-23-interactive-blocked	PASS	Shell refused while interactive mode is disabled
+capture-24-interactive-confirmation	PASS	Explicit interactive-mode confirmation
+capture-25-shell-picker	PASS	Shell-mode pod picker and action panel
+capture-26-shell-inside	PASS	Actual shell inside the live app container
+transfer-destination-reset	PASS	private fixture upload destination starts empty for the real copy and result capture
+capture-27-upload-browser	PASS	Local framed file browser with enabled upload actions
+capture-28-upload-destination	PASS	Remote destination browser before any transfer
+capture-29-upload-review	PASS	Upload preflight checks and explicit review
+capture-30-upload-result	PASS	Real upload result with source and destination hashes
+upload-roundtrip-bytes	PASS	uploaded file read independently through kubectl exec and compared byte for byte
+capture-70-directory-upload-review	PASS	Directory upload preflight and recursive checksum checks
+capture-71-directory-upload-result	PASS	Actual directory upload with recursive fingerprints
+directory-upload-bytes	PASS	independent kubectl read confirms the uploaded nested file bytes
+capture-31-download-browser	PASS	Remote framed file browser with selection and preview keys
+capture-49-download-review	PASS	Download preflight, selected format and name conflict checks
+capture-50-download-result	PASS	Real download result and per-item hash verification
+download-default-plain-replace	PASS	default plain-file download replaced the existing local file after explicit r
+capture-55-download-keep-review	PASS	Download preflight, selected format and name conflict checks
+capture-56-download-keep-result	PASS	Real download result and per-item hash verification
+download-keep-both	PASS	explicit k preserved the old file and created upload (2).txt with real container bytes
+capture-57-directory-download-review	PASS	Download preflight, selected format and name conflict checks
+capture-58-directory-download-result	PASS	Real download result and per-item hash verification
+directory-download-replace	PASS	directory replacement restored nested file bytes from the real container
+capture-59-download-zip-review	PASS	Download preflight, selected format and name conflict checks
+capture-60-download-zip-result	PASS	Real download result and per-item hash verification
+capture-61-download-tgz-review	PASS	Download preflight, selected format and name conflict checks
+capture-69-download-tgz-result	PASS	Real download result and per-item hash verification
+download-zip-bytes	PASS	ZIP archive opened independently; nested file matches uploaded source bytes
+download-tgz-bytes	PASS	tar.gz archive opened independently; nested file matches uploaded source bytes
+capture-51-pods-100col	PASS	PODS at 100 columns
+capture-52-picker-100col	PASS	Framed pod picker at 100 columns
+capture-53-namespace-100col	PASS	Namespace picker and action panel at 100 columns
+capture-51-pods-80col	PASS	PODS at 80 columns
+capture-82-mode-confirmation-80col	PASS	Confirmation remains usable in an 80-column terminal
+capture-83-mode-enabled-80col	PASS	Uppercase Y plus Enter enables interactive mode at 80 columns
+capture-52-picker-80col	PASS	Framed pod picker at 80 columns
+capture-53-namespace-80col	PASS	Namespace picker and action panel at 80 columns
+capture-54-ascii-picker	PASS	ASCII framed picker with colour disabled
+capture-84-certs	PASS	CERTIFICATES AND LOGINS real TLS and kubeconfig expiry evidence
+capture-85-runbook	PASS	RUNBOOK printed etcd recovery procedure with live cluster inventory
+capture-87-runbook-topic	PASS	RUNBOOK next topic displays certificate rotation instructions
+runbook-topic-cycle	PASS	right bracket selects the next procedure and left bracket returns
+capture-86-check	PASS	CHECK NOW actual unhealthy workloads and numbered read-only next commands
+check-ui-real-findings	PASS	instant-check view shows the real crashing and pending fixture pods
+capture-88-fmea	PASS	FMEA real failure modes, priority scores and read visibility
+capture-89-access	PASS	ACCESS real kubectl auth identity and permission checks
+capture-90-fmea-kind	PASS	FMEA kind filter on actual worksheet rows
+capture-91-fmea-sort	PASS	FMEA worksheet sorted by risk priority number
+session-report	PASS	exit 0; 269 bytes
+audit-events	PASS	exit 0; 69943 bytes
+audit-grep	PASS	exit 0; 5783 bytes
+audit-verify	PASS	exit 0; 101 bytes
+audit-export	PASS	exit 0; 200 bytes
+export-artifacts	PASS	14 HTML reports, 18 CSV files, 306 TSV files
+inspector-export-artifact	PASS	visible inspector log pane saved locally
+html-real-data	PASS	combined HTML contains the actual healthy and crashing fixture pod names
+screenshots-rendered	PASS	91 PNGs faithfully rendered from live tmux ANSI captures
+extended-installed-source-identical	PASS	extension tests the installed bytes that will be published
+extended-real-cluster-inventory	PASS	40 Kubernetes objects; pod app-server-8fb4699bc-cx5vz
+extended-dashboard-live-search	PASS	in-place find counts matching lines before Enter
+capture-100-dashboard-search	PASS	In-place dashboard search counts real matching lines
+extended-dashboard-search-navigation	PASS	n/N retain the search and navigate matches
+capture-101-search-other-view	PASS	Search retained while switching to live workloads
+extended-quick-export-searched-workloads	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261119-221358.log
+capture-102-export-searched-workloads	PASS	Quick export includes the screen and every workload line
+capture-103-invalid-search	PASS	Invalid search expressions remain editable
+capture-104-search-no-match	PASS	A valid unmatched search reports zero matching lines
+extended-quick-export-pod-filter	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261119-221409.log
+extended-line-editor-insert-arrow	PASS	Left inserts a missing character inside the live search
+extended-quick-export-editor-insertion	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261119-221423.log
+capture-105-search-history	PASS	Shared editor recalls this session's earlier search
+capture-106-search-editor-delete	PASS	Cursor Home/Delete/End/Backspace leaves the intended search text
+extended-quick-export-editor-delete	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261119-221436.log
+extended-quick-export-view-1	PASS	reports/exports/kdash_view-pods_kdash-e2e_20261119-221445.log
+extended-quick-export-view-2	PASS	reports/exports/kdash_view-nodes_kdash-e2e_20261119-221451.log
+extended-quick-export-view-3	PASS	reports/exports/kdash_view-workloads_kdash-e2e_20261119-221456.log
+extended-quick-export-view-4	PASS	reports/exports/kdash_view-ip_kdash-e2e_20261119-221501.log
+extended-quick-export-view-5	PASS	reports/exports/kdash_view-mem_kdash-e2e_20261119-221506.log
+extended-quick-export-view-6	PASS	reports/exports/kdash_view-io_kdash-e2e_20261119-221511.log
+extended-quick-export-view-7	PASS	reports/exports/kdash_view-alerts_kdash-e2e_20261119-221516.log
+extended-quick-export-view-8	PASS	reports/exports/kdash_view-services_kdash-e2e_20261119-221521.log
+extended-quick-export-view-9	PASS	reports/exports/kdash_view-storage_kdash-e2e_20261119-221526.log
+extended-quick-export-view-E	PASS	reports/exports/kdash_view-events_kdash-e2e_20261119-221531.log
+extended-quick-export-view-explain	PASS	reports/exports/kdash_view-explain_kdash-e2e_20261119-221536.log
+extended-quick-export-view-C	PASS	reports/exports/kdash_view-certs_kdash-e2e_20261119-221541.log
+extended-quick-export-view-R	PASS	reports/exports/kdash_view-runbook_kdash-e2e_20261119-221546.log
+extended-quick-export-view-K	PASS	reports/exports/kdash_view-check_kdash-e2e_20261119-221551.log
+extended-quick-export-view-M	PASS	reports/exports/kdash_view-fmea_kdash-e2e_20261119-221556.log
+extended-quick-export-view-Y	PASS	reports/exports/kdash_view-secrets_kdash-e2e_20261119-221601.log
+extended-quick-export-access	PASS	reports/exports/kdash_view-access_kdash-e2e_20261119-221608.log
+capture-107-export-access	PASS	Access view exports its complete permission review
+extended-quick-export-namespaces	PASS	reports/exports/kdash_namespace-list_kdash-local_20261119-221613.log
+capture-108-export-namespaces	PASS	Namespace picker quick export retains every namespace name
+extended-quick-export-pods	PASS	reports/exports/kdash_pod-list_kdash-e2e_20261119-221618.log
+capture-109-export-pods	PASS	Pod picker quick export retains full names and resource columns
+extended-quick-export-summary	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261119-221631.log
+capture-110-container-find	PASS	Container picker finds a real sidecar by name
+extended-quick-export-containers	PASS	reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261119-221639.log
+capture-111-export-containers	PASS	Container picker exports every regular container and image
+capture-112-whole-log-coverage	PASS	Whole current log displays read coverage and node proxy capability
+extended-quick-export-current-log	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221650.log
+extended-log-coverage-truthful	PASS	export retains the actual coverage result; rotated files counted only when read
+extended-real-rotated-log-read	PASS	actual node-proxy read reports a positive rotated-file count
+capture-113-log-find-in-place	PASS	Whole log search counts case-insensitive real warnings
+extended-quick-export-matching-log	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221703.log
+extended-only-matches-export	PASS	whole-pane export follows the chosen matching-lines filter
+extended-quick-export-describe	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261119-221710.log
+extended-quick-export-events	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261119-221715.log
+extended-quick-export-explain	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261119-221720.log
+extended-log-scope-cancel	PASS	cancelling the scope picker returns to the same real pod detail
+capture-114-log-search-scope	PASS	Full log search offers this pod, workload and namespace scopes
+capture-115-log-search-invalid-pattern	PASS	Invalid full-log search patterns can be corrected before reads begin
+capture-116-log-search-pod	PASS	Merged timestamped matching lines from real pod container logs
+extended-quick-export-find-pod	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221745.log
+extended-log-scope-pod	PASS	: 4 of 4 logs read
+extended-log-merge-order-pod	PASS	12040 exported matching lines remain in timestamp order
+capture-117-log-search-workload	PASS	Merged timestamped matching lines from real workload container logs
+extended-quick-export-find-workload	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221754.log
+extended-log-scope-workload	PASS	: 8 of 8 logs read
+extended-log-merge-order-workload	PASS	24082 exported matching lines remain in timestamp order
+capture-118-log-search-namespace	PASS	Merged timestamped matching lines from real namespace container logs
+extended-quick-export-find-namespace	PASS	reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221803.log
+extended-log-scope-namespace	PASS	: 26 of 26 logs read
+extended-log-merge-order-namespace	PASS	39085 exported matching lines remain in timestamp order
+extended-log-search-previous-instance	PASS	restarted fixture contributes its previous container instance
+capture-119-whole-previous-log	PASS	Full previous instance of a real restarted container
+extended-quick-export-whole-previous	PASS	reports/exports/kdash_z-crash_previous_20261119-221823.log
+extended-previous-log-coverage	PASS	previous instance is read with the same explicit node-rotation capability reporting
+extended-report-bundle	PASS	exit 0; 326 bytes
+extended-bundle-fmea-txt	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.txt
+extended-bundle-fmea-csv	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.csv
+extended-bundle-secrets-txt	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.txt
+extended-bundle-secrets-csv	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.csv
+extended-bundle-secrets-json	PASS	reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.json
+extended-bundle-secrets-json-valid	PASS	report bundle's structured Secrets data parses
+extended-report-with-extras-snapshot	PASS	exit 0; 299 bytes
+extended-combined-extra-tab-data	PASS	combined live snapshot embeds both populated, searchable/sortable diagnostic tables
+extended-report-without-extras	PASS	exit 0; 287 bytes
+extended-combined-extra-tabs-opt-out	PASS	KDASH_REPORT_EXTRAS=0 retains resource/history report tabs
+extended-certs-secret-certificates	PASS	exit 2; 16967 bytes
+capture-120-certs-secret-public-certificate	PASS	Certificate view includes real generated Secret public certificate expiry
+extended-quick-export-certs-secret-rows	PASS	reports/exports/kdash_view-certs_kdash-e2e_20261119-221905.log
+capture-121-certs-secret-search	PASS	Certificate search finds the generated Secret certificate
+capture-122-theme-safe	PASS	Live dashboard theme safe
+extended-theme-safe	PASS	observed real ANSI output and retained workload data
+capture-123-theme-dark	PASS	Live dashboard theme dark
+extended-theme-dark	PASS	observed real ANSI output and retained workload data
+capture-124-theme-light	PASS	Live dashboard theme light
+extended-theme-light	PASS	observed real ANSI output and retained workload data
+capture-125-theme-mono	PASS	Live dashboard theme mono
+extended-theme-mono	PASS	observed real ANSI output and retained workload data
+extended-legacy-render-fallbacks	PASS	16 colours, sequential reads, foreground model and no view cache remain usable
+capture-126-fallback-16-colours	PASS	Live compatibility mode with sequential reads and 16 ANSI colours
+extended-quick-export-local-files	PASS	reports/exports/kdash_files_local_20261119-221940.log
+capture-127-export-local-files	PASS	Quick export from the actual local files browser
+extended-quick-export-remote-files	PASS	reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261119-221951.log
+capture-128-export-remote-files	PASS	Quick export from the actual remote files browser
+extended-session-export-aggregation	PASS	8 session logs aggregate their explicit exports
+extended-latest-export-link	PASS	latest.log resolves to the newest individual export
+extended-screenshots-rendered	PASS	29 PNGs faithfully rendered from live tmux ANSI captures

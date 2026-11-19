@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                FIND IN LOGS
+[0m[38;5;243m┌─[39m [1mFIND IN LOGS[0m [38;5;243m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [38;5;243mREAD-ONLY / audited[39m [38;5;243m─┐[39m
+[38;5;243m│[39m [38;5;243mPOD      [39m  [1mapp-server-8fb4699bc-cx5vz[0m                                                                                                                                 [38;5;243m│[39m
+[38;5;243m│[39m [38;5;243mCONTAINER[39m  [1mapp[0m   [38;5;29m● Running[39m   [38;5;243mready[39m   [38;5;243mrestarts[39m 7   [38;5;243mlast exit[39m [1m[38;5;196mUnknown exit=255[0m   [38;5;243mbusybox:1.36[39m                                                                           [38;5;243m│[39m
+[38;5;243m└─[39m [1mrows 33-70 / 39117 · /INFO|WARN|ERROR in namespace kdash-e2e: 26 of 26 logs read, 283043 lines, 283040 matching[0m [38;5;243m─────────────────────────────────────────────────────┘[39m
+2026-11-06T12:38:09.400936105Z [completed-check-m9swm/check] [1m[38;5;196mINFO[0m completed live validation job
+2026-11-13T16:06:05.677215023Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mINFO[0m request=0 service=app-server healthy=true
+2026-11-13T16:06:05.677976679Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mWARN[0m request=0 demonstration warning from live workload
+2026-11-13T16:06:05.899641964Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-13T16:06:05+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:06.703619693Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:06+00:00 [1m[38;5;196mINFO[0m request=0 service=app-server healthy=true
+2026-11-13T16:06:06.704548262Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:06+00:00 [1m[38;5;196mWARN[0m request=0 demonstration warning from live workload
+2026-11-13T16:06:12.312059322Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:12+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:13.075369016Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:13+00:00 [1m[38;5;196mINFO[0m request=1 service=app-server healthy=true
+2026-11-13T16:06:13.076117127Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:13+00:00 [1m[38;5;196mWARN[0m request=1 demonstration warning from live workload
+2026-11-13T16:06:14.101989166Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:14+00:00 [1m[38;5;196mINFO[0m request=1 service=app-server healthy=true
+2026-11-13T16:06:14.102672773Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:14+00:00 [1m[38;5;196mWARN[0m request=1 demonstration warning from live workload
+2026-11-13T16:06:14.395435471Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-13T16:06:14+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:15.077419481Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:15+00:00 [1m[38;5;196mINFO[0m request=2 service=app-server healthy=true
+2026-11-13T16:06:15.078019836Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:15+00:00 [1m[38;5;196mWARN[0m request=2 demonstration warning from live workload
+2026-11-13T16:06:15.313125686Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:15+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:16.103704520Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:16+00:00 [1m[38;5;196mINFO[0m request=2 service=app-server healthy=true
+2026-11-13T16:06:16.104355016Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:16+00:00 [1m[38;5;196mWARN[0m request=2 demonstration warning from live workload
+2026-11-13T16:06:17.079614896Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:17+00:00 [1m[38;5;196mINFO[0m request=3 service=app-server healthy=true
+2026-11-13T16:06:17.080391674Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:17+00:00 [1m[38;5;196mWARN[0m request=3 demonstration warning from live workload
+2026-11-13T16:06:17.396479033Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-13T16:06:17+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:18.105795442Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:18+00:00 [1m[38;5;196mINFO[0m request=3 service=app-server healthy=true
+2026-11-13T16:06:18.106616064Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:18+00:00 [1m[38;5;196mWARN[0m request=3 demonstration warning from live workload
+2026-11-13T16:06:18.314825096Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:18+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:19.082005384Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:19+00:00 [1m[38;5;196mINFO[0m request=4 service=app-server healthy=true
+2026-11-13T16:06:19.082926515Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:19+00:00 [1m[38;5;196mWARN[0m request=4 demonstration warning from live workload
+2026-11-13T16:06:20.107699626Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:20+00:00 [1m[38;5;196mINFO[0m request=4 service=app-server healthy=true
+2026-11-13T16:06:20.108296945Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:20+00:00 [1m[38;5;196mWARN[0m request=4 demonstration warning from live workload
+2026-11-13T16:06:20.397405521Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-13T16:06:20+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:21.084151995Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:21+00:00 [1m[38;5;196mINFO[0m request=5 service=app-server healthy=true
+2026-11-13T16:06:21.084909117Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:21+00:00 [1m[38;5;196mWARN[0m request=5 demonstration warning from live workload
+2026-11-13T16:06:21.411171700Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-13T16:06:21+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+2026-11-13T16:06:22.109529479Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 [1m[38;5;196mINFO[0m request=5 service=app-server healthy=true
+2026-11-13T16:06:22.110432985Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 [1m[38;5;196mWARN[0m request=5 demonstration warning from live workload
+2026-11-13T16:06:22.711285104Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 [1m[38;5;196mINFO[0m request=8 service=app-server healthy=true
+2026-11-13T16:06:22.711978231Z [app-server-8fb4699bc-cx5vz/app previous] 2026-11-13T16:06:22+00:00 [1m[38;5;196mWARN[0m request=8 demonstration warning from live workload
+2026-11-13T16:06:23.086176203Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:23+00:00 [1m[38;5;196mINFO[0m request=6 service=app-server healthy=true
+2026-11-13T16:06:23.086755169Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-13T16:06:23+00:00 [1m[38;5;196mWARN[0m request=6 demonstration warning from live workload
+2026-11-13T16:06:23.398425171Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-13T16:06:23+00:00 [1m[38;5;196mINFO[0m sidecar heartbeat
+[38;5;243m┌─[39m [1mPANES[0m [38;5;243m─────┬─[39m [1mLOGS[0m [38;5;243m────────┬─[39m [1mATTACH[0m [38;5;243m──────┬─[39m [1mREAD[0m [38;5;243m───────┬─[39m [1mMOVE[0m [38;5;243m────────────────┬─[39m [1mFIND[0m [38;5;243m──────────────┬─[39m [1mOTHER[0m [38;5;243m────────────────────────────────────────────────────┐[39m
+[38;5;243m│[39m [1ms[0m  summary  [38;5;243m│[39m [1ml[0m  logs       [38;5;243m│[39m [1mS[0m  shell      [38;5;243m│[39m [1mW[0m  wrap on   [38;5;243m│[39m [1mj/k[0m         scroll    [38;5;243m│[39m [1m/[0m    find           [38;5;243m│[39m [1mr[0m  reload                                                  [38;5;243m│[39m
+[38;5;243m│[39m [1md[0m  describe [38;5;243m│[39m [1mp[0m  prev logs  [38;5;243m│[39m [1mU[0m  upload     [38;5;243m│[39m [1mJ[0m  JSON off  [38;5;243m│[39m [1mg/G[0m         top / end [38;5;243m│[39m [1m&[0m    only matches   [38;5;243m│[39m [1m?[0m  keys                                                    [38;5;243m│[39m
+[38;5;243m│[39m [1me[0m  events   [38;5;243m│[39m [1mc[0m  container  [38;5;243m│[39m [1mD[0m  download   [38;5;243m│[39m [1mL[0m  level all [38;5;243m│[39m [1mleft/right[0m  pan       [38;5;243m│[39m [1mn/N[0m  next / prev    [38;5;243m│[39m [1mq[0m  back                                                    [38;5;243m│[39m
+[38;5;243m│[39m [1m![0m  why      [38;5;243m│[39m [1mf[0m  follow off [38;5;243m│[39m [1m>[0m  export log [38;5;243m│[39m [1m+[0m  4x lines  [38;5;243m│[39m [1mA[0m           all lines [38;5;243m│[39m [1mF[0m    all pods' logs [38;5;243m│[39m [1mQ[0m  quit                                                    [38;5;243m│[39m
+[38;5;243m└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘[39m
+[1m[38;5;163m match 1/39085[0m

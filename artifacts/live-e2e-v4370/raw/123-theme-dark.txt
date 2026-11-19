@@ -1,0 +1,50 @@
+ KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 22:19:16 IST
+┌─ SCOPE ───────────────────────────────────────────┬─ POD HEALTH ──────────────────────────────┬─ USAGE vs LIMITS ──────────────────┬─ WORKLOADS · EVENTS ──────┐
+│ match .*   sort cpu ▼ high first                  │ ! pods 14/18 ready   restarts 395         │ cpu     60m ░░░░░░░░   3% lim      │ workloads 14              │
+│ poll 2s  spec 4s/30s   session 22:19:12 up 4s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     5Mi ░░░░░░░░   1% lim      │ events 15m ! 0  ^ 0       │
+└───────────────────────────────────────────────────┴───────────────────────────────────────────┴────────────────────────────────────┴───────────────────────────┘
+ DATA ● pods fresh 4s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                                                 │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)
+WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► TIMELINE  22:19:12 -> 22:19:16 IST  (all since kdash started, z window, c hides graphs) ───────────────────────────────────────────────────────────────────────
+  CPU used - namespace                                                              MEMORY used - namespace
+         one sample so far - the chart starts with the 2nd (run kdash live)                one sample so far - the chart starts with the 2nd (run kdash live)
+
+► PODS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► Pod z-oom  (1 pod)                                     1/1   0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0 ████████  12.5   6.2 █░░░░░░░
+  z-oom                                                  1/1   0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0 ████████  12.5   6.2 █░░░░░░░
+      cpu ░░                mem ░░                pk 1Mi    node dev   pool role:control-plane,master   ip 10.244.0.153   qos Burstable   status Running
+    └─ hog                                               Y     0 │     50 ·       1 · │     10     50       8      16 │ 500.0 100.0 ████████  12.5   6.2 █░░░░░░░
+..................................................................................................................................................................
+► Deployment app-server  (2 pods)                        2/2  28 │      6 ·       3 · │     50    500      24     192 │  12.0   1.2 ░░░░░░░░  12.5   1.6 ░░░░░░░░
+  app-server-8fb4699bc-cx5vz                             2/2  14 │      3 ·       3 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░  25.0   3.1 ░░░░░░░░
+      cpu ░░                mem ░░                pk 3Mi    node dev   pool role:control-plane,master   ip 10.244.0.135   qos Burstable   status Running   last-exit Unkn›
+    ├─ app                                               Y     7 │      2 ·       3 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░  37.5   4.7 ░░░░░░░░
+        last-exit Unknown
+    └─ sidecar                                           Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+        last-exit Unknown
+  app-server-8fb4699bc-t7zxj                             2/2  14 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.138   qos Burstable   status Running   last-exit Unkn›
+    ├─ app                                               Y     7 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+        last-exit Unknown
+    └─ sidecar                                           Y     7 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+        last-exit Unknown
+..................................................................................................................................................................
+► StatefulSet db-stateful  (2 pods)                      2/2   0 │      2 ·       0 · │     40    200      64     128 │   5.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+  db-stateful-0                                          1/1   0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.154   qos Burstable   status Running
+    └─ db                                                Y     0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+  db-stateful-1                                          1/1   0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.156   qos Burstable   status Running
+    └─ db                                                Y     0 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+..................................................................................................................................................................
+► ReplicationController functionality-legacy  (1 pod)    1/1   0 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+  functionality-legacy-67ks7                             1/1   0 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.19   qos Burstable   status Running
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (18 pods, 14 workloads)                                395 │     60 ·       5 · │    315   1750     276     976 │  19.0   3.4 ░░░░░░░░   1.8   0.5 ░░░░░░░░
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+ colour theme: dark - for black backgrounds (T: next) | ○ LIVE 22:19:17  next 1s  data 1s old  spec 5/30s  fetch 0.0s  poll 2s  AUDITED | pods | rows 1-35/95 | ? help

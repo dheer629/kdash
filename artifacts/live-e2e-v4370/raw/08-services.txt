@@ -1,0 +1,50 @@
+ KDASH 4.37.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-19 21:11:10 IST
+┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
+│ match .*   sort cpu ▼ high first                     │ ! pods 13/17 ready   restarts 381           │ cpu     60m ░░░░░░░░   4% lim       │ workloads 13                │
+│ poll 2s  spec 3s/30s   session 21:10:37 up 33s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     5Mi ░░░░░░░░   1% lim       │ events 15m ! 0  ^ 0         │
+└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
+ DATA ● pods fresh 3s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ SERVICES AND BACKENDS   observed configuration and readiness - reachability is not tested
+
+DATA SOURCES
+┌───────────┬───────┬────────┬────────────────┐
+│ SOURCE    │ STATE │   READ │ DETAIL         │
+├───────────┼───────┼────────┼────────────────┤
+│ services  │ ● ok  │ 4s ago │ read succeeded │
+│ pods      │ ● ok  │ 4s ago │ read succeeded │
+│ endpoints │ ● ok  │ 3s ago │ read succeeded │
+│ ingresses │ ● ok  │ 3s ago │ read succeeded │
+└───────────┴───────┴────────┴────────────────┘
+
+SERVICES  10 services
+┌────────────────────────────┬────────────┬──────────────┬──────────┬───────┬───────────┬────────────────────────────────────────┬──────────────────────────┐
+│ SERVICE                    │ STATUS     │ TYPE         │ SELECTED │ READY │ ENDPOINTS │ CLUSTER-IP                             │ PORTS (name:port→target) │
+├────────────────────────────┼────────────┼──────────────┼──────────┼───────┼───────────┼────────────────────────────────────────┼──────────────────────────┤
+│ app-server                 │ ● OK       │ ClusterIP    │        2 │     2 │ 2/2 ready │ 10.111.83.216                          │ 80→8080                  │
+│ db-headless                │ ● OK       │ Headless     │        2 │     2 │ 2/2 ready │ -                                      │ db:5432                  │
+│ external-api               │ ● EXTERNAL │ ExternalName │        - │     - │ -         │ → api.example.com                      │ -                        │
+│ functionality-external     │ ● EXTERNAL │ ExternalName │        - │     - │ -         │ → kubernetes.default.svc.cluster.local │ -                        │
+│ functionality-headless     │ ● OK       │ Headless     │        1 │     1 │ 1/1 ready │ -                                      │ http:8080→http           │
+│ functionality-loadbalancer │ ● OK       │ LoadBalancer │        1 │     1 │ 1/1 ready │ 10.109.199.192                         │ http:8080→http           │
+│ functionality-nodeport     │ ● OK       │ NodePort     │        1 │     1 │ 1/1 ready │ 10.102.33.174                          │ http:8080→http           │
+│ missing-backend            │ ● NO MATCH │ ClusterIP    │        0 │     0 │ 0/0 ready │ 10.104.104.128                         │ 80→8080                  │
+│ web-loadbalancer           │ ● NO MATCH │ LoadBalancer │        0 │     0 │ 0/0 ready │ 10.101.152.223                         │ http:80→8080             │
+│ web-nodeport               │ ● NO MATCH │ NodePort     │        0 │     0 │ 0/0 ready │ 10.107.100.32                          │ http:80→8080             │
+└────────────────────────────┴────────────┴──────────────┴──────────┴───────┴───────────┴────────────────────────────────────────┴──────────────────────────┘
+
+FINDINGS  3 findings   critical first - the next commands for each are listed below the table
+┌───┬────────────┬──────────────────┬──────────────────────────────────────────────────────────┐
+│ # │ SEVERITY   │ OBJECT           │ FINDING                                                  │
+├───┼────────────┼──────────────────┼──────────────────────────────────────────────────────────┤
+│ 1 │ ● CRITICAL │ missing-backend  │ selector app=does-not-exist matches no pod in this scope │
+│ 2 │ ● CRITICAL │ web-loadbalancer │ selector app=app-server matches no pod in this scope     │
+│ 3 │ ● CRITICAL │ web-nodeport     │ selector app=app-server matches no pod in this scope     │
+└───┴────────────┴──────────────────┴──────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  Enter runs the read commands of a finding now
+
+  #1  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
+      read   kubectl --context kdash-local -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
+ ○ LIVE 21:11:11  next 2s  data 2s old  spec 4/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-41/76 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export

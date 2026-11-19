@@ -21,6 +21,30 @@ function cut(s, w,   t, n) {
   return t "~"
 }
 function pad(s, w, right,   g) { g = w - vl(s); if (g < 0) g = 0; return right ? sprintf("%" g "s", "") s : s sprintf("%" g "s", "") }
+# A cell wider than its column continues on the next line of the row (nothing is cut):
+# the break goes after a space, / , ; : = - ) or | when one is in the last 60% of the
+# line, otherwise at the column edge. Colour markers stay whole. -> SG[1..n], returns n
+function wrap(s, w,   n, i, L, ch, cw, cur, curw, lastb, k, rest) {
+  if (w < 1) w = 1
+  if (vl(s) <= w || !WRAP) { SG[1] = (WRAP ? s : cut(s, w)); return 1 }
+  n = 0; cur = ""; curw = 0; lastb = 0; i = 1; L = length(s)
+  while (i <= L) {
+    ch = substr(s, i, 1)
+    if (ch == "~" && substr(s, i + 1, 1) == "[") { rest = substr(s, i); if (match(rest, /^~\[[0-9;]*m/)) { cur = cur substr(rest, 1, RLENGTH); i += RLENGTH; continue } }
+    cw = ch; i++
+    if (VLB) while (i <= L && substr(s, i, 1) ~ /[\200-\277]/) { cw = cw substr(s, i, 1); i++ }
+    if (curw >= w) {
+      if (lastb > 0 && lastb * 10 >= w * 4) { n++; SG[n] = substr(cur, 1, lastb); cur = substr(cur, lastb + 1) }
+      else { n++; SG[n] = cur; cur = "" }
+      sub(/^ +/, "", cur); curw = vl(cur); lastb = 0
+      for (k = length(cur); k > 0; k--) if (substr(cur, k, 1) ~ /[ \/,;:=)|-]/) { lastb = k; break }
+    }
+    cur = cur cw; curw++
+    if (cw ~ /^[ \/,;:=)|-]$/) lastb = length(cur)
+  }
+  n++; SG[n] = cur
+  return n
+}
 function sev(s,   t) { t = tolower(s)
   if (t ~ /fail|error|forbidden|denied|mismatch|missing|crash|oomkill|lost|critical|unbound|not ready|notready|unready|no endpoints|no match|evicted|auth-error|tls-error|unreachable|timeout/) return "1;31"
   if (t ~ /warn|pending|unknown|stale|waitfor|resiz|terminat|degraded|collecting|partial|no-data|unavailable|selectorless|released|info/) return "35"
@@ -28,7 +52,7 @@ function sev(s,   t) { t = tolower(s)
   return "90" }
 function own(s) { if (s ~ /^\{[rygbd]\}/) { OC = substr(s, 2, 1); return substr(s, 4) } OC = ""; return s }
 function occ(c) { return c == "r" ? "1;31" : c == "y" ? "35" : c == "g" ? "32" : c == "b" ? "1" : c == "d" ? "90" : "" }
-BEGIN { FS = "\t"; TKC = (ENVIRON["TK_COLOR"] == "1"); W = ENVIRON["TK_COLS"] + 0
+BEGIN { FS = "\t"; TKC = (ENVIRON["TK_COLOR"] == "1"); W = ENVIRON["TK_COLS"] + 0; WRAP = (ENVIRON["KDASH_TABLE_WRAP"] != "0")
   VLB = (length("\342\226\210") != 1); DOT = (ENVIRON["TK_GLYPH"] == "ascii") ? "*" : "\342\227\217"; HR = (ENVIRON["TK_GLYPH"] == "ascii") ? "-" : "\342\224\200" }
 NR == 1 { nc = split($0, H, "\t")
   for (i = 1; i <= nc; i++) { RA[i] = (substr(H[i], 1, 1) == ">"); if (RA[i]) H[i] = substr(H[i], 2)
@@ -54,15 +78,17 @@ END {
   else { BTL = "\342\224\214"; BTR = "\342\224\220"; BBL = "\342\224\224"; BBR = "\342\224\230"; BLT = "\342\224\234"; BRT = "\342\224\244"
          BTT = "\342\224\254"; BBT = "\342\224\264"; BX = "\342\224\274"; BH = "\342\224\200"; BV = "\342\224\202" }
   print K("90", hline(BTL, BTT, BTR))
-  h = K("90", BV); for (i = 1; i <= nc; i++) h = h " " K("1", pad(cut(H[i], WD[i]), WD[i], RA[i])) " " K("90", BV)
-  print h
+  # header and rows: a cell that does not fit wraps onto further lines of the same row
+  mx = 1; for (i = 1; i <= nc; i++) { m = wrap(H[i], WD[i]); HN[i] = m; for (k = 1; k <= m; k++) HS[i, k] = SG[k]; if (m > mx) mx = m }
+  for (k = 1; k <= mx; k++) { h = K("90", BV); for (i = 1; i <= nc; i++) h = h " " K("1", pad(k <= HN[i] ? HS[i, k] : "", WD[i], RA[i])) " " K("90", BV); print h }
   print K("90", hline(BLT, BX, BRT))
-  for (n = 1; n <= nr; n++) { line = K("90", BV)
-    for (i = 1; i <= nc; i++) { v = cut(CE[n, i], WD[i]); c = occ(CL[n, i])
-      if (ST[i] && c == "") { c = sev(substr(CE[n, i], length(DOT) + 2)) }
-      if (c == "" && DM[i]) c = "90"
-      line = line " " K(c, pad(v, WD[i], RA[i])) " " K("90", BV) }
-    print line }
+  for (n = 1; n <= nr; n++) { mx = 1
+    for (i = 1; i <= nc; i++) { m = wrap(CE[n, i], WD[i]); RN[i] = m; for (k = 1; k <= m; k++) RW[i, k] = SG[k]; if (m > mx) mx = m
+      c = occ(CL[n, i]); if (ST[i] && c == "") { c = sev(substr(CE[n, i], length(DOT) + 2)) }
+      if (c == "" && DM[i]) c = "90"; CC[i] = c }
+    for (k = 1; k <= mx; k++) { line = K("90", BV)
+      for (i = 1; i <= nc; i++) line = line " " K(CC[i], pad(k <= RN[i] ? RW[i, k] : "", WD[i], RA[i])) " " K("90", BV)
+      print line } }
   print K("90", hline(BBL, BBT, BBR))
 }
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
@@ -109,6 +135,15 @@ toolkit_once() { # view [renderer arguments]
     esac
 }
 # "2026-10-30T08:05:12Z" -> epoch, in any awk (no mktime): days-from-civil
+# epoch -> UTC date in awk (one "date" process per certificate made 1,000 Secrets slow)
+SM_UTC_AWK='
+function smutc(e, iso,   q, z, era, doe, yoe, y, doy, mp, d, m, t) {
+  if (e !~ /^-?[0-9]+$/) return "-"; e += 0; q = int(e / 86400); if (q * 86400 > e) q--; t = e - q * 86400; z = q + 719468
+  era = int(z / 146097); if (era * 146097 > z) era--; doe = z - era * 146097; yoe = int((doe - int(doe / 1460) + int(doe / 36524) - int(doe / 146096)) / 365)
+  y = yoe + era * 400; doy = doe - (365 * yoe + int(yoe / 4) - int(yoe / 100)); mp = int((5 * doy + 2) / 153)
+  d = doy - int((153 * mp + 2) / 5) + 1; m = mp + (mp < 10 ? 3 : -9); if (m <= 2) y++
+  return iso ? sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", y, m, d, int(t / 3600), int((t % 3600) / 60), t % 60) : sprintf("%04d-%02d-%02d %02d:%02d", y, m, d, int(t / 3600), int((t % 3600) / 60)) }
+'
 TK_TIME_AWK='
 function epoch(s,   y, m, d, H, M, S, era, yoe, doy, doe) {
   if (s !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/) return -1

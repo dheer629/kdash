@@ -1,0 +1,3202 @@
+{
+  "version": "4.37.0",
+  "namespace": "kdash-e2e",
+  "context": "kdash-local",
+  "started": "20261119-210741",
+  "phase": "all",
+  "completed": true,
+  "cli_workers": 1,
+  "sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
+  "installed_sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
+  "binary_sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
+  "capture_source_sha256": "1394f5b715fd9bfbd6afae57753e5509d76f2123fc5950b9aa2f9ecd678c999b",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "installed-source-identical",
+      "status": "PASS",
+      "detail": "installed binary and repository CLI have the same SHA-256"
+    },
+    {
+      "name": "fixture-apply",
+      "status": "PASS",
+      "detail": "isolated namespace, healthy and failing workloads, services, ingress, bound/unbound PVC"
+    },
+    {
+      "name": "fixture-ready",
+      "status": "PASS",
+      "detail": "deployment \"app-server\" successfully rolled out"
+    },
+    {
+      "name": "real-cluster-inventory",
+      "status": "PASS",
+      "detail": "38 Kubernetes objects; pod app-server-8fb4699bc-cx5vz"
+    },
+    {
+      "name": "view-pods",
+      "status": "PASS",
+      "detail": "exit 0; 10767 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v pods",
+      "exit_code": 0,
+      "seconds": 1.04,
+      "log": "logs/view-pods.log"
+    },
+    {
+      "name": "view-nodes",
+      "status": "PASS",
+      "detail": "exit 0; 6911 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v nodes",
+      "exit_code": 0,
+      "seconds": 0.93,
+      "log": "logs/view-nodes.log"
+    },
+    {
+      "name": "view-workloads",
+      "status": "PASS",
+      "detail": "exit 0; 6822 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v workloads",
+      "exit_code": 0,
+      "seconds": 1.01,
+      "log": "logs/view-workloads.log"
+    },
+    {
+      "name": "view-ip",
+      "status": "PASS",
+      "detail": "exit 0; 6313 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v ip",
+      "exit_code": 0,
+      "seconds": 0.97,
+      "log": "logs/view-ip.log"
+    },
+    {
+      "name": "view-mem",
+      "status": "PASS",
+      "detail": "exit 0; 6827 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v mem",
+      "exit_code": 0,
+      "seconds": 0.98,
+      "log": "logs/view-mem.log"
+    },
+    {
+      "name": "view-io",
+      "status": "PASS",
+      "detail": "exit 0; 6163 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v io --io-wait 16",
+      "exit_code": 0,
+      "seconds": 17.36,
+      "log": "logs/view-io.log"
+    },
+    {
+      "name": "view-alerts",
+      "status": "PASS",
+      "detail": "exit 0; 5344 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v alerts",
+      "exit_code": 0,
+      "seconds": 1.0,
+      "log": "logs/view-alerts.log"
+    },
+    {
+      "name": "view-services",
+      "status": "PASS",
+      "detail": "exit 0; 10753 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v services",
+      "exit_code": 0,
+      "seconds": 1.52,
+      "log": "logs/view-services.log"
+    },
+    {
+      "name": "view-storage",
+      "status": "PASS",
+      "detail": "exit 0; 14909 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v storage",
+      "exit_code": 0,
+      "seconds": 1.36,
+      "log": "logs/view-storage.log"
+    },
+    {
+      "name": "view-events",
+      "status": "PASS",
+      "detail": "exit 0; 34241 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v events",
+      "exit_code": 0,
+      "seconds": 1.42,
+      "log": "logs/view-events.log"
+    },
+    {
+      "name": "view-explain",
+      "status": "PASS",
+      "detail": "exit 0; 13433 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v explain",
+      "exit_code": 0,
+      "seconds": 1.47,
+      "log": "logs/view-explain.log"
+    },
+    {
+      "name": "tsv-pods",
+      "status": "PASS",
+      "detail": "exit 0; 4758 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v pods -o tsv",
+      "exit_code": 0,
+      "seconds": 1.13,
+      "log": "logs/tsv-pods.log"
+    },
+    {
+      "name": "tsv-nodes",
+      "status": "PASS",
+      "detail": "exit 0; 1999 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v nodes -o tsv",
+      "exit_code": 0,
+      "seconds": 1.0,
+      "log": "logs/tsv-nodes.log"
+    },
+    {
+      "name": "tsv-workloads",
+      "status": "PASS",
+      "detail": "exit 0; 2554 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v workloads -o tsv",
+      "exit_code": 0,
+      "seconds": 1.0,
+      "log": "logs/tsv-workloads.log"
+    },
+    {
+      "name": "tsv-ip",
+      "status": "PASS",
+      "detail": "exit 0; 2722 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v ip -o tsv",
+      "exit_code": 0,
+      "seconds": 1.11,
+      "log": "logs/tsv-ip.log"
+    },
+    {
+      "name": "tsv-mem",
+      "status": "PASS",
+      "detail": "exit 0; 2386 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v mem -o tsv",
+      "exit_code": 0,
+      "seconds": 0.98,
+      "log": "logs/tsv-mem.log"
+    },
+    {
+      "name": "tsv-services",
+      "status": "PASS",
+      "detail": "exit 0; 3458 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v services -o tsv",
+      "exit_code": 0,
+      "seconds": 1.67,
+      "log": "logs/tsv-services.log"
+    },
+    {
+      "name": "tsv-storage",
+      "status": "PASS",
+      "detail": "exit 0; 2938 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v storage -o tsv",
+      "exit_code": 0,
+      "seconds": 1.6,
+      "log": "logs/tsv-storage.log"
+    },
+    {
+      "name": "tsv-events",
+      "status": "PASS",
+      "detail": "exit 0; 11294 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v events -o tsv",
+      "exit_code": 0,
+      "seconds": 1.54,
+      "log": "logs/tsv-events.log"
+    },
+    {
+      "name": "tsv-explain",
+      "status": "PASS",
+      "detail": "exit 0; 6342 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v explain -o tsv",
+      "exit_code": 0,
+      "seconds": 1.77,
+      "log": "logs/tsv-explain.log"
+    },
+    {
+      "name": "csv-pods",
+      "status": "PASS",
+      "detail": "exit 0; 4650 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v pods -o csv",
+      "exit_code": 0,
+      "seconds": 1.15,
+      "log": "logs/csv-pods.log"
+    },
+    {
+      "name": "csv-nodes",
+      "status": "PASS",
+      "detail": "exit 0; 1979 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v nodes -o csv",
+      "exit_code": 0,
+      "seconds": 1.16,
+      "log": "logs/csv-nodes.log"
+    },
+    {
+      "name": "csv-workloads",
+      "status": "PASS",
+      "detail": "exit 0; 2468 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v workloads -o csv",
+      "exit_code": 0,
+      "seconds": 1.2,
+      "log": "logs/csv-workloads.log"
+    },
+    {
+      "name": "csv-ip",
+      "status": "PASS",
+      "detail": "exit 0; 2711 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v ip -o csv",
+      "exit_code": 0,
+      "seconds": 1.23,
+      "log": "logs/csv-ip.log"
+    },
+    {
+      "name": "csv-mem",
+      "status": "PASS",
+      "detail": "exit 0; 2340 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v mem -o csv",
+      "exit_code": 0,
+      "seconds": 1.3,
+      "log": "logs/csv-mem.log"
+    },
+    {
+      "name": "csv-services",
+      "status": "PASS",
+      "detail": "exit 0; 3796 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v services -o csv",
+      "exit_code": 0,
+      "seconds": 1.75,
+      "log": "logs/csv-services.log"
+    },
+    {
+      "name": "csv-storage",
+      "status": "PASS",
+      "detail": "exit 0; 3300 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v storage -o csv",
+      "exit_code": 0,
+      "seconds": 1.72,
+      "log": "logs/csv-storage.log"
+    },
+    {
+      "name": "csv-events",
+      "status": "PASS",
+      "detail": "exit 0; 12770 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v events -o csv",
+      "exit_code": 0,
+      "seconds": 2.01,
+      "log": "logs/csv-events.log"
+    },
+    {
+      "name": "csv-explain",
+      "status": "PASS",
+      "detail": "exit 0; 6605 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v explain -o csv",
+      "exit_code": 0,
+      "seconds": 1.95,
+      "log": "logs/csv-explain.log"
+    },
+    {
+      "name": "all-views",
+      "status": "PASS",
+      "detail": "exit 0; 44173 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v all",
+      "exit_code": 0,
+      "seconds": 1.36,
+      "log": "logs/all-views.log"
+    },
+    {
+      "name": "doctor",
+      "status": "PASS",
+      "detail": "exit 0; 4847 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --doctor",
+      "exit_code": 0,
+      "seconds": 2.82,
+      "log": "logs/doctor.log"
+    },
+    {
+      "name": "events",
+      "status": "PASS",
+      "detail": "exit 0; 34241 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --events",
+      "exit_code": 0,
+      "seconds": 0.55,
+      "log": "logs/events.log"
+    },
+    {
+      "name": "explain",
+      "status": "PASS",
+      "detail": "exit 0; 4854 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --explain z-crash",
+      "exit_code": 0,
+      "seconds": 0.6,
+      "log": "logs/explain.log"
+    },
+    {
+      "name": "inspect-summary",
+      "status": "PASS",
+      "detail": "exit 0; 895 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --inspect app-server-8fb4699bc-cx5vz",
+      "exit_code": 0,
+      "seconds": 0.8,
+      "log": "logs/inspect-summary.log"
+    },
+    {
+      "name": "inspect-logs",
+      "status": "PASS",
+      "detail": "exit 0; 479554 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --inspect app-server-8fb4699bc-cx5vz --container app --logs current",
+      "exit_code": 0,
+      "seconds": 1.22,
+      "log": "logs/inspect-logs.log"
+    },
+    {
+      "name": "filter-label",
+      "status": "PASS",
+      "detail": "exit 0; 2811 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once --selector role=server",
+      "exit_code": 0,
+      "seconds": 1.2,
+      "log": "logs/filter-label.log"
+    },
+    {
+      "name": "filter-status",
+      "status": "PASS",
+      "detail": "exit 0; 6034 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once --status Running",
+      "exit_code": 0,
+      "seconds": 1.13,
+      "log": "logs/filter-status.log"
+    },
+    {
+      "name": "filter-workload",
+      "status": "PASS",
+      "detail": "exit 0; 2813 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once --workload app-server",
+      "exit_code": 0,
+      "seconds": 0.92,
+      "log": "logs/filter-workload.log"
+    },
+    {
+      "name": "filter-unhealthy",
+      "status": "PASS",
+      "detail": "exit 0; 3822 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once --unhealthy",
+      "exit_code": 0,
+      "seconds": 0.91,
+      "log": "logs/filter-unhealthy.log"
+    },
+    {
+      "name": "filter-regex",
+      "status": "PASS",
+      "detail": "exit 0; 2801 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e app-server --once",
+      "exit_code": 0,
+      "seconds": 0.94,
+      "log": "logs/filter-regex.log"
+    },
+    {
+      "name": "ascii-no-color",
+      "status": "PASS",
+      "detail": "exit 0; 9908 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once --ascii --no-color",
+      "exit_code": 0,
+      "seconds": 1.07,
+      "log": "logs/ascii-no-color.log"
+    },
+    {
+      "name": "flat-pods",
+      "status": "PASS",
+      "detail": "exit 0; 7068 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once --flat --pods-only --sort name --reverse",
+      "exit_code": 0,
+      "seconds": 1.07,
+      "log": "logs/flat-pods.log"
+    },
+    {
+      "name": "no-cluster-metrics-io",
+      "status": "PASS",
+      "detail": "exit 0; 10767 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once --no-cluster --no-node-metrics --no-io",
+      "exit_code": 0,
+      "seconds": 0.78,
+      "log": "logs/no-cluster-metrics-io.log"
+    },
+    {
+      "name": "compare",
+      "status": "PASS",
+      "detail": "exit 0; 5192 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v nodes --compare kdash-e2e,default",
+      "exit_code": 0,
+      "seconds": 1.11,
+      "log": "logs/compare.log"
+    },
+    {
+      "name": "inspect-previous",
+      "status": "PASS",
+      "detail": "exit 0; 136 bytes; previous-log retries=0",
+      "command": "kdash -c kdash-local -n kdash-e2e --inspect z-crash --container crash --logs previous",
+      "exit_code": 0,
+      "seconds": 0.72,
+      "log": "logs/inspect-previous.log"
+    },
+    {
+      "name": "snapshot-combined",
+      "status": "PASS",
+      "detail": "exit 0; 239 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --snapshot",
+      "exit_code": 0,
+      "seconds": 7.51,
+      "log": "logs/snapshot-combined.log"
+    },
+    {
+      "name": "snapshot-all",
+      "status": "PASS",
+      "detail": "exit 0; 850 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --snapshot all",
+      "exit_code": 0,
+      "seconds": 1.67,
+      "log": "logs/snapshot-all.log"
+    },
+    {
+      "name": "snapshot-selection",
+      "status": "PASS",
+      "detail": "exit 0; 362 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --snapshot 25",
+      "exit_code": 0,
+      "seconds": 1.31,
+      "log": "logs/snapshot-selection.log"
+    },
+    {
+      "name": "report-bundle",
+      "status": "PASS",
+      "detail": "exit 0; 284 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --report",
+      "exit_code": 0,
+      "seconds": 8.7,
+      "log": "logs/report-bundle.log"
+    },
+    {
+      "name": "all-namespaces",
+      "status": "PASS",
+      "detail": "exit 0; 7467 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --once -v pods -A --no-cluster --selector app=kdash-e2e",
+      "exit_code": 0,
+      "seconds": 0.92,
+      "log": "logs/all-namespaces.log"
+    },
+    {
+      "name": "empty-filter",
+      "status": "PASS",
+      "detail": "exit 3; 1278 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e '^no-pod-can-match-this$' --once",
+      "exit_code": 3,
+      "seconds": 1.12,
+      "log": "logs/empty-filter.log"
+    },
+    {
+      "name": "invalid-option",
+      "status": "PASS",
+      "detail": "exit 2; 58 bytes",
+      "command": "kdash --not-a-kdash-option",
+      "exit_code": 2,
+      "seconds": 0.03,
+      "log": "logs/invalid-option.log"
+    },
+    {
+      "name": "version",
+      "status": "PASS",
+      "detail": "exit 0; 13 bytes",
+      "command": "kdash -V",
+      "exit_code": 0,
+      "seconds": 0.03,
+      "log": "logs/version.log"
+    },
+    {
+      "name": "help",
+      "status": "PASS",
+      "detail": "exit 0; 17132 bytes",
+      "command": "kdash --help",
+      "exit_code": 0,
+      "seconds": 0.02,
+      "log": "logs/help.log"
+    },
+    {
+      "name": "completion",
+      "status": "PASS",
+      "detail": "exit 0; 2756 bytes",
+      "command": "kdash --completion bash",
+      "exit_code": 0,
+      "seconds": 0.01,
+      "log": "logs/completion.log"
+    },
+    {
+      "name": "about",
+      "status": "PASS",
+      "detail": "exit 0; 2456 bytes",
+      "command": "kdash --about",
+      "exit_code": 0,
+      "seconds": 0.04,
+      "log": "logs/about.log"
+    },
+    {
+      "name": "real-data-pods",
+      "status": "PASS",
+      "detail": "observed app-server in installed CLI output"
+    },
+    {
+      "name": "real-data-services",
+      "status": "PASS",
+      "detail": "observed missing-backend in installed CLI output"
+    },
+    {
+      "name": "real-data-storage",
+      "status": "PASS",
+      "detail": "observed z-unbound in installed CLI output"
+    },
+    {
+      "name": "certs",
+      "status": "PASS",
+      "detail": "exit 1; 12631 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --certs",
+      "exit_code": 1,
+      "seconds": 6.46,
+      "log": "logs/certs.log"
+    },
+    {
+      "name": "check-summary",
+      "status": "PASS",
+      "detail": "exit 2; 13011 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --check",
+      "exit_code": 2,
+      "seconds": 3.87,
+      "log": "logs/check-summary.log"
+    },
+    {
+      "name": "check-real-finding-selected",
+      "status": "PASS",
+      "detail": "selected a numbered unhealthy fixture finding from actual --check output"
+    },
+    {
+      "name": "check-run-finding",
+      "status": "PASS",
+      "detail": "exit 0; 2724 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --check --run 1",
+      "exit_code": 0,
+      "seconds": 4.39,
+      "log": "logs/check-run-finding.log"
+    },
+    {
+      "name": "check-run-read-commands-only",
+      "status": "PASS",
+      "detail": "captured finding executed only guarded kubectl reads"
+    },
+    {
+      "name": "runbook-etcd-restore",
+      "status": "PASS",
+      "detail": "exit 0; 4791 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --runbook etcd-restore",
+      "exit_code": 0,
+      "seconds": 0.75,
+      "log": "logs/runbook-etcd-restore.log"
+    },
+    {
+      "name": "runbook-cert-rotate",
+      "status": "PASS",
+      "detail": "exit 0; 1453 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --runbook cert-rotate",
+      "exit_code": 0,
+      "seconds": 0.74,
+      "log": "logs/runbook-cert-rotate.log"
+    },
+    {
+      "name": "runbook-node-notready",
+      "status": "PASS",
+      "detail": "exit 0; 2319 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --runbook node-notready",
+      "exit_code": 0,
+      "seconds": 0.78,
+      "log": "logs/runbook-node-notready.log"
+    },
+    {
+      "name": "runbook-api-unreachable",
+      "status": "PASS",
+      "detail": "exit 0; 1719 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --runbook api-unreachable",
+      "exit_code": 0,
+      "seconds": 0.77,
+      "log": "logs/runbook-api-unreachable.log"
+    },
+    {
+      "name": "runbook-oidc-login",
+      "status": "PASS",
+      "detail": "exit 0; 978 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --runbook oidc-login",
+      "exit_code": 0,
+      "seconds": 0.86,
+      "log": "logs/runbook-oidc-login.log"
+    },
+    {
+      "name": "runbook-real-node-inventory",
+      "status": "PASS",
+      "detail": "node runbook includes the actual cluster node inventory"
+    },
+    {
+      "name": "fmea-summary",
+      "status": "PASS",
+      "detail": "exit 0; 25319 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea",
+      "exit_code": 0,
+      "seconds": 7.48,
+      "log": "logs/fmea-summary.log"
+    },
+    {
+      "name": "csv-fmea",
+      "status": "PASS",
+      "detail": "exit 0; 9745 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea -o csv",
+      "exit_code": 0,
+      "seconds": 7.68,
+      "log": "logs/csv-fmea.log"
+    },
+    {
+      "name": "tsv-fmea",
+      "status": "PASS",
+      "detail": "exit 0; 9631 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea -o tsv",
+      "exit_code": 0,
+      "seconds": 7.31,
+      "log": "logs/tsv-fmea.log"
+    },
+    {
+      "name": "fmea-json",
+      "status": "PASS",
+      "detail": "exit 0; 18616 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea -o json",
+      "exit_code": 0,
+      "seconds": 7.14,
+      "log": "logs/fmea-json.log"
+    },
+    {
+      "name": "fmea-json-real-rows",
+      "status": "PASS",
+      "detail": "real worksheet rows retain numeric scores, AP, access and namespace"
+    },
+    {
+      "name": "fmea-html",
+      "status": "PASS",
+      "detail": "exit 0; 103 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea -o html",
+      "exit_code": 0,
+      "seconds": 6.49,
+      "log": "logs/fmea-html.log"
+    },
+    {
+      "name": "fmea-access",
+      "status": "PASS",
+      "detail": "exit 0; 6909 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --access",
+      "exit_code": 0,
+      "seconds": 7.62,
+      "log": "logs/fmea-access.log"
+    },
+    {
+      "name": "fmea-fail-on-high",
+      "status": "PASS",
+      "detail": "exit 2; 25319 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea --fail-on high",
+      "exit_code": 2,
+      "seconds": 7.62,
+      "log": "logs/fmea-fail-on-high.log"
+    },
+    {
+      "name": "fmea-trend",
+      "status": "PASS",
+      "detail": "exit 0; 774 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea --since 30d",
+      "exit_code": 0,
+      "seconds": 0.52,
+      "log": "logs/fmea-trend.log"
+    },
+    {
+      "name": "fmea-real-finding-selected",
+      "status": "PASS",
+      "detail": "selected a real failing pod row's numbered read commands"
+    },
+    {
+      "name": "fmea-run-finding",
+      "status": "PASS",
+      "detail": "exit 0; 2730 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --fmea --run 6",
+      "exit_code": 0,
+      "seconds": 9.01,
+      "log": "logs/fmea-run-finding.log"
+    },
+    {
+      "name": "fmea-run-read-commands-only",
+      "status": "PASS",
+      "detail": "FMEA row execution ran only the captured guarded reads"
+    },
+    {
+      "name": "capture-01-pods",
+      "status": "PASS",
+      "detail": "PODS live requests, limits and measured usage"
+    },
+    {
+      "name": "capture-02-nodes",
+      "status": "PASS",
+      "detail": "NODE POOLS real allocatable capacity and namespace share"
+    },
+    {
+      "name": "capture-03-workloads",
+      "status": "PASS",
+      "detail": "WORKLOADS live replicas and placement"
+    },
+    {
+      "name": "capture-04-ip",
+      "status": "PASS",
+      "detail": "IP POOL real pod, node and service addresses"
+    },
+    {
+      "name": "capture-05-mem",
+      "status": "PASS",
+      "detail": "MEMORY live history and pod usage"
+    },
+    {
+      "name": "capture-06-io",
+      "status": "PASS",
+      "detail": "NETWORK AND DISK IO capability and live samples"
+    },
+    {
+      "name": "capture-07-alerts",
+      "status": "PASS",
+      "detail": "ALERTS real unhealthy fixture workloads"
+    },
+    {
+      "name": "capture-08-services",
+      "status": "PASS",
+      "detail": "SERVICES ingress, ready endpoints and missing backend"
+    },
+    {
+      "name": "capture-09-storage",
+      "status": "PASS",
+      "detail": "STORAGE bound volume and pending claim"
+    },
+    {
+      "name": "capture-10-events",
+      "status": "PASS",
+      "detail": "EVENTS real Kubernetes scheduler and kubelet events"
+    },
+    {
+      "name": "capture-11-explain",
+      "status": "PASS",
+      "detail": "INCIDENT EVIDENCE from actual failing workloads"
+    },
+    {
+      "name": "capture-12-namespace-picker",
+      "status": "PASS",
+      "detail": "Framed namespace picker with access and persistent default controls"
+    },
+    {
+      "name": "capture-13-namespace-filter",
+      "status": "PASS",
+      "detail": "Live namespace search and context-sensitive action panel"
+    },
+    {
+      "name": "namespace-save-default",
+      "status": "PASS",
+      "detail": "d writes the selected namespace into the isolated user's context mapping"
+    },
+    {
+      "name": "capture-67-namespace-saved-default",
+      "status": "PASS",
+      "detail": "A subsequent launch opens the namespace saved with d"
+    },
+    {
+      "name": "namespace-default-next-launch",
+      "status": "PASS",
+      "detail": "new process with no -n selected the persisted namespace"
+    },
+    {
+      "name": "namespace-clear-default",
+      "status": "PASS",
+      "detail": "x removes the saved mapping without changing other settings"
+    },
+    {
+      "name": "capture-68-namespace-typed",
+      "status": "PASS",
+      "detail": "t opens an explicitly typed namespace"
+    },
+    {
+      "name": "namespace-typed-name",
+      "status": "PASS",
+      "detail": "typed namespace opened the real workload"
+    },
+    {
+      "name": "capture-14-pod-picker",
+      "status": "PASS",
+      "detail": "Framed live pod picker with CPU, memory, restarts and attention state"
+    },
+    {
+      "name": "capture-15-pod-picker-help",
+      "status": "PASS",
+      "detail": "Pod picker navigation, filters and action keys"
+    },
+    {
+      "name": "capture-16-container-picker",
+      "status": "PASS",
+      "detail": "Framed multi-container picker with resource/state columns"
+    },
+    {
+      "name": "capture-17-inspector-summary",
+      "status": "PASS",
+      "detail": "Inspector summary of a real running pod"
+    },
+    {
+      "name": "capture-75-detail-shell-blocked",
+      "status": "PASS",
+      "detail": "Read-only inspector refuses shell actions and explains X"
+    },
+    {
+      "name": "capture-76-detail-confirmation",
+      "status": "PASS",
+      "detail": "X opens confirmation directly from pod detail"
+    },
+    {
+      "name": "capture-77-detail-cancel",
+      "status": "PASS",
+      "detail": "Declining keeps pod detail read-only"
+    },
+    {
+      "name": "capture-78-detail-interactive-on",
+      "status": "PASS",
+      "detail": "Whole yes answer enables the inspector without leaking keys"
+    },
+    {
+      "name": "capture-79-detail-shell",
+      "status": "PASS",
+      "detail": "Actual container shell opened after enabling X in detail"
+    },
+    {
+      "name": "capture-80-detail-interactive-off",
+      "status": "PASS",
+      "detail": "X disables interactive actions immediately in the inspector"
+    },
+    {
+      "name": "capture-81-detail-shell-blocked-again",
+      "status": "PASS",
+      "detail": "Shell is refused again after disabling X"
+    },
+    {
+      "name": "capture-18-inspector-logs",
+      "status": "PASS",
+      "detail": "Bounded timestamped logs from the live app container"
+    },
+    {
+      "name": "capture-62-inspector-expand",
+      "status": "PASS",
+      "detail": "Expanded bounded log read from the live container"
+    },
+    {
+      "name": "capture-63-inspector-all",
+      "status": "PASS",
+      "detail": "All available live container logs within the byte cap"
+    },
+    {
+      "name": "capture-64-inspector-nowrap",
+      "status": "PASS",
+      "detail": "Unwrapped logs with horizontal navigation"
+    },
+    {
+      "name": "capture-65-inspector-json",
+      "status": "PASS",
+      "detail": "Readable JSON log formatting enabled"
+    },
+    {
+      "name": "capture-66-inspector-follow",
+      "status": "PASS",
+      "detail": "Live follow periodically refreshes actual container logs"
+    },
+    {
+      "name": "capture-19-inspector-find",
+      "status": "PASS",
+      "detail": "Log search highlighting with context retained"
+    },
+    {
+      "name": "capture-20-inspector-only-matches",
+      "status": "PASS",
+      "detail": "Only matching warning lines from real logs"
+    },
+    {
+      "name": "capture-21-inspector-help",
+      "status": "PASS",
+      "detail": "Inspector help for log filtering and export"
+    },
+    {
+      "name": "capture-22-inspector-export",
+      "status": "PASS",
+      "detail": "Visible log pane exported locally"
+    },
+    {
+      "name": "capture-32-command-palette",
+      "status": "PASS",
+      "detail": "Fixed-command palette"
+    },
+    {
+      "name": "capture-33-doctor",
+      "status": "PASS",
+      "detail": "Live connection, TLS, RBAC and metrics checks"
+    },
+    {
+      "name": "capture-34-pod-filter",
+      "status": "PASS",
+      "detail": "Dashboard pod regular expression applied"
+    },
+    {
+      "name": "capture-35-structured-filters",
+      "status": "PASS",
+      "detail": "Atomic label, status, node, workload and unhealthy filters"
+    },
+    {
+      "name": "capture-36-detail-lines",
+      "status": "PASS",
+      "detail": "Toggle container detail lines"
+    },
+    {
+      "name": "capture-37-pods-only",
+      "status": "PASS",
+      "detail": "Pod totals without container rows"
+    },
+    {
+      "name": "capture-38-sort-order",
+      "status": "PASS",
+      "detail": "Sort key and reverse direction"
+    },
+    {
+      "name": "capture-39-paused-interval",
+      "status": "PASS",
+      "detail": "Paused collection and changed polling interval"
+    },
+    {
+      "name": "capture-40-theme-dark",
+      "status": "PASS",
+      "detail": "Dark colour theme"
+    },
+    {
+      "name": "capture-41-theme-light",
+      "status": "PASS",
+      "detail": "Light colour theme"
+    },
+    {
+      "name": "capture-42-theme-mono",
+      "status": "PASS",
+      "detail": "Monochrome colour theme"
+    },
+    {
+      "name": "capture-43-node-scale",
+      "status": "PASS",
+      "detail": "Node scope and true-scale resource bars"
+    },
+    {
+      "name": "capture-44-history-window",
+      "status": "PASS",
+      "detail": "Memory history with changed chart window"
+    },
+    {
+      "name": "capture-45-html-menu",
+      "status": "PASS",
+      "detail": "Local HTML report selection menu"
+    },
+    {
+      "name": "capture-46-html-report-written",
+      "status": "PASS",
+      "detail": "All-tabs report generated from live session"
+    },
+    {
+      "name": "capture-47-dashboard-help",
+      "status": "PASS",
+      "detail": "Dashboard navigation and interactive controls"
+    },
+    {
+      "name": "capture-48-session-summary",
+      "status": "PASS",
+      "detail": "Completed live session and retained history"
+    },
+    {
+      "name": "capture-23-interactive-blocked",
+      "status": "PASS",
+      "detail": "Shell refused while interactive mode is disabled"
+    },
+    {
+      "name": "capture-24-interactive-confirmation",
+      "status": "PASS",
+      "detail": "Explicit interactive-mode confirmation"
+    },
+    {
+      "name": "capture-25-shell-picker",
+      "status": "PASS",
+      "detail": "Shell-mode pod picker and action panel"
+    },
+    {
+      "name": "capture-26-shell-inside",
+      "status": "PASS",
+      "detail": "Actual shell inside the live app container"
+    },
+    {
+      "name": "transfer-destination-reset",
+      "status": "PASS",
+      "detail": "private fixture upload destination starts empty for the real copy and result capture"
+    },
+    {
+      "name": "capture-27-upload-browser",
+      "status": "PASS",
+      "detail": "Local framed file browser with enabled upload actions"
+    },
+    {
+      "name": "capture-28-upload-destination",
+      "status": "PASS",
+      "detail": "Remote destination browser before any transfer"
+    },
+    {
+      "name": "capture-29-upload-review",
+      "status": "PASS",
+      "detail": "Upload preflight checks and explicit review"
+    },
+    {
+      "name": "capture-30-upload-result",
+      "status": "PASS",
+      "detail": "Real upload result with source and destination hashes"
+    },
+    {
+      "name": "upload-roundtrip-bytes",
+      "status": "PASS",
+      "detail": "uploaded file read independently through kubectl exec and compared byte for byte"
+    },
+    {
+      "name": "capture-70-directory-upload-review",
+      "status": "PASS",
+      "detail": "Directory upload preflight and recursive checksum checks"
+    },
+    {
+      "name": "capture-71-directory-upload-result",
+      "status": "PASS",
+      "detail": "Actual directory upload with recursive fingerprints"
+    },
+    {
+      "name": "directory-upload-bytes",
+      "status": "PASS",
+      "detail": "independent kubectl read confirms the uploaded nested file bytes"
+    },
+    {
+      "name": "capture-31-download-browser",
+      "status": "PASS",
+      "detail": "Remote framed file browser with selection and preview keys"
+    },
+    {
+      "name": "capture-49-download-review",
+      "status": "PASS",
+      "detail": "Download preflight, selected format and name conflict checks"
+    },
+    {
+      "name": "capture-50-download-result",
+      "status": "PASS",
+      "detail": "Real download result and per-item hash verification"
+    },
+    {
+      "name": "download-default-plain-replace",
+      "status": "PASS",
+      "detail": "default plain-file download replaced the existing local file after explicit r"
+    },
+    {
+      "name": "capture-55-download-keep-review",
+      "status": "PASS",
+      "detail": "Download preflight, selected format and name conflict checks"
+    },
+    {
+      "name": "capture-56-download-keep-result",
+      "status": "PASS",
+      "detail": "Real download result and per-item hash verification"
+    },
+    {
+      "name": "download-keep-both",
+      "status": "PASS",
+      "detail": "explicit k preserved the old file and created upload (2).txt with real container bytes"
+    },
+    {
+      "name": "capture-57-directory-download-review",
+      "status": "PASS",
+      "detail": "Download preflight, selected format and name conflict checks"
+    },
+    {
+      "name": "capture-58-directory-download-result",
+      "status": "PASS",
+      "detail": "Real download result and per-item hash verification"
+    },
+    {
+      "name": "directory-download-replace",
+      "status": "PASS",
+      "detail": "directory replacement restored nested file bytes from the real container"
+    },
+    {
+      "name": "capture-59-download-zip-review",
+      "status": "PASS",
+      "detail": "Download preflight, selected format and name conflict checks"
+    },
+    {
+      "name": "capture-60-download-zip-result",
+      "status": "PASS",
+      "detail": "Real download result and per-item hash verification"
+    },
+    {
+      "name": "capture-61-download-tgz-review",
+      "status": "PASS",
+      "detail": "Download preflight, selected format and name conflict checks"
+    },
+    {
+      "name": "capture-69-download-tgz-result",
+      "status": "PASS",
+      "detail": "Real download result and per-item hash verification"
+    },
+    {
+      "name": "download-zip-bytes",
+      "status": "PASS",
+      "detail": "ZIP archive opened independently; nested file matches uploaded source bytes"
+    },
+    {
+      "name": "download-tgz-bytes",
+      "status": "PASS",
+      "detail": "tar.gz archive opened independently; nested file matches uploaded source bytes"
+    },
+    {
+      "name": "capture-51-pods-100col",
+      "status": "PASS",
+      "detail": "PODS at 100 columns"
+    },
+    {
+      "name": "capture-52-picker-100col",
+      "status": "PASS",
+      "detail": "Framed pod picker at 100 columns"
+    },
+    {
+      "name": "capture-53-namespace-100col",
+      "status": "PASS",
+      "detail": "Namespace picker and action panel at 100 columns"
+    },
+    {
+      "name": "capture-51-pods-80col",
+      "status": "PASS",
+      "detail": "PODS at 80 columns"
+    },
+    {
+      "name": "capture-82-mode-confirmation-80col",
+      "status": "PASS",
+      "detail": "Confirmation remains usable in an 80-column terminal"
+    },
+    {
+      "name": "capture-83-mode-enabled-80col",
+      "status": "PASS",
+      "detail": "Uppercase Y plus Enter enables interactive mode at 80 columns"
+    },
+    {
+      "name": "capture-52-picker-80col",
+      "status": "PASS",
+      "detail": "Framed pod picker at 80 columns"
+    },
+    {
+      "name": "capture-53-namespace-80col",
+      "status": "PASS",
+      "detail": "Namespace picker and action panel at 80 columns"
+    },
+    {
+      "name": "capture-54-ascii-picker",
+      "status": "PASS",
+      "detail": "ASCII framed picker with colour disabled"
+    },
+    {
+      "name": "capture-84-certs",
+      "status": "PASS",
+      "detail": "CERTIFICATES AND LOGINS real TLS and kubeconfig expiry evidence"
+    },
+    {
+      "name": "capture-85-runbook",
+      "status": "PASS",
+      "detail": "RUNBOOK printed etcd recovery procedure with live cluster inventory"
+    },
+    {
+      "name": "capture-87-runbook-topic",
+      "status": "PASS",
+      "detail": "RUNBOOK next topic displays certificate rotation instructions"
+    },
+    {
+      "name": "runbook-topic-cycle",
+      "status": "PASS",
+      "detail": "right bracket selects the next procedure and left bracket returns"
+    },
+    {
+      "name": "capture-86-check",
+      "status": "PASS",
+      "detail": "CHECK NOW actual unhealthy workloads and numbered read-only next commands"
+    },
+    {
+      "name": "check-ui-real-findings",
+      "status": "PASS",
+      "detail": "instant-check view shows the real crashing and pending fixture pods"
+    },
+    {
+      "name": "capture-88-fmea",
+      "status": "PASS",
+      "detail": "FMEA real failure modes, priority scores and read visibility"
+    },
+    {
+      "name": "capture-89-access",
+      "status": "PASS",
+      "detail": "ACCESS real kubectl auth identity and permission checks"
+    },
+    {
+      "name": "capture-90-fmea-kind",
+      "status": "PASS",
+      "detail": "FMEA kind filter on actual worksheet rows"
+    },
+    {
+      "name": "capture-91-fmea-sort",
+      "status": "PASS",
+      "detail": "FMEA worksheet sorted by risk priority number"
+    },
+    {
+      "name": "session-report",
+      "status": "PASS",
+      "detail": "exit 0; 269 bytes",
+      "command": "kdash --session-report /workspace/kdash/artifacts/live-e2e-v4370/reports/sessions/kdash_kdash-local_kdash-e2e_20261119_211829",
+      "exit_code": 0,
+      "seconds": 0.65,
+      "log": "logs/session-report.log"
+    },
+    {
+      "name": "audit-events",
+      "status": "PASS",
+      "detail": "exit 0; 69943 bytes",
+      "command": "kdash --audit 40",
+      "exit_code": 0,
+      "seconds": 0.06,
+      "log": "logs/audit-events.log"
+    },
+    {
+      "name": "audit-grep",
+      "status": "PASS",
+      "detail": "exit 0; 5783 bytes",
+      "command": "kdash --audit --audit-grep 'CP_UP|CP_DOWN|EXEC'",
+      "exit_code": 0,
+      "seconds": 0.05,
+      "log": "logs/audit-grep.log"
+    },
+    {
+      "name": "audit-verify",
+      "status": "PASS",
+      "detail": "exit 0; 101 bytes",
+      "command": "kdash --audit-verify",
+      "exit_code": 0,
+      "seconds": 0.32,
+      "log": "logs/audit-verify.log"
+    },
+    {
+      "name": "audit-export",
+      "status": "PASS",
+      "detail": "exit 0; 200 bytes",
+      "command": "kdash --audit-report /workspace/kdash/artifacts/live-e2e-v4370/reports",
+      "exit_code": 0,
+      "seconds": 0.41,
+      "log": "logs/audit-export.log"
+    },
+    {
+      "name": "export-artifacts",
+      "status": "PASS",
+      "detail": "14 HTML reports, 18 CSV files, 306 TSV files"
+    },
+    {
+      "name": "inspector-export-artifact",
+      "status": "PASS",
+      "detail": "visible inspector log pane saved locally"
+    },
+    {
+      "name": "html-real-data",
+      "status": "PASS",
+      "detail": "combined HTML contains the actual healthy and crashing fixture pod names"
+    },
+    {
+      "name": "screenshots-rendered",
+      "status": "PASS",
+      "detail": "91 PNGs faithfully rendered from live tmux ANSI captures"
+    },
+    {
+      "name": "extended-installed-source-identical",
+      "status": "PASS",
+      "detail": "extension tests the installed bytes that will be published",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-real-cluster-inventory",
+      "status": "PASS",
+      "detail": "40 Kubernetes objects; pod app-server-8fb4699bc-cx5vz",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-dashboard-live-search",
+      "status": "PASS",
+      "detail": "in-place find counts matching lines before Enter",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-100-dashboard-search",
+      "status": "PASS",
+      "detail": "In-place dashboard search counts real matching lines",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-dashboard-search-navigation",
+      "status": "PASS",
+      "detail": "n/N retain the search and navigate matches",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-101-search-other-view",
+      "status": "PASS",
+      "detail": "Search retained while switching to live workloads",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-searched-workloads",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221358.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-102-export-searched-workloads",
+      "status": "PASS",
+      "detail": "Quick export includes the screen and every workload line",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-103-invalid-search",
+      "status": "PASS",
+      "detail": "Invalid search expressions remain editable",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-104-search-no-match",
+      "status": "PASS",
+      "detail": "A valid unmatched search reports zero matching lines",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-pod-filter",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221409.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-line-editor-insert-arrow",
+      "status": "PASS",
+      "detail": "Left inserts a missing character inside the live search",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-editor-insertion",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221423.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-105-search-history",
+      "status": "PASS",
+      "detail": "Shared editor recalls this session's earlier search",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-106-search-editor-delete",
+      "status": "PASS",
+      "detail": "Cursor Home/Delete/End/Backspace leaves the intended search text",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-editor-delete",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221436.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-1",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221445.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-2",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-nodes_kdash-e2e_20261119-221451.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-3",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221456.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-4",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-ip_kdash-e2e_20261119-221501.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-5",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-mem_kdash-e2e_20261119-221506.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-6",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-io_kdash-e2e_20261119-221511.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-7",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-alerts_kdash-e2e_20261119-221516.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-8",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-services_kdash-e2e_20261119-221521.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-9",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-storage_kdash-e2e_20261119-221526.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-E",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-events_kdash-e2e_20261119-221531.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-explain",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-explain_kdash-e2e_20261119-221536.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-C",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-certs_kdash-e2e_20261119-221541.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-R",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-runbook_kdash-e2e_20261119-221546.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-K",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-check_kdash-e2e_20261119-221551.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-M",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-fmea_kdash-e2e_20261119-221556.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-view-Y",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-secrets_kdash-e2e_20261119-221601.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-access",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-access_kdash-e2e_20261119-221608.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-107-export-access",
+      "status": "PASS",
+      "detail": "Access view exports its complete permission review",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-namespaces",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_namespace-list_kdash-local_20261119-221613.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-108-export-namespaces",
+      "status": "PASS",
+      "detail": "Namespace picker quick export retains every namespace name",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-pods",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_pod-list_kdash-e2e_20261119-221618.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-109-export-pods",
+      "status": "PASS",
+      "detail": "Pod picker quick export retains full names and resource columns",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-summary",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261119-221631.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-110-container-find",
+      "status": "PASS",
+      "detail": "Container picker finds a real sidecar by name",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-containers",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261119-221639.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-111-export-containers",
+      "status": "PASS",
+      "detail": "Container picker exports every regular container and image",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-112-whole-log-coverage",
+      "status": "PASS",
+      "detail": "Whole current log displays read coverage and node proxy capability",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-current-log",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221650.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-coverage-truthful",
+      "status": "PASS",
+      "detail": "export retains the actual coverage result; rotated files counted only when read",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-real-rotated-log-read",
+      "status": "PASS",
+      "detail": "actual node-proxy read reports a positive rotated-file count",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-113-log-find-in-place",
+      "status": "PASS",
+      "detail": "Whole log search counts case-insensitive real warnings",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-matching-log",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221703.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-only-matches-export",
+      "status": "PASS",
+      "detail": "whole-pane export follows the chosen matching-lines filter",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-describe",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261119-221710.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-events",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261119-221715.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-explain",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261119-221720.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-scope-cancel",
+      "status": "PASS",
+      "detail": "cancelling the scope picker returns to the same real pod detail",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-114-log-search-scope",
+      "status": "PASS",
+      "detail": "Full log search offers this pod, workload and namespace scopes",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-115-log-search-invalid-pattern",
+      "status": "PASS",
+      "detail": "Invalid full-log search patterns can be corrected before reads begin",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-116-log-search-pod",
+      "status": "PASS",
+      "detail": "Merged timestamped matching lines from real pod container logs",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-find-pod",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221745.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-scope-pod",
+      "status": "PASS",
+      "detail": ": 4 of 4 logs read",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-merge-order-pod",
+      "status": "PASS",
+      "detail": "12040 exported matching lines remain in timestamp order",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-117-log-search-workload",
+      "status": "PASS",
+      "detail": "Merged timestamped matching lines from real workload container logs",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-find-workload",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221754.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-scope-workload",
+      "status": "PASS",
+      "detail": ": 8 of 8 logs read",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-merge-order-workload",
+      "status": "PASS",
+      "detail": "24082 exported matching lines remain in timestamp order",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-118-log-search-namespace",
+      "status": "PASS",
+      "detail": "Merged timestamped matching lines from real namespace container logs",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-find-namespace",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221803.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-scope-namespace",
+      "status": "PASS",
+      "detail": ": 26 of 26 logs read",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-merge-order-namespace",
+      "status": "PASS",
+      "detail": "39085 exported matching lines remain in timestamp order",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-log-search-previous-instance",
+      "status": "PASS",
+      "detail": "restarted fixture contributes its previous container instance",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-119-whole-previous-log",
+      "status": "PASS",
+      "detail": "Full previous instance of a real restarted container",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-whole-previous",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_z-crash_previous_20261119-221823.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-previous-log-coverage",
+      "status": "PASS",
+      "detail": "previous instance is read with the same explicit node-rotation capability reporting",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-report-bundle",
+      "status": "PASS",
+      "detail": "exit 0; 326 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --report /workspace/kdash/artifacts/live-e2e-v4370/extended/reports/with-extras --no-io",
+      "exit_code": 0,
+      "seconds": 9.17,
+      "log": "logs/extended-report-bundle.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-bundle-fmea-txt",
+      "status": "PASS",
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.txt",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-bundle-fmea-csv",
+      "status": "PASS",
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/fmea.csv",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-bundle-secrets-txt",
+      "status": "PASS",
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.txt",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-bundle-secrets-csv",
+      "status": "PASS",
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.csv",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-bundle-secrets-json",
+      "status": "PASS",
+      "detail": "reports/with-extras/kdash_kdash-local_kdash-e2e_20261119_221827/secrets.json",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-bundle-secrets-json-valid",
+      "status": "PASS",
+      "detail": "report bundle's structured Secrets data parses",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-report-with-extras-snapshot",
+      "status": "PASS",
+      "detail": "exit 0; 299 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --snapshot --no-io",
+      "exit_code": 0,
+      "seconds": 8.19,
+      "log": "logs/extended-report-with-extras-snapshot.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-combined-extra-tab-data",
+      "status": "PASS",
+      "detail": "combined live snapshot embeds both populated, searchable/sortable diagnostic tables",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-report-without-extras",
+      "status": "PASS",
+      "detail": "exit 0; 287 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --snapshot --no-io",
+      "exit_code": 0,
+      "seconds": 1.34,
+      "log": "logs/extended-report-without-extras.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-combined-extra-tabs-opt-out",
+      "status": "PASS",
+      "detail": "KDASH_REPORT_EXTRAS=0 retains resource/history report tabs",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-certs-secret-certificates",
+      "status": "PASS",
+      "detail": "exit 2; 16967 bytes",
+      "command": "kdash -c kdash-local -n kdash-e2e --certs -o tsv",
+      "exit_code": 2,
+      "seconds": 6.84,
+      "log": "logs/extended-certs-secret-certificates.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-120-certs-secret-public-certificate",
+      "status": "PASS",
+      "detail": "Certificate view includes real generated Secret public certificate expiry",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-certs-secret-rows",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_view-certs_kdash-e2e_20261119-221905.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-121-certs-secret-search",
+      "status": "PASS",
+      "detail": "Certificate search finds the generated Secret certificate",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-122-theme-safe",
+      "status": "PASS",
+      "detail": "Live dashboard theme safe",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-theme-safe",
+      "status": "PASS",
+      "detail": "observed real ANSI output and retained workload data",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-123-theme-dark",
+      "status": "PASS",
+      "detail": "Live dashboard theme dark",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-theme-dark",
+      "status": "PASS",
+      "detail": "observed real ANSI output and retained workload data",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-124-theme-light",
+      "status": "PASS",
+      "detail": "Live dashboard theme light",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-theme-light",
+      "status": "PASS",
+      "detail": "observed real ANSI output and retained workload data",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-125-theme-mono",
+      "status": "PASS",
+      "detail": "Live dashboard theme mono",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-theme-mono",
+      "status": "PASS",
+      "detail": "observed real ANSI output and retained workload data",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-legacy-render-fallbacks",
+      "status": "PASS",
+      "detail": "16 colours, sequential reads, foreground model and no view cache remain usable",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-126-fallback-16-colours",
+      "status": "PASS",
+      "detail": "Live compatibility mode with sequential reads and 16 ANSI colours",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-local-files",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_files_local_20261119-221940.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-127-export-local-files",
+      "status": "PASS",
+      "detail": "Quick export from the actual local files browser",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-quick-export-remote-files",
+      "status": "PASS",
+      "detail": "reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261119-221951.log",
+      "extension_source": "extended"
+    },
+    {
+      "name": "capture-128-export-remote-files",
+      "status": "PASS",
+      "detail": "Quick export from the actual remote files browser",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-session-export-aggregation",
+      "status": "PASS",
+      "detail": "8 session logs aggregate their explicit exports",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-latest-export-link",
+      "status": "PASS",
+      "detail": "latest.log resolves to the newest individual export",
+      "extension_source": "extended"
+    },
+    {
+      "name": "extended-screenshots-rendered",
+      "status": "PASS",
+      "detail": "29 PNGs faithfully rendered from live tmux ANSI captures",
+      "extension_source": "extended"
+    }
+  ],
+  "captures": [
+    {
+      "file": "raw/01-pods.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | PODS live requests, limits and measured usage",
+      "png": "samples/cli_4370/01-pods.png",
+      "sha256": "121233dc33458041cb387e4567f592c4815b275145acde010e374b4d20346ad8",
+      "native_png": "samples/cli_4370/native/01-pods.png",
+      "native_sha256": "91eae159f7dba19e5f78f82ec0476d4c1d3697cfafc66c546044f7f361c9429a"
+    },
+    {
+      "file": "raw/02-nodes.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | NODE POOLS real allocatable capacity and namespace share",
+      "png": "samples/cli_4370/02-nodes.png",
+      "sha256": "406fce61a033d1b1eb64b887ce5e8034bfea5081e7d35a3c87bd4415fd3bd8b8",
+      "native_png": "samples/cli_4370/native/02-nodes.png",
+      "native_sha256": "876813c87a2af0b83e3a91c424326031a77802da5924ae1d6f0b397f345b9946"
+    },
+    {
+      "file": "raw/03-workloads.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | WORKLOADS live replicas and placement",
+      "png": "samples/cli_4370/03-workloads.png",
+      "sha256": "1eb375d268a450552373254879f4ee5b694f91871b901b97e22be11645d95839",
+      "native_png": "samples/cli_4370/native/03-workloads.png",
+      "native_sha256": "26006422c4cee1cb5871b18ec97c92bb06e0efad2629d45ff26ce40cd7df3589"
+    },
+    {
+      "file": "raw/04-ip.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | IP POOL real pod, node and service addresses",
+      "png": "samples/cli_4370/04-ip.png",
+      "sha256": "ad9eee0c9425cb01c3c8518666605c2a3838d97c3ff4fa18e60185d035c64160",
+      "native_png": "samples/cli_4370/native/04-ip.png",
+      "native_sha256": "25966a4374ab5eb0e464478b926f4f9582ad6f976666e30027a0451ecaf4e112"
+    },
+    {
+      "file": "raw/05-mem.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | MEMORY live history and pod usage",
+      "png": "samples/cli_4370/05-mem.png",
+      "sha256": "33642dfa73df6c056e3a13687b153a6a46596b11e4077e134f35a30319ce5120",
+      "native_png": "samples/cli_4370/native/05-mem.png",
+      "native_sha256": "99ec8731859ed8e76f3431889e33ab09a77999541a9ffc982bb02c2f55c3cf59"
+    },
+    {
+      "file": "raw/06-io.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | NETWORK AND DISK IO capability and live samples",
+      "png": "samples/cli_4370/06-io.png",
+      "sha256": "7fabdfc180a3ed7b9c4ec0876c4e32618fd9456189a19bbe2c440d87f7b7be41",
+      "native_png": "samples/cli_4370/native/06-io.png",
+      "native_sha256": "ff2e6bb151d3c009f45e9b6fbc57ca71fddf576c534d5ec472227a734503c2ee"
+    },
+    {
+      "file": "raw/07-alerts.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | ALERTS real unhealthy fixture workloads",
+      "png": "samples/cli_4370/07-alerts.png",
+      "sha256": "3d6b07180856ab3478510367f78d15166591648c74656c11a2b8989111362f80",
+      "native_png": "samples/cli_4370/native/07-alerts.png",
+      "native_sha256": "c33600829677ce716ceb975138e1a620cfabc7e7dd79b8d8bfee9bc94266ef23"
+    },
+    {
+      "file": "raw/08-services.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | SERVICES ingress, ready endpoints and missing backend",
+      "png": "samples/cli_4370/08-services.png",
+      "sha256": "1cd0f5c85c8f92e4c6f52a87560172aab1f9baa870f659aae8e5baefb636e487",
+      "native_png": "samples/cli_4370/native/08-services.png",
+      "native_sha256": "c6a69e98cdc3df91b3a40023305a85f6d444667c9a0b056cfc107f2560fd153d"
+    },
+    {
+      "file": "raw/09-storage.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | STORAGE bound volume and pending claim",
+      "png": "samples/cli_4370/09-storage.png",
+      "sha256": "b95b4dc39e885663c41ba2418bb4800a821f4cada91a0a32aa96cde38aa5e598",
+      "native_png": "samples/cli_4370/native/09-storage.png",
+      "native_sha256": "e01f3d1d2ab708d6568ab1747184ee8e0fa020a910497ec20f8a79f953cadac2"
+    },
+    {
+      "file": "raw/10-events.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | EVENTS real Kubernetes scheduler and kubelet events",
+      "png": "samples/cli_4370/10-events.png",
+      "sha256": "d3e724b921fb808cf15cbe9608ba697403f081254c8fce05685ccfec0b977792",
+      "native_png": "samples/cli_4370/native/10-events.png",
+      "native_sha256": "7ef017fd870924f758e536c3ec8dcc1f2538a74ce27b17a295f096249950c216"
+    },
+    {
+      "file": "raw/11-explain.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | INCIDENT EVIDENCE from actual failing workloads",
+      "png": "samples/cli_4370/11-explain.png",
+      "sha256": "7477d29bf8d6fb66d626f77d8e68c8474ed7a63a09331a9c41c47839720bc778",
+      "native_png": "samples/cli_4370/native/11-explain.png",
+      "native_sha256": "5fac4d8e87b83d7a75c5efcc74a4a8bb59659726d8782d7ddc65d4eaa348c450"
+    },
+    {
+      "file": "raw/12-namespace-picker.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Framed namespace picker with access and persistent default controls",
+      "png": "samples/cli_4370/12-namespace-picker.png",
+      "sha256": "a4d3cba8dd58cf52f069df72d0682036fe8b863a7a4ce21183b0d98550f579a6",
+      "native_png": "samples/cli_4370/native/12-namespace-picker.png",
+      "native_sha256": "1bd524570cd460a272449ca0a13914041d47ca43490dac7c466f14448f1e9e25"
+    },
+    {
+      "file": "raw/13-namespace-filter.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live namespace search and context-sensitive action panel",
+      "png": "samples/cli_4370/13-namespace-filter.png",
+      "sha256": "8756b58c4c997a0f48cefa7789b61e9ff112fc09650363e57ed0321cd9e1a926",
+      "native_png": "samples/cli_4370/native/13-namespace-filter.png",
+      "native_sha256": "9eddd04383dca52adb6b0dacea084ea08903d2339e0161e5d5af7a3bf08effdf"
+    },
+    {
+      "file": "raw/67-namespace-saved-default.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | A subsequent launch opens the namespace saved with d",
+      "png": "samples/cli_4370/67-namespace-saved-default.png",
+      "sha256": "5d717e167b4d68d47bb42c23a47615873287f4a8c0b4d882dd9e4c11aaa4e367",
+      "native_png": "samples/cli_4370/native/67-namespace-saved-default.png",
+      "native_sha256": "5ed146110ff1d83bea2d718b29fc7723bcb1a848b2cfd460e965f9872a50f6cb"
+    },
+    {
+      "file": "raw/68-namespace-typed.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | t opens an explicitly typed namespace",
+      "png": "samples/cli_4370/68-namespace-typed.png",
+      "sha256": "db7c3ee1c0e3bc935d034308ad8881abc5ad9147e521b32d6980d06e11ebc5d2",
+      "native_png": "samples/cli_4370/native/68-namespace-typed.png",
+      "native_sha256": "b210ce1872800fa7acb6828b8a3872bbddca3f29c9dd1033922559198e81c0ef"
+    },
+    {
+      "file": "raw/14-pod-picker.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Framed live pod picker with CPU, memory, restarts and attention state",
+      "png": "samples/cli_4370/14-pod-picker.png",
+      "sha256": "91c8e435cbb42782d636349f10dbf37b5967de0c73695f4c33def2a8f09c4121",
+      "native_png": "samples/cli_4370/native/14-pod-picker.png",
+      "native_sha256": "3befecd1fdca70adca7b5769d1110f8790a3d1dd9f999733664635974118d9ea"
+    },
+    {
+      "file": "raw/15-pod-picker-help.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Pod picker navigation, filters and action keys",
+      "png": "samples/cli_4370/15-pod-picker-help.png",
+      "sha256": "9def73c1142d9d65cbb1f14008ef2632a3bacd3e2767b29660bb1c3df2cab8af",
+      "native_png": "samples/cli_4370/native/15-pod-picker-help.png",
+      "native_sha256": "0194b5f0b71d6313ce7597c18ff80297dfa1e79219a7da0a4c9871c153c16db3"
+    },
+    {
+      "file": "raw/16-container-picker.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Framed multi-container picker with resource/state columns",
+      "png": "samples/cli_4370/16-container-picker.png",
+      "sha256": "db1bf3d787228fc00248503835e379776717a256db6e673a21ea84b9c4e9aec8",
+      "native_png": "samples/cli_4370/native/16-container-picker.png",
+      "native_sha256": "287a40c06ae6bc29082bf5481a79a2de73e0ff08043676000a363eb827a7bfaa"
+    },
+    {
+      "file": "raw/17-inspector-summary.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Inspector summary of a real running pod",
+      "png": "samples/cli_4370/17-inspector-summary.png",
+      "sha256": "98adc12dad8fd3331149a55c3bbd83d3df7a442b8c6604d136a62012ebc01df6",
+      "native_png": "samples/cli_4370/native/17-inspector-summary.png",
+      "native_sha256": "2d6ff94679a1fcaabfbce9f80fe1970801363b7ed7f50e4beae9766df2c1908d"
+    },
+    {
+      "file": "raw/75-detail-shell-blocked.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Read-only inspector refuses shell actions and explains X",
+      "png": "samples/cli_4370/75-detail-shell-blocked.png",
+      "sha256": "d3885cc94c2679e64818baf6669251f2fbba2529920dd8d2778a42595555d6c7",
+      "native_png": "samples/cli_4370/native/75-detail-shell-blocked.png",
+      "native_sha256": "352588326df1038d88cf5765ee7b62b38b765d724fd2dec1276e1f8d097fe347"
+    },
+    {
+      "file": "raw/76-detail-confirmation.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | X opens confirmation directly from pod detail",
+      "png": "samples/cli_4370/76-detail-confirmation.png",
+      "sha256": "24e95719b92561e7186cc8d24d8b17844df47da6306717bef7a09f7ada2c78d3",
+      "native_png": "samples/cli_4370/native/76-detail-confirmation.png",
+      "native_sha256": "de42014094368750bd24df71b5f58c45ee92bb214030a3dc02dde24322cccf83"
+    },
+    {
+      "file": "raw/77-detail-cancel.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Declining keeps pod detail read-only",
+      "png": "samples/cli_4370/77-detail-cancel.png",
+      "sha256": "e61b0ea67ae8c32db77ba994c87001dc1fcda7829f316de43c501e124a3a1cbb",
+      "native_png": "samples/cli_4370/native/77-detail-cancel.png",
+      "native_sha256": "de34ae922e29d4f228a2b273ad1a27ea83d7b883b563971d4d933420b120c48b"
+    },
+    {
+      "file": "raw/78-detail-interactive-on.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Whole yes answer enables the inspector without leaking keys",
+      "png": "samples/cli_4370/78-detail-interactive-on.png",
+      "sha256": "b8c901010472de3728681ab3f544436f5399c3b8e8907ba9dae87e69882812c1",
+      "native_png": "samples/cli_4370/native/78-detail-interactive-on.png",
+      "native_sha256": "6d6bc3bac571784dfa58d2e441618697a1f43451d1242c7e909151b16e1ce08f"
+    },
+    {
+      "file": "raw/79-detail-shell.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Actual container shell opened after enabling X in detail",
+      "png": "samples/cli_4370/79-detail-shell.png",
+      "sha256": "41e6c1b0220e5bd528d9e7c15f18ff04434f2fe5b81497047d609b7041e7fc4b",
+      "native_png": "samples/cli_4370/native/79-detail-shell.png",
+      "native_sha256": "01f55f4bd296aa2ea49091e99b2001acc1de0049ce4a4c8ad866a0d17a5bfd41"
+    },
+    {
+      "file": "raw/80-detail-interactive-off.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | X disables interactive actions immediately in the inspector",
+      "png": "samples/cli_4370/80-detail-interactive-off.png",
+      "sha256": "af471522cbb06bff5ae3161f41fdffc8ddd360bd4a2f8443d9f946075cf6cdf6",
+      "native_png": "samples/cli_4370/native/80-detail-interactive-off.png",
+      "native_sha256": "28b7dbcd5ab07c4dc1c79e355df5bcc6726bb1509c12452c60dcfbb82aa82786"
+    },
+    {
+      "file": "raw/81-detail-shell-blocked-again.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Shell is refused again after disabling X",
+      "png": "samples/cli_4370/81-detail-shell-blocked-again.png",
+      "sha256": "d3885cc94c2679e64818baf6669251f2fbba2529920dd8d2778a42595555d6c7",
+      "native_png": "samples/cli_4370/native/81-detail-shell-blocked-again.png",
+      "native_sha256": "deb9e02ea3e5f265067f6476748deb343f12aa71cc0286814309998ddb7d2576"
+    },
+    {
+      "file": "raw/18-inspector-logs.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Bounded timestamped logs from the live app container",
+      "png": "samples/cli_4370/18-inspector-logs.png",
+      "sha256": "601f90d681db78d811afca809b6789314ee7162424cf1f528132e4401ed22f0b",
+      "native_png": "samples/cli_4370/native/18-inspector-logs.png",
+      "native_sha256": "9b8128f3be3d3cb7f8de7d859d715b967a0789649b00e79dda981b46032274d9"
+    },
+    {
+      "file": "raw/62-inspector-expand.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Expanded bounded log read from the live container",
+      "png": "samples/cli_4370/62-inspector-expand.png",
+      "sha256": "819f6fa21a8cc64c4c76aa2e77851db9ab0fcc2114043c49b5dadb1827e0049e",
+      "native_png": "samples/cli_4370/native/62-inspector-expand.png",
+      "native_sha256": "8db46e4aae288b7e8ed8221f37a9989965f4bb56e4d83f78466b6516e4349d56"
+    },
+    {
+      "file": "raw/63-inspector-all.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | All available live container logs within the byte cap",
+      "png": "samples/cli_4370/63-inspector-all.png",
+      "sha256": "94316950d5a063aa6f87c36ab4533e54df40f7bfa56431722434f0e613ea2a55",
+      "native_png": "samples/cli_4370/native/63-inspector-all.png",
+      "native_sha256": "45500fe9bc9787ac6d54f2fba796f33e12179e47a22c76da050e74214e6e1d3a"
+    },
+    {
+      "file": "raw/64-inspector-nowrap.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Unwrapped logs with horizontal navigation",
+      "png": "samples/cli_4370/64-inspector-nowrap.png",
+      "sha256": "00a26e110847ed3d555385799f17473bda9e994d032bb1b37f9c2c27aa28dd9a",
+      "native_png": "samples/cli_4370/native/64-inspector-nowrap.png",
+      "native_sha256": "8ba230a0a416e350b8ebe3af78ad96ec7eef52ee0ae3aac4f8afa23dbd38eb9e"
+    },
+    {
+      "file": "raw/65-inspector-json.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Readable JSON log formatting enabled",
+      "png": "samples/cli_4370/65-inspector-json.png",
+      "sha256": "905235cee41268456a905cd116a68ae241ad780b1c4bdfd44a011657ce5b583a",
+      "native_png": "samples/cli_4370/native/65-inspector-json.png",
+      "native_sha256": "18301b2850477fd54e02069d4e5c5795f1bb6833dac0313c4260dba886a5cee8"
+    },
+    {
+      "file": "raw/66-inspector-follow.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live follow periodically refreshes actual container logs",
+      "png": "samples/cli_4370/66-inspector-follow.png",
+      "sha256": "cc5420ff6aa281b44a7ae06230a47e1af459e0a20c012b5ed26c7985f718e7e8",
+      "native_png": "samples/cli_4370/native/66-inspector-follow.png",
+      "native_sha256": "5f9d989cc61246507dcae6bee91723bc97b0ee2f6d8016daf7cd55a684d20fee"
+    },
+    {
+      "file": "raw/19-inspector-find.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Log search highlighting with context retained",
+      "png": "samples/cli_4370/19-inspector-find.png",
+      "sha256": "631d46062a3f067ba4beda9c21fd41f11fa82a9b6258811a5ac7251f5f337dcf",
+      "native_png": "samples/cli_4370/native/19-inspector-find.png",
+      "native_sha256": "795b1cfe272775fbd66d674232c9b1c6a2c86841255efbcbe353a22e78f7f2b4"
+    },
+    {
+      "file": "raw/20-inspector-only-matches.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Only matching warning lines from real logs",
+      "png": "samples/cli_4370/20-inspector-only-matches.png",
+      "sha256": "f0bf3ae061510fddc90ff347cdd4a63576e226116671a561818f821da29d09e4",
+      "native_png": "samples/cli_4370/native/20-inspector-only-matches.png",
+      "native_sha256": "627e09d240e697745f0617f2b50e3adf814a823e1facbbf0753d4cecb19b2ab2"
+    },
+    {
+      "file": "raw/21-inspector-help.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Inspector help for log filtering and export",
+      "png": "samples/cli_4370/21-inspector-help.png",
+      "sha256": "562e325829d6356a545c27de04b512c53fb4c6345e8deaa2d0b299f659a3117e",
+      "native_png": "samples/cli_4370/native/21-inspector-help.png",
+      "native_sha256": "ce3866c56993ee6a813fa4c74420545dc445c1d340cd3e1c4694fa94ca58c928"
+    },
+    {
+      "file": "raw/22-inspector-export.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Visible log pane exported locally",
+      "png": "samples/cli_4370/22-inspector-export.png",
+      "sha256": "bcde9d303d866c7deb93b5e08ddb72c8930cc803728cac95b32aa6bcd7b4f467",
+      "native_png": "samples/cli_4370/native/22-inspector-export.png",
+      "native_sha256": "d138ce553498333f04c70cfba0a7b55e98a00bcbc00c3d894a06c481531b357f"
+    },
+    {
+      "file": "raw/32-command-palette.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Fixed-command palette",
+      "png": "samples/cli_4370/32-command-palette.png",
+      "sha256": "552b1fa6b14b2a5700197833d98b554b4e79f870856169b0440ec16716f0e1f2",
+      "native_png": "samples/cli_4370/native/32-command-palette.png",
+      "native_sha256": "e94551bf3f8060af0976cebd9b963c0a16670807e9934d1fcb0556c7b6ea4295"
+    },
+    {
+      "file": "raw/33-doctor.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live connection, TLS, RBAC and metrics checks",
+      "png": "samples/cli_4370/33-doctor.png",
+      "sha256": "fb9887f5d4e1cb5e68b1ef6cedc9d6b35dfbddef85be4043de96a17d4f785916",
+      "native_png": "samples/cli_4370/native/33-doctor.png",
+      "native_sha256": "6f92a1c78ff853bff8d22500e5ecb14e5ab9be428615769a534c377f78d40596"
+    },
+    {
+      "file": "raw/34-pod-filter.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Dashboard pod regular expression applied",
+      "png": "samples/cli_4370/34-pod-filter.png",
+      "sha256": "285284c7578277e1b7659ad5ac1e9a1cd52a9d4ca9b32935635728ab8178882a",
+      "native_png": "samples/cli_4370/native/34-pod-filter.png",
+      "native_sha256": "8502aec009403a4881d4188425352844d697585186503c5a87e978ba34ae6dc3"
+    },
+    {
+      "file": "raw/35-structured-filters.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Atomic label, status, node, workload and unhealthy filters",
+      "png": "samples/cli_4370/35-structured-filters.png",
+      "sha256": "98da13ce598f063971c0589493002357eab20b1b6b6d0319ecedd94ea180de71",
+      "native_png": "samples/cli_4370/native/35-structured-filters.png",
+      "native_sha256": "3738dc95d2d072f9ede48ed13e57d548f189d34f195096a0a014df14f0a4d9a0"
+    },
+    {
+      "file": "raw/36-detail-lines.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Toggle container detail lines",
+      "png": "samples/cli_4370/36-detail-lines.png",
+      "sha256": "406fc4de3f0efff2eb937ed32395e0d60bb3388c8ef49e639ee95ef324ed29ad",
+      "native_png": "samples/cli_4370/native/36-detail-lines.png",
+      "native_sha256": "d0e882398d079a4c0a8697f9067a8a28a4c4773bd51f969d29eaf59d679a9387"
+    },
+    {
+      "file": "raw/37-pods-only.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Pod totals without container rows",
+      "png": "samples/cli_4370/37-pods-only.png",
+      "sha256": "662d9eac34254533c158de82ec49f88721e2acd6f7b0db66efb4db9091c456bd",
+      "native_png": "samples/cli_4370/native/37-pods-only.png",
+      "native_sha256": "d484807cc7b733b30480c32e19d60879560898967db83653278915a5cfb484a1"
+    },
+    {
+      "file": "raw/38-sort-order.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Sort key and reverse direction",
+      "png": "samples/cli_4370/38-sort-order.png",
+      "sha256": "a7ffa3538a0018bec0036c5956cb75b0acc47c6409c2245d5c4468163d1f86d2",
+      "native_png": "samples/cli_4370/native/38-sort-order.png",
+      "native_sha256": "f51fa67989a21e8c0fd7ce811f838f8feb58945c2a71c6c6e4e401613f720793"
+    },
+    {
+      "file": "raw/39-paused-interval.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Paused collection and changed polling interval",
+      "png": "samples/cli_4370/39-paused-interval.png",
+      "sha256": "64d1d1ce3dcf1d7840c0e092a086ea17fa2e6971874955a5941958ed540545a8",
+      "native_png": "samples/cli_4370/native/39-paused-interval.png",
+      "native_sha256": "15297b09738c183248c545c73b1dfed2695b1538a2ab8b628ae31c3d5af5e640"
+    },
+    {
+      "file": "raw/40-theme-dark.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Dark colour theme",
+      "png": "samples/cli_4370/40-theme-dark.png",
+      "sha256": "0ed080ba98bf6308555e2c5207107a164cf2c0c3158def78462fee2f0c8e2753",
+      "native_png": "samples/cli_4370/native/40-theme-dark.png",
+      "native_sha256": "198616eb5000a081664f9d38511a42f3f32b4b86cfd4cfa77558d628a8a2ee09"
+    },
+    {
+      "file": "raw/41-theme-light.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Light colour theme",
+      "png": "samples/cli_4370/41-theme-light.png",
+      "sha256": "c1064f0fceda3b8f52b64064eef23fbb7446ceb6d6915049c5b9c2f6f2bff697",
+      "native_png": "samples/cli_4370/native/41-theme-light.png",
+      "native_sha256": "d60150b5e8fdafd6f5f20efa3d63202a544cc67d38e02ca271b20a15d9b91a81"
+    },
+    {
+      "file": "raw/42-theme-mono.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Monochrome colour theme",
+      "png": "samples/cli_4370/42-theme-mono.png",
+      "sha256": "64de5b133ad2fff23f2fe80604d7ff57f123e34aa08bb6b4b08924c35e4cf07f",
+      "native_png": "samples/cli_4370/native/42-theme-mono.png",
+      "native_sha256": "1a60332925b7b688fc742d52671996a264498b013a746fc34547d752c54ab9a5"
+    },
+    {
+      "file": "raw/43-node-scale.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Node scope and true-scale resource bars",
+      "png": "samples/cli_4370/43-node-scale.png",
+      "sha256": "11a3af90e6f5bb7229fc5916f41ab3d4f3eb5efb47da515c12a5a4b0319b2456",
+      "native_png": "samples/cli_4370/native/43-node-scale.png",
+      "native_sha256": "37420407da9d101c7b72c85b134220ddd7dc820f1d4bc62b2bb37f91e6120b0a"
+    },
+    {
+      "file": "raw/44-history-window.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Memory history with changed chart window",
+      "png": "samples/cli_4370/44-history-window.png",
+      "sha256": "ff0a5837433b2f03273cec9777daa295576a64803d5c3d52a1babf7a96ae2ef7",
+      "native_png": "samples/cli_4370/native/44-history-window.png",
+      "native_sha256": "f38af96153479adf87aae767664b230889bd26b5506821776cc11e52145680ec"
+    },
+    {
+      "file": "raw/45-html-menu.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Local HTML report selection menu",
+      "png": "samples/cli_4370/45-html-menu.png",
+      "sha256": "61cb9b3e6cdccc42ffc3af9d6c96c8ab32e8e4882efc336e34915e4902ed8d2f",
+      "native_png": "samples/cli_4370/native/45-html-menu.png",
+      "native_sha256": "c8523b17d548c3c58b6466fd25d9c94e8df27db9814a750659e477f6d042bcb6"
+    },
+    {
+      "file": "raw/46-html-report-written.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | All-tabs report generated from live session",
+      "png": "samples/cli_4370/46-html-report-written.png",
+      "sha256": "db90b2e1fa39b18143c0c4194a20829295fb819c0b8690a49626f4697b07f6d9",
+      "native_png": "samples/cli_4370/native/46-html-report-written.png",
+      "native_sha256": "fe6d8975dfa2b00c9a27bcceed5ae98645df2443ec382b8e13e3199cd080c42a"
+    },
+    {
+      "file": "raw/47-dashboard-help.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Dashboard navigation and interactive controls",
+      "png": "samples/cli_4370/47-dashboard-help.png",
+      "sha256": "b2844f0b1b7a792c99e0bb8120093273fe76eecc604daa22c045385dba600155",
+      "native_png": "samples/cli_4370/native/47-dashboard-help.png",
+      "native_sha256": "003cea8c71d5fd453455802bd88fbd3ed666600e0616b94f1dc3d54a52c6003c"
+    },
+    {
+      "file": "raw/48-session-summary.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Completed live session and retained history",
+      "png": "samples/cli_4370/48-session-summary.png",
+      "sha256": "a784b4770434ed3a6d4f714e9ecb2be2396f66007d4352cd1c9179bc475ef1d7",
+      "native_png": "samples/cli_4370/native/48-session-summary.png",
+      "native_sha256": "91e7ea4e93b310db8a8dca79b04d0804f6e8908d721e52517bda3f5c4c775ab2"
+    },
+    {
+      "file": "raw/23-interactive-blocked.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Shell refused while interactive mode is disabled",
+      "png": "samples/cli_4370/23-interactive-blocked.png",
+      "sha256": "f24aa6d51013746bd671de74c0804c2dd0835c1290f950b10bdd882aa12b0684",
+      "native_png": "samples/cli_4370/native/23-interactive-blocked.png",
+      "native_sha256": "4fd35b08e92929459f971b62978db3bb4964a49a37a3801d36c9f12086105c2a"
+    },
+    {
+      "file": "raw/24-interactive-confirmation.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Explicit interactive-mode confirmation",
+      "png": "samples/cli_4370/24-interactive-confirmation.png",
+      "sha256": "24e95719b92561e7186cc8d24d8b17844df47da6306717bef7a09f7ada2c78d3",
+      "native_png": "samples/cli_4370/native/24-interactive-confirmation.png",
+      "native_sha256": "de42014094368750bd24df71b5f58c45ee92bb214030a3dc02dde24322cccf83"
+    },
+    {
+      "file": "raw/25-shell-picker.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Shell-mode pod picker and action panel",
+      "png": "samples/cli_4370/25-shell-picker.png",
+      "sha256": "7d6161e0f7826683a822c9da8543f217b5ed979878c1cae47e170fa6ab594d67",
+      "native_png": "samples/cli_4370/native/25-shell-picker.png",
+      "native_sha256": "ed10bd1007a5e715b8ca01d5f5c1085e0c9c2a0e6fd8c8b6959cda04d9abe94a"
+    },
+    {
+      "file": "raw/26-shell-inside.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Actual shell inside the live app container",
+      "png": "samples/cli_4370/26-shell-inside.png",
+      "sha256": "df7a2d72b877dcc3fb1dcc33b31738c62600e8302d6dff6181f197bb05908f59",
+      "native_png": "samples/cli_4370/native/26-shell-inside.png",
+      "native_sha256": "bb93d05b1cb21dc792d4209e8a9cb5e79682c04c5bbf249f2d25d2d6dd32c50e"
+    },
+    {
+      "file": "raw/27-upload-browser.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Local framed file browser with enabled upload actions",
+      "png": "samples/cli_4370/27-upload-browser.png",
+      "sha256": "c35ae3df620b4d648622af6d0975a3f36225f1704199c6106eb7ae28366477d1",
+      "native_png": "samples/cli_4370/native/27-upload-browser.png",
+      "native_sha256": "4e9b3eba594cbe1db33a9224a3ae1afeaf5cb76c81430a384e5a9c661bfb54d0"
+    },
+    {
+      "file": "raw/28-upload-destination.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Remote destination browser before any transfer",
+      "png": "samples/cli_4370/28-upload-destination.png",
+      "sha256": "515f80f9a9319f0f790bc21c638d4a636918e1583eb122afcc0d97b4286f88d6",
+      "native_png": "samples/cli_4370/native/28-upload-destination.png",
+      "native_sha256": "911523bfca86d26170d14e4f2be97acf868ce0b81d282c5d89699da1f50ac1e1"
+    },
+    {
+      "file": "raw/29-upload-review.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Upload preflight checks and explicit review",
+      "png": "samples/cli_4370/29-upload-review.png",
+      "sha256": "16398e788ad49b7cbaad838fb56e5a1f049326249d4b3c2408a9e02f83babefe",
+      "native_png": "samples/cli_4370/native/29-upload-review.png",
+      "native_sha256": "f828c8bfc24c0602c7c4f5c2772247aab647a819159cace464d7ef0e25b89867"
+    },
+    {
+      "file": "raw/30-upload-result.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Real upload result with source and destination hashes",
+      "png": "samples/cli_4370/30-upload-result.png",
+      "sha256": "f10b9c1456f32e6d39a097509d78ab688ae51d27c1921550e0c28c2ce8522eed",
+      "native_png": "samples/cli_4370/native/30-upload-result.png",
+      "native_sha256": "1b08682e1ceb66821d9181439a86ca2818c562505446a5660b3e786a21a04b53"
+    },
+    {
+      "file": "raw/70-directory-upload-review.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Directory upload preflight and recursive checksum checks",
+      "png": "samples/cli_4370/70-directory-upload-review.png",
+      "sha256": "8c4771e005421a045a84ef1aeca98c754c5f88e3c251cdb2acd2f8dd82e2c735",
+      "native_png": "samples/cli_4370/native/70-directory-upload-review.png",
+      "native_sha256": "8590c57f9052987169abb2c0042f875082f4d94e382cb078f86c6d570b346ec4"
+    },
+    {
+      "file": "raw/71-directory-upload-result.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Actual directory upload with recursive fingerprints",
+      "png": "samples/cli_4370/71-directory-upload-result.png",
+      "sha256": "6b55d671d3ee33e463c7d59a576148a777d438f9832d647c763d822e48f6894c",
+      "native_png": "samples/cli_4370/native/71-directory-upload-result.png",
+      "native_sha256": "522d25bc1a39d14018a1263639c05f1d22b95bd11836d2f5a129fd1ccfd7f768"
+    },
+    {
+      "file": "raw/31-download-browser.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Remote framed file browser with selection and preview keys",
+      "png": "samples/cli_4370/31-download-browser.png",
+      "sha256": "84ee364337fdf5117162afa545e29251cbbb3c8436e980cae7dfe3c420ab8329",
+      "native_png": "samples/cli_4370/native/31-download-browser.png",
+      "native_sha256": "9bd3935cba2b92c30d3e6c74f2f9abe871f3fa48be07047ceb556c6b1de50cfb"
+    },
+    {
+      "file": "raw/49-download-review.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Download preflight, selected format and name conflict checks",
+      "png": "samples/cli_4370/49-download-review.png",
+      "sha256": "ce352ed42ce26b72380c0d898e2f04388d9fc6b6ce9787702d89a1b181ecbacd",
+      "native_png": "samples/cli_4370/native/49-download-review.png",
+      "native_sha256": "7512b3782faa73190059815e5e519848886c552b59e16db739b8da975548b8d2"
+    },
+    {
+      "file": "raw/50-download-result.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Real download result and per-item hash verification",
+      "png": "samples/cli_4370/50-download-result.png",
+      "sha256": "45c245c4c83d043b7e3460797c8b4cc627344851648c72c9b907982c4b4dac80",
+      "native_png": "samples/cli_4370/native/50-download-result.png",
+      "native_sha256": "881b92159e8108c4e77d0ee21778a5497d710426fad99ee211f9ee69237dfc37"
+    },
+    {
+      "file": "raw/55-download-keep-review.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Download preflight, selected format and name conflict checks",
+      "png": "samples/cli_4370/55-download-keep-review.png",
+      "sha256": "ce352ed42ce26b72380c0d898e2f04388d9fc6b6ce9787702d89a1b181ecbacd",
+      "native_png": "samples/cli_4370/native/55-download-keep-review.png",
+      "native_sha256": "7512b3782faa73190059815e5e519848886c552b59e16db739b8da975548b8d2"
+    },
+    {
+      "file": "raw/56-download-keep-result.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Real download result and per-item hash verification",
+      "png": "samples/cli_4370/56-download-keep-result.png",
+      "sha256": "ef5de9ee27ad6c3e3a2821e5bc84e8419108e4365f9b13ab4cbc6f0c389ae07d",
+      "native_png": "samples/cli_4370/native/56-download-keep-result.png",
+      "native_sha256": "4bbf367f3ee4dd08003c5acbda8e6be5a78721616839f5bffca21f8c16f67223"
+    },
+    {
+      "file": "raw/57-directory-download-review.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Download preflight, selected format and name conflict checks",
+      "png": "samples/cli_4370/57-directory-download-review.png",
+      "sha256": "c1267a67c6cc963064d4e2748d86c9278f6b7506d8acb4044ca2460bfc678e44",
+      "native_png": "samples/cli_4370/native/57-directory-download-review.png",
+      "native_sha256": "fd4ab33de5bf43148fd116a86e001d10e07e731cb7f1a8cd785047ed4f1c5c9f"
+    },
+    {
+      "file": "raw/58-directory-download-result.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Real download result and per-item hash verification",
+      "png": "samples/cli_4370/58-directory-download-result.png",
+      "sha256": "1d3983d4fd385e4d543d6a1ac8023e5941df71f426a417ede4fba45361cd5d22",
+      "native_png": "samples/cli_4370/native/58-directory-download-result.png",
+      "native_sha256": "872e8916594f0a4029b5cf062495780a288a704b9cf179b0ad4d9a027253b03b"
+    },
+    {
+      "file": "raw/59-download-zip-review.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Download preflight, selected format and name conflict checks",
+      "png": "samples/cli_4370/59-download-zip-review.png",
+      "sha256": "3d5bf719aec7c7590f350ddac59580987111193d5934b8bc959f0ffe5c32fe51",
+      "native_png": "samples/cli_4370/native/59-download-zip-review.png",
+      "native_sha256": "7dd1c6cacb3a1207d01fd976355d1d0c44e29fe96e86ecf8b38689b2578ab735"
+    },
+    {
+      "file": "raw/60-download-zip-result.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Real download result and per-item hash verification",
+      "png": "samples/cli_4370/60-download-zip-result.png",
+      "sha256": "288189de943dc1fa5a0fafc3581aa4022b5c13af806139b688aa9998687e08ce",
+      "native_png": "samples/cli_4370/native/60-download-zip-result.png",
+      "native_sha256": "ebed4e6e21f87c0d599bfe8a89ab176f46af88c4115976dabb8cb7ade9cb1b58"
+    },
+    {
+      "file": "raw/61-download-tgz-review.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Download preflight, selected format and name conflict checks",
+      "png": "samples/cli_4370/61-download-tgz-review.png",
+      "sha256": "b801014d0bb140276e571b83ec22addab3df7bf0bd67391a3cdfefe7666148bd",
+      "native_png": "samples/cli_4370/native/61-download-tgz-review.png",
+      "native_sha256": "7cfda501101f03ce12667e5ba27d2021ae3708afa9d423130710cf0ce81cf4e0"
+    },
+    {
+      "file": "raw/69-download-tgz-result.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Real download result and per-item hash verification",
+      "png": "samples/cli_4370/69-download-tgz-result.png",
+      "sha256": "d7c2c45a8db08dfde4dfe39f92955e322aede6639506797cdca07b3a3ab472cc",
+      "native_png": "samples/cli_4370/native/69-download-tgz-result.png",
+      "native_sha256": "74dd613b0108530d0640af9ef0c9eaa2a36417da09504a081ff1fa7e03c39464"
+    },
+    {
+      "file": "raw/51-pods-100col.ansi",
+      "columns": 100,
+      "rows": 40,
+      "title": "kdash 4.37.0 | PODS at 100 columns",
+      "png": "samples/cli_4370/51-pods-100col.png",
+      "sha256": "9fd5223ea2ec3e774f600b23be1772974223af12b42633292a2912d1ed163ae9",
+      "native_png": "samples/cli_4370/native/51-pods-100col.png",
+      "native_sha256": "e6792fbc68b8beb21961063b5994ecfe38ad5d67f6646a8f0949b19c41defa34"
+    },
+    {
+      "file": "raw/52-picker-100col.ansi",
+      "columns": 100,
+      "rows": 40,
+      "title": "kdash 4.37.0 | Framed pod picker at 100 columns",
+      "png": "samples/cli_4370/52-picker-100col.png",
+      "sha256": "0644b552275962a7f3dbed3c4df5c2a085fbbc91e87e17224711dd9e55fbc808",
+      "native_png": "samples/cli_4370/native/52-picker-100col.png",
+      "native_sha256": "219b423f2f795b142a73d0346cab2375e1e56354aaccf43b9f6dc5695f8c0c78"
+    },
+    {
+      "file": "raw/53-namespace-100col.ansi",
+      "columns": 100,
+      "rows": 40,
+      "title": "kdash 4.37.0 | Namespace picker and action panel at 100 columns",
+      "png": "samples/cli_4370/53-namespace-100col.png",
+      "sha256": "94935319d8670ca1c32b684fe61980dd6ed68f9af9574fc8dbf810e62400453c",
+      "native_png": "samples/cli_4370/native/53-namespace-100col.png",
+      "native_sha256": "4f6dd8956a7d7ac056d2d2ff1c13e438e335c3181f616c27e64e266e9b98d15b"
+    },
+    {
+      "file": "raw/51-pods-80col.ansi",
+      "columns": 80,
+      "rows": 30,
+      "title": "kdash 4.37.0 | PODS at 80 columns",
+      "png": "samples/cli_4370/51-pods-80col.png",
+      "sha256": "2167de8db539fcebbcfbdc693d68024ddbc45d784909c3ac8f2f2977f62e39b0",
+      "native_png": "samples/cli_4370/native/51-pods-80col.png",
+      "native_sha256": "1c7ca1559e35e8b6918810b85c4be968e89974d5cdc1f12b6c93c6701a850703"
+    },
+    {
+      "file": "raw/82-mode-confirmation-80col.ansi",
+      "columns": 80,
+      "rows": 30,
+      "title": "kdash 4.37.0 | Confirmation remains usable in an 80-column terminal",
+      "png": "samples/cli_4370/82-mode-confirmation-80col.png",
+      "sha256": "567e6d9e114d401589950f907639c9ccd42ed1b2b623b392e302cd27c438ffb7",
+      "native_png": "samples/cli_4370/native/82-mode-confirmation-80col.png",
+      "native_sha256": "88ec80419517d36c05b0abb5a5f174b95b7585661a2c1ff09f12200695c113d2"
+    },
+    {
+      "file": "raw/83-mode-enabled-80col.ansi",
+      "columns": 80,
+      "rows": 30,
+      "title": "kdash 4.37.0 | Uppercase Y plus Enter enables interactive mode at 80 columns",
+      "png": "samples/cli_4370/83-mode-enabled-80col.png",
+      "sha256": "9f006b3b04dbc9b4e2b2825b4e09f7c1b8a8d0e75fc55bf547c8e3c7d62ea31b",
+      "native_png": "samples/cli_4370/native/83-mode-enabled-80col.png",
+      "native_sha256": "5b1929aaa381f80731650cbc6f541055f595d41f6bf9618c8b83718bb882562c"
+    },
+    {
+      "file": "raw/52-picker-80col.ansi",
+      "columns": 80,
+      "rows": 30,
+      "title": "kdash 4.37.0 | Framed pod picker at 80 columns",
+      "png": "samples/cli_4370/52-picker-80col.png",
+      "sha256": "4b01f9c86b4988f03f148f8d63c4c31c8b6dc575f3cdb63f3c083b561ca9398e",
+      "native_png": "samples/cli_4370/native/52-picker-80col.png",
+      "native_sha256": "d40ca58fee239b667813cd8c013a5f63f04b38d40f0b0adc1371b141badeabea"
+    },
+    {
+      "file": "raw/53-namespace-80col.ansi",
+      "columns": 80,
+      "rows": 30,
+      "title": "kdash 4.37.0 | Namespace picker and action panel at 80 columns",
+      "png": "samples/cli_4370/53-namespace-80col.png",
+      "sha256": "62bd09bab577824fd24d5c031bf2b496995e1937c02a64bf9593d8c82acc29a5",
+      "native_png": "samples/cli_4370/native/53-namespace-80col.png",
+      "native_sha256": "9762996add3cd6e2c1811da0ed00294f477be9a67acaa27438b3b17d309e60cc"
+    },
+    {
+      "file": "raw/54-ascii-picker.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | ASCII framed picker with colour disabled",
+      "png": "samples/cli_4370/54-ascii-picker.png",
+      "sha256": "7064d01bf6b4eae9f5e3bcd5c4e2ab8980fa2c0b2226030c1533d7fa1f7511d3",
+      "native_png": "samples/cli_4370/native/54-ascii-picker.png",
+      "native_sha256": "8a958bd3a11e4c655f8d3f0dfbe8db141801479a3bbf9c33679703ec97aef31a"
+    },
+    {
+      "file": "raw/84-certs.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | CERTIFICATES AND LOGINS real TLS and kubeconfig expiry evidence",
+      "png": "samples/cli_4370/84-certs.png",
+      "sha256": "6e8632b5ae634dd3d4d52fac7b0b380302bbddd7c3a2b3766ca34782966626f1",
+      "native_png": "samples/cli_4370/native/84-certs.png",
+      "native_sha256": "3de5fc73cfbc33b6d687ec902cd15b4d5799058afa30d7d8008176172517029e"
+    },
+    {
+      "file": "raw/85-runbook.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | RUNBOOK printed etcd recovery procedure with live cluster inventory",
+      "png": "samples/cli_4370/85-runbook.png",
+      "sha256": "4b08db776c65f46aea52364172b5f770b3f2c416a761e03d05d4ab70e3d0f2eb",
+      "native_png": "samples/cli_4370/native/85-runbook.png",
+      "native_sha256": "ae479fbdacb0f32399a394c961f66282617def071f700c0731a0646340aead41"
+    },
+    {
+      "file": "raw/87-runbook-topic.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | RUNBOOK next topic displays certificate rotation instructions",
+      "png": "samples/cli_4370/87-runbook-topic.png",
+      "sha256": "eb3ffe9481478ee5cf3ff8cc9c8f1251a80ae6d20eb6fb1efe7a08202f2d556d",
+      "native_png": "samples/cli_4370/native/87-runbook-topic.png",
+      "native_sha256": "504a5ce9d56577c3daba2fdfbba65daa2a8da0058c3fc59b9fc03c4dfe6dd898"
+    },
+    {
+      "file": "raw/86-check.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | CHECK NOW actual unhealthy workloads and numbered read-only next commands",
+      "png": "samples/cli_4370/86-check.png",
+      "sha256": "26edeb252283298fa4b71cbb526766f365d7bf6991a6111f77adb8eebf2d12c5",
+      "native_png": "samples/cli_4370/native/86-check.png",
+      "native_sha256": "2deb2d3357f73bff3df4e91b1df2ea44401bd466d352090374605a80df33dd52"
+    },
+    {
+      "file": "raw/88-fmea.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | FMEA real failure modes, priority scores and read visibility",
+      "png": "samples/cli_4370/88-fmea.png",
+      "sha256": "a1622c93c66bd20f8f156333826ac58d32fcd6e39fb781cc33622c9e738d7a8d",
+      "native_png": "samples/cli_4370/native/88-fmea.png",
+      "native_sha256": "7b5549621f03e00a446dad2074f674ba71b9590f535cd49aa08d5e711b9d2ee2"
+    },
+    {
+      "file": "raw/89-access.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | ACCESS real kubectl auth identity and permission checks",
+      "png": "samples/cli_4370/89-access.png",
+      "sha256": "5f3ca5baab1019003d5a1b7d2336db5c4fe4fc328a904c108466aa1dcf5c09d0",
+      "native_png": "samples/cli_4370/native/89-access.png",
+      "native_sha256": "7caf767c711edc4812578ae0483e5a0ddd827021d8fc27e25551a07789f9d541"
+    },
+    {
+      "file": "raw/90-fmea-kind.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | FMEA kind filter on actual worksheet rows",
+      "png": "samples/cli_4370/90-fmea-kind.png",
+      "sha256": "ca52d51d62a512cab2724699440a4026448dc99f87a967720c11e0fc8b41bff9",
+      "native_png": "samples/cli_4370/native/90-fmea-kind.png",
+      "native_sha256": "6001bcb79d65d38f3e92b48ac67054e1df30e7a2cc4048515f7f020711d21c65"
+    },
+    {
+      "file": "raw/91-fmea-sort.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | FMEA worksheet sorted by risk priority number",
+      "png": "samples/cli_4370/91-fmea-sort.png",
+      "sha256": "aab790ef350926dad096484632abc8558989398719d018f4a7c8509e1c5017b6",
+      "native_png": "samples/cli_4370/native/91-fmea-sort.png",
+      "native_sha256": "4d230ea826252c7571429e3ee61227a59a361f2d11c357fc18c6e5634e978434"
+    },
+    {
+      "file": "raw/100-dashboard-search.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | In-place dashboard search counts real matching lines",
+      "png": "samples/cli_4370/100-dashboard-search.png",
+      "sha256": "6bde3318a2cf872e51aee1718cf94806a1c7576e92d3f8ab5cd099db76f5ead4",
+      "native_png": "samples/cli_4370/native/100-dashboard-search.png",
+      "native_sha256": "019dc2e787afa04309c5d6c3a533e57df427d1feaf270c2ae00b89cfadc08e15",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/101-search-other-view.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Search retained while switching to live workloads",
+      "png": "samples/cli_4370/101-search-other-view.png",
+      "sha256": "519b41ad7ebb3f73a19283aec36ba2437e1a4e58da6e465db4d03842e012b221",
+      "native_png": "samples/cli_4370/native/101-search-other-view.png",
+      "native_sha256": "f8a881edc43bdac205c28140daa5361d6eee7d715b9d92aa1b8a0b6f74c88fd8",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/102-export-searched-workloads.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Quick export includes the screen and every workload line",
+      "png": "samples/cli_4370/102-export-searched-workloads.png",
+      "sha256": "e790d8e55d44921f331023c92ed500fe2946e79e2152df3007b4129536edeb1c",
+      "native_png": "samples/cli_4370/native/102-export-searched-workloads.png",
+      "native_sha256": "8255c40c21524200f91fddc26b2dc2514d915ec01a75277bb629c8777b51e338",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/103-invalid-search.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Invalid search expressions remain editable",
+      "png": "samples/cli_4370/103-invalid-search.png",
+      "sha256": "119a93033548c2e3996d327bafeb6cccb866bfd3f8d5e51b94ca6e9a47e10730",
+      "native_png": "samples/cli_4370/native/103-invalid-search.png",
+      "native_sha256": "63c33dfa1607beec9cf7856eb138661f2174cbfbc2c516046cbec1cd1b768613",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/104-search-no-match.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | A valid unmatched search reports zero matching lines",
+      "png": "samples/cli_4370/104-search-no-match.png",
+      "sha256": "a0c5d005813754d18ca8207c64b172b08578391e6233671a06b37f2e742136f0",
+      "native_png": "samples/cli_4370/native/104-search-no-match.png",
+      "native_sha256": "73de58d49360ab7976c31dedae8f7962bd4be9dea672fc240dcb2a8d18b1dc4c",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/105-search-history.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Shared editor recalls this session's earlier search",
+      "png": "samples/cli_4370/105-search-history.png",
+      "sha256": "165b1432f1d4d2fc1ca4ad737a6f66e3b37d76ac59f8f0f401eeafca1a9c6d7e",
+      "native_png": "samples/cli_4370/native/105-search-history.png",
+      "native_sha256": "291b950060f6a5e83352a907de90d9ee063900a2dbd75f6b0275d2151e3b00bc",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/106-search-editor-delete.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Cursor Home/Delete/End/Backspace leaves the intended search text",
+      "png": "samples/cli_4370/106-search-editor-delete.png",
+      "sha256": "423ca4a29e4babca0fae7b0fec517c3a7a6b442b6e7e8068bb65051f3606c418",
+      "native_png": "samples/cli_4370/native/106-search-editor-delete.png",
+      "native_sha256": "92f843bcea0ad8c0d15436c1361f718d593c59acc2999926036a563a36474a02",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/107-export-access.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Access view exports its complete permission review",
+      "png": "samples/cli_4370/107-export-access.png",
+      "sha256": "2e7e2012878d9cc53fe57d384e779778fcf897e1e4740f885a683474791e0504",
+      "native_png": "samples/cli_4370/native/107-export-access.png",
+      "native_sha256": "cb6cc2e85ed8e8ef0cb6f3f5f771a725d0205f80cc90cfe79021fb7b3e9e5219",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/108-export-namespaces.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Namespace picker quick export retains every namespace name",
+      "png": "samples/cli_4370/108-export-namespaces.png",
+      "sha256": "03ec9980bb70cdf4f5d9ea850b7f9e28ef746b358bc568860dc53e3b80b59f0a",
+      "native_png": "samples/cli_4370/native/108-export-namespaces.png",
+      "native_sha256": "c0708bd8cd541190028a0f6dd50f1d7549168e0a8a95a9adbc6a3c98e2ff6ed1",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/109-export-pods.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Pod picker quick export retains full names and resource columns",
+      "png": "samples/cli_4370/109-export-pods.png",
+      "sha256": "25d2ab6ce4671791d0a678b6a101a911e4601a19bbff2e3eb718928372f71e66",
+      "native_png": "samples/cli_4370/native/109-export-pods.png",
+      "native_sha256": "23ebb556de66991095ee7da0911250efc242ca061660b5ef53bcaacd74d6fad7",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/110-container-find.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Container picker finds a real sidecar by name",
+      "png": "samples/cli_4370/110-container-find.png",
+      "sha256": "fbfc39c74412259b49de1d37152f6382680a5f1518ec3b8eae34738f5a779baa",
+      "native_png": "samples/cli_4370/native/110-container-find.png",
+      "native_sha256": "f01caf971d166aef9601307e9634f84ef8097227af3f9ce5362a97131c992e7f",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/111-export-containers.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Container picker exports every regular container and image",
+      "png": "samples/cli_4370/111-export-containers.png",
+      "sha256": "a3edacc8a4766fa3d51f0558e4ecbb85ffbab67c14dc5aeeae989696314d428b",
+      "native_png": "samples/cli_4370/native/111-export-containers.png",
+      "native_sha256": "af64f019dde9d01e410543570347747306efb88fc1be4375eeb81eae4a7d4556",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/112-whole-log-coverage.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Whole current log displays read coverage and node proxy capability",
+      "png": "samples/cli_4370/112-whole-log-coverage.png",
+      "sha256": "6d969a96f6b2fa7d41463f14a84fc0d31d0122831aa261bf5846146bc08fb457",
+      "native_png": "samples/cli_4370/native/112-whole-log-coverage.png",
+      "native_sha256": "d4136dc3743cea22b0d2208cbda3b68ee35a6933e33a8eb424c5d0f12c19cd11",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/113-log-find-in-place.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Whole log search counts case-insensitive real warnings",
+      "png": "samples/cli_4370/113-log-find-in-place.png",
+      "sha256": "2d1e2f797ffa7357b1bc8a7e1b54e4e11ca61624cd7855d62a6a19a683dcd073",
+      "native_png": "samples/cli_4370/native/113-log-find-in-place.png",
+      "native_sha256": "941ab6660101166c1751d38dc26c99fdb56ec408c7b011f663d3ec2472e815be",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/114-log-search-scope.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Full log search offers this pod, workload and namespace scopes",
+      "png": "samples/cli_4370/114-log-search-scope.png",
+      "sha256": "40bf8fcfbbbfbc07cb74bfeb398081d977949557428612b5fe9a6e0543e411bf",
+      "native_png": "samples/cli_4370/native/114-log-search-scope.png",
+      "native_sha256": "97df2c18a56f6c33759b133f9930fb814d61b2a37d412bfad087b5811523465a",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/115-log-search-invalid-pattern.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Invalid full-log search patterns can be corrected before reads begin",
+      "png": "samples/cli_4370/115-log-search-invalid-pattern.png",
+      "sha256": "222c03f1a8807bb3f09a6d24e61936f56176b187bc0d79e37f87d662afaa561e",
+      "native_png": "samples/cli_4370/native/115-log-search-invalid-pattern.png",
+      "native_sha256": "84885fd393ababaf8f23e7b5924a423b6e006cb083df26baffbf9c2c88d9b874",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/116-log-search-pod.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Merged timestamped matching lines from real pod container logs",
+      "png": "samples/cli_4370/116-log-search-pod.png",
+      "sha256": "b962d03405b0d9811a52e3fbf5209fd87ae617948659a311a032abeae5ddf453",
+      "native_png": "samples/cli_4370/native/116-log-search-pod.png",
+      "native_sha256": "b380a5cf695b7a28ce8649c37006e9087c342b67eb56f178c472b2919cfb0469",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/117-log-search-workload.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Merged timestamped matching lines from real workload container logs",
+      "png": "samples/cli_4370/117-log-search-workload.png",
+      "sha256": "4f9cd726960806ca8fc681edccaa8b29cd742dbffcfeaa492a9ff011e5d121ad",
+      "native_png": "samples/cli_4370/native/117-log-search-workload.png",
+      "native_sha256": "7208589224c111a3a17573ff96a595e7c41b707c80281218d4e08f90513ca766",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/118-log-search-namespace.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Merged timestamped matching lines from real namespace container logs",
+      "png": "samples/cli_4370/118-log-search-namespace.png",
+      "sha256": "3736e1251cd4abd894a8e034b6dff00fb70d7822473814cdd741a6749522688f",
+      "native_png": "samples/cli_4370/native/118-log-search-namespace.png",
+      "native_sha256": "35874e06a6d2b5717039b43112857bc2f2231b5349d457f61c15de5a17a2c5cd",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/119-whole-previous-log.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Full previous instance of a real restarted container",
+      "png": "samples/cli_4370/119-whole-previous-log.png",
+      "sha256": "38ec9092290c7b2694aa141d908ca71642c1bda047ca4006935136ed61b01f57",
+      "native_png": "samples/cli_4370/native/119-whole-previous-log.png",
+      "native_sha256": "2d32be9140763855e86dc5fe2d1b49c1011e7629838c939cb0febff5bfeb34f3",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/120-certs-secret-public-certificate.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Certificate view includes real generated Secret public certificate expiry",
+      "png": "samples/cli_4370/120-certs-secret-public-certificate.png",
+      "sha256": "c3046bcc6a7dd7e1e0a3b10040f8707a294840801b51788a49c8bd1ac706f5d6",
+      "native_png": "samples/cli_4370/native/120-certs-secret-public-certificate.png",
+      "native_sha256": "2f1c10a0fbec9d2d2249ed958dfe0d64b6e52e61e335abdf422be81ba2816cc2",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/121-certs-secret-search.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Certificate search finds the generated Secret certificate",
+      "png": "samples/cli_4370/121-certs-secret-search.png",
+      "sha256": "42ebce83d19673412eaf228882af9b1af8838a3cc9e5d270082e677e7074125f",
+      "native_png": "samples/cli_4370/native/121-certs-secret-search.png",
+      "native_sha256": "9f1c6efe16d0917d98ac992791378e76cc4ad621cdf48de66bbb1c9a026ba847",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/122-theme-safe.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live dashboard theme safe",
+      "png": "samples/cli_4370/122-theme-safe.png",
+      "sha256": "5a18e319bb7e9e759004a390fe4345b0b0432fe6b303e0e728148faaef472f04",
+      "native_png": "samples/cli_4370/native/122-theme-safe.png",
+      "native_sha256": "504d290357463863fce7375cdbb32ef288c7a4560e7ed26bccde3eb7cdba8bda",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/123-theme-dark.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live dashboard theme dark",
+      "png": "samples/cli_4370/123-theme-dark.png",
+      "sha256": "3a71a9572edf9311a3230f3a07ea4074da1f6e2f33a7441571533d381e333e54",
+      "native_png": "samples/cli_4370/native/123-theme-dark.png",
+      "native_sha256": "cfb2c26a74b838f1fd8bb295362f4fcaf4b34ae09f49af706ce39d00bd042fbb",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/124-theme-light.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live dashboard theme light",
+      "png": "samples/cli_4370/124-theme-light.png",
+      "sha256": "9303bae690530d15027f9fbd15ec8f32dc689f4af900678a172a53b88de884a3",
+      "native_png": "samples/cli_4370/native/124-theme-light.png",
+      "native_sha256": "e9d9aafc86fdb4b8e2ceec550024e6eb832e67f6af36400e91ff4626ffe64bb2",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/125-theme-mono.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live dashboard theme mono",
+      "png": "samples/cli_4370/125-theme-mono.png",
+      "sha256": "614a86ce05bfb44b05f3998cb8935be2197c28e040da1806886f03513efa2ad6",
+      "native_png": "samples/cli_4370/native/125-theme-mono.png",
+      "native_sha256": "8471a419da3f1b699bda8d3b4e74670402ce630de67f025db02abd4d399bd1d6",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/126-fallback-16-colours.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Live compatibility mode with sequential reads and 16 ANSI colours",
+      "png": "samples/cli_4370/126-fallback-16-colours.png",
+      "sha256": "32b33a7961ddf726fe29cbc5d809680de7cf35dcc30c10c1fbabcad71cba9554",
+      "native_png": "samples/cli_4370/native/126-fallback-16-colours.png",
+      "native_sha256": "cd9a41acfb47aa8aa0252671414ea2c925c7b47dd45e65321cebfe358e2ba908",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/127-export-local-files.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Quick export from the actual local files browser",
+      "png": "samples/cli_4370/127-export-local-files.png",
+      "sha256": "76456177a195c757d0df1092df6f11e2b556b0a885705bc20d36a9b1632abcf1",
+      "native_png": "samples/cli_4370/native/127-export-local-files.png",
+      "native_sha256": "f04a4066dde6ff9f43f88e68b1596b57fe95c8a4199e10d59c11595c4dd6cade",
+      "extension_source": "extended"
+    },
+    {
+      "file": "raw/128-export-remote-files.ansi",
+      "columns": 170,
+      "rows": 50,
+      "title": "kdash 4.37.0 | Quick export from the actual remote files browser",
+      "png": "samples/cli_4370/128-export-remote-files.png",
+      "sha256": "716bf6e90331f09b0432bf0e9ee51157c9ff1f9eca7710936f0ad84f192426a8",
+      "native_png": "samples/cli_4370/native/128-export-remote-files.png",
+      "native_sha256": "2e08a55bae8bd67c559d105180b7397fe0c6e8451651e793f3fb6683ca36638c",
+      "extension_source": "extended"
+    }
+  ],
+  "failures": [],
+  "extensions": {
+    "extended": {
+      "results": "extended/results.json",
+      "sha256": "ce3298c9b04bef9fb760e489b2d9207796adb37e0c5a147686df5152027636b9",
+      "checks": 103,
+      "captures": 29
+    }
+  }
+}

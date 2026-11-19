@@ -1,0 +1,1 @@
+PASS: 23 terminal replay checks preserve bright colors, bold, reset, RGB/indexed payloads and reverse video

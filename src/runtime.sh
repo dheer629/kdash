@@ -138,7 +138,13 @@ filter_spec() {
     END { flush() }' "$1"
 }
 
+# what a model depends on besides the data read: a model the fetch worker built is used
+# only when this is unchanged (MODEL_GEN moves on every model built in the foreground)
+MODEL_GEN=0; RENDER_GEN=0
+model_sig() { printf '%s|' "${FILTER:-}" "${KDASH_LABEL_SELECTOR:-}" "${KDASH_STATUS_FILTER:-}" "${KDASH_NODE_FILTER:-}" "${KDASH_WORKLOAD_FILTER:-}" \
+  "${KDASH_UNHEALTHY:-0}" "${ALL_NS:-0}" "${NS:-}" "${POOL_LABEL:-}" "${COMPARE_NS:-}" "${CTX_NAME:-}" "${IO:-0}" "$MODEL_GEN"; }
 build_model() {
+    [ "${IN_WORKER:-0}" = 1 ] || MODEL_GEN=$((MODEL_GEN + 1))
     local original="$SPEC"
     filter_spec "$original" > "$TMPD/spec.filtered"
     SPEC="$TMPD/spec.filtered"; build_model_core; local rc=$?; SPEC="$original"
@@ -156,20 +162,34 @@ fetch_worker() (
     [ ! -d "$parent/io" ] || cp -a "$parent/io" "$job/io"
     TMPD="$job"; SPEC="$job/spec"; TOPC="$job/top"; TOPP="$job/topprev"
     NODES="$job/nodes"; TOPN_F="$job/topnode"; SVC="$job/svc"; CLUS="$job/cluster"; WLS="$job/workloads"
-    local now; now=$(date +%s)
+    local now topdue=0 phist="${HIST:-$parent/hist.tsv}" pnhist="${NHIST:-$parent/nodehist.tsv}"; printf -v now '%(%s)T' -1; IN_WORKER=1
+    rm -f -- "$job/model.ok" "$job/model.sig" "$job/model.err"
+    [ "$now" -lt "${METRICS_NEXT:-0}" ] || topdue=1
+    # due metrics go out beside the other reads once the pod read proved the login
+    TOP_WANT=$topdue
     if [ $((now - SPEC_AT)) -ge "$SPEC_TTL" ] || [ "$SPEC_OK" != 1 ]; then refresh_spec; fi
-    if [ "$now" -ge "${METRICS_NEXT:-0}" ]; then
-        [ "$TOPN_STATE" != forbidden ] || TOPN_STATE=unread
-        refresh_top
+    if [ "$topdue" = 1 ]; then
+        if [ "$TOP_WANT" = 2 ]; then refresh_top_finish
+        else [ "$TOPN_STATE" != forbidden ] || TOPN_STATE=unread; refresh_top; fi
         if [ "$TOP_OK" = 1 ]; then METRICS_NEXT=0; else METRICS_NEXT=$((now + 30)); fi
     fi
     IO_PID=""; io_tick
     if [ -n "$IO_PID" ]; then wait "$IO_PID" 2>/dev/null || true; IO_PID=""; io_tick; fi
     [ -z "$IO_PID" ] || { wait "$IO_PID" 2>/dev/null || true; IO_PID=""; }
-    for name in SPEC_OK SPEC_AT TOP_OK TOP_AT NODES_STATE SVC_STATE TOPN_STATE TOPN_OK CLUSTER_STATE WL_STATE WL_KINDS TOPA_STATE NS_SCAN_AT METRICS_NEXT IO_STATE IO_SRC IO_REASON IO_LAST IO_DETECT_AT IO_SAMPLE_AT IO_SRC_PATH; do
+    # the model is built here too, so the screen only swaps it in and never waits for it
+    # (KDASH_BG_MODEL=0: built in the foreground as before)
+    if [ "${KDASH_BG_MODEL:-1}" != 0 ]; then
+        MODEL="$job/model"; rm -rf -- "$MODEL"; mkdir -p "$MODEL"
+        HIST="$job/hist.tsv"; NHIST="$job/nodehist.tsv"
+        cp -f "$phist" "$HIST" 2>/dev/null || : > "$HIST"; cp -f "$pnhist" "$NHIST" 2>/dev/null || : > "$NHIST"
+        cp -f "$parent/iohist" "$job/iohist" 2>/dev/null || true
+        model_sig > "$job/model.sig"
+        if build_model > "$job/model.err" 2>&1; then : > "$job/model.ok"; fi
+    fi
+    for name in SPEC_OK SPEC_AT TOP_OK TOP_AT NODES_STATE SVC_STATE TOPN_STATE TOPN_OK CLUSTER_STATE WL_STATE WL_KINDS TOPA_STATE NS_SCAN_AT METRICS_NEXT IO_STATE IO_SRC IO_REASON IO_LAST IO_DETECT_AT IO_SAMPLE_AT IO_SRC_PATH NS_READ_LIST NS_SCAN_TRIED NS_NOACC; do
         printf '%s\t%s\n' "$name" "${!name:-}"
     done > "$job/state"
-    date +%s > "$job/finished"
+    printf '%(%s)T\n' -1 > "$job/finished"
 )
 
 fetch_adopt() {
@@ -177,12 +197,12 @@ fetch_adopt() {
     kill -0 "$FETCH_PID" 2>/dev/null && return 0
     wait "$FETCH_PID" 2>/dev/null || true; FETCH_PID=""
     local job="$TMPD/fetch-job" name value
-    [ -f "$job/finished" ] || { FETCH_NEXT=$(( $(date +%s) + 5 )); return 0; }
+    [ -f "$job/finished" ] || { printf -v FETCH_NEXT '%(%s)T' -1; FETCH_NEXT=$(( FETCH_NEXT + 5 )); return 0; }
     for name in spec top topprev nodes topnode svc cluster workloads; do [ ! -f "$job/$name" ] || mv -f "$job/$name" "$TMPD/$name"; done
     cp -f "$job"/*.updated "$TMPD/" 2>/dev/null || true
     if [ -d "$job/io" ]; then rm -rf "$TMPD/io"; mv "$job/io" "$TMPD/io"; fi
     while IFS=$'\t' read -r name value; do
-        case "$name" in SPEC_OK|SPEC_AT|TOP_OK|TOP_AT|NODES_STATE|SVC_STATE|TOPN_STATE|TOPN_OK|CLUSTER_STATE|WL_STATE|WL_KINDS|TOPA_STATE|NS_SCAN_AT|METRICS_NEXT|IO_STATE|IO_SRC|IO_REASON|IO_LAST|IO_DETECT_AT|IO_SAMPLE_AT|IO_SRC_PATH) printf -v "$name" '%s' "$value" ;; esac
+        case "$name" in SPEC_OK|SPEC_AT|TOP_OK|TOP_AT|NODES_STATE|SVC_STATE|TOPN_STATE|TOPN_OK|CLUSTER_STATE|WL_STATE|WL_KINDS|TOPA_STATE|NS_SCAN_AT|METRICS_NEXT|IO_STATE|IO_SRC|IO_REASON|IO_LAST|IO_DETECT_AT|IO_SAMPLE_AT|IO_SRC_PATH|NS_READ_LIST|NS_SCAN_TRIED|NS_NOACC) printf -v "$name" '%s' "$value" ;; esac
     done < "$job/state"
     if [ "$SPEC_OK" = 1 ]; then FETCH_SUCCESS=$(cat "$job/finished"); FETCH_FAILURES=0
       [ -z "${SPEC_REASON:-}" ] || { SPEC_REASON=""; declare -F flash >/dev/null && flash "API reads work again" 5; }
@@ -201,8 +221,14 @@ fetch_adopt() {
     fi
     local delay="$INTERVAL"
     [ "$FETCH_FAILURES" = 0 ] || delay=$(( 2 ** (FETCH_FAILURES > 5 ? 5 : FETCH_FAILURES) ))
-    FETCH_NEXT=$(( $(date +%s) + ${delay%.*} ))
-    build_model; session_tick; FETCH_AT=$(date +%s)
+    printf -v FETCH_NEXT '%(%s)T' -1; FETCH_NEXT=$(( FETCH_NEXT + ${delay%.*} ))
+    # the model the worker built is swapped in when nothing it depends on changed meanwhile
+    if [ -f "$job/model.ok" ] && [ "$(cat "$job/model.sig" 2>/dev/null)" = "$(model_sig)" ]; then
+        rm -rf -- "$MODEL.old"; mv -f -- "$MODEL" "$MODEL.old" 2>/dev/null; mv -f -- "$job/model" "$MODEL"; rm -rf -- "$MODEL.old"
+        mv -f -- "$job/hist.tsv" "${HIST:-$TMPD/hist.tsv}"; mv -f -- "$job/nodehist.tsv" "${NHIST:-$TMPD/nodehist.tsv}"; [ ! -f "$job/iohist" ] || mv -f -- "$job/iohist" "$TMPD/iohist"
+    else build_model; fi
+    rm -rf -- "$job/model" "$job/model.ok" "$job/model.sig" "$job/model.err" "$job/hist.tsv" "$job/nodehist.tsv" "$job/iohist"
+    session_tick; printf -v FETCH_AT '%(%s)T' -1; RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))
     declare -F certs_quick_poll >/dev/null && certs_quick_poll
     NPODS=$(awk -F'\t' '$1=="pods"{print $2}' "$MODEL/meta.tsv" 2>/dev/null)
     # the first answer from the API decides the "no pods" hint (the start screen has none yet)
@@ -217,7 +243,7 @@ fetch() {
     fetch_adopt
     [ -z "${FETCH_PID:-}" ] || return 0
     [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0      # no reads until the login is done (key L)
-    [ "$(date +%s)" -ge "${FETCH_NEXT:-0}" ] || return 0
+    local t_; printf -v t_ '%(%s)T' -1; [ "$t_" -ge "${FETCH_NEXT:-0}" ] || return 0
     fetch_worker & FETCH_PID=$!
 }
 
@@ -227,13 +253,14 @@ toolkit_tick() {
         if [ -d "$TMPD/toolkit-next" ]; then
             rm -rf "$TOOLKIT_DIR"; mv "$TMPD/toolkit-next" "$TOOLKIT_DIR"
         fi
+        RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))
         FMEA_BADGE="$(fmea_badge)"
-        TOOLKIT_NEXT=$(( $(date +%s) + 30 ))
+        printf -v TOOLKIT_NEXT '%(%s)T' -1; TOOLKIT_NEXT=$(( TOOLKIT_NEXT + 30 ))
     fi
     [ "${TOOLKIT_REQUESTED:-0}" = 1 ] || return 0
     [ "${LOGIN_NEEDED:-0}" != 1 ] || return 0
     [ -z "${TOOLKIT_PID:-}" ] || return 0
-    [ "$(date +%s)" -ge "${TOOLKIT_NEXT:-0}" ] || return 0
+    local t_; printf -v t_ '%(%s)T' -1; [ "$t_" -ge "${TOOLKIT_NEXT:-0}" ] || return 0
     (
         trap - EXIT INT TERM HUP
         local next="$TMPD/toolkit-next"
@@ -253,6 +280,7 @@ toolkit_tick() {
         fi
         TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}" doctor_run > "$TOOLKIT_DIR/doctor.txt"
     ) & TOOLKIT_PID=$!
+    RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))      # the panels say "collecting" now
 }
 
 toolkit_cancel() {
@@ -275,7 +303,9 @@ toolkit_panel() {
     # Standard header (tab bar, clock, context, health line, warnings), then the panel body.
     HEADER_ONLY=1 render_core
     # tables fit the window and carry colour markers (made into escapes after cleaning)
-    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-$(tput cols 2>/dev/null || echo 160)}" TK_GLYPH="${BARCHR:-unicode}"
+    local panel_size="${PAINT_SZ:-}"
+    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-${panel_size#* }}" TK_GLYPH="${BARCHR:-unicode}"
+    [ -n "$TK_COLS" ] || TK_COLS="$(tput cols 2>/dev/null || echo 160)"
     export TK_COLOR TK_COLS TK_GLYPH
     # read commands shown in this view, by finding number: Enter runs them (check_run_prompt)
     RB_CAPTURE="$TOOLKIT_DIR/run-$view.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="Enter runs the read commands of a finding now"
@@ -293,18 +323,32 @@ toolkit_panel() {
     RB_CAPTURE=""; RB_RUN_HINT=""
     export -n TK_COLOR TK_COLS TK_GLYPH
     case "$view" in
-      secrets) printf 'Y secrets | Enter run checks | r re-read | C certs (endpoints, nodes) | M fmea | K check | j/k scroll | h/l pan (wide tables) | : commands | q quit\n' > "$FTRF" ;;
-      fmea|access) printf 'M fmea | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
-      *) printf 'K check | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF" ;;
+      secrets) printf 'Y secrets | / search | > export | Enter run checks | r re-read | C certs (endpoints, nodes) | M fmea | K check | j/k scroll | h/l pan (wide tables) | : commands | q quit\n' > "$FTRF" ;;
+      fmea|access) printf 'M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
+      *) printf 'K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l pan | i inspect | : commands | q quit\n' > "$FTRF" ;;
     esac
 }
 
+# a view drawn moments ago is shown again from its copy when nothing changed since: only
+# after a view key (1-7, Tab, v, the panel keys); new data, a theme or size change and any
+# other key (sort, filter, zoom, ...) make every copy old. KDASH_VIEW_CACHE=0 turns it off.
+declare -A RC_SIG=(); RC_GEN=0; RC_USE=0
+render_cached() {
+    local sig="$RENDER_GEN|$MODEL_GEN|$RC_GEN|${PAINT_SZ:-}|$THEME|$COLOR|${KDASH_COLUMNS:-}" d="$TMPD/rc/$VIEW"
+    case "$VIEW" in pods|nodes|workloads|ip|mem|io|alerts) ;; *) render; return ;; esac
+    if [ "$RC_USE" = 1 ] && [ "${KDASH_VIEW_CACHE:-1}" != 0 ] && [ "${RC_SIG[$VIEW]:-}" = "$sig" ] && [ -f "$d/${BODYF##*/}" ]; then
+        cp -f -- "$d/${HDRF##*/}" "$d/${BODYF##*/}" "$d/${FTRF##*/}" "${BODYF%/*}/" && return 0
+    fi
+    render
+    mkdir -p -- "$d" && cp -f -- "$HDRF" "$BODYF" "$FTRF" "$d/" && RC_SIG[$VIEW]="$sig"
+}
 render() {
     case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access|secrets) toolkit_panel "$VIEW" ;;
         *) render_core ;;
     esac
     local age=never status=not-collected
-    [ "${SPEC_AT:-0}" = 0 ] || age="$(( $(date +%s) - SPEC_AT ))s"
+    local t_; printf -v t_ '%(%s)T' -1
+    [ "${SPEC_AT:-0}" = 0 ] || age="$(( t_ - SPEC_AT ))s"
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
     # status strip: how fresh the data is (dot: green = fresh with metrics), then the shortcuts as chips
@@ -317,7 +361,7 @@ render() {
     # the certificate and FMEA badges come first: they are findings, the rest are shortcuts
     local sp=" ${sd}${sv}${sr} "
     strip=" ${sb}DATA${sr} ${sdot} pods ${sb}${status}${sr} ${sd}${age} old${sr}  metrics ${sb}${smet}${sr}${sp}${sb}C${sr} certs${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+  ${sb}M${sr} fmea ($FMEA_BADGE)}"
-    strip+="${sp}${sb}K${sr} check now${sp}${sb}i${sr} inspect${sp}${sb}8${sr} services  ${sb}9${sr} storage  ${sb}E${sr} events  ${sb}!${sr} explain${sp}${sb}:${sr} commands"
+    strip+="${sp}${sb}/${sr} search${sp}${sb}K${sr} check${sp}${sb}i${sr} inspect${sp}${sb}8${sr} services  ${sb}9${sr} storage  ${sb}E${sr} events  ${sb}!${sr} explain${sp}${sb}:${sr} commands"
     hdrall="$(< "$HDRF")"
     if [[ "$hdrall" == *$'\001DATASTRIP\001'* ]]; then printf '%s\n' "${hdrall/$'\001DATASTRIP\001'/$strip}" > "$HDRF"
     else printf '%s\n' "$strip" >> "$HDRF"; fi
@@ -326,8 +370,8 @@ render() {
     for source in nodes svc; do
         updated="$(cat "$TMPD/$source.updated" 2>/dev/null || printf 0)"
         case "$updated" in ''|*[!0-9]*) updated=0 ;; esac
-        if [ "$updated" != 0 ] && [ $(( $(date +%s) - updated )) -gt "$SPEC_TTL" ]; then
-            printf 'STALE %s: last successful read %ss ago\n' "$source" "$(( $(date +%s) - updated ))" >> "$HDRF"
+        if [ "$updated" != 0 ] && [ $(( t_ - updated )) -gt "$SPEC_TTL" ]; then
+            printf 'STALE %s: last successful read %ss ago\n' "$source" "$(( t_ - updated ))" >> "$HDRF"
         fi
     done
 }

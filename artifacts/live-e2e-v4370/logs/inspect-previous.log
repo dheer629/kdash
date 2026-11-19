@@ -1,0 +1,3 @@
+Context: kdash-local | Namespace: kdash-e2e | Pod: z-crash
+
+2026-11-19T15:33:55.376395047Z ERROR intentional validation failure exit=42

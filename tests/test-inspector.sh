@@ -256,8 +256,8 @@ try:
     expect("INFO started container=web")
     # find keeps the context, counts the matches and highlights them
     os.write(fd, b"/")
-    expect("FIND")
-    expect("Current: none")
+    expect("SEARCH")
+    expect("type to search this pane")
     os.write(fd, b"ERROR\n")
     expect("rows 1-4 / 4")
     expect("/ERROR (1 matching)")
@@ -266,8 +266,8 @@ try:
     expect("match 1/1")
     # & hides everything that does not match
     os.write(fd, b"&")
-    expect("SHOW ONLY MATCHES")
-    expect("Current: ERROR")
+    expect("SHOW ONLY MATCHING LINES")
+    expect("type to search this pane")
     os.write(fd, b"ERROR\n")
     expect("rows 1-1 / 1")
     expect("only /ERROR (1)")

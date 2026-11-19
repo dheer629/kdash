@@ -1,6 +1,6 @@
 # kdash DevOps user guide
 
-This guide describes the kdash 4.28.1 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
+This guide describes the kdash 4.37.0 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
 
 The current source can be installed with `git clone https://github.com/dheer629/kdash.git`,
 `cd kdash`, `sha256sum -c SHA256SUMS`, then `bash kdash-bundle.sh`.
@@ -12,7 +12,7 @@ does not itself publish new release assets.
 
 The captured validation run below used 4.12.0; the later feature galleries used
 4.13.1 and 4.14.0. They remain evidence of those versions and do not validate the
-4.28.1 terminal layout or interactive browser against a live cluster.
+4.37.0 terminal layout or interactive browser against a live cluster.
 
 The following evidence table describes the exercise on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
 
@@ -27,58 +27,21 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 | HTML evidence | 10 HTML reports per namespace: the live all-tabs namespace report, six one-shot view snapshots plus index, the combined report, and the audit report with CSV | `<namespace>/reports/`, `<namespace>/audit/` |
 | Session records | one recorded session per namespace with 5-second history samples and the model tables | `<namespace>/reports/sessions/` |
 
-`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4281/` follows this source and includes the runbook, check and certificates screens; the 4.24.1, 4.23.2 and older galleries support historical observations.
+`artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4281/` records 4.28.1 and includes the runbook, check and certificates screens; the 4.24.1, 4.23.2 and older galleries support historical observations.
 
-## Current 4.32.0 validation and visual changes
+## Current 4.37.0 validation and visual changes
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4320` records **199 passed live checks**, **23 passed browser checks** and **96 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.32.0 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-v4320/checks.tsv).
+Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser checks** and **125 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.37.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-v4370/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+The refresh exercised 200 baseline checks, 103 extension checks, 30 Secrets
+checks, 33 browser checks and all 19 fixture suites on the installed binary. It
+also read a real rotated kubelet log (94,906 lines, 10.2 MiB) alongside the
+current file; see the limits below and in the feature checklist.
 
 
 
@@ -103,8 +66,8 @@ that a real identity provider completed authentication.
 The current live run is named by [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt).
 Its `results.json`, `checks.tsv`, `inventory.json` and `captures.tsv` record the
 installed version, real WSL Kubernetes inventory, checks and every screen.
-[`samples/cli_4281/`](samples/cli_4281/README.md) contains the corresponding terminal
-renders and [`samples/html4281/`](samples/html4281/README.md) contains report output.
+[`samples/cli_4370/`](samples/cli_4370/README.md) contains the corresponding terminal
+renders and [`samples/html4370/`](samples/html4370/README.md) contains report output.
 The release-time [4.27.4 terminal gallery](samples/cli_4274/README.md),
 [HTML reports](samples/html4274/README.md) and
 [original run](artifacts/live-e2e-20261107-083145/results.json) remain available
@@ -135,13 +98,70 @@ Esc, `q`, Ctrl-C and Ctrl-D cancel. `X` disables immediately. The entire respons
 is consumed by the prompt, so Enter cannot open a pod or shell after it closes.
 `X` and `Q` also respond while an inspector object/log read is pending.
 
-The inspector uses framed identity/status rows and wrapped pane/read/move hints.
-In a current/previous log pane, `+` increases the requested tail fourfold and `A`
-requests all retained logs, while the byte cap still applies. This does not recover
-logs already rotated away by Kubernetes. Long lines wrap by default; `W` toggles
-wrapping. Defaults are 5,000 lines (`KDASH_LOG_TAIL`, up to 1,000,000) and 8 MiB
-(`KDASH_LOG_LIMIT_BYTES`, up to 256 MiB). `/` search, `n`/`N` match navigation, `&`
-only-matches, `L` levels, follow and deliberate `w` export remain available.
+## Search, logs and quick exports in 4.37.0
+
+Press `/` in any dashboard view to search its complete rendered body, including
+rows outside the visible window. Lowercase text ignores case; expressions use
+extended regular-expression syntax. Enter keeps the search, `n` / `N` move
+through matching lines, and Esc clears it. While a search is active, `n` moves to
+the next match; close it with Esc before using `n` for the namespace picker.
+Tab inside the search box switches to **FILTER PODS BY NAME**; Enter applies
+that filter to the pod views and reports. Tab again returns to finding text.
+The CLI pod regex argument and structured `F` filters remain available.
+
+In pod detail, `/` searches the pane and `&` keeps matching lines; Tab in its
+search box also toggles only-matches. By default a log search loads the whole
+available log first, subject to the byte/time caps. `F` opens **FIND IN LOGS**:
+choose this pod (`p`), its workload (`w`) or the namespace (`n`), then enter the
+expression. It reads each regular container's current log and the previous
+instance of restarted containers, shows per-log coverage and failures, and
+merges matches in timestamp order with `[pod/container]` labels. Esc stops the
+search and retains completed results. `KDASH_FIND_PARALLEL` defaults to 4
+(maximum 16); `KDASH_FIND_MAX_LINES` limits retained matches per log (default
+5,000). These are explicit log reads and stay out of automatic HTML/history
+reports.
+
+`A` in a current/previous log pane requests every available line. With
+`get nodes/proxy`, kdash also lists and reads older files retained by the
+kubelet, including gzip files. `/` log search and `F` use that same access.
+`KDASH_NODE_LOGS=0` disables node log reads. The status rule states which files
+were read, the first timestamp and whether a byte cap, timeout, failure or
+denied access left coverage incomplete. Deleted logs cannot be recovered.
+`KDASH_LOG_TIMEOUT` defaults to 300 seconds; `KDASH_LOG_MAX_BYTES` defaults to
+256 MiB. `W` toggles wrapping, `J` displays JSON log time/level/message, `+`
+expands the tail fourfold, and `f` follows. `KDASH_SEARCH_ALL_LINES=0` keeps a
+pane search within the already fetched tail.
+
+Press `>` to save the screen and complete current view, pane or list as a plain
+text `.log`, including rows and columns outside the window. It uses captured
+data and performs no extra cluster read. Files go to `$KDASH_EXPORT_DIR`, or
+`$KDASH_REPORT_DIR/exports` (default `~/kdash_reports/exports`), with mode 600.
+`latest.log` points to the latest export and `kdash_session_<id>.log` collects
+the session's exports. The operation is audited as `QUICK_EXPORT`. In a log
+pane it deliberately saves log contents; review the file before sharing. `w`
+still exports only the filtered inspector pane. Running a numbered check in
+the dashboard also saves its command output to this export directory.
+
+Search boxes in the pod, namespace, container and file lists show live match
+counts. Prompts support Left/Right, Home/End, Delete, Backspace, Ctrl-A/E,
+Ctrl-U/W and Up/Down history for that prompt in the current session. Esc cancels.
+
+The default `safe` theme maps colour roles to fixed 256-colour shades; `dark`,
+`light` and `mono` remain available with `T` or `--theme`. Set `KDASH_COLORS=16`
+for a console limited to ANSI colours. Changed-line redraws and terminal scroll
+regions reduce screen traffic; `KDASH_REDRAW=full` forces full frames and
+`KDASH_REDRAW=noscroll` avoids scroll regions. Quiet dashboard ticks update the
+status line; `KDASH_REDRAW_MAX=0` redraws every tick instead of the default
+10-second maximum quiet interval. `KDASH_VIEW_CACHE=0`, `KDASH_BG_MODEL=0` and
+`KDASH_PARALLEL_READS=0` disable the respective render cache, background model
+builds and parallel inventory reads for troubleshooting.
+
+Full certificate collection (`C`, `--certs`) now includes certificate expiry
+and readable usage paths from the Secrets map. `KDASH_CERTS_FROM_SECRETS=0`
+disables that addition. The Secrets scan excludes Helm release-history Secrets
+and uses `KDASH_SECRETS_TIMEOUT` (default 120 seconds) for large or slow reads.
+It keeps unavailable coverage visible; certificate timestamps in the Secrets
+table and exports use UTC.
 
 ## 1. Open the correct environment
 
@@ -337,18 +357,20 @@ CPU values such as `250m` mean 250 millicores, or 0.25 of a CPU core. Memory use
 
 | Key | Action |
 |---|---|
-| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `M`, `Tab` | Choose or cycle the CLI view (certificates, runbook, instant check, FMEA) |
+| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `M`, `Y`, `Tab` | Choose or cycle the CLI view (certificates, runbook, instant check, FMEA, Secrets) |
 | `: access` | Show the current user's read permissions and the FMEA checks they enable |
 | `L` | OIDC login for the current context: shows the URL and continues afterwards |
 | `?` | Explain the current view |
 | `j` / `k`, arrows; `space` / `b`; `g` / `G` | Scroll, page down/up, jump to top/bottom |
 | `h` / `l`, left/right arrows; `0` | Pan horizontally; return to the first column |
 | `s`, `o` | Cycle sort key; reverse sort order |
-| `/` | Change the pod-name regular expression; empty restores all matches |
+| `/` | Search the whole view; Tab in the box switches to the pod-name regex filter |
+| `n`, `N` | Next / previous match while searching; Esc closes search |
+| `>` | Save the screen and complete view, pane or list to a plain log |
 | `F`, `:` | Structured filters; fixed-command palette (`shell [FILTER]` opens shell mode) |
 | `Enter`, `i` | Live pod list and inspector: summary, containers, Events, describe, bounded logs |
 | `p`, `d`, `w` | Pod totals only, detail lines, grouped/flat pod listing |
-| `r`, `n` | Re-read specifications; choose another namespace |
+| `r`, `n` | Re-read specifications; choose another namespace when search is closed |
 | `a`, `Z` | In Node Pools: all/hosting nodes; auto zoom/true scale |
 | `P`, `+`, `-` | Pause/resume data refresh; adjust the poll interval |
 | `T`, `z` | Cycle theme; select chart time window |
@@ -387,7 +409,19 @@ kdash -c "$ctx" -n "$ns" -v pods --once -N > "$KDASH_REPORT_DIR/pods.txt"
 kdash -c "$ctx" -n "$ns" -v alerts --once -o csv > "$KDASH_REPORT_DIR/alerts.csv"
 ```
 
-`--snapshot all` writes views 1-6 plus an index; it does not create a seventh standalone Alerts page. `--snapshot 7` writes the namespace report whose Overview contains the summary and action table. In the all-tabs HTML, the numbering is **0 Overview, 1-6 detailed views, 7 History**. HTML tab 7 is therefore different from CLI key 7. The all-tabs report is self-contained and can be opened locally; its tables offer search, sorting, CSV downloads, JSON export, theme selection, and time-zone controls.
+`--snapshot all` writes views 1-6 plus an index; it does not create a seventh
+standalone Alerts page. `--snapshot 7` writes the namespace report whose
+Overview contains the summary and action table. In the all-tabs HTML, the
+numbering is **0 Overview, 1-6 detailed views, 7 History, 8 FMEA, 9 Secrets**.
+HTML tab 7 is therefore different from CLI key 7. The FMEA and Secrets tabs use
+readable current data, reusing assessments newer than five minutes when possible.
+`KDASH_REPORT_EXTRAS=0` skips their collection and export. The report bundle
+also includes `fmea.txt`, `fmea.csv`, `secrets.txt`, `secrets.csv` and
+`secrets.json` when those data were collected. Separate worksheet exports remain
+available. The all-tabs report is self-contained and can be opened locally;
+tables offer search, sorting, CSV downloads, JSON export, theme and time-zone
+controls. An offline `--session-report` rebuild uses saved resource history and
+does not recreate the live FMEA/Secrets additions.
 
 A one-shot export without a recorded session cannot create a five-minute history. Prefer the exact session directory when rebuilding evidence after multiple runs. A session report loads saved `meta.env` and model files; treat session folders as trusted input from this utility, and do not execute reports from unknown session folders.
 
@@ -564,6 +598,19 @@ CPU near its limit is a throttling-risk signal, not a measured throttling counte
 Absent volume-usage metrics leave usage unknown. A coverage percentage describes
 the signals actually readable by this user; it does not prove that every mode
 was observable or that an application was healthy.
+
+### Review Secrets and certificate consumers
+
+`Y` opens the Secrets map. Use `kdash -c "$ctx" -n "$ns" --secrets` for a
+one-shot worksheet, `-o csv|tsv|json` for structured stdout, or `-o html` for a
+self-contained HTML file whose path is printed. `--fail-on high|medium` supplies
+pipeline gates and `--run N` runs a finding's confirming reads. The worksheet
+maps certificate subject, SAN, issuer, expiry and key metadata to workload,
+Service, mount, environment and ingress references, with restart guidance.
+It filters non-certificate values from the normal API response. The optional
+`KDASH_SECRETS_KEYCHECK=1` comparison checks whether `tls.key` matches `tls.crt`.
+Use `C` / `--certs` for the combined cluster/login/Secret certificate expiry
+view. Missing permission or a timed-out scan remains a coverage gap.
 
 ## 8. Audit evidence
 

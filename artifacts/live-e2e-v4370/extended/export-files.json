@@ -1,0 +1,284 @@
+[
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221650.log",
+    "mode": "0o600",
+    "sha256": "bd58552c2bb573b069596f6544387b748a28be856a85ebf1f30dfe51f77e2f5e",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221659.log",
+    "mode": "0o600",
+    "sha256": "32777b43f37a07d57c66004fa27d23a293b9aa425c59383f4b973d62f6443ef0",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261119-221703.log",
+    "mode": "0o600",
+    "sha256": "4d0b59ce6da2e9659aa2d3aac8ef62119eb80f38787e21b0a85db3c13b1593ac",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261119-221710.log",
+    "mode": "0o600",
+    "sha256": "fd8ab31bcb837d30302a7500cf6effb5e2ea6354534bd455c6a38486b6f9afa8",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261119-221715.log",
+    "mode": "0o600",
+    "sha256": "e39265ef1ead72182d6f6361ea8a1de83b6ac9c4e8b6047e14839a31d1dc9de6",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261119-221720.log",
+    "mode": "0o600",
+    "sha256": "97f530f274ce28998b23840ec172db1272d0825df06cfe620619d82e23ac938c",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221745.log",
+    "mode": "0o600",
+    "sha256": "f77b6282bd9353f0de6ad2cc1326c9c22afe2f84e9a3f89da2f929f5327f1809",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221754.log",
+    "mode": "0o600",
+    "sha256": "483e5f4a55a48c55700529a6397ecbfe87b4b6469cfb90a6ba87d51202f36407",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261119-221803.log",
+    "mode": "0o600",
+    "sha256": "d3f96eb342a276187902feef4fa24a1e8f9708eba57ba91d0611ce2ce1f48da2",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261119-221631.log",
+    "mode": "0o600",
+    "sha256": "2ff0d018a8e2ce08cbf931a998d2a4134ed00f350c734c72695b3ee60174de14",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261119-221639.log",
+    "mode": "0o600",
+    "sha256": "2a2c40fc15fb38acfb98ed0381c9afff89baf63fc0e3709906971daa3d29a724",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261119-221951.log",
+    "mode": "0o600",
+    "sha256": "a92f59e880fe5fedaae4346d692683883209237a01357acb07f20f85cf724de7",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_files_local_20261119-221940.log",
+    "mode": "0o600",
+    "sha256": "633a786b5a25d2bedf5038a1557d779acff0475210b42273fb04b93b83e07a7d",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_namespace-list_kdash-local_20261119-221613.log",
+    "mode": "0o600",
+    "sha256": "dcf6c94e1ce911ed0f825aa65b38acc501da9e2138d6143a2335f82855e51015",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_pod-list_kdash-e2e_20261119-221618.log",
+    "mode": "0o600",
+    "sha256": "510c25839adb20d7361d485d40dcc18f884b33c313c4b5e333a49211090a2924",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221346-47140.log",
+    "mode": "0o600",
+    "sha256": "2022062618c164983e3141f52c7ce17d432425edc97b1db48a29be02307554ca",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221415-64322.log",
+    "mode": "0o600",
+    "sha256": "970af3439c99d4a63f4cf9c778f02f7378d20f4651988f0a33249b7269c602dd",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221439-77772.log",
+    "mode": "0o600",
+    "sha256": "f09499a5f484e0631513001c0fe8098425b444e94e82f2fc6bb47390abb7a0be",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221621-57369.log",
+    "mode": "0o600",
+    "sha256": "fe8d9f378ceaf8e338783a76363db13e5ecdf099babff2077db73f1787ea04f3",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221723-96474.log",
+    "mode": "0o600",
+    "sha256": "a5303dcdea0909bc21f3eacf743dfc1e93ddcc3017b97dad831790b20de0fad2",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221806-27161.log",
+    "mode": "0o600",
+    "sha256": "733ad8610a956ff4ba33d221baef9b89e0cfea3ba0858bccb09794a521e1a88e",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221852-62304.log",
+    "mode": "0o600",
+    "sha256": "425795a33efc0656393d4919c508540b8c280c887bd8c0a5d8b7d296bdf8b0a7",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261119-221929-91034.log",
+    "mode": "0o600",
+    "sha256": "abfb9e48d8f72c149f5e2a07587d55e33c110254e4c74bf887d8cd5ef9cff626",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-access_kdash-e2e_20261119-221608.log",
+    "mode": "0o600",
+    "sha256": "7e43f842053e0a92947460f47408be2bbfd07940f651867b5144cdda1abf50b3",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-alerts_kdash-e2e_20261119-221516.log",
+    "mode": "0o600",
+    "sha256": "94f5c6ffa189dc80c81c6a3d31ac1084315a20c227831b0ee78d29f9fc5d356f",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-certs_kdash-e2e_20261119-221541.log",
+    "mode": "0o600",
+    "sha256": "215f10c976ea157b575bf8aa37cfe3089a980b2dcc4daa042dbf35b15d79bf39",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-certs_kdash-e2e_20261119-221905.log",
+    "mode": "0o600",
+    "sha256": "2b7d45f2a85f19b0252b301608da10014b84a549e45a466631027d184cfd2e6b",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-check_kdash-e2e_20261119-221551.log",
+    "mode": "0o600",
+    "sha256": "5e275f1e01f887649c8e8bb9458bcb721dfcb9f22531ab62985ec5eb204898b5",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-events_kdash-e2e_20261119-221531.log",
+    "mode": "0o600",
+    "sha256": "c13a28eede0300d0a90933cee88f0babaf49bda1eca07a7ce4c03b8f53536046",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-explain_kdash-e2e_20261119-221536.log",
+    "mode": "0o600",
+    "sha256": "7e1ba2a3e1cc8daf2e9409bfb8b28bea2bb04e297426ee9aebc3f91635e4040a",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-fmea_kdash-e2e_20261119-221556.log",
+    "mode": "0o600",
+    "sha256": "a04d1932c656ce9ad8c4a168ce36a64154b75ad57ea759eed0ea64906a12b5c2",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-io_kdash-e2e_20261119-221511.log",
+    "mode": "0o600",
+    "sha256": "2d609b8a17ba4c95964821e643f78460901e8088c285bf73497bdfbe3c820f97",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-ip_kdash-e2e_20261119-221501.log",
+    "mode": "0o600",
+    "sha256": "38368e6b9cfb790ed748ac70218c849d0f9b491e0bb7eb834f4c75ea8af56cf3",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-mem_kdash-e2e_20261119-221506.log",
+    "mode": "0o600",
+    "sha256": "b07773253d4c0d7a216b489d6b4474aec01a0047623b7621f60f300789a3dc35",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-nodes_kdash-e2e_20261119-221451.log",
+    "mode": "0o600",
+    "sha256": "85f681c8b80593038236e1e0bdfc5f296d7ad9debf501f3d45a7df4eda4debcf",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221423.log",
+    "mode": "0o600",
+    "sha256": "77c6c32c287b40b8abac3cb9dedbb6ecc73ede8ff54b61682f79b99411991826",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221436.log",
+    "mode": "0o600",
+    "sha256": "fe088c39ca62e47264e62335538e48dc75eceb141452a9c54088a714842312d6",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-pods_kdash-e2e_20261119-221445.log",
+    "mode": "0o600",
+    "sha256": "6fc9145cd0008b63c3253a8220388cf726f4c6b261f81508860dfd80988d77c8",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-runbook_kdash-e2e_20261119-221546.log",
+    "mode": "0o600",
+    "sha256": "89db6eb4d1d93c82367d2c8615574e2eeb3b63dced701040a85e5146ec043b30",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-secrets_kdash-e2e_20261119-221601.log",
+    "mode": "0o600",
+    "sha256": "ca47dcbf4bd0bd8dd9acdcad2e77d6ed28088ad9388abef8431fb6a5e360da96",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-services_kdash-e2e_20261119-221521.log",
+    "mode": "0o600",
+    "sha256": "907a0530d50992ad3461980d4c0aea205b418ed26138a45ed87dce106989bfbc",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-storage_kdash-e2e_20261119-221526.log",
+    "mode": "0o600",
+    "sha256": "b3f8012f143efbd404c5c13c024fd7cc37a834a6bb408fcb33f489bc33317da8",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221358.log",
+    "mode": "0o600",
+    "sha256": "0466897f5feece7c397fa1d6a07fe0cb5f4df385d3f9aec1f129ad296275ddc5",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221409.log",
+    "mode": "0o600",
+    "sha256": "c33f19b4357763c7900f31bc746c0cd3554a9cdec29af8e8b2ec48e6cfa767de",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-workloads_kdash-e2e_20261119-221456.log",
+    "mode": "0o600",
+    "sha256": "01786270d212b58aca3f4bfcf29a7836bc176f89ec834d9e58b23c9919d5dce9",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_z-crash_previous_20261119-221823.log",
+    "mode": "0o600",
+    "sha256": "4f33fb16368032c5a397f1550f98ba58d761d8344199693ad5c40ee5bde465a8",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/latest.log",
+    "mode": "0o600",
+    "sha256": "a92f59e880fe5fedaae4346d692683883209237a01357acb07f20f85cf724de7",
+    "symlink": true
+  }
+]

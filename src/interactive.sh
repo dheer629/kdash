@@ -8,6 +8,11 @@
 #   * nothing they produce enters the model, a report, a session or an export.
 # The command is built from the audited KC argv array on the host side: the
 # dashboard never evaluates shell text.
+# Login helpers are also used with this source module on its own. In that case
+# there is no screen theme to map; retain the original ANSI role unchanged.
+if ! declare -F ui_mapl >/dev/null 2>&1; then
+  ui_mapl() { UI_ML="$1"; }
+fi
 # Q, anywhere: leave kdash at once. The EXIT trap (cleanup) restores the screen,
 # writes the audit END record and removes temporary files.
 kdash_quit() { # where
@@ -103,8 +108,7 @@ interactive_audit_path() {
 
 interactive_ask() { # prompt [default] -> INTERACTIVE_ANSWER
     local ans=""
-    printf '%s' "$1"
-    IFS= read -r ans </dev/tty || return 1
+    ui_edit_line ans "$1" ask || return 1
     INTERACTIVE_ANSWER="${ans:-${2:-}}"
     return 0
 }
@@ -146,6 +150,7 @@ interactive_run() { # cmd...   (INTERACTIVE_BANNER is printed once the real scre
     fi
     printf '\033[?25l'
     [ "${ALTSCR:-1}" = 1 ] && printf '\033[?1049h'
+    [ "${UI_QUIET:-0}" != 1 ] || stty -echo </dev/tty 2>/dev/null      # stty sane above turned echo on for the child
     return "$rc"
 }
 
@@ -834,7 +839,7 @@ xfer_browse() { # side mode title ns pod container start
   picker_colors
   printf '\033[?25l\033[2J'
   while :; do
-    picker_size; bx_init; rows=$((PK_ROWS - 14)); [ "$rows" -ge 3 ] || rows=3
+    picker_size; bx_init; rows=$((PK_ROWS - 14)); [ "$typing" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3
     if [ "$reload" = 1 ]; then
       ui_bar "$PK_COLS" " KDASH ${PC_SEP} ${title} ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $([ "$side" = remote ] && printf '%s %s %s' "$pod" "$PC_SEP" "$c" || printf 'this host %s %s' "$PC_SEP" "$(hostname 2>/dev/null)") "
       printf '\033[H%s\033[K\n\033[K\n %sreading%s %s ...\033[J' "$UI_BAR" "$PC_D" "$PC_R" "$dir"
@@ -968,15 +973,20 @@ xfer_browse() { # side mode title ns pod container start
     [ -n "$tgt" ] && o1=1 || o1=0
     if [ "$side" = remote ] && [ "$mode" = pick ]; then
       t4="DOWNLOAD"; [ -n "$tgt" ] && l1="download $tgt" || l1="download"
-      c4=("d|$l1|$o1" "|then: review, confirm or cancel|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      c4=("d|$l1|$o1" "|then: review, confirm or cancel|0" "q Esc / Q|cancel / quit|1" ">|export to a log|1")
     elif [ "$mode" = pick ]; then
       t4="UPLOAD  step 1 of 2"; [ -n "$tgt" ] && l1="next: destination for $tgt" || l1="next: destination"
-      c4=("u|$l1|$o1" "|nothing is copied yet|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      c4=("u|$l1|$o1" "|nothing is copied yet|0" "q Esc / Q|cancel / quit|1" ">|export to a log|1")
     else
       t4="UPLOAD  step 2 of 2"
-      c4=("u|upload ${XFER_UPN:-the items} into ${dir##*/}/|1" "|then: review, confirm or cancel|0" "q / Esc|cancel, back to kdash|1" "Q|quit kdash|1")
+      c4=("u|upload ${XFER_UPN:-the items} into ${dir##*/}/|1" "|then: review, confirm or cancel|0" "q Esc / Q|cancel / quit|1" ">|export to a log|1")
     fi
     xfer_panel "$PK_COLS" "MOVE" "OPEN ${PC_MID} VIEW" "$t3" "$t4" "${c1[@]}" "${c2[@]}" "${c3[@]}" "${c4[@]}"
+    if [ "$typing" = 1 ]; then
+      if [ "$mode" = dir ] || [ -z "$q" ]; then t=open; else t=keep; fi
+      ui_search_box "$PK_COLS" "FILTER NAMES" "$nv of $n in ${dir##*/}/" "/ $q" $(( ${#q} + 2 )) "Enter $t   ${PC_UP}${PC_DN} move   Backspace erase   Esc clear"
+      buf+="$UI_SBOX"$'\n'
+    fi
     buf+="$XFER_PANEL"
     ui_flush "$buf" "xfer:$side:$mode:$PK_COLS:$PK_ROWS" "$fl"; fl=1
     picker_key 120 || continue
@@ -1013,11 +1023,15 @@ xfer_browse() { # side mode title ns pod container start
       '<PGUP>') sel=$((sel - rows)) ;;
       g|'<HOME>') sel=0 ;; G|'<END>') sel=$((nv - 1)) ;;
       /) typing=1; qd=0 ;;
+      '>') local qi
+           { printf 'TYPE\tSIZE\tMODIFIED\tNAME\n'; for qi in ${V[@]+"${V[@]}"}; do printf '%s\t%s\t%s\t%s\n' "${T[qi]}" "${H[qi]}" "${M[qi]}" "${N[qi]}"; done; } | qx_align > "$d/qx.tsv"
+           if quick_export "files_$([ "$side" = remote ] && printf '%s' "$pod" || printf 'local')" "file browser | $([ "$side" = remote ] && printf '%s/%s' "$pod" "$c" || printf 'this host %s' "$hn") | $dir | $nv of $n entries${q:+ | filter \"$q\"}" "$d/qx.tsv" "EVERY ENTRY OF $dir"
+           then act="$QX_MSG"; else msg="$QX_MSG"; fi ;;
       r) reload=1; act="reloaded" ;;
       h|'<LEFT>'|$'\177'|$'\b'|-) if [ "$dir" = / ]; then msg="already at /"; else dir="${dir%/*}"; [ -n "$dir" ] || dir=/; reload=1; act="up to $dir"; fi ;;
       l|'<RIGHT>') [ -n "$k" ] && [[ "${T[k]}" == d* ]] && { dir="${dir%/}/${N[k]}"; reload=1; act="opened ${N[k]}/"; } ;;
-      p|:) printf '\033[%s;1H\033[K\033[?25h %spath%s (absolute, or relative to %s): ' "$PK_ROWS" "$PC_B" "$PC_R" "$dir"
-           local np=""; IFS= read -r np </dev/tty || np=""; printf '\033[?25l'; case "$np" in *$'\e'*) np="" ;; esac
+      p|:) printf '\033[%s;1H\033[K' "$PK_ROWS"
+           local np=""; ui_edit_line np " ${PC_B}path${PC_R} (absolute, or relative to $dir): " "path-$side" || np=""; printf '\033[?25l'
            if [ -n "$np" ] && interactive_valid_path "$np"; then
              [ "$side" = local ] && np="$(interactive_expand "$np")"
              case "$np" in /*) dir="$np" ;; *) dir="${dir%/}/$np" ;; esac; reload=1; act="went to $np"
@@ -1477,11 +1491,11 @@ xfer_download_once() { # ns pod container
               break ;;
       f|F) case "$fmt" in files) if [ -n "$zt" ]; then fmt=zip; else fmt=tgz; fi ;; zip) fmt=tgz ;; *) fmt=files ;; esac
            XFER_NOTE="format is now $(case "$fmt" in zip) echo "zip ($base.zip)";; tgz) echo "tar.gz ($base.tar.gz)";; *) echo 'the same names as in the container';; esac)" ;;
-      l|L) printf '\n local directory: '; local nd=""; IFS= read -r nd </dev/tty || nd=""; case "$nd" in *$'\e'*) nd="" ;; esac; nd="$(interactive_expand "$nd")"
+      l|L) printf '\n'; local nd=""; ui_edit_line nd " local directory: " localdir || nd=""; nd="$(interactive_expand "$nd")"
            if [ -n "$nd" ] && [ -d "$nd" ]; then outdir="$(cd -- "$nd" && pwd)"; XFER_NOTE="local directory is now $outdir"
            elif [ -n "$nd" ]; then XFER_NOTE="$nd is not a directory - unchanged"; fi ;;
       n|N) [ "$fmt" = files ] && { XFER_NOTE="plain files keep their names - f switches to zip or tar.gz"; continue; }
-           printf '\n archive name without extension [%s]: ' "$base"; local nb=""; IFS= read -r nb </dev/tty || nb=""; case "$nb" in *$'\e'*) nb="" ;; esac
+           printf '\n'; local nb=""; ui_edit_line nb " archive name without extension [$base]: " archive || nb=""
            [ -z "$nb" ] || { base="${nb%.zip}"; base="${base%.tar.gz}"; base="${base//\//_}"; XFER_NOTE="archive name is now $base"; } ;;
       b|B) XFER_BACK="$src"; return 3 ;;
       q|$'\033') audit CP_CANCEL "dir=down pod=$ns/$pod container=${c:--} at=summary"; return 1 ;;
@@ -2095,6 +2109,40 @@ certs__local() {
   return 0
 }
 
+# Certificates inside Secrets (the services' own TLS certificates - Ericsson SIP-TLS,
+# cert-manager or by hand): the same read as the secrets map (Y), one row per
+# certificate with its expiry, where it is mounted and who uses it.
+certs__secrets() {
+  if [ "${KDASH_CERTS_FROM_SECRETS:-1}" = 0 ]; then health__status cert-secrets disabled 'KDASH_CERTS_FROM_SECRETS=0'; return 0; fi
+  declare -F sm_collect >/dev/null || return 0
+  [ "$(sm_age)" -lt "${KDASH_SECRETS_CHECK_TTL:-300}" ] || sm_collect > /dev/null 2>&1
+  local st det
+  st="$(health__state sm-secrets)"; det="$(cut -f3 "$TOOLKIT_DIR/health-sm-secrets.status" 2>/dev/null)"
+  if [ "$st" != ok ]; then
+    case "$st" in error|timeout) det="certificates in Secrets not listed: ${det:-not read}" ;; *) det="certificates in Secrets not listed (Secrets read $st)" ;; esac
+    health__status cert-secrets "$st" "$det"; return 0
+  fi
+  LC_ALL=C awk -F'\t' -v all="${ALL_NS:-0}" '
+    BEGIN { OFS = "\t" }
+    FILENAME ~ /sm-uses/ { if ($4 == "-" || $4 == "") next
+      k = $1 "/" $2; p = ($7 != "" && $7 != "-") ? $7 : $3
+      u = $4 (($6 != "" && $6 != "-") ? " (" $6 ")" : "") (p != "" && p != "-" ? " " p : "")
+      if (!((k, u) in SEEN)) { SEEN[k, u] = 1; U[k] = U[k] (U[k] == "" ? "" : "; ") u; NU[k]++ }
+      next }
+    { e = $10 + 0; if (e <= 0) next          # NOTAFTER is epoch seconds in sm-certs.tsv
+      k = $1 "/" $2
+      what = ($5 == "CA" || $5 == "chain CA") ? "CA " $6 : ($5 == "chain" ? "chain: " $6 : $6)
+      obj = (all == "1" ? $1 "/" : "") $2 " " $3 ($4 > 1 ? " #" $4 : "")
+      where = (U[k] != "") ? U[k] : "not used by any pod you can read"
+      note = "issuer " ($13 == "self" ? "(self-signed)" : $8)
+      if ($14 ~ /MISSING/) note = note "; tls.key MISSING"
+      if ($15 ~ /NOT signed|out of order|does not sign/) { c = $15; sub(/^\{.\}/, "", c); note = note "; chain: " c }
+      print "SECRETS", what, obj, where, e, "ok", note, "secret"; n++ }
+    END { printf "%d\n", n + 0 > "/dev/stderr" }' "$TOOLKIT_DIR/sm-uses.tsv" "$TOOLKIT_DIR/sm-certs.tsv" 2> "$CERTS_DIR/secrets.n" >> "$CERTS_ROWS"
+  local n m; n="$(cat "$CERTS_DIR/secrets.n" 2>/dev/null)"; m="$(awk 'END { print NR }' "$TOOLKIT_DIR/sm-secrets.tsv" 2>/dev/null)"
+  health__status cert-secrets ok "${n:-0} certificates in ${m:-0} Secrets (the same read as Y)"
+}
+
 certs_collect() { # quick (kubeconfig + API endpoint + CA bundles) | full (adds nodes, ingress, this host)
   local mode="${1:-full}"
   [ -n "${TOOLKIT_DIR:-}" ] || return 1
@@ -2107,6 +2155,7 @@ certs_collect() { # quick (kubeconfig + API endpoint + CA bundles) | full (adds 
   certs__api "$mode"
   certs__probe_all
   [ "$mode" != full ] || certs__local
+  [ "$mode" != full ] || certs__secrets
   printf 'mode=%s\nrke2=%s\nnodes_cut=%s\nat=%s\n' "$mode" "${CERTS_RKE2:-0}" "${CERTS_NODES_CUT:-0}" "$(date +%s)" > "$CERTS_DIR/meta"
   rm -rf "$TOOLKIT_DIR/certs"; mv "$CERTS_DIR" "$TOOLKIT_DIR/certs"
   certs_summary > "$TOOLKIT_DIR/certs.summary"
@@ -2169,7 +2218,7 @@ certs_render() {
     return 0
   fi
   mode="$(sed -n 's/^mode=//p' "$d/meta")"; rke2="$(sed -n 's/^rke2=//p' "$d/meta")"; cut="$(sed -n 's/^nodes_cut=//p' "$d/meta")"
-  health__sources cert-kubeconfig cert-tls cert-webhooks cert-apiservices cert-manager $([ "$mode" = full ] && printf 'cert-nodes cert-ingress') $([ -f "$TOOLKIT_DIR/health-cert-host.status" ] && printf cert-host)
+  health__sources cert-kubeconfig cert-tls cert-webhooks cert-apiservices cert-manager $([ "$mode" = full ] && printf 'cert-nodes cert-ingress cert-secrets') $([ -f "$TOOLKIT_DIR/health-cert-host.status" ] && printf cert-host)
   local all="$d/graded.tsv" sum
   certs__graded > "$all"
   sum="$(certs_summary)"
@@ -2180,8 +2229,8 @@ certs_render() {
     awk -F'\t' '$3 != "-"' "$all" | cut -f1-7
   } | tk_table "EXPIRY" "soonest first - warning under $CERT_WARN_DAYS days, critical under $CERT_CRIT_DAYS days (KDASH_CERT_WARN_DAYS / KDASH_CERT_CRIT_DAYS)" \
       "$(awk -F'\t' '$3 == "-" { f = 1 } END { exit !f }' "$all" && printf 'no expiry dates could be read - see NOT CHECKED below' || printf 'nothing to check: no TLS endpoint, client certificate, token or CA bundle was found')" item items
-  { awk -F'\t' -v host="$(hostname -s 2>/dev/null || hostname)" '
-      function hint(   o, a) {
+  { awk -F'\t' -v host="$(hostname -s 2>/dev/null || hostname)" -v ns="${NS:-}" '
+      function hint(   o, a, b) {
         if ($9 ~ /^node-/) return "cert-node||" $5 "|" (($5 in SRV) ? "server" : "agent")
         if ($9 == "rke2") return "cert-rke2file||" host "|server"
         if ($9 == "ca") return "cert-ca||" host
@@ -2193,6 +2242,7 @@ certs_render() {
         if ($8 == "CERT-MANAGER") return "cert-manager|" a[1] "|" a[2]
         if ($8 == "INGRESS") return "cert-ingress|" a[1] "|" a[2]
         if ($8 == "LOGIN") return "login"
+        if ($8 == "SECRETS") { split($5, a, " "); o = a[1]; if (index(o, "/")) { split(o, b, "/"); return "sm-expiring|" b[1] "|" b[2] "|" a[2] } return "sm-expiring|" ns "|" o "|" a[2] }
         return "" }
       NR == FNR { if ($9 == "node-api" || $9 == "node-rke2") SRV[$5] = 1; next }
       { s = $1; sub(/^\{.\}/, "", s) }
@@ -2249,10 +2299,10 @@ certs_badge() { # summary line -> short text for the header ("" when nothing is 
 # then hourly; it only sets the header badge and flashes once when something is due.
 certs_quick_poll() {
   [ "${KDASH_CERT_CHECK:-1}" = 1 ] || return 0
-  local now; now=$(date +%s)
+  local now; printf -v now '%(%s)T' -1
   if [ -n "${CERTQ_PID:-}" ] && ! kill -0 "$CERTQ_PID" 2>/dev/null; then
     wait "$CERTQ_PID" 2>/dev/null || true; CERTQ_PID=""; CERTQ_NEXT=$((now + 3600))
-    CERT_BADGE="$(certs_badge "$(cat "$TMPD/certq/certs.summary" 2>/dev/null)")"
+    CERT_BADGE="$(certs_badge "$(cat "$TMPD/certq/certs.summary" 2>/dev/null)")"; RENDER_GEN=$(( ${RENDER_GEN:-0} + 1 ))
   fi
   # once per session, and never over another message (it waits until that one ends)
   if [ -n "${CERT_BADGE:-}" ] && [ "${CERTQ_FLASHED:-0}" = 0 ] && [ -s "$TMPD/certq/certs.summary" ] && [ "$now" -ge "${FLASH_UNTIL:-0}" ]; then
@@ -2915,7 +2965,7 @@ check_run() { # finding-number capture-file output-file
     esac
     case " ${rest[*]} " in *" --raw "*|*" -w "*|*" --watch "*|*" -f "*|*" --follow "*) verb="" ;; esac
     if [ -z "$verb" ]; then printf '(not run: only get, describe, logs, top, rollout history/status and auth whoami/can-i run from here)\n' >> "$out"; skipped=$((skipped + 1)); continue; fi
-    t0=$(date +%s)
+    printf -v t0 '%(%s)T' -1
     timeout "${KDASH_CHECK_TIMEOUT:-30}" "${KC[@]}" "${rest[@]}" < /dev/null 2>&1 | head -c "${KDASH_CHECK_BYTES:-262144}" | inspector_clean >> "$out"
     rc="${PIPESTATUS[0]}"
     [ "$rc" = 0 ] || printf '(exit %s%s)\n' "$rc" "$([ "$rc" = 124 ] && printf ' - timed out after %ss' "${KDASH_CHECK_TIMEOUT:-30}")" >> "$out"
@@ -2934,9 +2984,9 @@ check_run_prompt() {
   [ -s "$cap" ] || paint 2>/dev/null
   first="$(awk -F'\t' '$1 ~ /^[0-9]+$/ { print $1; exit }' "$cap" 2>/dev/null)"
   [ -n "$first" ] || { flash "no read commands to run in this view" 4; return 0; }
-  printf '\033[%s;1H\033[K\033[?25h run the read commands of finding # (Enter = %s, Esc cancels): ' "$(tput lines 2>/dev/null || echo 24)" "$first"
-  IFS= read -r n </dev/tty || n=""; printf '\033[?25l'
-  case "$n" in *$'\e'*|q|Q) return 0 ;; '') n="$first" ;; esac
+  printf '\033[%s;1H\033[K' "$(tput lines 2>/dev/null || echo 24)"
+  ui_edit_line n " run the read commands of finding # (Enter = $first, Esc cancels): " finding || { printf '\033[?25l'; return 0; }; printf '\033[?25l'
+  case "$n" in q|Q) return 0 ;; '') n="$first" ;; esac
   case "$n" in \#*) n="${n#\#}" ;; esac
   case "$n" in *[!0-9]*) flash "not a finding number: $n" 4; return 0 ;; esac
   flash "running the read commands of #$n ..." 30; paint 2>/dev/null
@@ -2946,7 +2996,9 @@ check_run_prompt() {
   { printf '(q returns to kdash)\n\n'; cat "$out"; } | LESS='-R -K -S' "$pager"
   [ "${pager##*/}" != cat ] || { printf '\n any key returns'; IFS= read -rsn1 _ </dev/tty; }
   printf '\033[?25l\033[2J'
-  flash "#$n: ran ${CHECK_RAN:-0}, left to you ${CHECK_SKIPPED:-0} - output kept in $out" 8
+  if QX_NOSCREEN=1 quick_export "check-run-${n}_${NS:-ns}" "read commands of finding #$n (view $(qx_view_name))" "$out" "OUTPUT OF THE READ COMMANDS OF #$n"; then
+    flash "#$n: ran ${CHECK_RAN:-0}, left to you ${CHECK_SKIPPED:-0} - output saved to $QX_DISP" 10
+  else flash "#$n: ran ${CHECK_RAN:-0}, left to you ${CHECK_SKIPPED:-0} - output kept in $out ($QX_MSG)" 10; fi
 }
 
 # ---- OIDC / exec-plugin login (startup check, key L) ----------------------------
@@ -3031,7 +3083,7 @@ login__cache_state() {
     if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then newest="$f"; fi
   done
   [ -n "$newest" ] || { printf none; return 0; }
-  now=$(date +%s)
+  printf -v now '%(%s)T' -1
   idt="$(LC_ALL=C grep -o '"id_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
   rt="$(LC_ALL=C grep -o '"refresh_token" *: *"[^"]*"' "$newest" | head -n 1 | sed 's/.*: *"//; s/"$//')"
   e="$(certs__jwt "$idt" 2>/dev/null | cut -f1)"
@@ -3242,14 +3294,14 @@ login_interactive() { # start | session [auto]
     printf '\033[1;7m KDASH | OIDC LOGIN | context %s \033[0m\n\n' "$CTX_NAME" > /dev/tty
     printf '  Your login for context %s %s%s. The login helper starts now and shows a URL:\n' "$CTX_NAME" "$([ -n "$auto" ] && printf 'has expired - kdash opened the login for you' || printf 'is needed')" "$([ "$when" = start ] && printf ' before kdash can read anything' || printf ' - the dashboard keeps its last data meanwhile')" > /dev/tty
     printf '  open it, sign in, and kdash continues by itself.\n' > /dev/tty
-    [ -z "$iss" ] || printf '\n  \033[2missuer   %s%s\033[0m\n' "$iss" "${cid:+   client $cid}" > /dev/tty
+    ui_mapl $'\033[2m'; [ -z "$iss" ] || printf '\n  %sissuer   %s%s\033[0m\n' "$UI_ML" "$iss" "${cid:+   client $cid}" > /dev/tty
     audit LOGIN_START "context=$CTX_NAME when=$when${auto:+ auto=1}"
     login__browser_dir "$bdir" 2>/dev/null
     ( i=0; hinted=0; while [ "$i" -lt 3000 ]; do
         u="$(login_urls_of "$f")"; if [ -n "$u" ]; then sleep 0.3; login__box $(login_urls_of "$f"); exit 0; fi
         # a helper that opened a "browser" instead of printing the URL: the stand-in recorded it
         if [ -s "$bdir/url" ]; then sleep 0.3; [ -n "$(login_urls_of "$f")" ] && { login__box $(login_urls_of "$f"); exit 0; }
-          printf '\n  \033[2m(the login helper tried to open a browser on this host - its URL was caught instead)\033[0m\n' > /dev/tty
+          ui_mapl $'\033[2m'; printf '\n  %s(the login helper tried to open a browser on this host - its URL was caught instead)\033[0m\n' "$UI_ML" > /dev/tty
           login__box $(awk '!s[$0]++' "$bdir/url" | head -n 3); exit 0; fi
         if [ "$hinted" = 0 ] && [ "$i" -ge $(( ${KDASH_LOGIN_NOURL_HINT:-8} * 5 )) ]; then hinted=1
           { printf '\n  The login helper has not printed a URL yet. It may have opened a browser on this host\n'
@@ -3288,13 +3340,13 @@ login_interactive() { # start | session [auto]
     fi
     if [ "$rc" = 0 ]; then
       LOGIN_USER="$(awk '/^Username/ { $1 = ""; sub(/^ +/, ""); print; exit }' "$out")"
-      printf '\n\033[1;32m  Logged in%s.\033[0m kdash continues ...\n' "${LOGIN_USER:+ as $LOGIN_USER}" > /dev/tty
+      ui_mapl $'\033[1;32m'; printf '\n%s  Logged in%s.\033[0m kdash continues ...\n' "$UI_ML" "${LOGIN_USER:+ as $LOGIN_USER}" > /dev/tty
       rm -f "${TOOLKIT_DIR:-/nonexistent}/fmea-access.tsv" 2>/dev/null
       audit LOGIN_OK "context=$CTX_NAME user=${LOGIN_USER:-?} seconds=$((SECONDS - t0))$([ "$elsewhere" = 1 ] && printf ' via=poll')$([ -s "$bdir/url" ] && printf ' url=captured')"
       ok=1; sleep 1; break
     fi
     audit LOGIN_FAILED "context=$CTX_NAME rc=$rc"
-    printf '\n\033[1;31m  The login did not complete (rc=%s).\033[0m Last messages:\n' "$rc" > /dev/tty
+    ui_mapl $'\033[1;31m'; printf '\n%s  The login did not complete (rc=%s).\033[0m Last messages:\n' "$UI_ML" "$rc" > /dev/tty
     tail -n 4 "$f" | sed 's/^/    /' > /dev/tty
     if grep -qiE 'discovery error|openid-configuration' "$f" && grep -qiE 'dial tcp|no such host|timeout|refused|x509|certificate' "$f"; then
       printf '\n  \033[1mThe identity provider%s cannot be reached from this host\033[0m (network, proxy, DNS or its certificate) -
@@ -3312,6 +3364,7 @@ login_interactive() { # start | session [auto]
     FETCH_NEXT=0; FETCH_FAILURES=0; SPEC_AT=0; LAST=0; TOOLKIT_NEXT=0
     CERTQ_NEXT=0; CERT_BADGE=""
   fi
+  [ "${UI_QUIET:-0}" != 1 ] || stty -echo </dev/tty 2>/dev/null   # back to a screen that draws typed keys itself
   if [ "$when" != start ]; then
     printf '\033[?25l' > /dev/tty
     [ "${ALTSCR:-1}" = 1 ] && printf '\033[?1049h' > /dev/tty
@@ -3492,7 +3545,7 @@ fmea__perm_args() { # perm -> can-i words; NS scope from the dashboard
 fmea_access() { # [force] -> $TOOLKIT_DIR/fmea-access.tsv
   local f="$TOOLKIT_DIR/fmea-access.tsv" key now perms p i=0 user groups w d
   local -a args pids
-  key="${CTX_NAME:-?}|${NS:-?}|${ALL_NS:-0}"; now=$(date +%s)
+  key="${CTX_NAME:-?}|${NS:-?}|${ALL_NS:-0}"; printf -v now '%(%s)T' -1
   if [ "${1:-}" != force ] && [ -s "$f" ]; then
     IFS=$'\t' read -r _ k at < "$f"
     if [ "$k" = "$key" ] && [ $((now - ${at:-0})) -lt "${KDASH_FMEA_ACCESS_TTL:-300}" ]; then return 0; fi
@@ -4152,7 +4205,37 @@ sm__x509() { # < one PEM certificate
   out="$(openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 2>/dev/null)" || return 1
   printf '%s\n' "$out" | LC_ALL=C awk "$TK_TIME_AWK$SM_X509_AWK"
 }
+# the same for the Secrets scan, with no subshell: PEM file, work file prefix -> SM_X509
+sm__x509f() {
+  SM_X509=""
+  { openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 -ext subjectAltName,basicConstraints \
+      -text -certopt no_header,no_version,no_serial,no_signame,no_validity,no_subject,no_issuer,no_sigdump,no_aux,no_extensions < "$1" > "$2.x" 2>/dev/null ||
+    openssl x509 -noout -startdate -enddate -subject -issuer -fingerprint -sha256 -nameopt RFC2253 < "$1" > "$2.x" 2>/dev/null; } || return 1
+  LC_ALL=C awk "$TK_TIME_AWK$SM_X509_AWK" "$2.x" > "$2.l" && IFS= read -r SM_X509 < "$2.l"
+}
 
+sm__kindv() { # type key header24 -> SM_KIND (no subshell)
+  case "$3" in
+    LS0tLS1CRUdJTiBDRVJUSUZJ|LS0tLS1CRUdJTiBUUlVTVEVE) SM_KIND=cert ;;
+    LS0tLS1CRUdJTiBQUklWQVRF) SM_KIND='private key (PKCS8)' ;;
+    LS0tLS1CRUdJTiBSU0EgUFJJ) SM_KIND='private key (RSA)' ;;
+    LS0tLS1CRUdJTiBFQyBQUklW) SM_KIND='private key (EC)' ;;
+    LS0tLS1CRUdJTiBEU0EgUFJJ) SM_KIND='private key (DSA)' ;;
+    LS0tLS1CRUdJTiBPUEVOU1NI) SM_KIND='private key (OpenSSH)' ;;
+    LS0tLS1CRUdJTiBFTkNSWVBU) SM_KIND='private key (encrypted)' ;;
+    LS0tLS1CRUdJTiBQVUJMSUMg) SM_KIND='public key' ;;
+    LS0tLS1CRUdJ*) SM_KIND='PEM' ;;
+    *) case "$1" in
+         kubernetes.io/dockerconfigjson|kubernetes.io/dockercfg) SM_KIND='registry credentials' ;;
+         kubernetes.io/service-account-token) SM_KIND='service-account token' ;;
+         kubernetes.io/basic-auth|kubernetes.io/ssh-auth) SM_KIND='credentials' ;;
+         *) case "$2" in
+              *.jks|*.p12|*.pfx|*.keystore|*.truststore|*keystore*|*truststore*) SM_KIND='keystore (binary, not parsed)' ;;
+              *) SM_KIND=value ;;
+            esac ;;
+       esac ;;
+  esac
+}
 sm__kind() { # first 24 base64 characters of a PEM value -> what it is
   case "$1" in
     LS0tLS1CRUdJTiBDRVJUSUZJ) printf cert ;;
@@ -4187,8 +4270,10 @@ sm__read_secrets() {
   rm -rf "$w"; mkdir -p "$w"; : > "$d/sm-secrets.tsv"; : > "$d/sm-certs.tsv"
   # values: only PEM certificate values pass the template; every other value is reduced to its length
   # (a PEM value: its 18-byte header). Helm release payloads are left out at the API.
-  "${KC[@]}" get secrets "${SCOPE[@]}" --field-selector 'type!=helm.sh/release.v1' --request-timeout="${KDASH_HEALTH_TIMEOUT:-12s}" -o 'go-template={{range .items}}{{$o := .}}S|{{.metadata.namespace}}|{{.metadata.name}}|{{.type}}|{{.metadata.creationTimestamp}}|{{.immutable}}|{{with .metadata.annotations}}{{index . "cert-manager.io/certificate-name"}}{{end}}|{{with .metadata.annotations}}{{index . "cert-manager.io/issuer-name"}}{{end}}|{{with .metadata.annotations}}{{index . "meta.helm.sh/release-name"}}{{end}}|{{with .metadata.labels}}{{index . "app.kubernetes.io/managed-by"}}{{end}}|{{range .metadata.ownerReferences}}{{.kind}}/{{.name}}{{end}}|{{with .metadata.annotations}}{{index . "kubernetes.io/service-account.name"}}{{end}}{{"\n"}}{{range $k, $v := .data}}K|{{$k}}|{{len $v}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 12) "LS0tLS1CRUdJ"}}{{slice $v 0 24}}{{end}}{{end}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 28) "LS0tLS1CRUdJTiBDRVJUSUZJQ0FU"}}{{$v}}{{end}}{{end}}{{"\n"}}{{end}}E|{{"\n"}}{{end}}' 2> "$err" |
-  { local sns="" sname="" stype="" screated="" simm="" mgr=""
+  local stt="${KDASH_SECRETS_TIMEOUT:-120}"; case "$stt" in ''|*[!0-9]*|0) stt=120 ;; esac
+  KDASH_CMD_TIMEOUT=$((stt + 5)) "${KC[@]}" get secrets "${SCOPE[@]}" --field-selector 'type!=helm.sh/release.v1' --request-timeout="${stt}s" -o 'go-template={{range .items}}{{$o := .}}S|{{.metadata.namespace}}|{{.metadata.name}}|{{.type}}|{{.metadata.creationTimestamp}}|{{.immutable}}|{{with .metadata.annotations}}{{index . "cert-manager.io/certificate-name"}}{{end}}|{{with .metadata.annotations}}{{index . "cert-manager.io/issuer-name"}}{{end}}|{{with .metadata.annotations}}{{index . "meta.helm.sh/release-name"}}{{end}}|{{with .metadata.labels}}{{index . "app.kubernetes.io/managed-by"}}{{end}}|{{range .metadata.ownerReferences}}{{.kind}}/{{.name}}{{end}}|{{with .metadata.annotations}}{{index . "kubernetes.io/service-account.name"}}{{end}}{{"\n"}}{{range $k, $v := .data}}K|{{$k}}|{{len $v}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 12) "LS0tLS1CRUdJ"}}{{slice $v 0 24}}{{end}}{{end}}|{{if ge (len $v) 28}}{{if eq (slice $v 0 28) "LS0tLS1CRUdJTiBDRVJUSUZJQ0FU"}}{{$v}}{{end}}{{end}}{{"\n"}}{{end}}E|{{"\n"}}{{end}}' 2> "$err" > "$w/api.txt"
+  rc=$?
+  { local sns="" sname="" stype="" screated="" simm="" mgr="" sf
     while IFS='|' read -r rec a b c e f g h i line ks pem; do
       case "$rec" in
         S) sns="$a"; sname="$b"; stype="$c"; screated="$e"; simm="$f"; keys=""; ncert=0
@@ -4200,34 +4285,38 @@ sm__read_secrets() {
            elif [ -n "${pem#<no value>}" ]; then mgr="service account: $pem"
            elif [ -n "${line#<no value>}" ]; then mgr="$line"; fi ;;
         K) # a = key, b = base64 length, c = PEM header (24 chars), e = certificate value (base64) or empty
-           kind="$(sm__kind "$c")"; [ -n "$kind" ] || kind="$(sm__kind_by_name "$stype" "$a")"
+           sm__kindv "$stype" "$a" "$c"; kind="$SM_KIND"
            if [ -n "$e" ] && [ "$n" -lt "$max" ]; then
              # only CERTIFICATE blocks are kept: anything else in the value is dropped in the pipe
              f="$w/$(( n + 1 ))"
-             printf '%s' "$e" | base64 -d 2>/dev/null | LC_ALL=C awk -v p="$f" '
+             printf '%s' "$e" > "$f.b"; base64 -d < "$f.b" 2>/dev/null | LC_ALL=C awk -v p="$f" '
                /-----BEGIN (TRUSTED )?CERTIFICATE-----/ { c++; o = p "." c ".pem" }
                /-----BEGIN .*PRIVATE KEY-----/ { pk = 1 }
                o != "" { print > o }
                /-----END (TRUSTED )?CERTIFICATE-----/ { if (o != "") close(o); o = "" }
                END { print c + 0, pk + 0 }' > "$f.n"
-             read -r g h < "$f.n"; rm -f "$f.n"
-             [ "${h:-0}" = 1 ] && kind="cert + private key in one file"
+             read -r g h < "$f.n"
+             sf=""; [ "${h:-0}" != 1 ] || { kind="cert + private key in one file"; sf=samefile; }
              i=1
              while [ "$i" -le "${g:-0}" ]; do
-               if line="$(sm__x509 < "$f.$i.pem")"; then
-                 n=$(( n + 1 )); ncert=$(( ncert + 1 ))
-                 printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$a" "$i" "$line" "$([ "${h:-0}" = 1 ] && echo samefile)" >> "$d/sm-certs.raw"
-                 cp -f "$f.$i.pem" "$w/fp-$(printf '%s' "$line" | cut -f5).pem" 2>/dev/null
+               if sm__x509f "$f.$i.pem" "$f.$i"; then
+                 line="$SM_X509"; n=$(( n + 1 )); ncert=$(( ncert + 1 ))
+                 printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$a" "$i" "$line" "$sf" >> "$d/sm-certs.raw"
+                 e="${line#*$'\t'}"; e="${e#*$'\t'}"; e="${e#*$'\t'}"; e="${e#*$'\t'}"; e="${e%%$'\t'*}"   # field 5: fingerprint
+                 mv -f "$f.$i.pem" "$w/fp-$e.pem" 2>/dev/null
                fi
-               rm -f "$f.$i.pem"; i=$(( i + 1 ))
+               i=$(( i + 1 ))
              done
            fi
            keys="$keys${keys:+; }$a [$kind, $(( b * 3 / 4 )) B]" ;;
-        E) [ -z "$sname" ] || printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$stype" "$screated" "$mgr" "${keys:-(no data)}" "$ncert" "$([ "$simm" = true ] && echo immutable)" >> "$d/sm-secrets.tsv"
+        E) if [ -n "$sname" ]; then
+             if [ "$simm" = true ]; then sf=immutable; else sf=""; fi
+             printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$sns" "$sname" "$stype" "$screated" "$mgr" "${keys:-(no data)}" "$ncert" "$sf" >> "$d/sm-secrets.tsv"
+           fi
            sname="" ;;
       esac
-    done; }
-  rc="${PIPESTATUS[0]}"
+    done < "$w/api.txt"; }
+  rm -f -- "$w/api.txt"
   if [ "$rc" = 0 ]; then health__status sm-secrets ok 'successful API read'; else : > "$d/sm-secrets.tsv"; rm -f "$d/sm-certs.raw"; health__failure sm-secrets "$err"; fi
   # per certificate: role in its file (first = the certificate, further ones = its chain) and the key beside it
   if [ -s "$d/sm-certs.raw" ]; then
@@ -4481,7 +4570,7 @@ sm_render() {
   [ "${ALL_NS:-0}" != 1 ] || one=0     # one namespace: its name is in the header, not in every row
   tk_title "SECRETS" "certificates and keys in Secrets: expiry, who manages them, who uses them and where the files are - values are never read"
   if [ ! -s "$d/sm.summary" ]; then printf '\nReading Secrets (names, types, certificates) and every reference to them ...\n'; return 0; fi
-  IFS=$'\t' read -r ns nc ex cr wa fc fw u st < "$d/sm.summary"; now="$(date +%s)"
+  IFS=$'\t' read -r ns nc ex cr wa fc fw u st < "$d/sm.summary"; printf -v now '%(%s)T' -1
   printf '\n '
   if [ "$st" = ok ]; then
     sm__chip EXPIRED "$ex" '41;97'; sm__chip "CRITICAL (<= ${CERT_CRIT_DAYS:-7} d)" "$cr" '41;97'; sm__chip "WARNING (<= ${CERT_WARN_DAYS:-30} d)" "$wa" '43;30'
@@ -4500,15 +4589,18 @@ sm_render() {
     TK_COUNT=0 tk_table "ACCESS" "user $u, scope $([ "${ALL_NS:-0}" = 1 ] && echo 'all namespaces' || echo "${NS:-?}") - only what your RBAC allows is read"
   if [ "$st" != ok ]; then
     tk_note "Secrets cannot be read here ($st): certificates and expiry are not visible to you. References from pods and ingresses are still shown below."
+    local why_; why_="$(cut -f3 "$TOOLKIT_DIR/health-sm-secrets.status" 2>/dev/null)"
+    [ -z "$why_" ] || tk_note "reason: $why_"
+    case "$st" in timeout|error) tk_note "a large namespace over a slow link needs time: KDASH_SECRETS_TIMEOUT (now ${KDASH_SECRETS_TIMEOUT:-120} s) raises the limit; r reads again" ;; esac
     tk_note "To see them, ask for: verbs get, list on resource secrets in this namespace (read-only)."
   fi
   # 1. certificates: the list (what expires when, who uses it), then the details by the same #
-  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" -v one="$one" 'BEGIN { OFS = "\t" }
+  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" -v one="$one" "$SM_UTC_AWK"'BEGIN { OFS = "\t" }
       FILENAME ~ /sm-secrets/ { MG[$1 "/" $2] = $5; next }
       FILENAME ~ /sm-uses/ { s = $1 "/" $2; if (!((s, $4) in seen)) { seen[s, $4] = 1; UB[s] = UB[s] (UB[s] == "" ? "" : ", ") $4 }; next }
       { s = $1 "/" $2; dl = int(($10 - now) / 86400)
         stt = ($10 < now) ? "{r}EXPIRED" : (dl <= crit) ? "{r}CRITICAL" : (dl <= warn) ? "{y}WARNING" : "{g}OK"
-        cmd = "date -u -d @" $10 " +%Y-%m-%d\\ %H:%M 2>/dev/null"; t = "-"; cmd | getline t; close(cmd)
+        t = smutc($10, 0)
         san = $7; gsub(/,/, ", ", san)
         print $10, stt, dl, t, (one ? $2 : s), $3 ($4 > 1 ? " #" $4 : ""), ($13 == "self" && $5 == "certificate" ? "self-signed" : $5), $6, ($13 == "self" ? "(self)" : $8),
               ($4 > 1 ? "{d}(with the certificate above it)" : (UB[s] == "" ? (PODS_OK ? "{y}no pod or ingress" : "{d}not visible (pods)") : UB[s] (PODS_OK ? "" : " (+ pods not visible)"))), $11, $14, MG[s], $12, san, ($15 == "" ? "-" : $15) }' \
@@ -4599,7 +4691,7 @@ sm_export() { # csv|tsv|json
           printf "{\"context\":%s,\"namespace\":%s,\"generated\":%s,\"user\":%s,\"secrets_access\":%s,\"counts\":{\"secrets\":%d,\"certificates\":%d,\"expired\":%d,\"critical\":%d,\"warning\":%d},\"secrets\":[%s],\"referenced_but_not_readable_or_missing\":[%s],\"findings\":[%s]}\n", j(ctx), j(ns), j(at), j(M[8]), j(M[9]), M[1], M[2], M[3], M[4], M[5], S, X, F }' \
         "$d/sm-svc.tsv" "$d/sm-certs.tsv" "$d/sm-uses.tsv" "$d/sm-findings.tsv" "$d/sm-secrets.tsv" 2>/dev/null ;;
     *) { printf 'NAMESPACE\tSECRET\tTYPE\tKEY\tINDEX\tROLE\tSUBJECT\tSAN\tISSUER\tNOT_BEFORE\tNOT_AFTER\tDAYS_LEFT\tVALIDITY\tALGORITHM\tSHA256_PREFIX\tPRIVATE_KEY\tCHAIN\tMANAGED_BY\tUSED_BY\tPOD\tSERVICES\tHOW\tCONTAINER\tPATH_IN_CONTAINER\tNODE\tHOST_PATH\tAFTER_ROTATION\tTHIS_HOST\n'
-         sm__flat | awk -F'\t' 'BEGIN { OFS = "\t" } { for (i = 10; i <= 11; i++) if ($i != "") { cmd = "date -u -d @" $i " +%Y-%m-%dT%H:%M:%SZ 2>/dev/null"; cmd | getline t; close(cmd); $i = t } print }'; } |
+         sm__flat | awk -F'\t' "$SM_UTC_AWK"'BEGIN { OFS = "\t" } { for (i = 10; i <= 11; i++) if ($i != "") $i = smutc($i, 1); print }'; } |
        if [ "$1" = csv ]; then awk -F'\t' '{ for (i = 1; i <= NF; i++) { v = $i; if (v ~ /[",]/) { gsub(/"/, "\"\"", v); v = "\"" v "\"" } printf "%s%s", v, (i < NF ? "," : "\n") } }'; else cat; fi ;;
   esac
   audit SECRETS_EXPORT "format=$1"
@@ -4706,13 +4798,13 @@ report_bundle_extras() { # dir: the same data as files in the report bundle
 }
 
 sm__tables_tsv() { # the four tables as "@@TITLE" + TSV (for the HTML report)
-  local d="$TOOLKIT_DIR" now; now="$(date +%s)"
+  local d="$TOOLKIT_DIR" now; printf -v now '%(%s)T' -1
   printf '@@Certificates in Secrets|soonest expiry first; CHAIN = is it signed by the ca.crt or the intermediates stored with it\n'
   printf 'STATE\t>DAYS\tEXPIRES (UTC)\tSECRET\tKEY\tROLE\tSUBJECT\tSAN\tISSUER\tALGO\tPRIVATE KEY\tCHAIN (signatures)\tMANAGED BY\tSHA-256 (prefix)\n'
-  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" 'BEGIN { OFS = "\t" }
+  awk -F'\t' -v now="$now" -v warn="${CERT_WARN_DAYS:-30}" -v crit="${CERT_CRIT_DAYS:-7}" "$SM_UTC_AWK"'BEGIN { OFS = "\t" }
     FILENAME ~ /sm-secrets/ { MG[$1 "/" $2] = $5; next }
     { s = $1 "/" $2; dl = int(($10 - now) / 86400); stt = ($10 < now) ? "{r}EXPIRED" : (dl <= crit) ? "{r}CRITICAL" : (dl <= warn) ? "{y}WARNING" : "{g}OK"
-      cmd = "date -u -d @" $10 " +%Y-%m-%d\\ %H:%M 2>/dev/null"; cmd | getline t; close(cmd)
+      t = smutc($10, 0)
       print $10, stt, dl, t, s, $3 ($4 > 1 ? " #" $4 : ""), $5 ($13 == "self" && $5 != "CA" ? ", self-signed" : ""), $6, $7, ($13 == "self" ? "(self)" : $8), $11, $14, ($15 == "" ? "-" : $15), MG[s], $12 }' "$d/sm-secrets.tsv" "$d/sm-certs.tsv" 2>/dev/null | LC_ALL=C sort -t $'\t' -k1,1n | cut -f2-
   printf '@@Where each Secret is used|one row per pod and way of use; volumes follow a rotation by themselves, env and subPath need a restart\n'
   printf 'SECRET\tUSED BY\tPOD\tSERVICE\tHOW\tCONTAINER\tPATH IN THE CONTAINER\tNODE\tPATH ON THE NODE (kubelet)\tAFTER A ROTATION\tTHIS HOST\n'
