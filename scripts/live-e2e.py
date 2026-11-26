@@ -594,32 +594,50 @@ spec:
             native = self.repo / self.args.gallery / "native" / (stem + ".png")
             native.parent.mkdir(parents=True, exist_ok=True)
             xenv = {**self.env, "DISPLAY": self.display}
-            terminal = subprocess.Popen(["xterm", "-title", "kdash-e2e-" + stem,
-                "-geometry", f"{columns}x{rows}+0+0", "-fa", "DejaVu Sans Mono", "-fs", "9",
-                "-bg", "#0d1117", "-fg", "#e6edf3", "-e", "tmux", "-L", self.socket,
-                "attach-session", "-r", "-t", session], env=xenv,
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            try:
-                for _ in range(30):
+
+            def launch():
+                return subprocess.Popen(["xterm", "-title", "kdash-e2e-" + stem,
+                    "-geometry", f"{columns}x{rows}+0+0", "-fa", "DejaVu Sans Mono", "-fs", "9",
+                    "-bg", "#0d1117", "-fg", "#e6edf3", "-e", "tmux", "-L", self.socket,
+                    "attach-session", "-r", "-t", session], env=xenv,
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            def visible(timeout=3.0):
+                until = time.monotonic() + timeout
+                while time.monotonic() < until:
                     probe = subprocess.run(["xwininfo", "-name", "kdash-e2e-" + stem], env=xenv,
                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     if probe.returncode == 0:
-                        break
+                        return True
                     time.sleep(0.1)
-                time.sleep(0.5)
-                # A busy X server can make a single window grab slow; retry rather
-                # than losing the whole run to one screenshot. The native grab is
-                # best-effort: the ANSI replay PNG is still produced for every view.
-                for attempt in range(3):
-                    try:
-                        subprocess.run(["import", "-window", "kdash-e2e-" + stem, str(native)], env=xenv,
-                                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=120)
-                        break
-                    except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
-                        if attempt == 2:
-                            native = None
+                return False
+
+            terminal = launch()
+            try:
+                appeared = visible()
+                if not appeared:
+                    # The attach window can be lost while the session redraws; one
+                    # relaunch is cheap, whereas importing a window that never
+                    # appeared blocks until the subprocess timeout.
+                    terminal.terminate()
+                    terminal.wait(timeout=10)
+                    terminal = launch()
+                    appeared = visible()
+                if appeared:
+                    time.sleep(0.5)
+                    for attempt in range(2):
+                        try:
+                            subprocess.run(["import", "-window", "kdash-e2e-" + stem, str(native)], env=xenv,
+                                           check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=45)
                             break
-                        time.sleep(1)
+                        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+                            if attempt == 1:
+                                break
+                            time.sleep(1)
+                    if not native.is_file():
+                        native = None
+                else:
+                    native = None
             finally:
                 terminal.terminate()
                 terminal.wait(timeout=10)
