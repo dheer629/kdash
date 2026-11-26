@@ -16,7 +16,7 @@
 │ checksum in the container  │ ● pass    │ sha256sum - every file is verified after the copy                                                                            │
 │ readable in the container  │ ● pass    │ 1 of 1 item(s)                                                                                                               │
 │ local directory            │ ● pass    │ writable                                                                                                                     │
-│ local free space           │ ● pass    │ 461.9 GiB free, about 21.0 KiB needed                                                                                        │
+│ local free space           │ ● pass    │ 462.1 GiB free, about 21.0 KiB needed                                                                                        │
 │ names                      │ ● check   │ 1 item already here - Enter asks: replace or keep both                                                                       │
 └────────────────────────────┴───────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 

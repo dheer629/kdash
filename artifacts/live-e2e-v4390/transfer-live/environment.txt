@@ -2,7 +2,7 @@ context=kdash-local
 namespace=kdash-e2e
 pod=app-server-8fb4699bc-cx5vz
 container=app
-started_utc=2026-11-26T09:46:06Z
-remote_bin_seconds=0.250
-local_bin_seconds=0.021 path=/tmp/kdash-transfer-live.WmD0ruAs/bin-stage
-local_bin_seconds=0.826 path=/workspace/kdash/artifacts/live-e2e-v4390/transfer-live/.bin-stage.5koBF43n
+started_utc=2026-11-26T11:15:47Z
+remote_bin_seconds=0.215
+local_bin_seconds=0.020 path=/tmp/kdash-transfer-live.z57mtATa/bin-stage
+local_bin_seconds=0.695 path=/workspace/kdash/artifacts/live-e2e-v4390/transfer-live/.bin-stage.NsSj8fO8

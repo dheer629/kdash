@@ -1,21 +1,21 @@
 # pods
 KEY	NAMESPACE	POD	STATUS	READY	RESTARTS	NODE	POOL	POD_IP	HOST_IP	QOS	KIND	WORKLOAD	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	CONTAINERS	HOST_NETWORK
 app-server-8fb4699bc-cx5vz	kdash-e2e	app-server-8fb4699bc-cx5vz	Running	2/2	21	dev	role:control-plane,master	10.244.0.166	172.18.0.2	Burstable	Deployment	app-server	3	25	250	1	12	96	3	1	Unknown	2	false
-app-server-8fb4699bc-t7zxj	kdash-e2e	app-server-8fb4699bc-t7zxj	Running	2/2	20	dev	role:control-plane,master	10.244.0.163	172.18.0.2	Burstable	Deployment	app-server	3	25	250	0	12	96	3	0	Unknown	2	false
+app-server-8fb4699bc-t7zxj	kdash-e2e	app-server-8fb4699bc-t7zxj	Running	2/2	20	dev	role:control-plane,master	10.244.0.163	172.18.0.2	Burstable	Deployment	app-server	2	25	250	0	12	96	2	0	Unknown	2	false
 completed-check-m9swm	kdash-e2e	completed-check-m9swm	Succeeded	0/1	0	dev	role:control-plane,master	-	172.18.0.2	Burstable	Job	completed-check	-	5	50	-	4	32	-	-	-	1	false
 db-stateful-0	kdash-e2e	db-stateful-0	Running	1/1	3	dev	role:control-plane,master	10.244.0.159	172.18.0.2	Burstable	StatefulSet	db-stateful	1	20	100	0	32	64	1	0	Unknown	1	false
 db-stateful-1	kdash-e2e	db-stateful-1	Running	1/1	3	dev	role:control-plane,master	10.244.0.177	172.18.0.2	Burstable	StatefulSet	db-stateful	1	20	100	0	32	64	1	0	Unknown	1	false
 functionality-legacy-67ks7	kdash-e2e	functionality-legacy-67ks7	Running	1/1	3	dev	role:control-plane,master	10.244.0.167	172.18.0.2	Burstable	ReplicationController	functionality-legacy	1	10	50	0	8	32	1	0	Unknown	1	false
-kdash-secrets-live-consumer	kdash-e2e	kdash-secrets-live-consumer	Running	1/1	8	dev	role:control-plane,master	10.244.0.156	172.18.0.2	Burstable	Pod	kdash-secrets-live-consumer	0	50	200	0	32	128	0	0	Completed	1	false
-nightly-report-29928075-27m6x	kdash-e2e	nightly-report-29928075-27m6x	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.64	172.18.0.2	Burstable	CronJob	nightly-report	-	10	50	-	16	32	-	-	-	1	false
-nightly-report-29928080-wz9d4	kdash-e2e	nightly-report-29928080-wz9d4	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.67	172.18.0.2	Burstable	CronJob	nightly-report	-	10	50	-	16	32	-	-	-	1	false
-nightly-report-29928085-sm4xz	kdash-e2e	nightly-report-29928085-sm4xz	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.68	172.18.0.2	Burstable	CronJob	nightly-report	-	10	50	-	16	32	-	-	-	1	false
+kdash-secrets-live-consumer	kdash-e2e	kdash-secrets-live-consumer	Running	1/1	10	dev	role:control-plane,master	10.244.0.156	172.18.0.2	Burstable	Pod	kdash-secrets-live-consumer	0	50	200	0	32	128	0	0	Completed	1	false
+nightly-report-29928165-fpv4n	kdash-e2e	nightly-report-29928165-fpv4n	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.100	172.18.0.2	Burstable	CronJob	nightly-report	-	10	50	-	16	32	-	-	-	1	false
+nightly-report-29928170-gllb2	kdash-e2e	nightly-report-29928170-gllb2	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.103	172.18.0.2	Burstable	CronJob	nightly-report	-	10	50	-	16	32	-	-	-	1	false
+nightly-report-29928175-w2kvf	kdash-e2e	nightly-report-29928175-w2kvf	Succeeded	0/1	0	dev	role:control-plane,master	10.244.0.105	172.18.0.2	Burstable	CronJob	nightly-report	-	10	50	-	16	32	-	-	-	1	false
 node-agent-ctvg6	kdash-e2e	node-agent-ctvg6	Running	1/1	4	dev	role:control-plane,master	10.244.0.152	172.18.0.2	Burstable	DaemonSet	node-agent	1	10	50	0	16	32	1	0	Unknown	1	false
 sync-pod	kdash-e2e	sync-pod	Succeeded	0/1	0	dev	role:control-plane,master	-	172.18.0.2	BestEffort	Pod	sync-pod	-	-	-	-	-	-	-	-	-	1	false
-test-sts-0	kdash-e2e	test-sts-0	Running	1/1	31	dev	role:control-plane,master	10.244.0.176	172.18.0.2	BestEffort	StatefulSet	test-sts	0	-	-	0	-	-	0	0	Completed	1	false
-z-crash	kdash-e2e	z-crash	CrashLoopBackOff	0/1	528	dev	role:control-plane,master	10.244.0.178	172.18.0.2	Burstable	Pod	z-crash	-	5	50	-	4	32	-	-	Error	1	false
+test-sts-0	kdash-e2e	test-sts-0	Running	1/1	33	dev	role:control-plane,master	10.244.0.176	172.18.0.2	BestEffort	StatefulSet	test-sts	0	-	-	0	-	-	0	0	Completed	1	false
+z-crash	kdash-e2e	z-crash	CrashLoopBackOff	0/1	545	dev	role:control-plane,master	10.244.0.178	172.18.0.2	Burstable	Pod	z-crash	-	5	50	-	4	32	-	-	Error	1	false
 z-imagepull	kdash-e2e	z-imagepull	ImagePullBackOff	0/1	0	dev	role:control-plane,master	10.244.0.175	172.18.0.2	Burstable	Pod	z-imagepull	-	50	200	-	32	128	-	-	-	1	false
-z-oom	kdash-e2e	z-oom	Running	1/1	3	dev	role:control-plane,master	10.244.0.157	172.18.0.2	Burstable	Pod	z-oom	51	10	50	1	8	16	51	1	Unknown	1	false
+z-oom	kdash-e2e	z-oom	Running	1/1	3	dev	role:control-plane,master	10.244.0.157	172.18.0.2	Burstable	Pod	z-oom	50	10	50	1	8	16	50	1	Unknown	1	false
 z-pending	kdash-e2e	z-pending	Pending	0/1	0	(unscheduled)	(none)	-	-	Burstable	Pod	z-pending	-	5	50	-	4	32	-	-	-	1	false
 z-unschedulable	kdash-e2e	z-unschedulable	Pending	0/1	0	(unscheduled)	(none)	-	-	Burstable	Pod	z-unschedulable	-	50	200	-	32	128	-	-	-	1	false
 
@@ -23,21 +23,21 @@ z-unschedulable	kdash-e2e	z-unschedulable	Pending	0/1	0	(unscheduled)	(none)	-	-
 KEY	POD	CONTAINER	READY	RESTARTS	CPU_USED_m	CPU_REQ_m	CPU_LIM_m	MEM_USED_Mi	MEM_REQ_Mi	MEM_LIM_Mi	CPU_PREV_m	MEM_PREV_Mi	LAST_TERMINATION	WAITING
 app-server-8fb4699bc-cx5vz	app-server-8fb4699bc-cx5vz	app	Y	11	2	20	200	1	8	64	2	1	Unknown	-
 app-server-8fb4699bc-cx5vz	app-server-8fb4699bc-cx5vz	sidecar	Y	10	1	5	50	0	4	32	1	0	Unknown	-
-app-server-8fb4699bc-t7zxj	app-server-8fb4699bc-t7zxj	app	Y	10	2	20	200	0	8	64	2	0	Unknown	-
+app-server-8fb4699bc-t7zxj	app-server-8fb4699bc-t7zxj	app	Y	10	1	20	200	0	8	64	1	0	Unknown	-
 app-server-8fb4699bc-t7zxj	app-server-8fb4699bc-t7zxj	sidecar	Y	10	1	5	50	0	4	32	1	0	Unknown	-
 completed-check-m9swm	completed-check-m9swm	check	N	0	-	5	50	-	4	32	-	-	-	-
 db-stateful-0	db-stateful-0	db	Y	3	1	20	100	0	32	64	1	0	Unknown	-
 db-stateful-1	db-stateful-1	db	Y	3	1	20	100	0	32	64	1	0	Unknown	-
 functionality-legacy-67ks7	functionality-legacy-67ks7	web	Y	3	1	10	50	0	8	32	1	0	Unknown	-
-kdash-secrets-live-consumer	kdash-secrets-live-consumer	consumer	Y	8	0	50	200	0	32	128	0	0	Completed	-
-nightly-report-29928075-27m6x	nightly-report-29928075-27m6x	report	N	0	-	10	50	-	16	32	-	-	-	-
-nightly-report-29928080-wz9d4	nightly-report-29928080-wz9d4	report	N	0	-	10	50	-	16	32	-	-	-	-
-nightly-report-29928085-sm4xz	nightly-report-29928085-sm4xz	report	N	0	-	10	50	-	16	32	-	-	-	-
+kdash-secrets-live-consumer	kdash-secrets-live-consumer	consumer	Y	10	0	50	200	0	32	128	0	0	Completed	-
+nightly-report-29928165-fpv4n	nightly-report-29928165-fpv4n	report	N	0	-	10	50	-	16	32	-	-	-	-
+nightly-report-29928170-gllb2	nightly-report-29928170-gllb2	report	N	0	-	10	50	-	16	32	-	-	-	-
+nightly-report-29928175-w2kvf	nightly-report-29928175-w2kvf	report	N	0	-	10	50	-	16	32	-	-	-	-
 node-agent-ctvg6	node-agent-ctvg6	agent	Y	4	1	10	50	0	16	32	1	0	Unknown	-
 sync-pod	sync-pod	sync-pod	N	0	-	-	-	-	-	-	-	-	-	-
-test-sts-0	test-sts-0	c	Y	31	0	-	-	0	-	-	0	0	Completed	-
-z-crash	z-crash	crash	N	528	-	5	50	-	4	32	-	-	Error	CrashLoopBackOff
+test-sts-0	test-sts-0	c	Y	33	0	-	-	0	-	-	0	0	Completed	-
+z-crash	z-crash	crash	N	545	-	5	50	-	4	32	-	-	Error	CrashLoopBackOff
 z-imagepull	z-imagepull	bad	N	0	-	50	200	-	32	128	-	-	-	ImagePullBackOff
-z-oom	z-oom	hog	Y	3	51	10	50	1	8	16	51	1	Unknown	-
+z-oom	z-oom	hog	Y	3	50	10	50	1	8	16	50	1	Unknown	-
 z-pending	z-pending	pending	-	0	-	5	50	-	4	32	-	-	-	-
 z-unschedulable	z-unschedulable	wait	-	0	-	50	200	-	32	128	-	-	-	-

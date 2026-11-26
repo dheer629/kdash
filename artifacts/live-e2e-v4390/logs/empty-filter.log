@@ -1,5 +1,5 @@
  KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   14:59:10 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   16:28:55 IST
  match ^no-pod-can-match-this$   sort cpu ▼ high first
  DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)

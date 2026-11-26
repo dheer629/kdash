@@ -122,6 +122,8 @@ Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser che
 
 
 
+
+
 The run covers 200 baseline checks plus 124 extension checks, 31 Secrets checks,
 33 browser checks and all 20 fixture suites. The whole-log check read a real
 kubelet-rotated file (the fixture container exceeds the 10 MiB rotation size)
@@ -400,8 +402,9 @@ interactive mode is on - see [Shell and file copy](#shell-and-file-copy-opt-in).
 ## Search, logs and quick exports in 4.37.0
 
 Press `/` in any dashboard view to search its complete rendered body, including
-rows outside the visible window. Lowercase text ignores case; expressions use
-extended regular-expression syntax. Enter keeps the search, `n` / `N` move
+rows outside the visible window. Every pattern ignores case - `node`, `Node` and
+`NODE` find the same lines, and expressions use extended regular-expression
+syntax. Enter keeps the search, `n` / `N` move
 through matching lines, and Esc clears it. While a search is active, `n` moves to
 the next match; close it with Esc before using `n` for the namespace picker.
 Tab inside the search box switches to **FILTER PODS BY NAME**; Enter applies

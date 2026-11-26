@@ -2,7 +2,7 @@
 ┌─ LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
-└─ rows 0-0 / 0 · 0 shown · level ERROR · 20 lines 2.2 KiB since 2026-11-26 09:44:46, newest only (+ more, A all) ──────────────────────────────────────────────────────┘
+└─ rows 0-0 / 0 · 0 shown · level ERROR · 20 lines 2.2 KiB since 2026-11-26 11:14:28, newest only (+ more, A all) ──────────────────────────────────────────────────────┘
   No line at log level ERROR or above in the 20 lines read - L switches the level.
 
 

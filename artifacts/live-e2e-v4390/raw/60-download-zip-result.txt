@@ -3,7 +3,7 @@
 ┌─ DOWNLOAD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── result ─┐
 │  VERIFIED   1 item identical  ·  SHA-256  ·  1s                                                                                                                       │
 │ SAVED  /workspace/kdash/artifacts/live-e2e-v4390/work/upload-tree.zip   742 B                                                                                         │
-│ TEST   ● zip test passed   sha256 369ad4985b48418457974efd376421165f1e5758804c5995c0f354339a3adc61                                                                    │
+│ TEST   ● zip test passed   sha256 dbe75c66eecffedf20980463d4e635d692feaa5cb1dfd0e571521a5f581ac66c                                                                    │
 │ FROM   app-server-8fb4699bc-cx5vz ► app ► /tmp/kdash-transfer                                                                                                         │
 ├──────────────────────────────────────────────────────────────────────────────────┬───────┬───────┬──────────────┬──────────────┬─────────────────────┬────────────────┤
 │ ITEM                                                                             │ TYPE  │ FILES │ IN CONTAINER │         HERE │ SHA-256             │ CHECK          │

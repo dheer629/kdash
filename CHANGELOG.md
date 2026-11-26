@@ -28,6 +28,10 @@ the detailed per-release notes.
 - Return a verification error when audit records or their hashes cannot be read.
 - Open the Events view with `e` as well as `E`. The HTML export menu moved to
   Ctrl-E, so typing `e` no longer leaves a prompt that swallows the next key.
+- Make the dashboard search (`/`) ignore case for every pattern, so capitalised
+  resource names (`Node`, `App-server`, `APP-SERVER`) find the same lines as
+  lowercase ones. The log and pane searches keep exact case for uppercase
+  patterns.
 
 ## [4.37.0] - 2026-11-19
 

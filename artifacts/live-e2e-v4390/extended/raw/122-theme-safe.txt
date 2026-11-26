@@ -1,8 +1,8 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 15:13:40 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 16:43:22 IST
 ┌─ SCOPE ───────────────────────────────────────────┬─ POD HEALTH ──────────────────────────────┬─ USAGE vs LIMITS ──────────────────┬─ WORKLOADS · EVENTS ──────┐
-│ match .*   sort cpu ▼ high first                  │ ! pods 14/18 ready   restarts 629         │ cpu     61m ░░░░░░░░   3% lim      │ workloads 14              │
-│ poll 2s  spec 1s/30s   session 15:13:39 up 1s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     2Mi ░░░░░░░░   0% lim      │ events 15m ! 0  ^ 0       │
+│ match .*   sort cpu ▼ high first                  │ ! pods 14/18 ready   restarts 648         │ cpu     60m ░░░░░░░░   3% lim      │ workloads 14              │
+│ poll 2s  spec 1s/30s   session 16:43:21 up 1s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     2Mi ░░░░░░░░   0% lim      │ events 15m ! 0  ^ 0       │
 └───────────────────────────────────────────────────┴───────────────────────────────────────────┴────────────────────────────────────┴───────────────────────────┘
  DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
@@ -14,16 +14,16 @@ WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  M
     └─ hog                                               Y     3 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0 ████████  12.5   6.2 █░░░░░░░
         last-exit Unknown
 ..................................................................................................................................................................
-► Deployment app-server  (2 pods)                        2/2  41 │      6 ·       1 · │     50    500      24     192 │  12.0   1.2 ░░░░░░░░   4.2   0.5 ░░░░░░░░
+► Deployment app-server  (2 pods)                        2/2  41 │      5 ·       1 · │     50    500      24     192 │  10.0   1.0 ░░░░░░░░   4.2   0.5 ░░░░░░░░
   app-server-8fb4699bc-cx5vz                             2/2  21 │      3 ·       1 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░   8.3   1.0 ░░░░░░░░
       node dev   pool role:control-plane,master   ip 10.244.0.166   qos Burstable   status Running   last-exit Unknown
     ├─ app                                               Y    11 │      2 ·       1 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░  12.5   1.6 ░░░░░░░░
         last-exit Unknown
     └─ sidecar                                           Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
         last-exit Unknown
-  app-server-8fb4699bc-t7zxj                             2/2  20 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+  app-server-8fb4699bc-t7zxj                             2/2  20 │      2 ·       0 · │     25    250      12      96 │   8.0   0.8 ░░░░░░░░   0.0   0.0 ░░░░░░░░
       node dev   pool role:control-plane,master   ip 10.244.0.163   qos Burstable   status Running   last-exit Unknown
-    ├─ app                                               Y    10 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+    ├─ app                                               Y    10 │      1 ·       0 · │     20    200       8      64 │   5.0   0.5 ░░░░░░░░   0.0   0.0 ░░░░░░░░
         last-exit Unknown
     └─ sidecar                                           Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
         last-exit Unknown
@@ -45,6 +45,6 @@ WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  M
         last-exit Unknown
 ..................................................................................................................................................................
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-TOTAL (18 pods, 14 workloads)                                629 │     61 ·       2 · │    315   1750     276     976 │  19.4   3.5 ░░░░░░░░   0.7   0.2 ░░░░░░░░
+TOTAL (18 pods, 14 workloads)                                648 │     60 ·       2 · │    315   1750     276     976 │  19.0   3.4 ░░░░░░░░   0.7   0.2 ░░░░░░░░
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
- AUDITED session 20261126-151339-26971 - every action is logged; use is your responsibility (kdash --about) | ○ LIVE 15:13:43  next 2s  data 4s old  fetch 0.0s  AUDITED
+ AUDITED session 20261126-164321-8424 - every action is logged; use is your responsibility (kdash --about) | ○ LIVE 16:43:25  next 2s  data 4s old  fetch 0.0s  AUDITED

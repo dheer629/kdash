@@ -43,6 +43,6 @@ CLASS	PROVISIONER	BINDING	EXPANSION	RECLAIM	USED HERE
 local-path	rancher.io/local-path	WaitForFirstConsumer	no	Delete	yes
 # STORAGE EVENTS
 LAST SEEN	TYPE	OBJECT	REASON	COUNT	MESSAGE
-1m	Warning	PersistentVolumeClaim/z-unbound	ProvisioningFailed	1421	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
-30m	Warning	Pod/z-pending	FailedScheduling	66	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+1m	Warning	PersistentVolumeClaim/z-unbound	ProvisioningFailed	1781	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
+29m	Warning	Pod/z-pending	FailedScheduling	84	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
 

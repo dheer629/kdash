@@ -1,0 +1,86 @@
+NS	KIND	NAME	UID	TYPE	REASON	COUNT	FIRST	LAST	MESSAGE
+kdash-e2e	PersistentVolumeClaim	z-unbound	adcffa9f-14a0-4e3c-a42f-26b384e88ff5	Warning	ProvisioningFailed	1841	2026-11-26T03:32:30Z	2026-11-26T11:12:14Z	storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found
+kdash-e2e	Pod	z-crash	c908fc39-4ddb-46bf-b546-41038ddd13a3	Warning	BackOff	2095	2026-11-26T03:32:35Z	2026-11-26T11:11:58Z	Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
+kdash-e2e	Pod	z-imagepull	46cdf3c5-022c-4f66-8a88-6ca9fd3a767d	Normal	BackOff	2007	2026-11-26T03:32:34Z	2026-11-26T11:11:49Z	Back-off pulling image "busybox:does-not-exist"
+kdash-e2e	Job	nightly-report-29928190	b970bc1b-3296-4486-a719-8d229360249f	Normal	Completed	1	2026-11-26T11:10:06Z	2026-11-26T11:10:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928190-5fwh4	af9df4bd-9053-4b8e-9dc5-045a75dba3b0	Normal	Started	1	2026-11-26T11:10:02Z	2026-11-26T11:10:02Z	Started container report
+kdash-e2e	Pod	nightly-report-29928190-5fwh4	af9df4bd-9053-4b8e-9dc5-045a75dba3b0	Normal	Created	1	2026-11-26T11:10:01Z	2026-11-26T11:10:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928190-5fwh4	af9df4bd-9053-4b8e-9dc5-045a75dba3b0	Normal	Pulled	1	2026-11-26T11:10:01Z	2026-11-26T11:10:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928190-5fwh4	af9df4bd-9053-4b8e-9dc5-045a75dba3b0	Normal	Scheduled	1	2026-11-26T11:10:00.127384Z	2026-11-26T11:10:00.127384Z	Successfully assigned kdash-e2e/nightly-report-29928190-5fwh4 to dev
+kdash-e2e	CronJob	nightly-report	a46b0dfd-4122-46a3-b7df-8e38dcbd70ba	Normal	SuccessfulCreate	84	2026-11-26T04:15:00Z	2026-11-26T11:10:00Z	(combined from similar events): Created job nightly-report-29928190
+kdash-e2e	Job	nightly-report-29928190	b970bc1b-3296-4486-a719-8d229360249f	Normal	SuccessfulCreate	1	2026-11-26T11:10:00Z	2026-11-26T11:10:00Z	Created pod: nightly-report-29928190-5fwh4
+kdash-e2e	Job	nightly-report-29928185	1eca2bec-fd56-40f5-9f86-f7466a0821b0	Normal	Completed	1	2026-11-26T11:05:06Z	2026-11-26T11:05:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928185-vc2gm	4dd17ab4-985b-44b2-af8c-73b843e03645	Normal	Created	1	2026-11-26T11:05:01Z	2026-11-26T11:05:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928185-vc2gm	4dd17ab4-985b-44b2-af8c-73b843e03645	Normal	Pulled	1	2026-11-26T11:05:01Z	2026-11-26T11:05:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928185-vc2gm	4dd17ab4-985b-44b2-af8c-73b843e03645	Normal	Started	1	2026-11-26T11:05:01Z	2026-11-26T11:05:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928185-vc2gm	4dd17ab4-985b-44b2-af8c-73b843e03645	Normal	Scheduled	1	2026-11-26T11:05:00.120955Z	2026-11-26T11:05:00.120955Z	Successfully assigned kdash-e2e/nightly-report-29928185-vc2gm to dev
+kdash-e2e	Job	nightly-report-29928185	1eca2bec-fd56-40f5-9f86-f7466a0821b0	Normal	SuccessfulCreate	1	2026-11-26T11:05:00Z	2026-11-26T11:05:00Z	Created pod: nightly-report-29928185-vc2gm
+kdash-e2e	Job	nightly-report-29928180	330aec4d-5906-4228-abe5-aa0d898b4d0f	Normal	Completed	1	2026-11-26T11:00:06Z	2026-11-26T11:00:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928180-lq9x9	8a6f6e19-3e64-46a5-8c77-02bbac8289ac	Normal	Created	1	2026-11-26T11:00:01Z	2026-11-26T11:00:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928180-lq9x9	8a6f6e19-3e64-46a5-8c77-02bbac8289ac	Normal	Pulled	1	2026-11-26T11:00:01Z	2026-11-26T11:00:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928180-lq9x9	8a6f6e19-3e64-46a5-8c77-02bbac8289ac	Normal	Started	1	2026-11-26T11:00:01Z	2026-11-26T11:00:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928180-lq9x9	8a6f6e19-3e64-46a5-8c77-02bbac8289ac	Normal	Scheduled	1	2026-11-26T11:00:00.119273Z	2026-11-26T11:00:00.119273Z	Successfully assigned kdash-e2e/nightly-report-29928180-lq9x9 to dev
+kdash-e2e	Job	nightly-report-29928180	330aec4d-5906-4228-abe5-aa0d898b4d0f	Normal	SuccessfulCreate	1	2026-11-26T11:00:00Z	2026-11-26T11:00:00Z	Created pod: nightly-report-29928180-lq9x9
+kdash-e2e	Pod	z-unschedulable	fc40885e-f063-4dbc-9878-6421bde1adfb	Warning	FailedScheduling	90	2026-11-26T03:32:18.090813Z	2026-11-26T10:59:02.745592Z	0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Pod	z-pending	497fbdc8-4a5b-4da4-9c76-bec7976cd910	Warning	FailedScheduling	90	2026-11-26T03:32:18.090756Z	2026-11-26T10:59:02.745568Z	0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+kdash-e2e	Job	nightly-report-29928175	1676a8f1-d348-40cb-a590-1266f865d605	Normal	Completed	1	2026-11-26T10:55:06Z	2026-11-26T10:55:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928175-w2kvf	b4cb4ae3-67ba-424f-9e80-ce6241eb84f8	Normal	Created	1	2026-11-26T10:55:01Z	2026-11-26T10:55:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928175-w2kvf	b4cb4ae3-67ba-424f-9e80-ce6241eb84f8	Normal	Pulled	1	2026-11-26T10:55:01Z	2026-11-26T10:55:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928175-w2kvf	b4cb4ae3-67ba-424f-9e80-ce6241eb84f8	Normal	Started	1	2026-11-26T10:55:01Z	2026-11-26T10:55:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928175-w2kvf	b4cb4ae3-67ba-424f-9e80-ce6241eb84f8	Normal	Scheduled	1	2026-11-26T10:55:00.115831Z	2026-11-26T10:55:00.115831Z	Successfully assigned kdash-e2e/nightly-report-29928175-w2kvf to dev
+kdash-e2e	Job	nightly-report-29928175	1676a8f1-d348-40cb-a590-1266f865d605	Normal	SuccessfulCreate	1	2026-11-26T10:55:00Z	2026-11-26T10:55:00Z	Created pod: nightly-report-29928175-w2kvf
+kdash-e2e	Pod	z-imagepull	46cdf3c5-022c-4f66-8a88-6ca9fd3a767d	Normal	Pulling	90	2026-11-26T03:32:31Z	2026-11-26T10:51:49Z	Pulling image "busybox:does-not-exist"
+kdash-e2e	Job	nightly-report-29928170	7f466053-ba36-40f1-9aeb-e6b0e1afc3a0	Normal	Completed	1	2026-11-26T10:50:06Z	2026-11-26T10:50:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928170-gllb2	ebbd636e-3a2f-4ffd-9054-88bf55a438e8	Normal	Created	1	2026-11-26T10:50:01Z	2026-11-26T10:50:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928170-gllb2	ebbd636e-3a2f-4ffd-9054-88bf55a438e8	Normal	Pulled	1	2026-11-26T10:50:01Z	2026-11-26T10:50:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928170-gllb2	ebbd636e-3a2f-4ffd-9054-88bf55a438e8	Normal	Started	1	2026-11-26T10:50:01Z	2026-11-26T10:50:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928170-gllb2	ebbd636e-3a2f-4ffd-9054-88bf55a438e8	Normal	Scheduled	1	2026-11-26T10:50:00.116635Z	2026-11-26T10:50:00.116635Z	Successfully assigned kdash-e2e/nightly-report-29928170-gllb2 to dev
+kdash-e2e	Job	nightly-report-29928170	7f466053-ba36-40f1-9aeb-e6b0e1afc3a0	Normal	SuccessfulCreate	1	2026-11-26T10:50:00Z	2026-11-26T10:50:00Z	Created pod: nightly-report-29928170-gllb2
+kdash-e2e	Job	nightly-report-29928165	603235da-4545-4e21-9624-0709dd247e89	Normal	Completed	1	2026-11-26T10:45:06Z	2026-11-26T10:45:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928165-fpv4n	c71ed0e7-1fa3-4981-9f69-15dc6d168923	Normal	Created	1	2026-11-26T10:45:01Z	2026-11-26T10:45:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928165-fpv4n	c71ed0e7-1fa3-4981-9f69-15dc6d168923	Normal	Pulled	1	2026-11-26T10:45:01Z	2026-11-26T10:45:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928165-fpv4n	c71ed0e7-1fa3-4981-9f69-15dc6d168923	Normal	Started	1	2026-11-26T10:45:01Z	2026-11-26T10:45:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928165-fpv4n	c71ed0e7-1fa3-4981-9f69-15dc6d168923	Normal	Scheduled	1	2026-11-26T10:45:00.114097Z	2026-11-26T10:45:00.114097Z	Successfully assigned kdash-e2e/nightly-report-29928165-fpv4n to dev
+kdash-e2e	Job	nightly-report-29928165	603235da-4545-4e21-9624-0709dd247e89	Normal	SuccessfulCreate	1	2026-11-26T10:45:00Z	2026-11-26T10:45:00Z	Created pod: nightly-report-29928165-fpv4n
+kdash-e2e	Job	nightly-report-29928160	17ac5feb-0282-4344-a5b9-a02bed5afff5	Normal	Completed	1	2026-11-26T10:40:05Z	2026-11-26T10:40:05Z	Job completed
+kdash-e2e	Pod	nightly-report-29928160-q9kwx	e77f3672-a709-441b-9479-c119327e8814	Normal	Created	1	2026-11-26T10:40:01Z	2026-11-26T10:40:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928160-q9kwx	e77f3672-a709-441b-9479-c119327e8814	Normal	Started	1	2026-11-26T10:40:01Z	2026-11-26T10:40:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928160-q9kwx	e77f3672-a709-441b-9479-c119327e8814	Normal	Scheduled	1	2026-11-26T10:40:00.117614Z	2026-11-26T10:40:00.117614Z	Successfully assigned kdash-e2e/nightly-report-29928160-q9kwx to dev
+kdash-e2e	Job	nightly-report-29928160	17ac5feb-0282-4344-a5b9-a02bed5afff5	Normal	SuccessfulCreate	1	2026-11-26T10:40:00Z	2026-11-26T10:40:00Z	Created pod: nightly-report-29928160-q9kwx
+kdash-e2e	Pod	nightly-report-29928160-q9kwx	e77f3672-a709-441b-9479-c119327e8814	Normal	Pulled	1	2026-11-26T10:40:00Z	2026-11-26T10:40:00Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Job	nightly-report-29928155	d848602e-2532-4513-a0e6-bb692ca2a3c5	Normal	Completed	1	2026-11-26T10:35:06Z	2026-11-26T10:35:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928155-brxg4	65532877-4035-447c-b3db-8f53521f5b5c	Normal	Created	1	2026-11-26T10:35:01Z	2026-11-26T10:35:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928155-brxg4	65532877-4035-447c-b3db-8f53521f5b5c	Normal	Pulled	1	2026-11-26T10:35:01Z	2026-11-26T10:35:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928155-brxg4	65532877-4035-447c-b3db-8f53521f5b5c	Normal	Started	1	2026-11-26T10:35:01Z	2026-11-26T10:35:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928155-brxg4	65532877-4035-447c-b3db-8f53521f5b5c	Normal	Scheduled	1	2026-11-26T10:35:00.117255Z	2026-11-26T10:35:00.117255Z	Successfully assigned kdash-e2e/nightly-report-29928155-brxg4 to dev
+kdash-e2e	Job	nightly-report-29928155	d848602e-2532-4513-a0e6-bb692ca2a3c5	Normal	SuccessfulCreate	1	2026-11-26T10:35:00Z	2026-11-26T10:35:00Z	Created pod: nightly-report-29928155-brxg4
+kdash-e2e	Pod	test-sts-0	f3562140-9756-4c2a-ad1c-49fc9071761a	Normal	Created	8	2026-11-26T03:32:31Z	2026-11-26T10:32:19Z	Created container c
+kdash-e2e	Pod	test-sts-0	f3562140-9756-4c2a-ad1c-49fc9071761a	Normal	Pulled	8	2026-11-26T03:32:31Z	2026-11-26T10:32:19Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	test-sts-0	f3562140-9756-4c2a-ad1c-49fc9071761a	Normal	Started	8	2026-11-26T03:32:31Z	2026-11-26T10:32:19Z	Started container c
+kdash-e2e	Pod	kdash-secrets-live-consumer	c380a976-1d61-4b60-8fbf-a805faebd238	Normal	Created	8	2026-11-26T03:32:27Z	2026-11-26T10:32:15Z	Created container consumer
+kdash-e2e	Pod	kdash-secrets-live-consumer	c380a976-1d61-4b60-8fbf-a805faebd238	Normal	Pulled	8	2026-11-26T03:32:27Z	2026-11-26T10:32:15Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	kdash-secrets-live-consumer	c380a976-1d61-4b60-8fbf-a805faebd238	Normal	Started	8	2026-11-26T03:32:27Z	2026-11-26T10:32:15Z	Started container consumer
+kdash-e2e	Job	nightly-report-29928150	d1c09bee-ca10-4808-968b-9aa2c8811965	Normal	Completed	1	2026-11-26T10:30:06Z	2026-11-26T10:30:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928150-rqprl	2587e58b-8025-4bb1-a2f2-a7123d764973	Normal	Created	1	2026-11-26T10:30:01Z	2026-11-26T10:30:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928150-rqprl	2587e58b-8025-4bb1-a2f2-a7123d764973	Normal	Pulled	1	2026-11-26T10:30:01Z	2026-11-26T10:30:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928150-rqprl	2587e58b-8025-4bb1-a2f2-a7123d764973	Normal	Started	1	2026-11-26T10:30:01Z	2026-11-26T10:30:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928150-rqprl	2587e58b-8025-4bb1-a2f2-a7123d764973	Normal	Scheduled	1	2026-11-26T10:30:00.115403Z	2026-11-26T10:30:00.115403Z	Successfully assigned kdash-e2e/nightly-report-29928150-rqprl to dev
+kdash-e2e	Job	nightly-report-29928150	d1c09bee-ca10-4808-968b-9aa2c8811965	Normal	SuccessfulCreate	1	2026-11-26T10:30:00Z	2026-11-26T10:30:00Z	Created pod: nightly-report-29928150-rqprl
+kdash-e2e	Job	nightly-report-29928145	1295e5f3-f7b1-4c95-a161-9486312a7297	Normal	Completed	1	2026-11-26T10:25:06Z	2026-11-26T10:25:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928145-kk82l	80904682-0ce6-4653-a60f-42d92ed9436e	Normal	Created	1	2026-11-26T10:25:01Z	2026-11-26T10:25:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928145-kk82l	80904682-0ce6-4653-a60f-42d92ed9436e	Normal	Pulled	1	2026-11-26T10:25:01Z	2026-11-26T10:25:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928145-kk82l	80904682-0ce6-4653-a60f-42d92ed9436e	Normal	Started	1	2026-11-26T10:25:01Z	2026-11-26T10:25:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928145-kk82l	80904682-0ce6-4653-a60f-42d92ed9436e	Normal	Scheduled	1	2026-11-26T10:25:00.117380Z	2026-11-26T10:25:00.117380Z	Successfully assigned kdash-e2e/nightly-report-29928145-kk82l to dev
+kdash-e2e	Job	nightly-report-29928145	1295e5f3-f7b1-4c95-a161-9486312a7297	Normal	SuccessfulCreate	1	2026-11-26T10:25:00Z	2026-11-26T10:25:00Z	Created pod: nightly-report-29928145-kk82l
+kdash-e2e	Job	nightly-report-29928140	358ad382-75b6-49ff-942c-16fce4e9f884	Normal	Completed	1	2026-11-26T10:20:05Z	2026-11-26T10:20:05Z	Job completed
+kdash-e2e	Pod	nightly-report-29928140-r5nl2	04cd8c44-8954-4f16-bdab-ed4572d52e71	Normal	Created	1	2026-11-26T10:20:01Z	2026-11-26T10:20:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928140-r5nl2	04cd8c44-8954-4f16-bdab-ed4572d52e71	Normal	Pulled	1	2026-11-26T10:20:01Z	2026-11-26T10:20:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928140-r5nl2	04cd8c44-8954-4f16-bdab-ed4572d52e71	Normal	Started	1	2026-11-26T10:20:01Z	2026-11-26T10:20:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928140-r5nl2	04cd8c44-8954-4f16-bdab-ed4572d52e71	Normal	Scheduled	1	2026-11-26T10:20:00.115324Z	2026-11-26T10:20:00.115324Z	Successfully assigned kdash-e2e/nightly-report-29928140-r5nl2 to dev
+kdash-e2e	Job	nightly-report-29928140	358ad382-75b6-49ff-942c-16fce4e9f884	Normal	SuccessfulCreate	1	2026-11-26T10:20:00Z	2026-11-26T10:20:00Z	Created pod: nightly-report-29928140-r5nl2
+kdash-e2e	Job	nightly-report-29928135	15c09ec1-f346-434a-aa45-a14fb4fd3ad3	Normal	Completed	1	2026-11-26T10:15:06Z	2026-11-26T10:15:06Z	Job completed
+kdash-e2e	Pod	nightly-report-29928135-nq4r4	7f6f7752-d86d-446a-bb28-a1795dcd98df	Normal	Created	1	2026-11-26T10:15:01Z	2026-11-26T10:15:01Z	Created container report
+kdash-e2e	Pod	nightly-report-29928135-nq4r4	7f6f7752-d86d-446a-bb28-a1795dcd98df	Normal	Pulled	1	2026-11-26T10:15:01Z	2026-11-26T10:15:01Z	Container image "busybox:1.36" already present on machine
+kdash-e2e	Pod	nightly-report-29928135-nq4r4	7f6f7752-d86d-446a-bb28-a1795dcd98df	Normal	Started	1	2026-11-26T10:15:01Z	2026-11-26T10:15:01Z	Started container report
+kdash-e2e	Pod	nightly-report-29928135-nq4r4	7f6f7752-d86d-446a-bb28-a1795dcd98df	Normal	Scheduled	1	2026-11-26T10:15:00.121740Z	2026-11-26T10:15:00.121740Z	Successfully assigned kdash-e2e/nightly-report-29928135-nq4r4 to dev
+kdash-e2e	Job	nightly-report-29928135	15c09ec1-f346-434a-aa45-a14fb4fd3ad3	Normal	SuccessfulCreate	1	2026-11-26T10:15:00Z	2026-11-26T10:15:00Z	Created pod: nightly-report-29928135-nq4r4

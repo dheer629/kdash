@@ -1,9 +1,9 @@
  KDASH │ DOWNLOAD │ RESULT │ kdash-local │ kdash-e2e                                                                                                              audited
 
 ┌─ DOWNLOAD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── result ─┐
-│  VERIFIED   1 item identical  ·  SHA-256  ·  1s                                                                                                                       │
-│ SAVED  /workspace/kdash/artifacts/live-e2e-v4390/work/upload-tree.tar.gz   330 B                                                                                      │
-│ TEST   ● gzip -t passed   sha256 e7102bdb92660d211e5188356569033b7b2d772a1b5788b21f4e1689333cc9f7                                                                     │
+│  VERIFIED   1 item identical  ·  SHA-256  ·  under 1s                                                                                                                 │
+│ SAVED  /workspace/kdash/artifacts/live-e2e-v4390/work/upload-tree.tar.gz   328 B                                                                                      │
+│ TEST   ● gzip -t passed   sha256 44df60acedcc8d19d0a3a1c93eb1e346f0bd51bc910cae7692c3bdf8df38056c                                                                     │
 │ FROM   app-server-8fb4699bc-cx5vz ► app ► /tmp/kdash-transfer                                                                                                         │
 ├──────────────────────────────────────────────────────────────────────────────────┬───────┬───────┬──────────────┬──────────────┬─────────────────────┬────────────────┤
 │ ITEM                                                                             │ TYPE  │ FILES │ IN CONTAINER │         HERE │ SHA-256             │ CHECK          │

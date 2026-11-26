@@ -4,4 +4,6 @@ PASS: lowercase e no longer opens the HTML menu prompt
 PASS: both keys appear in the dashboard help text
 PASS: the README key table documents both bindings
 PASS: the installer summary matches the new binding
-PASS: 6 Events/HTML-menu key checks
+PASS: dashboard search ignores case for lowercase, capitalised and upper-case patterns
+PASS: documentation states that the dashboard search ignores case
+PASS: 8 Events/HTML-menu/search key checks

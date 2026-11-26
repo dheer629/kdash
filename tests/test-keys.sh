@@ -32,4 +32,35 @@ pass 'the README key table documents both bindings'
 grep -Fq '^E HTML menu' "$ROOT/kdash-bundle.sh" || fail 'the installer summary still advertises e for the HTML menu'
 pass 'the installer summary matches the new binding'
 
-printf 'PASS: %s Events/HTML-menu key checks\n' "$count"
+# The dashboard search must ignore case for every pattern, including capitalised
+# resource names. Slice the real function out of the built CLI and run it on a
+# fixture body, so the assertion tests the shipped code.
+source "$ROOT/src/inspector.sh"
+search_tmp="$(mktemp -d "${TMPDIR:-/tmp}/kdash-search-test.XXXXXXXX")"
+trap 'rm -rf -- "$search_tmp"' EXIT
+printf 'Deployment app-server running\nz-crash CrashLoopBackOff\nNODE dev ready\n' > "$search_tmp/body"
+awk '/^ds_match\(\) \{/,/^\}$/' "$ROOT/kdash" > "$search_tmp/ds_match.sh"
+grep -Fq 'awk -v ic=1' "$search_tmp/ds_match.sh" || fail 'ds_match does not force case-insensitive matching'
+BODYF="$search_tmp/body"; DS_MODE=find
+source "$search_tmp/ds_match.sh"
+ds_case() {
+    DS_PAT="$1"; ds_match
+    [ "$DS_N" = "$2" ] || fail "search '$1' found $DS_N line(s), expected $2"
+}
+ds_case app-server 1
+ds_case App-Server 1
+ds_case APP-SERVER 1
+ds_case z-crash 1
+ds_case Z-Crash 1
+ds_case 'NODE' 1
+ds_case 'node' 1
+ds_case 'nope' 0
+pass 'dashboard search ignores case for lowercase, capitalised and upper-case patterns'
+
+grep -Fq 'search box: find in the view, case-insensitive' "$ROOT/kdash" \
+    || fail 'the help text does not document the case-insensitive search'
+grep -Fq 'Every pattern ignores case' "$ROOT/README.md" \
+    || fail 'the README does not document the case-insensitive search'
+pass 'documentation states that the dashboard search ignores case'
+
+printf 'PASS: %s Events/HTML-menu/search key checks\n' "$count"

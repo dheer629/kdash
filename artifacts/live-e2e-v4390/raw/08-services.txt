@@ -1,20 +1,20 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 15:00:25 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 16:30:09 IST
 ┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
-│ match .*   sort cpu ▼ high first                     │ ! pods 14/18 ready   restarts 624           │ cpu     61m ░░░░░░░░   3% lim       │ workloads 14                │
-│ poll 2s  spec 0s/30s   session 14:59:55 up 30s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 1         │
+│ match .*   sort cpu ▼ high first                     │ ! pods 14/18 ready   restarts 645           │ cpu     60m ░░░░░░░░   3% lim       │ workloads 14                │
+│ poll 2s  spec 2s/30s   session 16:29:37 up 32s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 1         │
 └──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
- DATA ● pods fresh 0s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 2s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  SERVICES AND BACKENDS   observed configuration and readiness - reachability is not tested
 
 DATA SOURCES
 ┌───────────┬───────┬────────┬────────────────┐
 │ SOURCE    │ STATE │   READ │ DETAIL         │
 ├───────────┼───────┼────────┼────────────────┤
-│ services  │ ● ok  │ 1s ago │ read succeeded │
-│ pods      │ ● ok  │ 1s ago │ read succeeded │
-│ endpoints │ ● ok  │ 1s ago │ read succeeded │
-│ ingresses │ ● ok  │ 1s ago │ read succeeded │
+│ services  │ ● ok  │ 3s ago │ read succeeded │
+│ pods      │ ● ok  │ 3s ago │ read succeeded │
+│ endpoints │ ● ok  │ 3s ago │ read succeeded │
+│ ingresses │ ● ok  │ 3s ago │ read succeeded │
 └───────────┴───────┴────────┴────────────────┘
 
 SERVICES  11 services
@@ -47,4 +47,4 @@ NEXT COMMANDS  read = only reads, CHANGE = modifies the cluster or a node (print
 
   #1  CRITICAL  missing-backend  selector app=does-not-exist matches no pod in this scope
 K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
- ○ LIVE 15:00:27  next 2s  data 2s old  spec 2/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-41/78 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export
+ ● LIVE 16:30:10  next 1s  data 1s old  spec 3/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-41/78 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export

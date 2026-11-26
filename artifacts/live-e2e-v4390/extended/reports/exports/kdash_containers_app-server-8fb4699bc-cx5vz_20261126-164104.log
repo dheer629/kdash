@@ -1,0 +1,68 @@
+# kdash 4.39.0 - quick export (key >)
+# screen   : container list | pod kdash-e2e/app-server-8fb4699bc-cx5vz | 2 containers
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-26 16:41:04 +0530 by operator on Dheeraj (session 20261126-164046-50743)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH │ SELECT CONTAINER │ context kdash-local │ namespace kdash-e2e                                                                                        2 containers
+ pod        app-server-8fb4699bc-cx5vz   ● Running   ready 2/2   restarts 21
+ node       dev   containers 2 app
+
+┌────┬───────────┬──────┬───────────┬─────┬─────────┬──────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  # │ CONTAINER │ TYPE │ READY     │ RST │ STATE   │ LAST EXIT        │ IMAGE                                                                                          │
+├────┼───────────┼──────┼───────────┼─────┼─────────┼──────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  1 │ app       │ app  │ ready     │  11 │ Running │ Unknown exit=255 │ busybox:1.36                                                                                   │
+│  2 │ sidecar   │ app  │ ready     │  10 │ Running │ Unknown exit=255 │ busybox:1.36                                                                                   │
+└────┴───────────┴──────┴───────────┴─────┴─────────┴──────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── 1 of 2 containers match /sidecar - n next match ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+┌─ MOVE ───────────────────┬─ INSPECT ────────────────┬─ LOGS ───────────┬─ LEAVE ──────────────────────────────────────────────────────────────────────────────────────┐
+│ j/k ↑↓  move             │ Enter / i  summary of it │ l  logs          │ q / Esc  back                                                                                │
+│ g / G   first / last     │            2 app         │ p  previous logs │ Q        quit kdash                                                                          │
+│ 1-9     open by number   │                          │                  │ >        export to a log                                                                     │
+│ / n     find, next match │                          │                  │                                                                                              │
+└──────────────────────────┴──────────────────────────┴──────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+ EVERY CONTAINER OF THE POD (3 lines, every line and column - nothing cut)
+================================================================================
+TYPE  CONTAINER  READY  RESTARTS  STATE    LAST EXIT         IMAGE
+app   app        ready  11        Running  Unknown exit=255  busybox:1.36
+app   sidecar    ready  10        Running  Unknown exit=255  busybox:1.36
+
+# end of export

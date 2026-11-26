@@ -2,7 +2,7 @@
 ┌─ FIND IN LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
-└─ rows 10-47 / 10022 · /INFO|WARN|ERROR in pod app-server-8fb4699bc-cx5vz: 4 of 4 logs read, 172458 lines, 172458 matching ────────────────────────────────────────────┘
+└─ rows 10-47 / 10022 · /INFO|WARN|ERROR in pod app-server-8fb4699bc-cx5vz: 4 of 4 logs read, 179635 lines, 179635 matching ────────────────────────────────────────────┘
 2026-11-26T03:27:29.886337813Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:29+00:00 INFO sidecar heartbeat
 2026-11-26T03:27:32.887268423Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:32+00:00 INFO sidecar heartbeat
 2026-11-26T03:27:35.888183275Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:35+00:00 INFO sidecar heartbeat

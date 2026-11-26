@@ -13,6 +13,8 @@ Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser che
 
 
 
+
+
 The current **4.39.0** validation uses the installed utility against the local
 WSL Kubernetes cluster in the dedicated `kdash-e2e` namespace.
 [Run pointer](latest-e2e.txt) · [Feature checklist](../docs/VALIDATION-4.39.0.md)

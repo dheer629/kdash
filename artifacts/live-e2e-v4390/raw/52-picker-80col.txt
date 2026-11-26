@@ -4,22 +4,22 @@
 ┌──────────────────────────┬─────────┬───────┬─────┬────────┬─────────┬───────┐
 │ POD                      │ STATUS  │ READY │ RST │    CPU │     MEM │  %LIM │
 ├──────────────────────────┼─────────┼───────┼─────┼────────┼─────────┼───────┤
-│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  21 │     3m │     1Mi │    1% │
+│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  21 │     4m │     1Mi │    1% │
 │ app-server-8~699bc-t7zxj │ Running │ 2/2   │  20 │     3m │     0Mi │    0% │
 │ completed-check-m9swm    │ Succeed │ 0/1   │   0 │      - │       - │     - │
 │ db-stateful-0            │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
 │ db-stateful-1            │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
 │ functionalit~egacy-67ks7 │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
-│ kdash-secret~ve-consumer │ Running │ 1/1   │   9 │     0m │     0Mi │    0% │
-│ nightly-repo~28085-sm4xz │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ nightly-repo~28090-sx6nw │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ nightly-repo~28095-2kb82 │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ kdash-secret~ve-consumer │ Running │ 1/1   │  10 │     0m │     0Mi │    0% │
+│ nightly-repo~28175-w2kvf │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~28180-lq9x9 │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~28185-vc2gm │ Succeed │ 0/1   │   0 │      - │       - │     - │
 │ node-agent-ctvg6         │ Running │ 1/1   │   4 │     1m │     0Mi │    0% │
 │ sync-pod                 │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ test-sts-0               │ Running │ 1/1   │  32 │     0m │     0Mi │     - │
-│ z-crash                  │ CrashLo │ 0/1   │ 529 │      - │       - │     - │
+│ test-sts-0               │ Running │ 1/1   │  33 │     0m │     0Mi │     - │
+│ z-crash                  │ CrashLo │ 0/1   │ 547 │      - │       - │     - │
 │ z-imagepull              │ ImagePu │ 0/1   │   0 │      - │       - │     - │
-│ z-oom                    │ Running │ 1/1   │   3 │    50m │     1Mi │    6% │
+│ z-oom                    │ Running │ 1/1   │   3 │    51m │     1Mi │    6% │
 └──────────────────────────┴─────────┴───────┴─────┴────────┴─────────┴───────┘
 ── 1 / 18   ↓ 2 below   2 failing ──────────────────────── live · refresh 2s ──
 ┌─ MOVE ───────┬─ FIND ───────┬─ INSPECT ─────┬─ SHELL ───────┬─ LEAVE ───────┐

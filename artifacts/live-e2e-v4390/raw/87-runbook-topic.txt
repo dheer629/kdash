@@ -1,10 +1,10 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 15:07:50 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 16:37:33 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 627           │ cpu     59m ░░░░░░░░   3% lim       │ workloads 14               │
-│ poll 2s  spec 14s/30s   session 15:07:36 up 14s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 647           │ cpu     61m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 15s/30s   session 16:37:18 up 15s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
- DATA ● pods fresh 14s old  metrics available │ C certs (2 critical, 3 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : comman›
+ DATA ● pods fresh 15s old  metrics available │ C certs (2 critical, 3 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : comman›
  RUNBOOK - cert-rotate   printed procedures with your cluster's names filled in - kdash never runs them
 runbooks:   1 etcd-restore   [2 cert-rotate]   3 node-notready    4 api-unreachable    5 oidc-login    [ ] previous / next   (kdash --runbook NAME)
 
@@ -47,4 +47,4 @@ WHEN TO USE  RKE2 certificates (API server, kubelet, supervisor, etcd) are close
 
 
 K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
- certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ● LIVE 15:07:52  next 2s  data 2s old  fetch >
+ certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ○ LIVE 16:37:35  next 2s  data 2s old  fetch >

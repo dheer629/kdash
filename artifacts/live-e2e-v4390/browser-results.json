@@ -1,8 +1,8 @@
 {
   "version": "4.39.0",
-  "source_sha256": "94c5c42ddd40e663863e11f69f4019000c3cae7ec46946af6e9ec818529c8618",
-  "report": "reports/kdash_namespace_report_kdash-local_kdash-e2e_20261126_145858.html",
-  "report_sha256": "cedf45428b227716af9f1d46755c8cfe387e273129625a00759d7817b1179936",
+  "source_sha256": "6d7b090e9b10d51d2537f87c910c20e1619748f1e1d3eba6a6bc59b1d46b594f",
+  "report": "reports/kdash_namespace_report_kdash-local_kdash-e2e_20261126_162844.html",
+  "report_sha256": "764a3af131f369224ad20de0e8178175f4f987b5232449e27c27b6b1d9d56919",
   "status": "PASS",
   "checks": [
     {
@@ -174,74 +174,74 @@
   "screenshots": [
     {
       "file": "samples/html4390/screenshots/overview.png",
-      "sha256": "b786cd9c55aad8b66ec016d6248c46e77375fc91ff31aef55ecaf22736fde655",
+      "sha256": "1f2abc4f92927d98767eddf795e17ff238b11f85c336f95fe3c81adcb9557d27",
       "tab": "overview"
     },
     {
       "file": "samples/html4390/screenshots/pods.png",
-      "sha256": "69843a38cd61556e8cc96dbbcfe58705797449ad29451b1ca4409e4e6fdf161d",
+      "sha256": "535b50e96fd4015ac0019036c0fef3fbb15c171ee154be9d80d17ddc341df3f3",
       "tab": "pods"
     },
     {
       "file": "samples/html4390/screenshots/nodes.png",
-      "sha256": "05cb9bc1f4468e144c8301a82d93cfc82b959d75566c0431e7d29227c296b3aa",
+      "sha256": "9611a5b189c9f1e37954ec320cbf329071e9b5340ad0fe46e6578b438161d3f1",
       "tab": "nodes"
     },
     {
       "file": "samples/html4390/screenshots/workloads.png",
-      "sha256": "e9c95efd95a2d005425a084c4198ad064483e5aa448a23ddc191e79452caf3e5",
+      "sha256": "c45b760f8ce8f00e0f31104c6b05b97388b7cb9e94834e363e73379f1c5379de",
       "tab": "workloads"
     },
     {
       "file": "samples/html4390/screenshots/ip.png",
-      "sha256": "54e2d436d8a67e7e59dccce9d11737be8f62904ac584f844e62b6687037f3d06",
+      "sha256": "752c752e428cd29a0535b67570c30dc04b65d8de50d663e1c563ef1fd51cbf0c",
       "tab": "ip"
     },
     {
       "file": "samples/html4390/screenshots/mem.png",
-      "sha256": "862a9fb7622f3ab1a567dfcf4b445d7e3439d8c8e3b89cdb473caa11a9897e6a",
+      "sha256": "c992f3eb485ff7fab186e4d81133ce8f0ba3fc192ecd96f5a6f2e5279914a4c5",
       "tab": "mem"
     },
     {
       "file": "samples/html4390/screenshots/io.png",
-      "sha256": "e4f4e7347d1ebb8a9a456920cacaf92337d9b4fcd70bebc6a31a258d049cc60e",
+      "sha256": "b72395ce03ea0ce07490a41a9e03dad7126beb019ee1783588467899fc82b396",
       "tab": "io"
     },
     {
       "file": "samples/html4390/screenshots/history.png",
-      "sha256": "531678481041f4449463f18dea60c6871fc382e492ec575abf1fac4b0af719c6",
+      "sha256": "b211a9b932826ed4def5773a8dadeacd53686012cd10582600224e1c2026e2d6",
       "tab": "history"
     },
     {
       "file": "samples/html4390/screenshots/combined-fmea.png",
-      "sha256": "fe97608361f8766eeeeb4fadff3141a27b44cd69a6e02bb7410d9cc84d55dd4d",
+      "sha256": "368a0b394fc52ec2028e15e30f467ed5458a344bff1b70e361724697caaf9515",
       "tab": "combined-fmea"
     },
     {
       "file": "samples/html4390/screenshots/combined-secrets.png",
-      "sha256": "6cadb961fa678f4c0daf95484fc4ecb0fe9351740bfb704ea1f48635aeb1a3fc",
+      "sha256": "c254a58b2a9f373b499a661ae0cb1dd959f42f8a9e687f59f2f49a10c0ae5510",
       "tab": "combined-secrets"
     },
     {
       "file": "samples/html4390/screenshots/fmea.png",
-      "sha256": "40837df580626766b84ae81e4ffae1088c3fe98e7200defdd7d422be110bf55c",
+      "sha256": "a39921f3d7f26b992163e1248d6356dda48664dae8b2b8a5f3f6febb56de4f9c",
       "tab": "fmea"
     },
     {
       "file": "samples/html4390/screenshots/secrets.png",
-      "sha256": "6fd611206aec9acc5571bf5084dceccabb268a42416d9f886e671719a798ebeb",
+      "sha256": "1a603d5001215d7bf5e9d7b2a8ac65cf6bb612c222c5f53224f07fe6d61870b3",
       "tab": "secrets"
     }
   ],
   "errors": [],
   "additional_reports": [
     {
-      "report": "reports/fmea/fmea_kdash-local_kdash-e2e_20261126_145941.html",
-      "sha256": "8d7e19f9269e872f00114c74d68fe5aae1817102f3106adf0bb7021195c3d353"
+      "report": "reports/fmea/fmea_kdash-local_kdash-e2e_20261126_162925.html",
+      "sha256": "d333fbfb233335a56d4e3b878773174364482976cabdfb007cd39d62f017de6d"
     },
     {
-      "report": "secrets/reports/secrets/secrets_kdash-local_kdash-e2e_20261126_151535.html",
-      "sha256": "6d46811785731ab4df59bcf529ceec932ea2af0234a41860f8c98fd03630d3ce"
+      "report": "secrets/reports/secrets/secrets_kdash-local_kdash-e2e_20261126_164517.html",
+      "sha256": "044ffe86e8e71e14f07c8d62c68e1cb2634e7eba5564aed67352eeba094cdcab"
     }
   ]
 }

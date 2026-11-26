@@ -2,7 +2,7 @@
 [0m[38;5;243m┌─[39m [1mLOGS[0m [38;5;243m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [38;5;243mREAD-ONLY / audited[39m [38;5;243m─┐[39m
 [38;5;243m│[39m [38;5;243mPOD      [39m  [1mapp-server-8fb4699bc-cx5vz[0m                                                                                                                                 [38;5;243m│[39m
 [38;5;243m│[39m [38;5;243mCONTAINER[39m  [1mapp[0m   [38;5;29m● Running[39m   [38;5;243mready[39m   [38;5;243mrestarts[39m 11   [38;5;243mlast exit[39m [1m[38;5;196mUnknown exit=255[0m   [38;5;243mbusybox:1.36[39m                                                                          [38;5;243m│[39m
-[38;5;243m└─[39m [1mrows 1-38 / 164989 · 164989 lines 18.0 MiB since 2026-11-26 03:32:29, whole log: 1 rotated file from dev + the current file[0m [38;5;243m─────────────────────────────────────────┘[39m
+[38;5;243m└─[39m [1mrows 1-38 / 170371 · 170371 lines 18.6 MiB since 2026-11-26 03:32:29, whole log: 1 rotated file from dev + the current file[0m [38;5;243m─────────────────────────────────────────┘[39m
 [38;5;243m2026-11-26T03:32:29.406140665Z[39m 2026-11-26T03:32:29+00:00 INFO request=0 service=app-server healthy=true
 [38;5;243m2026-11-26T03:32:29.406790334Z[39m 2026-11-26T03:32:29+00:00 [38;5;163mWARN[39m request=0 demonstration warning from live workload
 [38;5;243m2026-11-26T03:32:31.408016871Z[39m 2026-11-26T03:32:31+00:00 INFO request=1 service=app-server healthy=true

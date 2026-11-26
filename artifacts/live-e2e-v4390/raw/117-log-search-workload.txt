@@ -2,7 +2,7 @@
 ┌─ FIND IN LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
-└─ rows 14-51 / 20063 · /INFO|WARN|ERROR in Deployment app-server: 8 of 8 logs read, 202107 lines, 202107 matching ─────────────────────────────────────────────────────┘
+└─ rows 14-51 / 20063 · /INFO|WARN|ERROR in Deployment app-server: 8 of 8 logs read, 216463 lines, 216463 matching ─────────────────────────────────────────────────────┘
 2026-11-26T03:27:28.642482458Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:28+00:00 INFO request=0 service=app-server healthy=true
 2026-11-26T03:27:28.643057985Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:28+00:00 WARN request=0 demonstration warning from live workload
 2026-11-26T03:27:28.764306362Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-26T03:27:28+00:00 INFO sidecar heartbeat

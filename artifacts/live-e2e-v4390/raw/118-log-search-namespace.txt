@@ -2,7 +2,7 @@
 ┌─ FIND IN LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
-└─ rows 39-76 / 31215 · /INFO|WARN|ERROR in namespace kdash-e2e: 32 of 32 logs read, 213261 lines, 213258 matching ─────────────────────────────────────────────────────┘
+└─ rows 39-76 / 32865 · /INFO|WARN|ERROR in namespace kdash-e2e: 32 of 32 logs read, 230308 lines, 230305 matching ─────────────────────────────────────────────────────┘
 2026-11-06T12:38:09.400936105Z [completed-check-m9swm/check] INFO completed live validation job
 2026-11-26T03:27:27.768077891Z [db-stateful-0/db previous] 2026-11-26T03:27:27+00:00 INFO db heartbeat
 2026-11-26T03:27:28.642482458Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:28+00:00 INFO request=0 service=app-server healthy=true
@@ -47,4 +47,4 @@
 │ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
 │ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
 └─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
- match 1/31177
+ match 1/32827

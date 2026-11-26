@@ -1,12 +1,12 @@
 {
  "generator": "kdash",
  "title": "Namespace Report - kdash-local / kdash-e2e",
- "generated": 1795685341,
+ "generated": 1795690727,
  "timezone": {
   "off": 19800,
   "name": "IST",
   "label": "IST (UTC+05:30)",
-  "now": 1795685341
+  "now": 1795690727
  },
  "tables": {
   "actiontable": {
@@ -72,7 +72,7 @@
      "Section": "Memory and OOM Risk",
      "Item": "test-sts-0",
      "Status": "NO_LIMIT",
-     "Details": "node dev · pool role:control-plane,master · kind StatefulSet · workload test-sts · mem used 0Mi · restarts 31",
+     "Details": "node dev · pool role:control-plane,master · kind StatefulSet · workload test-sts · mem used 0Mi · restarts 33",
      "Next step": "no memory limit"
     },
     {
@@ -80,7 +80,7 @@
      "Section": "Pods",
      "Item": "z-crash",
      "Status": "CrashLoopBackOff",
-     "Details": "ready 0/1 · restarts 528 · node dev · pool role:control-plane,master · pod ip 10.244.0.178 · host ip 172.18.0.2",
+     "Details": "ready 0/1 · restarts 545 · node dev · pool role:control-plane,master · pod ip 10.244.0.178 · host ip 172.18.0.2",
      "Next step": "kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100"
     },
     {
@@ -88,7 +88,7 @@
      "Section": "Containers",
      "Item": "z-crash",
      "Status": "CrashLoopBackOff",
-     "Details": "container crash · ready N · restarts 528 · cpu request 5m · cpu limit 50m · mem request 4Mi",
+     "Details": "container crash · ready N · restarts 545 · cpu request 5m · cpu limit 50m · mem request 4Mi",
      "Next step": "kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100"
     },
     {
@@ -202,7 +202,7 @@
     {
      "Source": "Usage of other namespaces",
      "State": "ok",
-     "Detail": "pod metrics, 1319Mi / 189m"
+     "Detail": "pod metrics, 1379Mi / 173m"
     },
     {
      "Source": "Workload objects",
@@ -227,7 +227,7 @@
     {
      "Source": "Clock",
      "State": "ok",
-     "Detail": "host time IST (UTC+05:30) · generated 2026-11-26 09:29:01 by dheer"
+     "Detail": "host time IST (UTC+05:30) · generated 2026-11-26 10:58:47 by dheer"
     }
    ]
   },
@@ -256,15 +256,15 @@
      "Pod / container": "z-oom",
      "RDY": "1/1",
      "RST": "3",
-     "CPUm": 50,
+     "CPUm": 51,
      "T": "·",
      "MEM Mi": 1,
      "CPUreq": "10",
      "CPUlim": "50",
      "MEMreq": "8",
      "MEMlim": "16",
-     "c%REQ": "500.0",
-     "c%LIM": "100.0",
+     "c%REQ": "510.0",
+     "c%LIM": "102.0",
      "CPU/LIM": "",
      "m%REQ": "12.5",
      "m%LIM": "6.2",
@@ -274,15 +274,15 @@
      "Pod / container": "└─ hog",
      "RDY": "Y",
      "RST": "3",
-     "CPUm": 50,
+     "CPUm": 51,
      "T": "·",
      "MEM Mi": 1,
      "CPUreq": "10",
      "CPUlim": "50",
      "MEMreq": "8",
      "MEMlim": "16",
-     "c%REQ": "500.0",
-     "c%LIM": "100.0",
+     "c%REQ": "510.0",
+     "c%LIM": "102.0",
      "CPU/LIM": "",
      "m%REQ": "12.5",
      "m%LIM": "6.2",
@@ -292,15 +292,15 @@
      "Pod / container": "app-server-8fb4699bc-cx5vz",
      "RDY": "2/2",
      "RST": "21",
-     "CPUm": 2,
+     "CPUm": 3,
      "T": "·",
      "MEM Mi": 1,
      "CPUreq": "25",
      "CPUlim": "250",
      "MEMreq": "12",
      "MEMlim": "96",
-     "c%REQ": "8.0",
-     "c%LIM": "0.8",
+     "c%REQ": "12.0",
+     "c%LIM": "1.2",
      "CPU/LIM": "",
      "m%REQ": "8.3",
      "m%LIM": "1.0",
@@ -310,15 +310,15 @@
      "Pod / container": "├─ app",
      "RDY": "Y",
      "RST": "11",
-     "CPUm": 1,
+     "CPUm": 2,
      "T": "·",
      "MEM Mi": 1,
      "CPUreq": "20",
      "CPUlim": "200",
      "MEMreq": "8",
      "MEMlim": "64",
-     "c%REQ": "5.0",
-     "c%LIM": "0.5",
+     "c%REQ": "10.0",
+     "c%LIM": "1.0",
      "CPU/LIM": "",
      "m%REQ": "12.5",
      "m%LIM": "1.6",
@@ -346,15 +346,15 @@
      "Pod / container": "app-server-8fb4699bc-t7zxj",
      "RDY": "2/2",
      "RST": "20",
-     "CPUm": 2,
+     "CPUm": 3,
      "T": "·",
      "MEM Mi": 0,
      "CPUreq": "25",
      "CPUlim": "250",
      "MEMreq": "12",
      "MEMlim": "96",
-     "c%REQ": "8.0",
-     "c%LIM": "0.8",
+     "c%REQ": "12.0",
+     "c%LIM": "1.2",
      "CPU/LIM": "",
      "m%REQ": "0.0",
      "m%LIM": "0.0",
@@ -364,15 +364,15 @@
      "Pod / container": "├─ app",
      "RDY": "Y",
      "RST": "10",
-     "CPUm": 1,
+     "CPUm": 2,
      "T": "·",
      "MEM Mi": 0,
      "CPUreq": "20",
      "CPUlim": "200",
      "MEMreq": "8",
      "MEMlim": "64",
-     "c%REQ": "5.0",
-     "c%LIM": "0.5",
+     "c%REQ": "10.0",
+     "c%LIM": "1.0",
      "CPU/LIM": "",
      "m%REQ": "0.0",
      "m%LIM": "0.0",
@@ -543,7 +543,7 @@
     {
      "Pod / container": "kdash-secrets-live-consumer",
      "RDY": "1/1",
-     "RST": "8",
+     "RST": "10",
      "CPUm": 0,
      "T": "·",
      "MEM Mi": 0,
@@ -561,7 +561,7 @@
     {
      "Pod / container": "└─ consumer",
      "RDY": "Y",
-     "RST": "8",
+     "RST": "10",
      "CPUm": 0,
      "T": "·",
      "MEM Mi": 0,
@@ -579,7 +579,7 @@
     {
      "Pod / container": "test-sts-0",
      "RDY": "1/1",
-     "RST": "31",
+     "RST": "33",
      "CPUm": 0,
      "T": "·",
      "MEM Mi": 0,
@@ -597,7 +597,7 @@
     {
      "Pod / container": "└─ c",
      "RDY": "Y",
-     "RST": "31",
+     "RST": "33",
      "CPUm": 0,
      "T": "·",
      "MEM Mi": 0,
@@ -649,7 +649,7 @@
      "MEM/LIM": ""
     },
     {
-     "Pod / container": "nightly-report-29928075-27m6x",
+     "Pod / container": "nightly-report-29928165-fpv4n",
      "RDY": "0/1",
      "RST": "0",
      "CPUm": "-",
@@ -685,7 +685,7 @@
      "MEM/LIM": ""
     },
     {
-     "Pod / container": "nightly-report-29928080-wz9d4",
+     "Pod / container": "nightly-report-29928170-gllb2",
      "RDY": "0/1",
      "RST": "0",
      "CPUm": "-",
@@ -721,7 +721,7 @@
      "MEM/LIM": ""
     },
     {
-     "Pod / container": "nightly-report-29928085-sm4xz",
+     "Pod / container": "nightly-report-29928175-w2kvf",
      "RDY": "0/1",
      "RST": "0",
      "CPUm": "-",
@@ -795,7 +795,7 @@
     {
      "Pod / container": "z-crash",
      "RDY": "0/1",
-     "RST": "528",
+     "RST": "545",
      "CPUm": "-",
      "T": "·",
      "MEM Mi": "-",
@@ -813,7 +813,7 @@
     {
      "Pod / container": "└─ crash",
      "RDY": "N",
-     "RST": "528",
+     "RST": "545",
      "CPUm": "-",
      "T": "·",
      "MEM Mi": "-",
@@ -978,13 +978,13 @@
      "QOS": "Burstable",
      "KIND": "Deployment",
      "WORKLOAD": "app-server",
-     "CPU_USED_m": 2,
+     "CPU_USED_m": 3,
      "CPU_REQ_m": 25,
      "CPU_LIM_m": 250,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 12,
      "MEM_LIM_Mi": 96,
-     "CPU_PREV_m": 2,
+     "CPU_PREV_m": 3,
      "MEM_PREV_Mi": 1,
      "LAST_TERMINATION": "Unknown",
      "CONTAINERS": 2,
@@ -1003,13 +1003,13 @@
      "QOS": "Burstable",
      "KIND": "Deployment",
      "WORKLOAD": "app-server",
-     "CPU_USED_m": 2,
+     "CPU_USED_m": 3,
      "CPU_REQ_m": 25,
      "CPU_LIM_m": 250,
      "MEM_USED_Mi": 0,
      "MEM_REQ_Mi": 12,
      "MEM_LIM_Mi": 96,
-     "CPU_PREV_m": 2,
+     "CPU_PREV_m": 3,
      "MEM_PREV_Mi": 0,
      "LAST_TERMINATION": "Unknown",
      "CONTAINERS": 2,
@@ -1120,7 +1120,7 @@
      "POD": "kdash-secrets-live-consumer",
      "STATUS": "Running",
      "READY": "1/1",
-     "RESTARTS": 8,
+     "RESTARTS": 10,
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "POD_IP": "10.244.0.156",
@@ -1142,13 +1142,13 @@
     },
     {
      "NAMESPACE": "kdash-e2e",
-     "POD": "nightly-report-29928075-27m6x",
+     "POD": "nightly-report-29928165-fpv4n",
      "STATUS": "Succeeded",
      "READY": "0/1",
      "RESTARTS": 0,
      "NODE": "dev",
      "POOL": "role:control-plane,master",
-     "POD_IP": "10.244.0.64",
+     "POD_IP": "10.244.0.100",
      "HOST_IP": "172.18.0.2",
      "QOS": "Burstable",
      "KIND": "CronJob",
@@ -1167,13 +1167,13 @@
     },
     {
      "NAMESPACE": "kdash-e2e",
-     "POD": "nightly-report-29928080-wz9d4",
+     "POD": "nightly-report-29928170-gllb2",
      "STATUS": "Succeeded",
      "READY": "0/1",
      "RESTARTS": 0,
      "NODE": "dev",
      "POOL": "role:control-plane,master",
-     "POD_IP": "10.244.0.67",
+     "POD_IP": "10.244.0.103",
      "HOST_IP": "172.18.0.2",
      "QOS": "Burstable",
      "KIND": "CronJob",
@@ -1192,13 +1192,13 @@
     },
     {
      "NAMESPACE": "kdash-e2e",
-     "POD": "nightly-report-29928085-sm4xz",
+     "POD": "nightly-report-29928175-w2kvf",
      "STATUS": "Succeeded",
      "READY": "0/1",
      "RESTARTS": 0,
      "NODE": "dev",
      "POOL": "role:control-plane,master",
-     "POD_IP": "10.244.0.68",
+     "POD_IP": "10.244.0.105",
      "HOST_IP": "172.18.0.2",
      "QOS": "Burstable",
      "KIND": "CronJob",
@@ -1270,7 +1270,7 @@
      "POD": "test-sts-0",
      "STATUS": "Running",
      "READY": "1/1",
-     "RESTARTS": 31,
+     "RESTARTS": 33,
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "POD_IP": "10.244.0.176",
@@ -1295,7 +1295,7 @@
      "POD": "z-crash",
      "STATUS": "CrashLoopBackOff",
      "READY": "0/1",
-     "RESTARTS": 528,
+     "RESTARTS": 545,
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "POD_IP": "10.244.0.178",
@@ -1353,13 +1353,13 @@
      "QOS": "Burstable",
      "KIND": "Pod",
      "WORKLOAD": "z-oom",
-     "CPU_USED_m": 50,
+     "CPU_USED_m": 51,
      "CPU_REQ_m": 10,
      "CPU_LIM_m": 50,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 8,
      "MEM_LIM_Mi": 16,
-     "CPU_PREV_m": 50,
+     "CPU_PREV_m": 51,
      "MEM_PREV_Mi": 1,
      "LAST_TERMINATION": "Unknown",
      "CONTAINERS": 1,
@@ -1440,13 +1440,13 @@
      "CONTAINER": "app",
      "READY": "Y",
      "RESTARTS": 11,
-     "CPU_USED_m": 1,
+     "CPU_USED_m": 2,
      "CPU_REQ_m": 20,
      "CPU_LIM_m": 200,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 8,
      "MEM_LIM_Mi": 64,
-     "CPU_PREV_m": 1,
+     "CPU_PREV_m": 2,
      "MEM_PREV_Mi": 1,
      "LAST_TERMINATION": "Unknown",
      "WAITING": "-"
@@ -1472,13 +1472,13 @@
      "CONTAINER": "app",
      "READY": "Y",
      "RESTARTS": 10,
-     "CPU_USED_m": 1,
+     "CPU_USED_m": 2,
      "CPU_REQ_m": 20,
      "CPU_LIM_m": 200,
      "MEM_USED_Mi": 0,
      "MEM_REQ_Mi": 8,
      "MEM_LIM_Mi": 64,
-     "CPU_PREV_m": 1,
+     "CPU_PREV_m": 2,
      "MEM_PREV_Mi": 0,
      "LAST_TERMINATION": "Unknown",
      "WAITING": "-"
@@ -1567,7 +1567,7 @@
      "POD": "kdash-secrets-live-consumer",
      "CONTAINER": "consumer",
      "READY": "Y",
-     "RESTARTS": 8,
+     "RESTARTS": 10,
      "CPU_USED_m": 0,
      "CPU_REQ_m": 50,
      "CPU_LIM_m": 200,
@@ -1580,7 +1580,7 @@
      "WAITING": "-"
     },
     {
-     "POD": "nightly-report-29928075-27m6x",
+     "POD": "nightly-report-29928165-fpv4n",
      "CONTAINER": "report",
      "READY": "N",
      "RESTARTS": 0,
@@ -1596,7 +1596,7 @@
      "WAITING": "-"
     },
     {
-     "POD": "nightly-report-29928080-wz9d4",
+     "POD": "nightly-report-29928170-gllb2",
      "CONTAINER": "report",
      "READY": "N",
      "RESTARTS": 0,
@@ -1612,7 +1612,7 @@
      "WAITING": "-"
     },
     {
-     "POD": "nightly-report-29928085-sm4xz",
+     "POD": "nightly-report-29928175-w2kvf",
      "CONTAINER": "report",
      "READY": "N",
      "RESTARTS": 0,
@@ -1663,7 +1663,7 @@
      "POD": "test-sts-0",
      "CONTAINER": "c",
      "READY": "Y",
-     "RESTARTS": 31,
+     "RESTARTS": 33,
      "CPU_USED_m": 0,
      "CPU_REQ_m": "-",
      "CPU_LIM_m": "-",
@@ -1679,7 +1679,7 @@
      "POD": "z-crash",
      "CONTAINER": "crash",
      "READY": "N",
-     "RESTARTS": 528,
+     "RESTARTS": 545,
      "CPU_USED_m": "-",
      "CPU_REQ_m": 5,
      "CPU_LIM_m": 50,
@@ -1712,13 +1712,13 @@
      "CONTAINER": "hog",
      "READY": "Y",
      "RESTARTS": 3,
-     "CPU_USED_m": 50,
+     "CPU_USED_m": 51,
      "CPU_REQ_m": 10,
      "CPU_LIM_m": 50,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 8,
      "MEM_LIM_Mi": 16,
-     "CPU_PREV_m": 50,
+     "CPU_PREV_m": 51,
      "MEM_PREV_Mi": 1,
      "LAST_TERMINATION": "Unknown",
      "WAITING": "-"
@@ -1777,7 +1777,7 @@
      "col2": "mem",
      "Alloc": "7524Mi",
      "used █ requested ▒ free": "",
-     "used%": "34.8",
+     "used%": "36.6",
      "req%": "33.3"
     },
     {
@@ -1786,7 +1786,7 @@
      "col2": "cpu",
      "Alloc": "24.0c",
      "used █ requested ▒ free": "",
-     "used%": "1.8",
+     "used%": "2.2",
      "req%": "7.6"
     }
    ]
@@ -1816,10 +1816,10 @@
      "Nodes": "1",
      "CPU used": 8,
      "CPU req": 0,
-     "MEM used": 244,
+     "MEM used": 243,
      "MEM req": 0,
      "MEM lim": "0Mi",
-     "% of used": "18.5",
+     "% of used": "17.6",
      "% cluster mem": "0.0",
      "share of the memory used": ""
     },
@@ -1831,10 +1831,10 @@
      "Nodes": "1",
      "CPU used": 3,
      "CPU req": 0,
-     "MEM used": 70,
+     "MEM used": 78,
      "MEM req": 0,
      "MEM lim": "0Mi",
-     "% of used": "5.3",
+     "% of used": "5.7",
      "% cluster mem": "0.0",
      "share of the memory used": ""
     },
@@ -1844,12 +1844,12 @@
      "Ready": "5",
      "Workloads": "7",
      "Nodes": "1",
-     "CPU used": 62,
+     "CPU used": 61,
      "CPU req": 420,
-     "MEM used": 528,
+     "MEM used": 532,
      "MEM req": 856,
      "MEM lim": "2864Mi",
-     "% of used": "40.0",
+     "% of used": "38.6",
      "% cluster mem": "11.4",
      "share of the memory used": ""
     },
@@ -1859,12 +1859,12 @@
      "Ready": "4",
      "Workloads": "4",
      "Nodes": "1",
-     "CPU used": 23,
+     "CPU used": 9,
      "CPU req": 350,
-     "MEM used": 110,
+     "MEM used": 129,
      "MEM req": 256,
      "MEM lim": "4096Mi",
-     "% of used": "8.3",
+     "% of used": "9.4",
      "% cluster mem": "3.4",
      "share of the memory used": ""
     },
@@ -1874,12 +1874,12 @@
      "Ready": "9",
      "Workloads": "11",
      "Nodes": "1",
-     "CPU used": 58,
+     "CPU used": 59,
      "CPU req": 280,
      "MEM used": 2,
      "MEM req": 224,
      "MEM lim": "848Mi",
-     "% of used": "0.2",
+     "% of used": "0.1",
      "% cluster mem": "3.0",
      "share of the memory used": ""
     },
@@ -1906,10 +1906,10 @@
      "Nodes": "1",
      "CPU used": 4,
      "CPU req": 100,
-     "MEM used": 19,
+     "MEM used": 22,
      "MEM req": 50,
      "MEM lim": "0Mi",
-     "% of used": "1.4",
+     "% of used": "1.6",
      "% cluster mem": "0.7",
      "share of the memory used": ""
     },
@@ -1919,12 +1919,12 @@
      "Ready": "3",
      "Workloads": "3",
      "Nodes": "1",
-     "CPU used": 10,
+     "CPU used": 9,
      "CPU req": 120,
-     "MEM used": 86,
+     "MEM used": 99,
      "MEM req": 264,
      "MEM lim": "170Mi",
-     "% of used": "6.5",
+     "% of used": "7.2",
      "% cluster mem": "3.5",
      "share of the memory used": ""
     },
@@ -1934,12 +1934,12 @@
      "Ready": "4",
      "Workloads": "4",
      "Nodes": "1",
-     "CPU used": 12,
+     "CPU used": 11,
      "CPU req": 400,
-     "MEM used": 194,
+     "MEM used": 200,
      "MEM req": 768,
      "MEM lim": "2048Mi",
-     "% of used": "14.7",
+     "% of used": "14.5",
      "% cluster mem": "10.2",
      "share of the memory used": ""
     },
@@ -1951,10 +1951,10 @@
      "Nodes": "1",
      "CPU used": 1,
      "CPU req": 0,
-     "MEM used": 15,
+     "MEM used": 17,
      "MEM req": 0,
      "MEM lim": "0Mi",
-     "% of used": "1.1",
+     "% of used": "1.2",
      "% cluster mem": "0.0",
      "share of the memory used": ""
     },
@@ -1966,10 +1966,10 @@
      "Nodes": "1",
      "CPU used": 4,
      "CPU req": 200,
-     "MEM used": 50,
+     "MEM used": 56,
      "MEM req": 128,
      "MEM lim": "1024Mi",
-     "% of used": "3.8",
+     "% of used": "4.1",
      "% cluster mem": "1.7",
      "share of the memory used": ""
     }
@@ -2003,7 +2003,7 @@
      "alloc": "7.3",
      "%al": "0.0",
      "nsLim": "0.8",
-     "node%": "34.8",
+     "node%": "36.6",
      "clReq%": "33.3",
      "this ns · other ns · free": ""
     },
@@ -2016,7 +2016,7 @@
      "alloc": "7.3",
      "%al": "0.0",
      "nsLim": "0.8",
-     "node%": "34.8",
+     "node%": "36.6",
      "clReq%": "33.3",
      "this ns · other ns · free": ""
     },
@@ -2092,19 +2092,19 @@
      "ROLES": "control-plane,master",
      "NS_PODS": 16,
      "NS_PODS_READY": 14,
-     "NS_RESTARTS": 624,
-     "NS_CPU_USED_m": 58,
+     "NS_RESTARTS": 645,
+     "NS_CPU_USED_m": 61,
      "NS_CPU_REQ_m": 260,
      "NS_CPU_LIM_m": 1500,
      "NODE_CPU_ALLOC_m": 24000,
-     "NODE_CPU_USED_m": 433,
+     "NODE_CPU_USED_m": 519,
      "NS_MEM_USED_Mi": 2,
      "NS_MEM_REQ_Mi": 240,
      "NS_MEM_LIM_Mi": 816,
      "NODE_MEM_ALLOC_Mi": 7524,
-     "NODE_MEM_USED_Mi": 2617,
+     "NODE_MEM_USED_Mi": 2751,
      "NS_MEM_PCT_ALLOC": 0,
-     "NODE_MEM_PCT": 34.8,
+     "NODE_MEM_PCT": 36.6,
      "INTERNAL_IP": "172.18.0.2",
      "POD_CIDR": "10.244.0.0/24",
      "NS_POD_IPS": 14,
@@ -2115,7 +2115,7 @@
      "CL_MEM_REQ_Mi": 2506,
      "CL_MEM_LIM_Mi": 10986,
      "OTHER_NS_MEM_REQ_Mi": 2266,
-     "OTHER_NS_MEM_USED_Mi": 2615,
+     "OTHER_NS_MEM_USED_Mi": 2749,
      "CL_MEM_REQ_PCT": 33.3,
      "CL_CPU_REQ_PCT": 7.6,
      "CL_NAMESPACES": 11
@@ -2190,24 +2190,24 @@
      "NODES_IN_POOL": 1,
      "NS_PODS": 16,
      "NS_PODS_READY": 14,
-     "NS_CPU_USED_m": 58,
+     "NS_CPU_USED_m": 61,
      "NS_CPU_REQ_m": 260,
      "POOL_CPU_ALLOC_m": 24000,
      "NS_MEM_USED_Mi": 2,
      "NS_MEM_REQ_Mi": 240,
      "NS_MEM_LIM_Mi": 816,
      "POOL_MEM_ALLOC_Mi": 7524,
-     "POOL_MEM_USED_Mi": 2617,
+     "POOL_MEM_USED_Mi": 2751,
      "NS_MEM_PCT_ALLOC": 0,
      "CL_PODS": 42,
      "CL_CPU_REQ_m": 1820,
      "CL_MEM_REQ_Mi": 2506,
      "CL_MEM_LIM_Mi": 10986,
-     "POOL_CPU_USED_m": 433,
+     "POOL_CPU_USED_m": 519,
      "NS_CPU_LIM_m": 1500,
      "POOL_METRICS_NODES": "1/1",
-     "SCOPE_MEM_USED_Mi": 1319,
-     "SCOPE_CPU_USED_m": 189
+     "SCOPE_MEM_USED_Mi": 1379,
+     "SCOPE_CPU_USED_m": 173
     },
     {
      "POOL": "(none)",
@@ -2264,9 +2264,9 @@
      "WORKLOADS": 4,
      "MEM_REQ_PCT_CLUSTER": 0,
      "CPU_USED_m": 8,
-     "MEM_USED_Mi": 244,
-     "MEM_USED_PCT_SCOPE": 18.5,
-     "CPU_USED_PCT_SCOPE": 4.2
+     "MEM_USED_Mi": 243,
+     "MEM_USED_PCT_SCOPE": 17.6,
+     "CPU_USED_PCT_SCOPE": 4.6
     },
     {
      "NAMESPACE": "cert-manager",
@@ -2279,9 +2279,9 @@
      "WORKLOADS": 3,
      "MEM_REQ_PCT_CLUSTER": 0,
      "CPU_USED_m": 3,
-     "MEM_USED_Mi": 70,
-     "MEM_USED_PCT_SCOPE": 5.3,
-     "CPU_USED_PCT_SCOPE": 1.6
+     "MEM_USED_Mi": 78,
+     "MEM_USED_PCT_SCOPE": 5.7,
+     "CPU_USED_PCT_SCOPE": 1.7
     },
     {
      "NAMESPACE": "default",
@@ -2293,10 +2293,10 @@
      "PODS_READY": 5,
      "WORKLOADS": 7,
      "MEM_REQ_PCT_CLUSTER": 11.38,
-     "CPU_USED_m": 62,
-     "MEM_USED_Mi": 528,
-     "MEM_USED_PCT_SCOPE": 40,
-     "CPU_USED_PCT_SCOPE": 32.8
+     "CPU_USED_m": 61,
+     "MEM_USED_Mi": 532,
+     "MEM_USED_PCT_SCOPE": 38.6,
+     "CPU_USED_PCT_SCOPE": 35.3
     },
     {
      "NAMESPACE": "flux-system",
@@ -2308,10 +2308,10 @@
      "PODS_READY": 4,
      "WORKLOADS": 4,
      "MEM_REQ_PCT_CLUSTER": 3.4,
-     "CPU_USED_m": 23,
-     "MEM_USED_Mi": 110,
-     "MEM_USED_PCT_SCOPE": 8.3,
-     "CPU_USED_PCT_SCOPE": 12.2
+     "CPU_USED_m": 9,
+     "MEM_USED_Mi": 129,
+     "MEM_USED_PCT_SCOPE": 9.4,
+     "CPU_USED_PCT_SCOPE": 5.2
     },
     {
      "NAMESPACE": "kdash-e2e",
@@ -2323,10 +2323,10 @@
      "PODS_READY": 9,
      "WORKLOADS": 11,
      "MEM_REQ_PCT_CLUSTER": 2.98,
-     "CPU_USED_m": 58,
+     "CPU_USED_m": 59,
      "MEM_USED_Mi": 2,
-     "MEM_USED_PCT_SCOPE": 0.2,
-     "CPU_USED_PCT_SCOPE": 30.7
+     "MEM_USED_PCT_SCOPE": 0.1,
+     "CPU_USED_PCT_SCOPE": 34.1
     },
     {
      "NAMESPACE": "kdash-e2e-qa-20261114-fast",
@@ -2341,7 +2341,7 @@
      "CPU_USED_m": 4,
      "MEM_USED_Mi": 1,
      "MEM_USED_PCT_SCOPE": 0.1,
-     "CPU_USED_PCT_SCOPE": 2.1
+     "CPU_USED_PCT_SCOPE": 2.3
     },
     {
      "NAMESPACE": "kube-flannel",
@@ -2354,9 +2354,9 @@
      "WORKLOADS": 1,
      "MEM_REQ_PCT_CLUSTER": 0.66,
      "CPU_USED_m": 4,
-     "MEM_USED_Mi": 19,
-     "MEM_USED_PCT_SCOPE": 1.4,
-     "CPU_USED_PCT_SCOPE": 2.1
+     "MEM_USED_Mi": 22,
+     "MEM_USED_PCT_SCOPE": 1.6,
+     "CPU_USED_PCT_SCOPE": 2.3
     },
     {
      "NAMESPACE": "kube-system",
@@ -2368,10 +2368,10 @@
      "PODS_READY": 3,
      "WORKLOADS": 3,
      "MEM_REQ_PCT_CLUSTER": 3.51,
-     "CPU_USED_m": 10,
-     "MEM_USED_Mi": 86,
-     "MEM_USED_PCT_SCOPE": 6.5,
-     "CPU_USED_PCT_SCOPE": 5.3
+     "CPU_USED_m": 9,
+     "MEM_USED_Mi": 99,
+     "MEM_USED_PCT_SCOPE": 7.2,
+     "CPU_USED_PCT_SCOPE": 5.2
     },
     {
      "NAMESPACE": "learnalgorithm",
@@ -2383,10 +2383,10 @@
      "PODS_READY": 4,
      "WORKLOADS": 4,
      "MEM_REQ_PCT_CLUSTER": 10.21,
-     "CPU_USED_m": 12,
-     "MEM_USED_Mi": 194,
-     "MEM_USED_PCT_SCOPE": 14.7,
-     "CPU_USED_PCT_SCOPE": 6.3
+     "CPU_USED_m": 11,
+     "MEM_USED_Mi": 200,
+     "MEM_USED_PCT_SCOPE": 14.5,
+     "CPU_USED_PCT_SCOPE": 6.4
     },
     {
      "NAMESPACE": "local-path-storage",
@@ -2399,9 +2399,9 @@
      "WORKLOADS": 1,
      "MEM_REQ_PCT_CLUSTER": 0,
      "CPU_USED_m": 1,
-     "MEM_USED_Mi": 15,
-     "MEM_USED_PCT_SCOPE": 1.1,
-     "CPU_USED_PCT_SCOPE": 0.5
+     "MEM_USED_Mi": 17,
+     "MEM_USED_PCT_SCOPE": 1.2,
+     "CPU_USED_PCT_SCOPE": 0.6
     },
     {
      "NAMESPACE": "podinfo-demo",
@@ -2414,9 +2414,9 @@
      "WORKLOADS": 1,
      "MEM_REQ_PCT_CLUSTER": 1.7,
      "CPU_USED_m": 4,
-     "MEM_USED_Mi": 50,
-     "MEM_USED_PCT_SCOPE": 3.8,
-     "CPU_USED_PCT_SCOPE": 2.1
+     "MEM_USED_Mi": 56,
+     "MEM_USED_PCT_SCOPE": 4.1,
+     "CPU_USED_PCT_SCOPE": 2.3
     }
    ]
   },
@@ -2477,7 +2477,7 @@
      "Updated": "2",
      "Pods": "2",
      "Nodes": "1",
-     "CPU used": 4,
+     "CPU used": 6,
      "CPU req": "50m",
      "MEM used": 1,
      "MEM req": "24Mi",
@@ -2514,7 +2514,7 @@
      "MEM used": 0,
      "MEM req": "32Mi",
      "MEM lim": "128Mi",
-     "RST": "8",
+     "RST": "10",
      "Status": "N/A",
      "Distribution (node : pods)": "dev 1"
     },
@@ -2546,7 +2546,7 @@
      "MEM used": "-",
      "MEM req": "4Mi",
      "MEM lim": "32Mi",
-     "RST": "528",
+     "RST": "545",
      "Status": "N/A",
      "Distribution (node : pods)": "dev 1"
     },
@@ -2573,7 +2573,7 @@
      "Updated": "-",
      "Pods": "1",
      "Nodes": "1",
-     "CPU used": 50,
+     "CPU used": 51,
      "CPU req": "10m",
      "MEM used": 1,
      "MEM req": "8Mi",
@@ -2658,7 +2658,7 @@
      "MEM used": 0,
      "MEM req": "-",
      "MEM lim": "-",
-     "RST": "31",
+     "RST": "33",
      "Status": "SINGLE",
      "Distribution (node : pods)": "dev 1"
     }
@@ -2714,7 +2714,7 @@
      "RESTARTS": 0,
      "IMAGES": "busybox:1.36",
      "SCHEDULE": "*/5 * * * *",
-     "LAST_SCHEDULE": "2026-11-26T09:25:00Z"
+     "LAST_SCHEDULE": "2026-11-26T10:55:00Z"
     },
     {
      "KIND": "DaemonSet",
@@ -2750,7 +2750,7 @@
      "NODES": 1,
      "MAX_PER_NODE": 2,
      "VERDICT": "HA_RISK",
-     "CPU_USED_m": 4,
+     "CPU_USED_m": 6,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 24,
      "MEM_LIM_Mi": 192,
@@ -2811,7 +2811,7 @@
      "AVAILABLE": "-",
      "ROLLOUT": "-",
      "CPU_REQ_m": 50,
-     "RESTARTS": 8,
+     "RESTARTS": 10,
      "IMAGES": "-",
      "SCHEDULE": "-",
      "LAST_SCHEDULE": "-"
@@ -2861,7 +2861,7 @@
      "AVAILABLE": "-",
      "ROLLOUT": "-",
      "CPU_REQ_m": 5,
-     "RESTARTS": 528,
+     "RESTARTS": 545,
      "IMAGES": "-",
      "SCHEDULE": "-",
      "LAST_SCHEDULE": "-"
@@ -2900,7 +2900,7 @@
      "NODES": 1,
      "MAX_PER_NODE": 1,
      "VERDICT": "N/A",
-     "CPU_USED_m": 50,
+     "CPU_USED_m": 51,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 8,
      "MEM_LIM_Mi": 16,
@@ -3036,7 +3036,7 @@
      "AVAILABLE": 1,
      "ROLLOUT": "complete",
      "CPU_REQ_m": "-",
-     "RESTARTS": 31,
+     "RESTARTS": 33,
      "IMAGES": "busybox:1.36",
      "SCHEDULE": "-",
      "LAST_SCHEDULE": "-"
@@ -3069,7 +3069,7 @@
      "CPU_USED_m": "-",
      "MEM_USED_Mi": "-",
      "MEM_REQ_Mi": 48,
-     "POD_NAMES": "nightly-report-29928075-27m6x,nightly-report-29928080-wz9d4,nightly-report-29928085-sm4xz"
+     "POD_NAMES": "nightly-report-29928165-fpv4n,nightly-report-29928170-gllb2,nightly-report-29928175-w2kvf"
     },
     {
      "NODE": "dev",
@@ -3092,7 +3092,7 @@
      "PODS": 2,
      "PODS_READY": 2,
      "RESTARTS": 41,
-     "CPU_USED_m": 4,
+     "CPU_USED_m": 6,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 24,
      "POD_NAMES": "app-server-8fb4699bc-cx5vz,app-server-8fb4699bc-t7zxj"
@@ -3117,7 +3117,7 @@
      "WORKLOAD": "kdash-secrets-live-consumer",
      "PODS": 1,
      "PODS_READY": 1,
-     "RESTARTS": 8,
+     "RESTARTS": 10,
      "CPU_USED_m": 0,
      "MEM_USED_Mi": 0,
      "MEM_REQ_Mi": 32,
@@ -3143,7 +3143,7 @@
      "WORKLOAD": "z-crash",
      "PODS": 1,
      "PODS_READY": 0,
-     "RESTARTS": 528,
+     "RESTARTS": 545,
      "CPU_USED_m": "-",
      "MEM_USED_Mi": "-",
      "MEM_REQ_Mi": 4,
@@ -3170,7 +3170,7 @@
      "PODS": 1,
      "PODS_READY": 1,
      "RESTARTS": 3,
-     "CPU_USED_m": 50,
+     "CPU_USED_m": 51,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 8,
      "POD_NAMES": "z-oom"
@@ -3208,7 +3208,7 @@
      "WORKLOAD": "test-sts",
      "PODS": 1,
      "PODS_READY": 1,
-     "RESTARTS": 31,
+     "RESTARTS": 33,
      "CPU_USED_m": 0,
      "MEM_USED_Mi": 0,
      "MEM_REQ_Mi": "-",
@@ -3384,8 +3384,8 @@
    ],
    "rows": [
     {
-     "Pod IP": "10.244.0.64",
-     "Pod": "nightly-report-29928075-27m6x",
+     "Pod IP": "10.244.0.100",
+     "Pod": "nightly-report-29928165-fpv4n",
      "Node": "dev",
      "Host IP": "172.18.0.2",
      "Workload": "nightly-report",
@@ -3393,8 +3393,8 @@
      "Note": ""
     },
     {
-     "Pod IP": "10.244.0.67",
-     "Pod": "nightly-report-29928080-wz9d4",
+     "Pod IP": "10.244.0.103",
+     "Pod": "nightly-report-29928170-gllb2",
      "Node": "dev",
      "Host IP": "172.18.0.2",
      "Workload": "nightly-report",
@@ -3402,8 +3402,8 @@
      "Note": ""
     },
     {
-     "Pod IP": "10.244.0.68",
-     "Pod": "nightly-report-29928085-sm4xz",
+     "Pod IP": "10.244.0.105",
+     "Pod": "nightly-report-29928175-w2kvf",
      "Node": "dev",
      "Host IP": "172.18.0.2",
      "Workload": "nightly-report",
@@ -3561,8 +3561,8 @@
    ],
    "rows": [
     {
-     "POD": "nightly-report-29928075-27m6x",
-     "POD_IP": "10.244.0.64",
+     "POD": "nightly-report-29928165-fpv4n",
+     "POD_IP": "10.244.0.100",
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "HOST_IP": "172.18.0.2",
@@ -3572,8 +3572,8 @@
      "NOTE": "-"
     },
     {
-     "POD": "nightly-report-29928080-wz9d4",
-     "POD_IP": "10.244.0.67",
+     "POD": "nightly-report-29928170-gllb2",
+     "POD_IP": "10.244.0.103",
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "HOST_IP": "172.18.0.2",
@@ -3583,8 +3583,8 @@
      "NOTE": "-"
     },
     {
-     "POD": "nightly-report-29928085-sm4xz",
-     "POD_IP": "10.244.0.68",
+     "POD": "nightly-report-29928175-w2kvf",
+     "POD_IP": "10.244.0.105",
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "HOST_IP": "172.18.0.2",
@@ -3928,7 +3928,7 @@
      "NS used": 2,
      "Alloc": 7524,
      "NS%": "0.0",
-     "Node%": "34.8",
+     "Node%": "36.6",
      "Node memory: this ns █ other ▒ free ░": "",
      "NS trend": ""
     }
@@ -4029,7 +4029,7 @@
      "%REQ": 0,
      "%LIM": 0,
      "MEM/LIM": "",
-     "RST": "8",
+     "RST": "10",
      "Risk": ""
     },
     {
@@ -4053,7 +4053,7 @@
      "%REQ": "-",
      "%LIM": "-",
      "MEM/LIM": "",
-     "RST": "31",
+     "RST": "33",
      "Risk": "NO_LIMIT"
     },
     {
@@ -4069,7 +4069,7 @@
      "Risk": ""
     },
     {
-     "Pod": "nightly-report-29928075-27m6x",
+     "Pod": "nightly-report-29928165-fpv4n",
      "Node": "dev",
      "Used": "-",
      "Req": 16,
@@ -4081,7 +4081,7 @@
      "Risk": ""
     },
     {
-     "Pod": "nightly-report-29928080-wz9d4",
+     "Pod": "nightly-report-29928170-gllb2",
      "Node": "dev",
      "Used": "-",
      "Req": 16,
@@ -4093,7 +4093,7 @@
      "Risk": ""
     },
     {
-     "Pod": "nightly-report-29928085-sm4xz",
+     "Pod": "nightly-report-29928175-w2kvf",
      "Node": "dev",
      "Used": "-",
      "Req": 16,
@@ -4125,7 +4125,7 @@
      "%REQ": "-",
      "%LIM": "-",
      "MEM/LIM": "",
-     "RST": "528",
+     "RST": "545",
      "Risk": ""
     },
     {
@@ -4438,7 +4438,7 @@
      "MEM_LIM_Mi": 128,
      "PCT_OF_REQ": 0,
      "PCT_OF_LIM": 0,
-     "RESTARTS": 8,
+     "RESTARTS": 10,
      "LAST_TERMINATION": "Completed",
      "RISK": "-"
     },
@@ -4468,7 +4468,7 @@
      "MEM_LIM_Mi": "-",
      "PCT_OF_REQ": "-",
      "PCT_OF_LIM": "-",
-     "RESTARTS": 31,
+     "RESTARTS": 33,
      "LAST_TERMINATION": "Completed",
      "RISK": "NO_LIMIT"
     },
@@ -4488,7 +4488,7 @@
      "RISK": "-"
     },
     {
-     "POD": "nightly-report-29928075-27m6x",
+     "POD": "nightly-report-29928165-fpv4n",
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "KIND": "CronJob",
@@ -4503,7 +4503,7 @@
      "RISK": "-"
     },
     {
-     "POD": "nightly-report-29928080-wz9d4",
+     "POD": "nightly-report-29928170-gllb2",
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "KIND": "CronJob",
@@ -4518,7 +4518,7 @@
      "RISK": "-"
     },
     {
-     "POD": "nightly-report-29928085-sm4xz",
+     "POD": "nightly-report-29928175-w2kvf",
      "NODE": "dev",
      "POOL": "role:control-plane,master",
      "KIND": "CronJob",
@@ -4558,7 +4558,7 @@
      "MEM_LIM_Mi": 32,
      "PCT_OF_REQ": "-",
      "PCT_OF_LIM": "-",
-     "RESTARTS": 528,
+     "RESTARTS": 545,
      "LAST_TERMINATION": "Error",
      "RISK": "-"
     },
@@ -4653,19 +4653,19 @@
      "ROLES": "control-plane,master",
      "NS_PODS": 16,
      "NS_PODS_READY": 14,
-     "NS_RESTARTS": 624,
-     "NS_CPU_USED_m": 58,
+     "NS_RESTARTS": 645,
+     "NS_CPU_USED_m": 61,
      "NS_CPU_REQ_m": 260,
      "NS_CPU_LIM_m": 1500,
      "NODE_CPU_ALLOC_m": 24000,
-     "NODE_CPU_USED_m": 433,
+     "NODE_CPU_USED_m": 519,
      "NS_MEM_USED_Mi": 2,
      "NS_MEM_REQ_Mi": 240,
      "NS_MEM_LIM_Mi": 816,
      "NODE_MEM_ALLOC_Mi": 7524,
-     "NODE_MEM_USED_Mi": 2617,
+     "NODE_MEM_USED_Mi": 2751,
      "NS_MEM_PCT_ALLOC": 0,
-     "NODE_MEM_PCT": 34.8,
+     "NODE_MEM_PCT": 36.6,
      "INTERNAL_IP": "172.18.0.2",
      "POD_CIDR": "10.244.0.0/24",
      "NS_POD_IPS": 14,
@@ -4676,7 +4676,7 @@
      "CL_MEM_REQ_Mi": 2506,
      "CL_MEM_LIM_Mi": 10986,
      "OTHER_NS_MEM_REQ_Mi": 2266,
-     "OTHER_NS_MEM_USED_Mi": 2615,
+     "OTHER_NS_MEM_USED_Mi": 2749,
      "CL_MEM_REQ_PCT": 33.3,
      "CL_CPU_REQ_PCT": 7.6,
      "CL_NAMESPACES": 11
@@ -4768,7 +4768,7 @@
      "RESTARTS": 0,
      "IMAGES": "busybox:1.36",
      "SCHEDULE": "*/5 * * * *",
-     "LAST_SCHEDULE": "2026-11-26T09:25:00Z"
+     "LAST_SCHEDULE": "2026-11-26T10:55:00Z"
     },
     {
      "KIND": "DaemonSet",
@@ -4804,7 +4804,7 @@
      "NODES": 1,
      "MAX_PER_NODE": 2,
      "VERDICT": "HA_RISK",
-     "CPU_USED_m": 4,
+     "CPU_USED_m": 6,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 24,
      "MEM_LIM_Mi": 192,
@@ -4865,7 +4865,7 @@
      "AVAILABLE": "-",
      "ROLLOUT": "-",
      "CPU_REQ_m": 50,
-     "RESTARTS": 8,
+     "RESTARTS": 10,
      "IMAGES": "-",
      "SCHEDULE": "-",
      "LAST_SCHEDULE": "-"
@@ -4915,7 +4915,7 @@
      "AVAILABLE": "-",
      "ROLLOUT": "-",
      "CPU_REQ_m": 5,
-     "RESTARTS": 528,
+     "RESTARTS": 545,
      "IMAGES": "-",
      "SCHEDULE": "-",
      "LAST_SCHEDULE": "-"
@@ -4954,7 +4954,7 @@
      "NODES": 1,
      "MAX_PER_NODE": 1,
      "VERDICT": "N/A",
-     "CPU_USED_m": 50,
+     "CPU_USED_m": 51,
      "MEM_USED_Mi": 1,
      "MEM_REQ_Mi": 8,
      "MEM_LIM_Mi": 16,
@@ -5090,7 +5090,7 @@
      "AVAILABLE": 1,
      "ROLLOUT": "complete",
      "CPU_REQ_m": "-",
-     "RESTARTS": 31,
+     "RESTARTS": 33,
      "IMAGES": "busybox:1.36",
      "SCHEDULE": "-",
      "LAST_SCHEDULE": "-"
@@ -5188,7 +5188,7 @@
      "DISK_W_IOPS": "-"
     },
     {
-     "POD": "nightly-report-29928075-27m6x",
+     "POD": "nightly-report-29928165-fpv4n",
      "NODE": "dev",
      "WORKLOAD": "CronJob/nightly-report",
      "NET_RX_Bps": "-",
@@ -5199,7 +5199,7 @@
      "DISK_W_IOPS": "-"
     },
     {
-     "POD": "nightly-report-29928080-wz9d4",
+     "POD": "nightly-report-29928170-gllb2",
      "NODE": "dev",
      "WORKLOAD": "CronJob/nightly-report",
      "NET_RX_Bps": "-",
@@ -5210,7 +5210,7 @@
      "DISK_W_IOPS": "-"
     },
     {
-     "POD": "nightly-report-29928085-sm4xz",
+     "POD": "nightly-report-29928175-w2kvf",
      "NODE": "dev",
      "WORKLOAD": "CronJob/nightly-report",
      "NET_RX_Bps": "-",
@@ -5492,7 +5492,7 @@
      "KIND": "Pod",
      "OBJECT": "kdash-e2e/z-crash",
      "FAILURE MODE": "CrashLoopBackOff",
-     "NOW": "CrashLoopBackOff, 528 restarts (last: Error)",
+     "NOW": "CrashLoopBackOff, 545 restarts (last: Error)",
      "ACCESS": "full",
      "EFFECT": "Restarts; service degraded or down"
     },
@@ -6178,7 +6178,7 @@
      "KIND": "Pod",
      "OBJECT": "kdash-e2e/z-oom",
      "FAILURE MODE": "CPU near its limit",
-     "NOW": "cpu 50m of 50m limit (throttling not measured)",
+     "NOW": "cpu 51m of 50m limit (throttling not measured)",
      "ACCESS": "full",
      "EFFECT": "Latency up, timeouts"
     },
@@ -6275,7 +6275,7 @@
     {
      "STATE": "CRITICAL",
      "DAYS": "1",
-     "EXPIRES (UTC)": "2026-11-28 05:51",
+     "EXPIRES (UTC)": "2026-11-28 09:45",
      "SECRET": "kdash-e2e/kdash-secrets-live-mismatch",
      "KEY": "tls.crt",
      "ROLE": "CA",
@@ -6286,12 +6286,12 @@
      "PRIVATE KEY": "tls.key present",
      "CHAIN (signatures)": "-",
      "MANAGED BY": "manual",
-     "SHA-256 (prefix)": "52e0d576a20eea0c"
+     "SHA-256 (prefix)": "85ecb6c32b4753a2"
     },
     {
      "STATE": "CRITICAL",
      "DAYS": "1",
-     "EXPIRES (UTC)": "2026-11-28 05:51",
+     "EXPIRES (UTC)": "2026-11-28 09:45",
      "SECRET": "kdash-e2e/kdash-secrets-live-valid",
      "KEY": "tls.crt",
      "ROLE": "CA",
@@ -6302,7 +6302,7 @@
      "PRIVATE KEY": "tls.key present",
      "CHAIN (signatures)": "-",
      "MANAGED BY": "manual",
-     "SHA-256 (prefix)": "52e0d576a20eea0c"
+     "SHA-256 (prefix)": "85ecb6c32b4753a2"
     },
     {
      "STATE": "WARNING",
@@ -6508,15 +6508,15 @@
   }
  },
  "history": {
-  "start": 1795685341,
-  "now": 1795685341,
+  "start": 1795690727,
+  "now": 1795690727,
   "every": 2,
   "scope": "all",
   "events": [],
   "fc": {},
   "ns": {
    "EPOCH": [
-    1795685341
+    1795690727
    ],
    "PODS": [
     18
@@ -6525,10 +6525,10 @@
     14
    ],
    "RESTARTS": [
-    624
+    645
    ],
    "CPU_USED_m": [
-    58
+    61
    ],
    "CPU_REQ_m": [
     315
@@ -6564,7 +6564,7 @@
     2578
    ],
    "CL_MEM_USED_Mi": [
-    2617
+    2751
    ],
    "CL_MEM_ALLOC_Mi": [
     7524
@@ -6573,7 +6573,7 @@
     1930
    ],
    "CL_CPU_USED_m": [
-    433
+    519
    ],
    "CL_CPU_ALLOC_m": [
     24000

@@ -1,0 +1,84 @@
+# kdash 4.39.0 - quick export (key >)
+# screen   : pod list | 18 of 18 pods | sort name
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-26 16:40:42 +0530 by operator on Dheeraj (session 20261126-163904-5066)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e                                                                                 18 of 18 pods
+ pods    ● CrashLoopBackOff 1  ● ImagePullBackOff 1  ● Pending 2  ● Running 9  ● Succeeded 5
+ / search   view all (u)   X enables shell / upload / download   sort name
+┌────────────────────────────────────────────────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┬──────────────────────────┐
+│ POD                                                                            │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │ NODE                     │
+├────────────────────────────────────────────────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┼──────────────────────────┤
+│ app-server-8fb4699bc-cx5vz                                                     │ Running          │ 2/2   │  21 │     3m │     1Mi │    1% │ dev  last-exit Unknown   │
+│ app-server-8fb4699bc-t7zxj                                                     │ Running          │ 2/2   │  20 │     3m │     0Mi │    0% │ dev  last-exit Unknown   │
+│ completed-check-m9swm                                                          │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ db-stateful-0                                                                  │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │ dev  last-exit Unknown   │
+│ db-stateful-1                                                                  │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │ dev  last-exit Unknown   │
+│ functionality-legacy-67ks7                                                     │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │ dev  last-exit Unknown   │
+│ kdash-secrets-live-consumer                                                    │ Running          │ 1/1   │  10 │     0m │     0Mi │    0% │ dev  last-exit Completed │
+│ nightly-report-29928180-lq9x9                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ nightly-report-29928185-vc2gm                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ nightly-report-29928190-5fwh4                                                  │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ node-agent-ctvg6                                                               │ Running          │ 1/1   │   4 │     1m │     0Mi │    0% │ dev  last-exit Unknown   │
+│ sync-pod                                                                       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ test-sts-0                                                                     │ Running          │ 1/1   │  33 │     0m │     0Mi │     - │ dev  last-exit Completed │
+│ z-crash                                                                        │ CrashLoopBackOff │ 0/1   │ 547 │      - │       - │     - │ dev  last-exit Error     │
+│ z-imagepull                                                                    │ ImagePullBackOff │ 0/1   │   0 │      - │       - │     - │ dev                      │
+│ z-oom                                                                          │ Running          │ 1/1   │   3 │    50m │     1Mi │    6% │ dev  last-exit Unknown   │
+│ z-pending                                                                      │ Pending          │ 0/1   │   0 │      - │       - │     - │ (unscheduled)            │
+│ z-unschedulable                                                                │ Pending          │ 0/1   │   0 │      - │       - │     - │ (unscheduled)            │
+└────────────────────────────────────────────────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┴──────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+── 1 / 18   2 failing   2 pending / starting ─────────────────────────────────────────────────────────────────────────────────────────────────────── live · refresh 2s ──
+┌─ MOVE ──────────────────┬─ FIND ─────────────┬─ INSPECT ───────────────────┬─ SHELL · FILES ─────┬─ LEAVE ────────────────────────────────────────────────────────────┐
+│ j/k ↑↓     move         │ /  search          │ Enter  summary              │ S  shell            │ q / Q  back / quit                                                 │
+│ PgUp/PgDn  page         │ u  needs attention │ l / p  logs / previous logs │ U  upload           │ >      export to a log                                             │
+│ g / G      first / last │ s  sort: name      │ d / e  describe / events    │ D  download         │ r      refresh now                                                 │
+│ 12         go to row 12 │ F  filters         │ w / c  why / containers     │ X  enable S / U / D │ ?      all keys                                                    │
+└─────────────────────────┴────────────────────┴─────────────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+ THE WHOLE POD LIST (19 lines, every line and column - nothing cut)
+================================================================================
+POD                            STATUS            READY  RESTARTS  CPU  MEM  %LIMIT  NODE
+app-server-8fb4699bc-cx5vz     Running           2/2    21        3m   1Mi  1%      dev  last-exit Unknown
+app-server-8fb4699bc-t7zxj     Running           2/2    20        3m   0Mi  0%      dev  last-exit Unknown
+completed-check-m9swm          Succeeded         0/1    0         -    -    -       dev
+db-stateful-0                  Running           1/1    3         1m   0Mi  0%      dev  last-exit Unknown
+db-stateful-1                  Running           1/1    3         1m   0Mi  0%      dev  last-exit Unknown
+functionality-legacy-67ks7     Running           1/1    3         1m   0Mi  0%      dev  last-exit Unknown
+kdash-secrets-live-consumer    Running           1/1    10        0m   0Mi  0%      dev  last-exit Completed
+nightly-report-29928180-lq9x9  Succeeded         0/1    0         -    -    -       dev
+nightly-report-29928185-vc2gm  Succeeded         0/1    0         -    -    -       dev
+nightly-report-29928190-5fwh4  Succeeded         0/1    0         -    -    -       dev
+node-agent-ctvg6               Running           1/1    4         1m   0Mi  0%      dev  last-exit Unknown
+sync-pod                       Succeeded         0/1    0         -    -    -       dev
+test-sts-0                     Running           1/1    33        0m   0Mi  -       dev  last-exit Completed
+z-crash                        CrashLoopBackOff  0/1    547       -    -    -       dev  last-exit Error
+z-imagepull                    ImagePullBackOff  0/1    0         -    -    -       dev
+z-oom                          Running           1/1    3         50m  1Mi  6%      dev  last-exit Unknown
+z-pending                      Pending           0/1    0         -    -    -       (unscheduled)
+z-unschedulable                Pending           0/1    0         -    -    -       (unscheduled)
+
+# end of export

@@ -11,6 +11,8 @@ Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser che
 
 
 
+
+
 The 136 published screenshots comprise 91 baseline views, 40 extension scenarios
 (search, full logs, exports, themes, compatibility, terminal design and the audit
 table) and 5 Secrets-map screens. Every capture links its raw ANSI screen and

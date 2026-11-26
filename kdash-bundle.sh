@@ -917,7 +917,7 @@ KEYS WHILE RUNNING
   E / e         events view        ^E        HTML menu: all-tabs report, current view, views 1-6, or the bundle
   j k / arrows  scroll            space b   page down / up
   h l / arrows  pan left / right  0         back to column 1
-  g G           top / bottom      /         search box: find in the view (n/N), Tab = pod filter
+  g G           top / bottom      /         search box: find in the view, case-insensitive (n/N), Tab = pod filter
   >             quick export: the screen + the whole view (or pane, or list) to a log file
   p             pods-only         d         toggle detail lines
   s             cycle sort key    o         reverse sort order
@@ -5855,17 +5855,18 @@ SCROLL=0; HSCROLL=0; FLASH=""; FLASH_UNTIL=0; FLASH_BG=""
 # ---- the search box (/) of every dashboard view ---------------------------------------
 # Find: every line of the view that matches is highlighted (the current one underlined),
 # the view jumps to the first match, the box counts the matching lines of the WHOLE view
-# (not only the visible part); n / N step through them. A lowercase pattern ignores case;
-# the pattern is an extended regular expression. Tab: filter pods by name instead (the
-# filter of every pod view and report, applied with Enter). The search stays on while you
-# switch views - each view is searched as it is drawn.
+# (not only the visible part); n / N step through them. The search ignores case for every
+# pattern, including capitalised resource names; the pattern is an extended regular
+# expression. Tab: filter pods by name instead (the filter of every pod view and report,
+# applied with Enter). The search stays on while you switch views - each view is searched
+# as it is drawn.
 DS_PAT=""; DS_ON=0; DS_TYPING=0; DS_MODE="find"; DS_N=0; DS_I=0; DS_CUR=0; DS_MSG=""; DS_BAD=0
 declare -a DS_M=()
 ds_match() { # matching line numbers of the whole view body -> DS_M, DS_N
   DS_M=(); DS_N=0; DS_BAD=0
   [ -n "$DS_PAT" ] && [ "$DS_MODE" = find ] || return 0
   if ! inspector_pattern_ok "$DS_PAT"; then DS_BAD=1; return 0; fi
-  mapfile -t DS_M < <(KD_PAT="$DS_PAT" LC_ALL=C awk -v ic="$(inspector_icase "$DS_PAT")" '
+  mapfile -t DS_M < <(KD_PAT="$DS_PAT" LC_ALL=C awk -v ic=1 '
     BEGIN { pat = ENVIRON["KD_PAT"]; if (ic == "1") pat = tolower(pat) }
     { s = $0; gsub(/\033\[[0-9;?]*[A-Za-z]/, "", s); if (ic == "1") s = tolower(s); if (s ~ pat) print NR }' "$BODYF" 2>/dev/null)
   DS_N=${#DS_M[@]}
@@ -5891,7 +5892,7 @@ ds_box() { # width -> DS_BOX (three rows)
     t="SEARCH"; ri="${DS_N} matching line$([ "$DS_N" = 1 ] || printf s) in this view"
     [ "$DS_N" = 0 ] || ri="match $(( DS_I + 1 )) of $ri"
     [ "$DS_BAD" = 0 ] || ri="not a valid pattern yet"
-    [ -n "$DS_PAT" ] || ri="type to search the whole view"
+    [ -n "$DS_PAT" ] || ri="type to search the whole view (case-insensitive)"
     if [ "$DS_TYPING" = 1 ]; then ks="Enter keep   n/N next/prev   Up/Down earlier   Tab filter pods   Esc close"
     else ks="n next   N prev   / edit   Esc close${DS_MSG:+   - $DS_MSG}"; fi
   fi
@@ -6261,7 +6262,7 @@ H
   cat <<'H'
 
  KEYS
-   1-9 / Tab  switch view          n  pick another namespace     /  search box (n/N next/prev, Tab: pod filter)
+   1-9 / Tab  switch view          n  pick another namespace     /  search box (case-insensitive, n/N, Tab: pod filter)
    s          next sort key        o  reverse the sort order     w  PODS grouped / flat
    j k arrows scroll               h l arrows  pan left / right   g G  top / bottom
    d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only

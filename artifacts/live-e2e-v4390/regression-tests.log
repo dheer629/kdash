@@ -5,7 +5,7 @@ test-fmea	0	PASS: 83 FMEA fixture checks
 test-health	0	9 health fixture tests passed.
 test-inspector	0	PASS: inspector identity, bounded opt-in logs, search and highlighting, level filter, container drill-down, export, failures, filters and report isolation
 test-interactive	0	interactive regression checks passed
-test-keys	0	PASS: 6 Events/HTML-menu key checks
+test-keys	0	PASS: 8 Events/HTML-menu/search key checks
 test-log-history	0	PASS: 22 rotated-log decoding, ordering, gzip, byte-cap, access and incomplete-read checks
 test-login-cleanup	0	PASS: 27 login-cleanup checks, exact helper/tag scope, keep tree, detached login and TERM/KILL
 test-login-flow	0	PASS: 39 login-flow PTY checks (no cluster or identity provider required)

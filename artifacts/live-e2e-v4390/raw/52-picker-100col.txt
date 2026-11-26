@@ -1,25 +1,25 @@
  KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e           18 of 18 pods
- pods    ● CrashLoopBackOff 1  ● ImagePullBackOff 1  ● Pending 2  ● Running 9  ● Succeeded 5
+ pods    ● ImagePullBackOff 1  ● NotReady 1  ● Pending 2  ● Running 9  ● Succeeded 5
  / search   view all (u)   X enables shell / upload / download   sort name
 ┌─────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┐
 │ POD                                 │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │
 ├─────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┤
-│ app-server-8fb4699bc-cx5vz          │ Running          │ 2/2   │  21 │     5m │     1Mi │    1% │
+│ app-server-8fb4699bc-cx5vz          │ Running          │ 2/2   │  21 │     4m │     1Mi │    1% │
 │ app-server-8fb4699bc-t7zxj          │ Running          │ 2/2   │  20 │     2m │     0Mi │    0% │
 │ completed-check-m9swm               │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
 │ db-stateful-0                       │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │
 │ db-stateful-1                       │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │
 │ functionality-legacy-67ks7          │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │
-│ kdash-secrets-live-consumer         │ Running          │ 1/1   │   9 │     0m │     0Mi │    0% │
-│ nightly-report-29928085-sm4xz       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
-│ nightly-report-29928090-sx6nw       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
-│ nightly-report-29928095-2kb82       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ kdash-secrets-live-consumer         │ Running          │ 1/1   │  10 │     0m │     0Mi │    0% │
+│ nightly-report-29928175-w2kvf       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ nightly-report-29928180-lq9x9       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ nightly-report-29928185-vc2gm       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
 │ node-agent-ctvg6                    │ Running          │ 1/1   │   4 │     1m │     0Mi │    0% │
 │ sync-pod                            │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
-│ test-sts-0                          │ Running          │ 1/1   │  32 │     0m │     0Mi │     - │
-│ z-crash                             │ CrashLoopBackOff │ 0/1   │ 529 │      - │       - │     - │
+│ test-sts-0                          │ Running          │ 1/1   │  33 │     0m │     0Mi │     - │
+│ z-crash                             │ NotReady         │ 0/1   │ 547 │      - │       - │     - │
 │ z-imagepull                         │ ImagePullBackOff │ 0/1   │   0 │      - │       - │     - │
-│ z-oom                               │ Running          │ 1/1   │   3 │    51m │     1Mi │    6% │
+│ z-oom                               │ Running          │ 1/1   │   3 │    50m │     1Mi │    6% │
 │ z-pending                           │ Pending          │ 0/1   │   0 │      - │       - │     - │
 │ z-unschedulable                     │ Pending          │ 0/1   │   0 │      - │       - │     - │
 └─────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┘

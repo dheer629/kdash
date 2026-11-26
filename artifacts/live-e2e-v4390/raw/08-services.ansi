@@ -1,20 +1,20 @@
 [1;7m KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [38;5;243m 3 WORKLOADS [39m [38;5;243m 4 IP POOL [39m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [1;7m 8 SVCS [0m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-26 15:00:25[0m[38;5;243m IST[39m
+[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [38;5;243m 3 WORKLOADS [39m [38;5;243m 4 IP POOL [39m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [1;7m 8 SVCS [0m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-26 16:30:09[0m[38;5;243m IST[39m
 [38;5;243m┌─ [1m[39mSCOPE[0m[38;5;243m ──────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[38;5;243m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[38;5;243m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[38;5;243m ────────┐
-│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msort cpu ▼ high first[0m                     [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m624[39m           [38;5;243m│[39m [38;5;243mcpu [39m    61m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14                [38;5;243m│
-│[39m [38;5;243mpoll 2s  spec 0s/30s   session [39m14:59:55[38;5;243m up [39m30s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    2Mi [38;5;29m░░░░░░░░[39m [38;5;29m  0%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;163m^ 1[39m         [38;5;243m│
+│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msort cpu ▼ high first[0m                     [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m645[39m           [38;5;243m│[39m [38;5;243mcpu [39m    60m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14                [38;5;243m│
+│[39m [38;5;243mpoll 2s  spec 2s/30s   session [39m16:29:37[38;5;243m up [39m32s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    2Mi [38;5;29m░░░░░░░░[39m [38;5;29m  0%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;163m^ 1[39m         [38;5;243m│
 └──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
-[1m[38;5;231m[48;5;24m DATA [0m[38;5;29m●[39m pods [1m[38;5;29mfresh[0m [38;5;243m0s old[39m  metrics [1m[38;5;29mavailable[0m [38;5;243m│[39m [1m[38;5;63mC[0m certs (1 expiring) [38;5;243m│[39m [1m[38;5;63m/[0m search [38;5;243m│[39m [1m[38;5;63mK[0m check [38;5;243m│[39m [1m[38;5;63mi[0m inspect [38;5;243m│[39m [1m[38;5;63m8[0m services  [1m[38;5;63m9[0m storage  [1m[38;5;63mE[0m events  [1m[38;5;63m![0m explain [38;5;243m│[39m [1m[38;5;63m:[0m commands
+[1m[38;5;231m[48;5;24m DATA [0m[38;5;29m●[39m pods [1m[38;5;29mfresh[0m [38;5;243m2s old[39m  metrics [1m[38;5;29mavailable[0m [38;5;243m│[39m [1m[38;5;63mC[0m certs (1 expiring) [38;5;243m│[39m [1m[38;5;63m/[0m search [38;5;243m│[39m [1m[38;5;63mK[0m check [38;5;243m│[39m [1m[38;5;63mi[0m inspect [38;5;243m│[39m [1m[38;5;63m8[0m services  [1m[38;5;63m9[0m storage  [1m[38;5;63mE[0m events  [1m[38;5;63m![0m explain [38;5;243m│[39m [1m[38;5;63m:[0m commands
 [1m[38;5;231m[48;5;24m SERVICES AND BACKENDS [0m  [38;5;243mobserved configuration and readiness - reachability is not tested[39m
 
 [1mDATA SOURCES[0m
 [38;5;243m┌───────────┬───────┬────────┬────────────────┐[39m
 [38;5;243m│[1m[38;5;231m[48;5;24m SOURCE    │ STATE │   READ │ DETAIL         [0m[38;5;243m│[39m
 [38;5;243m├───────────┼───────┼────────┼────────────────┤[39m
-[38;5;243m│[39m services  [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 1s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
-[38;5;243m│[39m pods      [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 1s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
-[38;5;243m│[39m endpoints [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 1s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
-[38;5;243m│[39m ingresses [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 1s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
+[38;5;243m│[39m services  [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 3s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
+[38;5;243m│[39m pods      [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 3s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
+[38;5;243m│[39m endpoints [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 3s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
+[38;5;243m│[39m ingresses [38;5;243m│[39m [38;5;29m● ok [39m [38;5;243m│[39m 3s ago [38;5;243m│[39m [38;5;243mread succeeded[39m [38;5;243m│[39m
 [38;5;243m└───────────┴───────┴────────┴────────────────┘[39m
 
 [1mSERVICES[0m  [38;5;243m11 services[39m
@@ -47,4 +47,4 @@
 
   [1m#1[0m  CRITICAL  [1mmissing-backend[0m  [38;5;243mselector app=does-not-exist matches no pod in this scope[39m
 K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l[38;5;243m›
-[7m[39m ○ LIVE 15:00:27  next 2s  data 2s old  spec 2/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-41/78 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export    [0m
+[7m[39m ● LIVE 16:30:10  next 1s  data 1s old  spec 3/30s  fetch 0.0s  poll 2s  AUDITED | services | rows 1-41/78 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export    [0m

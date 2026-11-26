@@ -10,14 +10,14 @@
 | db-stateful-0                                                                  | Running          | 1/1   |   3 |     1m |     0Mi |    0% | dev  last-exit Unknown   |
 | db-stateful-1                                                                  | Running          | 1/1   |   3 |     1m |     0Mi |    0% | dev  last-exit Unknown   |
 | functionality-legacy-67ks7                                                     | Running          | 1/1   |   3 |     1m |     0Mi |    0% | dev  last-exit Unknown   |
-| kdash-secrets-live-consumer                                                    | Running          | 1/1   |   9 |     0m |     0Mi |    0% | dev  last-exit Completed |
-| nightly-report-29928085-sm4xz                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
-| nightly-report-29928090-sx6nw                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
-| nightly-report-29928095-2kb82                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
+| kdash-secrets-live-consumer                                                    | Running          | 1/1   |  10 |     0m |     0Mi |    0% | dev  last-exit Completed |
+| nightly-report-29928175-w2kvf                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
+| nightly-report-29928180-lq9x9                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
+| nightly-report-29928185-vc2gm                                                  | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
 | node-agent-ctvg6                                                               | Running          | 1/1   |   4 |     1m |     0Mi |    0% | dev  last-exit Unknown   |
 | sync-pod                                                                       | Succeeded        | 0/1   |   0 |      - |       - |     - | dev                      |
-| test-sts-0                                                                     | Running          | 1/1   |  32 |     0m |     0Mi |     - | dev  last-exit Completed |
-| z-crash                                                                        | CrashLoopBackOff | 0/1   | 529 |      - |       - |     - | dev  last-exit Error     |
+| test-sts-0                                                                     | Running          | 1/1   |  33 |     0m |     0Mi |     - | dev  last-exit Completed |
+| z-crash                                                                        | CrashLoopBackOff | 0/1   | 547 |      - |       - |     - | dev  last-exit Error     |
 | z-imagepull                                                                    | ImagePullBackOff | 0/1   |   0 |      - |       - |     - | dev                      |
 | z-oom                                                                          | Running          | 1/1   |   3 |    51m |     1Mi |    6% | dev  last-exit Unknown   |
 | z-pending                                                                      | Pending          | 0/1   |   0 |      - |       - |     - | (unscheduled)            |

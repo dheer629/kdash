@@ -1,0 +1,4 @@
+EPOCH	NODE	POOL	STATUS	NS_PODS	NS_CPU_m	NS_MEM_Mi	NODE_CPU_m	NODE_MEM_Mi	NODE_MEM_ALLOC_Mi
+1795691217	dev	role:control-plane,master	Ready	16	62	2	393	2744	7524
+1795691221	dev	role:control-plane,master	Ready	16	62	2	393	2744	7524
+1795691225	dev	role:control-plane,master	Ready	16	62	2	393	2744	7524

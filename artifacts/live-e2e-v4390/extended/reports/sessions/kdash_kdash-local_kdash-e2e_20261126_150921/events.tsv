@@ -1,5 +1,0 @@
-EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
-1795685961	info	SESSION	kdash-e2e	kdash 4.39.0 started on Dheeraj by dheer - filter .*
-1795686021	info	POD_ADDED	nightly-report-29928100-v5jqr	added on dev (CronJob/nightly-report, Succeeded)
-1795686021	warn	POD_REMOVED	nightly-report-29928085-sm4xz	gone (was on dev, Succeeded)
-1795686062	info	SESSION	kdash-e2e	kdash stopped after 101s

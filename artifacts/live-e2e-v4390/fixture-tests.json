@@ -1,7 +1,7 @@
 {
-  "completed_utc": "2026-11-26T09:49:00.395627+00:00",
-  "kdash_sha256": "94c5c42ddd40e663863e11f69f4019000c3cae7ec46946af6e9ec818529c8618",
-  "kdash_sha256_after": "94c5c42ddd40e663863e11f69f4019000c3cae7ec46946af6e9ec818529c8618",
+  "completed_utc": "2026-11-26T11:18:31.032388+00:00",
+  "kdash_sha256": "6d7b090e9b10d51d2537f87c910c20e1619748f1e1d3eba6a6bc59b1d46b594f",
+  "kdash_sha256_after": "6d7b090e9b10d51d2537f87c910c20e1619748f1e1d3eba6a6bc59b1d46b594f",
   "unchanged": true,
   "passed": 20,
   "total": 20,
@@ -32,7 +32,7 @@
       "exit_code": 0,
       "last_line": "PASS: 83 FMEA fixture checks",
       "log": "artifacts/live-e2e-v4390/fixture-tests/test-fmea.log",
-      "log_sha256": "3acedc500e9653a24587bff86345d49507c9a5d32cc413d77775bbe2ae4eed9f"
+      "log_sha256": "e75a936de065b8dd1b3ceaf9c86dc3e830f2b13e598126ce417104c1144d5930"
     },
     {
       "test": "tests/test-health.sh",
@@ -58,9 +58,9 @@
     {
       "test": "tests/test-keys.sh",
       "exit_code": 0,
-      "last_line": "PASS: 6 Events/HTML-menu key checks",
+      "last_line": "PASS: 8 Events/HTML-menu/search key checks",
       "log": "artifacts/live-e2e-v4390/fixture-tests/test-keys.log",
-      "log_sha256": "17306168cd22d7ca0eaeefe5cb91eda9e54e8b16a55649e5a538aec8a1378ead"
+      "log_sha256": "dde503c55290e2ea87b87fd87313a6ab774be3b433fa20310f74b15c71fe6300"
     },
     {
       "test": "tests/test-log-history.sh",

@@ -1,9 +1,9 @@
  KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                               PREVIOUS LOGS
 ┌─ PREVIOUS LOGS ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        z-crash                                                                                                                                                    │
-│ CONTAINER  crash   ● CrashLoopBackOff   not-ready   restarts 530   last exit Error exit=42   busybox:1.36                                                             │
-└─ rows 1-1 / 1 · 1 lines 76 B since 2026-11-26 09:38:25, whole log (nothing rotated yet) ──────────────────────────────────────────────────────────────────────────────┘
-2026-11-26T09:38:25.290089413Z ERROR intentional validation failure exit=42
+│ CONTAINER  crash   ● CrashLoopBackOff   not-ready   restarts 548   last exit Error exit=42   busybox:1.36                                                             │
+└─ rows 1-1 / 1 · 1 lines 76 B since 2026-11-26 11:11:44, whole log (nothing rotated yet) ──────────────────────────────────────────────────────────────────────────────┘
+2026-11-26T11:11:44.644017694Z ERROR intentional validation failure exit=42
 
 
 

@@ -1,7 +1,7 @@
 # kdash 4.39.0 - quick export (key >)
-# screen   : pod detail, pane current | pod kdash-e2e/app-server-8fb4699bc-cx5vz | container app | read: 20 lines 2.2 KiB since 2026-11-26 09:44:46, newest only (+ more, A all) | level ERROR
+# screen   : pod detail, pane current | pod kdash-e2e/app-server-8fb4699bc-cx5vz | container app | read: 20 lines 2.2 KiB since 2026-11-26 11:14:28, newest only (+ more, A all) | level ERROR
 # context  : kdash-local    namespace: kdash-e2e
-# taken    : 2026-11-26 15:15:11 +0530 by operator on Dheeraj (session 20261126-151443-55621)
+# taken    : 2026-11-26 16:44:53 +0530 by operator on Dheeraj (session 20261126-164425-29929)
 # note     : logs and describe output can hold sensitive values (tokens, addresses, payloads) - review before sharing
 # a copy of what kdash showed - nothing was run against the cluster to make it
 
@@ -12,7 +12,7 @@
 ┌─ LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
-└─ rows 0-0 / 0 · 0 shown · level ERROR · 20 lines 2.2 KiB since 2026-11-26 09:44:46, newest only (+ more, A all) ──────────────────────────────────────────────────────┘
+└─ rows 0-0 / 0 · 0 shown · level ERROR · 20 lines 2.2 KiB since 2026-11-26 11:14:28, newest only (+ more, A all) ──────────────────────────────────────────────────────┘
   No line at log level ERROR or above in the 20 lines read - L switches the level.
 
 

@@ -1,4 +1,4 @@
-kdash instant check - finding #1 - context kdash-local - 2026-11-26 14:59:20 IST
+kdash instant check - finding #1 - context kdash-local - 2026-11-26 16:29:05 IST
 read-only commands, run now through the audited kubectl guard
 
 $ kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100
@@ -21,7 +21,7 @@ IPs:
   IP:  10.244.0.178
 Containers:
   crash:
-    Container ID:  containerd://13218b54188614860846072d9e893be492f4769b729980dff624761e0436369d
+    Container ID:  containerd://40c618617e4ad9791e09a8056d733f3fc13ec5d201fb39e44e9f2652de68ee7d
     Image:         busybox:1.36
     Image ID:      docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
     Port:          <none>
@@ -35,10 +35,10 @@ Containers:
     Last State:     Terminated
       Reason:       Error
       Exit Code:    42
-      Started:      Thu, 26 Nov 2026 14:57:58 +0530
-      Finished:     Thu, 26 Nov 2026 14:58:01 +0530
+      Started:      Thu, 26 Nov 2026 16:26:10 +0530
+      Finished:     Thu, 26 Nov 2026 16:26:13 +0530
     Ready:          False
-    Restart Count:  528
+    Restart Count:  545
     Limits:
       cpu:     50m
       memory:  32Mi
@@ -67,8 +67,7 @@ Node-Selectors:              <none>
 Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
                              node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
 Events:
-  Type     Reason   Age                       From     Message
-  ----     ------   ----                      ----     -------
-  Normal   Pulled   37m (x67 over 5h56m)      kubelet  Container image "busybox:1.36" already present on machine
-  Warning  BackOff  2m17s (x1614 over 5h56m)  kubelet  Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
+  Type     Reason   Age                      From     Message
+  ----     ------   ----                     ----     -------
+  Warning  BackOff  2m3s (x2026 over 7h26m)  kubelet  Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
 (0s)

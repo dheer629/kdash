@@ -1,32 +1,32 @@
 [7m KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V [0m
- [7m 1 PODS [0m  2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   [1m2026-11-26 15:13:47[0m IST
+ [7m 1 PODS [0m  2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   [1m2026-11-26 16:43:29[0m IST
 ┌─ [1mSCOPE[0m ───────────────────────────────────────────┬─ [1mPOD HEALTH[0m ──────────────────────────────┬─ [1mUSAGE vs LIMITS[0m ──────────────────┬─ [1mWORKLOADS · EVENTS[0m ──────┐
-│ match .*   [1msort cpu ▼ high first[0m                  │ [1m! pods 14/18 ready[0m   restarts 629         │ cpu     59m ░░░░░░░░   3% lim      │ workloads 14              │
-│ poll 2s  spec 8s/30s   session 15:13:39 up 8s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     2Mi ░░░░░░░░   0% lim      │ events 15m ! 0  ^ 0       │
+│ match .*   [1msort cpu ▼ high first[0m                  │ [1m! pods 14/18 ready[0m   restarts 648         │ cpu     60m ░░░░░░░░   3% lim      │ workloads 14              │
+│ poll 2s  spec 8s/30s   session 16:43:21 up 8s     │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     2Mi ░░░░░░░░   0% lim      │ events 15m ! 0  ^ 0       │
 └───────────────────────────────────────────────────┴───────────────────────────────────────────┴────────────────────────────────────┴───────────────────────────┘
 [1;7m DATA [0m● pods [1mfresh[0m 8s old  metrics [1mavailable[0m │ [1mC[0m certs │ [1m/[0m search │ [1mK[0m check │ [1mi[0m inspect │ [1m8[0m services  [1m9[0m storage  [1mE[0m events  [1m![0m explain │ [1m:[0m commands
  [1mPOD / CONTAINER RESOURCES[0m   actual usage vs requests and limits, grouped by workload (w = flat list)
-[1m►[0m [1mTIMELINE[0m  15:13:39 -> 15:13:47 IST  (all since kdash started, z window, c hides graphs) ──────────────────────────────────────────────────────────────────────
+[1m►[0m [1mTIMELINE[0m  16:43:21 -> 16:43:29 IST  (all since kdash started, z window, c hides graphs) ──────────────────────────────────────────────────────────────────────
   [1;7m CPU used - namespace                                                         [0m    [1;7m MEMORY used - namespace                                                      [0m
-     68m┤                ·                  ·                ·                         2Mi┤                ·                  ·                ·
+     69m┤                ·                  ·                ·                         2Mi┤                ·                  ·                ·
         │                ·                  ████████████████████████████████████          │                ·                  ████████████████████████████████████
         │                ·                  ████████████████████████████████████          │                ·                  ████████████████████████████████████
-     34m┤                ·                  ████████████████████████████████████       1Mi┤                ·                  ████████████████████████████████████
+     35m┤                ·                  ████████████████████████████████████       1Mi┤                ·                  ████████████████████████████████████
         │                ·                  ████████████████████████████████████          │                ·                  ████████████████████████████████████
         │                ·                  ████████████████████████████████████          │                ·                  ████████████████████████████████████
       0m└┴───────────────┴──────────────────┴────────────────┴─────────────────┴       0Mi└┴───────────────┴──────────────────┴────────────────┴─────────────────┴
-         15:13:39                       15:13:43                        15:13:47           15:13:39                       15:13:43                        15:13:47
+         16:43:21                       16:43:25                        16:43:29           16:43:21                       16:43:25                        16:43:29
   events                                                                            events
-  now [1m59m[0m  min 59m  avg 59m  max [1m59m[0m @ 15:13:47                                     now [1m2Mi[0m  min 2Mi  avg 2Mi  max [1m2Mi[0m @ 15:13:47
+  now [1m60m[0m  min 60m  avg 60m  max [1m60m[0m @ 16:43:29                                     now [1m2Mi[0m  min 2Mi  avg 2Mi  max [1m2Mi[0m @ 16:43:29
   request 315m (above)  limit 1750m (above)  3% of limit                            request 276Mi (above)  limit 976Mi (above)  0% of limit
 
 [1m►[0m [1mPODS[0m ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
                                                                  │ [1m  ACTUAL (live)   [0m │ [1m   ASSIGNED (req / limit)    [0m │ [1m     UTILISATION (used vs req / lim)      [0m
 [1;7mWORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM  [0m
-[1m► Pod z-oom  (1 pod)                                    [0m 1/1   3 │     50 ·       1 · │     10     50       8      16 │ [1m500.0[0m [1m100.0[0m [1m████████[0m  12.5   6.2 █░░░░░░░
-  z-oom                                                  1/1   3 │     50 ·       1 · │     10     50       8      16 │ [1m500.0[0m [1m100.0[0m [1m████████[0m  12.5   6.2 █░░░░░░░
+[1m► Pod z-oom  (1 pod)                                    [0m 1/1   3 │     51 ·       1 · │     10     50       8      16 │ [1m510.0[0m [1m102.0[0m [1m████████[0m  12.5   6.2 █░░░░░░░
+  z-oom                                                  1/1   3 │     51 ·       1 · │     10     50       8      16 │ [1m510.0[0m [1m102.0[0m [1m████████[0m  12.5   6.2 █░░░░░░░
       cpu ░░░░              mem ░░░░              pk 1Mi    node dev   pool role:control-plane,master   ip 10.244.0.157   qos Burstable   status Running   last-exit Unkn›
-    └─ hog                                               Y     3 │     50 ·       1 · │     10     50       8      16 │ [1m500.0[0m [1m100.0[0m [1m████████[0m  12.5   6.2 █░░░░░░░
+    └─ hog                                               Y     3 │     51 ·       1 · │     10     50       8      16 │ [1m510.0[0m [1m102.0[0m [1m████████[0m  12.5   6.2 █░░░░░░░
         last-exit Unknown
 ..................................................................................................................................................................
 [1m► Deployment app-server  (2 pods)                       [0m 2/2  41 │      5 ·       1 · │     50    500      24     192 │  10.0   1.0 ░░░░░░░░   4.2   0.5 ░░░░░░░░
@@ -45,6 +45,6 @@
 ..................................................................................................................................................................
 [1m► StatefulSet db-stateful  (2 pods)                     [0m 2/2   6 │      2 ·       0 · │     40    200      64     128 │   5.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[1mTOTAL (18 pods, 14 workloads)                           [0m     629 │     59 ·       2 · │    315   1750     276     976 │  18.7   3.4 ░░░░░░░░   0.7   0.2 ░░░░░░░░
+[1mTOTAL (18 pods, 14 workloads)                           [0m     648 │     60 ·       2 · │    315   1750     276     976 │  19.0   3.4 ░░░░░░░░   0.7   0.2 ░░░░░░░░
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
-[7m colour theme: mono - no colour, bold and reverse only (T: next) | ● LIVE 15:13:48  next 1s  data 1s old  spec 9/30s  fetch 0.0s  poll 2s  AUDITED | pods | rows 1-38/113[0m
+[7m colour theme: mono - no colour, bold and reverse only (T: next) | ● LIVE 16:43:30  next 1s  data 1s old  spec 9/30s  fetch 0.0s  poll 2s  AUDITED | pods | rows 1-38/113[0m

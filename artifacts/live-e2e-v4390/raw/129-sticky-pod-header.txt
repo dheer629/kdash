@@ -1,7 +1,7 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                            read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-11-26 15:14:28 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   2026-11-26 16:44:10 IST
 ┌─ SCOPE ──────────────────────────────┬─ POD HEALTH ──────────────────────────────┬─ USAGE vs LIMITS ─────────┬─ WORKLOADS · EVENTS ──────┐
-│ match .*   sort cpu ▼ high first     │ ! pods 14/18 ready   restarts 629         │ cpu     61m   3% lim      │ workloads 14              │
+│ match .*   sort cpu ▼ high first     │ ! pods 14/18 ready   restarts 648         │ cpu     60m   3% lim      │ workloads 14              │
 │ poll 2s  spec 4s/30s                 │ OOM risk 0   OOMKilled 0   no-limit 1     │ mem     2Mi   0% lim      │ events 15m ! 0  ^ 0       │
 └──────────────────────────────────────┴───────────────────────────────────────────┴───────────────────────────┴───────────────────────────┘
  DATA ● pods fresh 4s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : co›
@@ -19,6 +19,6 @@ WORKLOAD / POD / CONTAINER                           RDY RST │   CPUm T  MEM M
       cpu                   mem                             node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
     └─ wait                                          -     0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-TOTAL (18 pods, 14 workloads)                            629 │     61 ·       2 · │    315   1750     276     976 │  19.4   3.5   0.7   0.2
+TOTAL (18 pods, 14 workloads)                            648 │     60 ·       2 · │    315   1750     276     976 │  19.0   3.4   0.7   0.2
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w›
- ○ LIVE 15:14:29  next 1s  data 1s old  spec 5/30s  fetch 0.0s  poll 2s  AUDITED | pods | rows 89-98/98 | ? help  1-9 view  n ns
+ ● LIVE 16:44:12  next 2s  data 2s old  spec 6/30s  fetch 0.0s  poll 2s  AUDITED | pods | rows 89-98/98 | ? help  1-9 view  n ns

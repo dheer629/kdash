@@ -1,0 +1,6 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1795691344	info	SESSION	kdash-e2e	kdash 4.39.0 started on Dheeraj by dheer - filter .*
+1795691404	info	POD_ADDED	nightly-report-29928190-5fwh4	added on dev (CronJob/nightly-report, Running)
+1795691434	ok	STATUS	nightly-report-29928190-5fwh4	Running -> Succeeded on dev
+1795691434	warn	POD_REMOVED	nightly-report-29928175-w2kvf	gone (was on dev, Succeeded)
+1795691445	info	SESSION	kdash-e2e	kdash stopped after 101s

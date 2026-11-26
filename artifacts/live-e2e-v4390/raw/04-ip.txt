@@ -1,8 +1,8 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 15:00:11 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 16:29:53 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sorted by IP address                       │ ! pods 14/18 ready   restarts 624           │ cpu     59m ░░░░░░░░   3% lim       │ workloads 14               │
-│ poll 2s  spec 16s/30s   session 14:59:55 up 16s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sorted by IP address                       │ ! pods 14/18 ready   restarts 645           │ cpu     60m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 16s/30s   session 16:29:37 up 16s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
  DATA ● pods fresh 16s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
@@ -34,9 +34,9 @@
 
 ► POD IP ASSIGNMENTS ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
-  10.244.0.64      nightly-report-29928075-27m6x                dev                        172.18.0.2       nightly-report               Succeeded
-  10.244.0.67      nightly-report-29928080-wz9d4                dev                        172.18.0.2       nightly-report               Succeeded
-  10.244.0.68      nightly-report-29928085-sm4xz                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.100     nightly-report-29928165-fpv4n                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.103     nightly-report-29928170-gllb2                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.105     nightly-report-29928175-w2kvf                dev                        172.18.0.2       nightly-report               Succeeded
   10.244.0.152     node-agent-ctvg6                             dev                        172.18.0.2       node-agent
   10.244.0.156     kdash-secrets-live-consumer                  dev                        172.18.0.2       kdash-secrets-live-consumer
   10.244.0.157     z-oom                                        dev                        172.18.0.2       z-oom
@@ -47,4 +47,4 @@
   10.244.0.175     z-imagepull                                  dev                        172.18.0.2       z-imagepull                  ImagePullBackOff
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n›
- certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ● LIVE 15:00:12  next 1s  data 1s old  fetch >
+ certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ○ LIVE 16:29:55  next 2s  data 2s old  fetch >

@@ -9,7 +9,7 @@ DATA SOURCES   context kdash-local
 ┌────────┬───────┬────────┬────────────────────────────────────────────┬────────────────┐
 │ SOURCE │ STATE │   READ │ SCOPE                                      │ DETAIL         │
 ├────────┼───────┼────────┼────────────────────────────────────────────┼────────────────┤
-│ events │ ● ok  │ 4s ago │ kdash-e2e / pod app-server-8fb4699bc-cx5vz │ read succeeded │
+│ events │ ● ok  │ 3s ago │ kdash-e2e / pod app-server-8fb4699bc-cx5vz │ read succeeded │
 └────────┴───────┴────────┴────────────────────────────────────────────┴────────────────┘
 
 PODS NEEDING ATTENTION  1 pod    - from the dashboard model

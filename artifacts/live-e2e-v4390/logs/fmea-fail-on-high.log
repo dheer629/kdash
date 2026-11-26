@@ -20,7 +20,7 @@ WORKSHEET  60 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 │ 5  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-       │ No endpoints         │ selector app=app-server  │
 │    │        │    │    │    │     │        │ nodeport             │                      │ matches no pod in this   │
 │    │        │    │    │    │     │        │                      │                      │ scope                    │
-│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash    │ CrashLoopBackOff     │ CrashLoopBackOff, 528    │
+│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash    │ CrashLoopBackOff     │ CrashLoopBackOff, 545    │
 │    │        │    │    │    │     │        │                      │                      │ restarts (last: Error)   │
 │ 7  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending  │ Pending,             │ Pending                  │
 │    │        │    │    │    │     │        │                      │ unschedulable        │                          │
@@ -132,7 +132,7 @@ WORKSHEET  60 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 │ 53 │ LOW    │  5 │ 2* │  3 │  30 │ NOD-04 │ -                    │ Limits far above     │ all 1 nodes ok           │
 │    │        │    │    │    │     │        │                      │ allocatable          │                          │
 │ 54 │ LOW    │  5 │ 2* │  2 │  20 │ PDB-01 │ -                    │ Allows 0 disruptions │ all 2 pdbs ok            │
-│ 55 │ LOW    │  4 │  4 │  6 │  96 │ POD-08 │ kdash-e2e/z-oom      │ CPU near its limit   │ cpu 50m of 50m limit     │
+│ 55 │ LOW    │  4 │  4 │  6 │  96 │ POD-08 │ kdash-e2e/z-oom      │ CPU near its limit   │ cpu 51m of 50m limit     │
 │    │        │    │    │    │     │        │                      │                      │ (throttling not          │
 │    │        │    │    │    │     │        │                      │                      │ measured)                │
 │ 56 │ LOW    │  4 │ 2* │  4 │  32 │ NS-01  │ -                    │ Stuck Terminating    │ all 14 namespaces ok     │
@@ -166,7 +166,7 @@ NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (pr
       read   kubectl --context kdash-local -n kdash-e2e get service web-nodeport -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
       CHANGE kubectl --context kdash-local -n kdash-e2e edit service web-nodeport  # make spec.selector match the pod labels (or fix the labels on the workload)
 
-  #6  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 528 restarts (last: Error)
+  #6  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 545 restarts (last: Error)
       read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
       read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
 

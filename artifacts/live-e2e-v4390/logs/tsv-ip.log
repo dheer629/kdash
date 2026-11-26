@@ -1,8 +1,8 @@
 # ip
 POD	POD_IP	NODE	POOL	HOST_IP	KIND	WORKLOAD	STATUS	NOTE
-nightly-report-29928075-27m6x	10.244.0.64	dev	role:control-plane,master	172.18.0.2	CronJob	nightly-report	Succeeded	-
-nightly-report-29928080-wz9d4	10.244.0.67	dev	role:control-plane,master	172.18.0.2	CronJob	nightly-report	Succeeded	-
-nightly-report-29928085-sm4xz	10.244.0.68	dev	role:control-plane,master	172.18.0.2	CronJob	nightly-report	Succeeded	-
+nightly-report-29928165-fpv4n	10.244.0.100	dev	role:control-plane,master	172.18.0.2	CronJob	nightly-report	Succeeded	-
+nightly-report-29928170-gllb2	10.244.0.103	dev	role:control-plane,master	172.18.0.2	CronJob	nightly-report	Succeeded	-
+nightly-report-29928175-w2kvf	10.244.0.105	dev	role:control-plane,master	172.18.0.2	CronJob	nightly-report	Succeeded	-
 node-agent-ctvg6	10.244.0.152	dev	role:control-plane,master	172.18.0.2	DaemonSet	node-agent	Running	-
 kdash-secrets-live-consumer	10.244.0.156	dev	role:control-plane,master	172.18.0.2	Pod	kdash-secrets-live-consumer	Running	-
 z-oom	10.244.0.157	dev	role:control-plane,master	172.18.0.2	Pod	z-oom	Running	-

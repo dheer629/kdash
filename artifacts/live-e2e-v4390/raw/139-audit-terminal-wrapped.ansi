@@ -23,7 +23,7 @@
 │                          │              │              │               │         │ headers --    │
 │                          │              │              │               │         │ request-      │
 │                          │              │              │               │         │ timeout=20s   │
-│ 2026-11-26 15:15:15+0530 │ operator@wsl │ local /dev/  │ kdash-local / │ END     │ rc=0 mode=    │
+│ 2026-11-26 16:44:57+0530 │ operator@wsl │ local /dev/  │ kdash-local / │ END     │ rc=0 mode=    │
 │                          │ -validation  │ pts/11       │ kdash-e2e     │         │ once duration │
 │                          │              │              │               │         │ =1s reports=0 │
 └──────────────────────────┴──────────────┴──────────────┴───────────────┴─────────┴───────────────┘
