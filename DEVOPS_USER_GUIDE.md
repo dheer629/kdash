@@ -1,6 +1,6 @@
 # kdash DevOps user guide
 
-This guide describes the kdash 4.37.0 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
+This guide describes the kdash 4.39.0 source in this repository. kdash is a Bash terminal dashboard that reads Kubernetes objects and metrics through `kubectl`. Its reports preserve observations so an operator can investigate and decide what to do next. Container shells and file transfers are explicit exceptions to the default read-only guard (`-X` / `--allow-interactive`, `--shell-picker`, or the `X` key). They run with your permissions, are counted as writes and keep their output out of automatic reports. They can change files and application state inside a container.
 
 The current source can be installed with `git clone https://github.com/dheer629/kdash.git`,
 `cd kdash`, `sha256sum -c SHA256SUMS`, then `bash kdash-bundle.sh`.
@@ -10,9 +10,8 @@ does not itself publish new release assets.
 
 ## What the recorded run actually produced
 
-The captured validation run below used 4.12.0; the later feature galleries used
-4.13.1 and 4.14.0. They remain evidence of those versions and do not validate the
-4.37.0 terminal layout or interactive browser against a live cluster.
+The captured validation run below used 4.12.0. See the
+[4.39.0 feature checklist](docs/VALIDATION-4.39.0.md) for the current results.
 
 The following evidence table describes the exercise on 2026-10-18 in the WSL Ubuntu distribution as user `demo`, against the local vcluster context `devops-admin@local-cluster` (one visible node, `dev`, v1.30.4), with kdash 4.12.0 whose sha256 is `2213bf63f5a6c9c21be49e084fea1cce77e5b9e223acfed6b1e85c7972bd7dc0` both installed and in the repository. The recorded run is `artifacts/wsl-validation-20261018-134816/`; `artifacts/latest-run.txt` names it.
 
@@ -29,25 +28,20 @@ The following evidence table describes the exercise on 2026-10-18 in the WSL Ubu
 
 `artifacts/` holds that raw evidence, `samples/cli_419/` holds the 55 screens of the **historical 4.19.2 interface and what it does** (screens 01-31: all nine views, `E` events, `!` explanations, the command palette, the doctor, the inspector with find and only-matches, the `?` help, two 100-column layouts and the opt-in interactive mode; screens 32-55: the dashboard controls, the HTML/report/bundle/audit exports and the one-shot modes) with their raw captures in `artifacts/view-screens-20261031-051739/` and `artifacts/operation-screens-20261031-062953/`, `samples/html419/` holds the HTML those runs produced with browser screenshots of its pages, `samples/cli/` holds rendered screenshots of the seven 4.12.0 CLI views per namespace, `samples/cli_413/` holds the 22 screens of the 4.13.1 views and inspector (services, storage, events, explanations, doctor, find, container picker) with their raw captures in `artifacts/feature-screens-*`, and `samples/html/` holds the HTML reports with checksums. `samples/cli_4281/` records 4.28.1 and includes the runbook, check and certificates screens; the 4.24.1, 4.23.2 and older galleries support historical observations.
 
-## Current 4.37.0 validation and visual changes
+## Current 4.39.0 validation and visual changes
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser checks** and **125 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.37.0 in namespace `kdash-e2e`.
-[Inspect the recorded checks](artifacts/live-e2e-v4370/checks.tsv).
+Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser checks** and **136 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.39.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](artifacts/live-e2e-v4390/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
 
 
 
-The refresh exercised 200 baseline checks, 103 extension checks, 30 Secrets
-checks, 33 browser checks and all 19 fixture suites on the installed binary. It
-also read a real rotated kubelet log (103,840 lines, 11.1 MiB) alongside the
-current file; see the limits below and in the feature checklist.
-
-
-
-
+The run covers 200 baseline checks plus 124 extension checks, 31 Secrets checks,
+33 browser checks and all 19 fixture suites; 136 terminal screenshots are
+published with native grabs and ANSI replays.
 
 Current screenshots include native xterm windows captured live inside WSL on an
 isolated Xvfb display, plus separately labelled ANSI replays. They preserve actual
@@ -68,8 +62,11 @@ that a real identity provider completed authentication.
 The current live run is named by [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt).
 Its `results.json`, `checks.tsv`, `inventory.json` and `captures.tsv` record the
 installed version, real WSL Kubernetes inventory, checks and every screen.
-[`samples/cli_4370/`](samples/cli_4370/README.md) contains the corresponding terminal
-renders and [`samples/html4370/`](samples/html4370/README.md) contains report output.
+[`samples/cli_4390/`](samples/cli_4390/README.md) contains the corresponding terminal
+screenshots and [`samples/html4390/`](samples/html4390/README.md) contains report output.
+See the [feature checklist](docs/VALIDATION-4.39.0.md) for coverage and results.
+The [4.37.0 terminal gallery](samples/cli_4370/README.md) and
+[HTML reports](samples/html4370/README.md) record that earlier version.
 The release-time [4.27.4 terminal gallery](samples/cli_4274/README.md),
 [HTML reports](samples/html4274/README.md) and
 [original run](artifacts/live-e2e-20261107-083145/results.json) remain available
@@ -81,6 +78,19 @@ The [4.27.3 terminal](samples/cli_4273/README.md),
 [HTML](samples/html423/README.md) galleries remain available. The older five-minute
 exercise below remains labelled 4.12.0; the 4.19.2 galleries also retain their
 recorded version.
+
+In 4.39.0, the active dashboard table keeps its column labels visible below the
+main header while you scroll. As you move to the next table, its labels take over.
+The `?` help screen highlights keys. When the pager is visible, Space advances,
+`b` goes back, and other keys return to the calling screen. The command palette
+opened with `:` lists available commands and descriptions.
+
+In pod detail, `s` shows aligned condition, resource and state tables. `d`, `e`
+and `!` use section headings to highlight Describe, Events and Why information.
+`l` and `p` show log timestamps and severity colours. The `F` search results also
+use colour to distinguish source labels and per-log outcomes. The empty-pane
+message identifies possible next keys. Exports produced with `w` or `>` use plain
+text.
 
 4.23.1 introduced boxed tables and reverse-video selection to namespace, pod, container,
 inspector and file screens. Titles, table borders, aligned columns and grouped key
@@ -629,7 +639,7 @@ journalctl -t kdash --since today
 
 By default the local log is `$KDASH_REPORT_DIR/audit/audit_YYYYMM.log`, unless `KDASH_AUDIT_DIR` is set separately. The central copy uses `/var/log/kdash` only if available and writable. Syslog uses `logger -t kdash`; successful emission does not guarantee a persistent journal exists in every WSL distribution. Record unavailable sources as unavailable.
 
-Logs are hash-chained. `--audit-verify` detects broken links in the available file; removal of the file's trailing records cannot be detected from that file alone. Verify original files before preparing redacted copies. Redaction changes bytes and invalidates the original chain, so label such copies and retain the original verification result with the private source. Exported reports have hashes recorded in the audit trail.
+Logs are hash-chained. `--audit-verify` batches SHA-256 work and reports the first broken link in each available file. It returns an error if it cannot read the records or compute their hashes. Detecting removal of trailing records requires a trusted copy. Verify original files before preparing redacted copies. Redaction changes bytes and invalidates the original chain, so label such copies and retain the original verification result with the private source. Exported reports have hashes recorded in the audit trail.
 
 ## 9. Troubleshooting
 

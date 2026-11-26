@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serial live checks for the search, log, export and rendering additions in 4.37.
+"""Serial live checks for search, log, export and terminal rendering.
 
 Uses the existing kdash-e2e fixtures. No cluster resources are changed. Native
 xterm screenshots and their ANSI captures are saved with the checked output.
@@ -14,9 +14,12 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import stat
 import tempfile
+
+import pyte
 
 
 def merge(base: Path, output: Path):
@@ -382,6 +385,123 @@ def main():
                 live.key(s, "q")
         live.key(s, "Q")
 
+    def terminal_design():
+        def cell(session, text):
+            ansi = live.tm("capture-pane", "-e", "-p", "-t", session)
+            screen = pyte.Screen(*live.sizes[session])
+            pyte.Stream(screen).feed(ansi.removesuffix("\n").replace("\n", "\r\n"))
+            for row, line in enumerate(screen.display):
+                column = line.find(text)
+                if column >= 0:
+                    return screen.buffer[row][column]
+            raise RuntimeError(f"{session}: could not inspect style of {text!r}")
+
+        s = live.launch("extended-sticky-help", extra=("-i", "2", "--no-io"), columns=140, rows=24)
+        live.wait(s, "pods fresh")
+        live.key(s, "c", delay=2)
+        label = "WORKLOAD / POD / CONTAINER"
+        first = live.wait(s, label)
+        starting_row = re.search(r"pods \| rows (\d+)-", first)
+        live.key(s, "G", delay=2)
+        last = live.wait(s, r"pods \| rows \d+-\d+/\d+")
+        ending_row = re.search(r"pods \| rows (\d+)-(\d+)/(\d+)", last)
+        record("sticky-pod-header", bool(starting_row and ending_row)
+               and int(ending_row[1]) > int(starting_row[1]) and ending_row[2] == ending_row[3]
+               and last.count(label) == 1 and cell(s, label).bg != "default",
+               "Scrolled to the final pod rows with the original column header and its colour band visible")
+        capture(s, "sticky-pod-header", "Pod column header stays visible while scrolling the live pod table", label)
+
+        live.key(s, "?", delay=2)
+        first_help = live.wait(s, r"lines 1-\d+ of \d+: Space next page")
+        heading = "PODS - every pod and container"
+        coloured = cell(s, heading).fg != cell(s, "every pod and container").fg
+        capture(s, "dashboard-help-first-page", "Coloured pod view help on the first page of a 24-row terminal", heading)
+        live.key(s, "Space", delay=2)
+        second_help = live.wait(s, r"lines [2-9]\d*-\d+ of \d+: Space next page, b back")
+        capture(s, "dashboard-help-next-page", "Dashboard help continues on a second page with back navigation", "b back")
+        live.key(s, "b", delay=2)
+        back = live.wait(s, r"lines 1-\d+ of \d+: Space next page")
+        live.key(s, "Escape", delay=2)
+        record("dashboard-help-pagination", coloured and heading in first_help and heading not in second_help
+               and heading in back and label in live.screen(s),
+               "Help title is coloured, Space advances, b returns to the first page, and Esc closes help")
+        live.key(s, ":", delay=2)
+        live.wait(s, "WHAT IT DOES")
+        record("command-palette-colour", cell(s, "WHAT IT DOES").bg != "default"
+               and cell(s, "secrets").fg != cell(s, "Certificates and keys").fg,
+               "Palette has a column band and distinguishes commands from descriptions")
+        capture(s, "command-palette-style", "Coloured command names and column headings in the command palette", "WHAT IT DOES")
+        live.key(s, "Escape", "Q")
+
+        s = open_detail("extended-inspector-design")
+        live.wait(s, "CPU REQUEST / LIMIT")
+        record("inspector-summary-style", cell(s, "CPU REQUEST / LIMIT").bg != "default"
+               and cell(s, "Phase").fg != cell(s, "Running").fg,
+               "Summary displays resource columns and distinguishes labels from pod state")
+        capture(s, "inspector-summary-tables", "Pod conditions, resources and container state in coloured tables", "CPU REQUEST / LIMIT")
+        for key, name, heading in [("d", "describe", "Status:"), ("e", "events", "EVENTS"),
+                                   ("!", "why", "EVIDENCE")]:
+            live.key(s, key, delay=3)
+            capture(s, "inspector-" + name, "Restyled " + name + " pane for a live pod", heading)
+
+        live.key(s, "l", delay=3)
+        live.wait(s, "WARN request")
+        record("inspector-log-colour", cell(s, "WARN request").fg != cell(s, "INFO request").fg,
+               "Observed distinct colours for real WARN and INFO log messages")
+        capture(s, "inspector-log-level-colour", "Live warning lines use a distinct severity colour", "WARN request")
+        live.key(s, "L", delay=2)
+        empty = r"No line at log level ERROR or above in the \d+ lines read"
+        live.wait(s, empty)
+        capture(s, "inspector-empty-level", "Empty ERROR filter explains why no log lines are displayed", empty)
+        body = exported(s, "inspector-empty-level", ("THE WHOLE CURRENT PANE", "# end of export"))
+        whole_pane = body.split("THE WHOLE CURRENT PANE")[-1]
+        record("inspector-empty-pane-export", "No line at log level" not in whole_pane and "WARN request" not in whole_pane,
+               "Display-only guidance stays out of the exported log data")
+        live.key(s, "Q")
+
+    def audit_terminal():
+        live.finish_cli(live.cli("extended-audit-terminal-source", ["--once", "--no-io"], ("app-server",)))
+        live.finish_cli(live.cli("extended-audit-terminal-chain", ["--audit-verify"], ("chain intact",), scoped=False))
+
+        with tempfile.TemporaryDirectory(prefix="kdash-audit-preview-") as preview_dir:
+            source_dir = Path(live.env["KDASH_AUDIT_DIR"])
+            for source in sorted(source_dir.glob("audit_*.log")):
+                public_rows = []
+                for row in source.read_text().splitlines():
+                    fields = row.split("\t")
+                    if row.startswith("#") or len(fields) != 16 or fields[13] not in {"START", "KUBECTL", "END"}:
+                        continue
+                    for index, replacement in ((3, "operator"), (4, "operator"), (6, "wsl-validation"), (7, "local")):
+                        original = fields[index]
+                        if original:
+                            fields[14] = re.sub(r"(?<![\w-])" + re.escape(original) + r"(?![\w-])", replacement, fields[14])
+                        fields[index] = replacement
+                    public_rows.append("\t".join(fields))
+                (Path(preview_dir) / source.name).write_text("\n".join(public_rows) + "\n")
+
+            session, columns, rows = "extended-audit-terminal", 100, 30
+            # Keep the pane open after kdash exits so the short command can be captured.
+            command = shlex.join(["env", f"KDASH_AUDIT_DIR={preview_dir}", f"KDASH_COLUMNS={columns}",
+                                  *live.base, "--audit", "4", "--audit-grep", "\t(START|KUBECTL|END)\t"])
+            live.tm("new-session", "-d", "-s", session, "-x", str(columns), "-y", str(rows),
+                    command + "; IFS= read -rsn1 _")
+            live.tm("set-option", "-t", session, "status", "off")
+            live.sizes[session] = (columns, rows)
+            # Four live events with wrapped DETAIL cells are taller than a 30-row
+            # window, so the table header scrolls out of the visible pane. Column
+            # values wrap too (operator@wsl- / validation), so wait for the stable
+            # prefix, then assert on the saved scrollback while the screenshot
+            # keeps the visible window.
+            live.wait(session, r"operator@wsl", timeout=60)
+            screen = live.tm("capture-pane", "-p", "-S", "-400", "-t", session)
+            cells = [line.split("│") for line in screen.splitlines()]
+            wrapped = any(len(row) == 8 and not row[5].strip() and row[6].strip() for row in cells)
+            record("audit-terminal-wrapped-details", wrapped and "DETAIL" in screen and "START" in screen
+                   and "operator@wsl" in screen and any(line.startswith("└") for line in screen.splitlines()),
+                   "The narrow audit table retained wrapped details from live events after masking operator and host names")
+            capture(session, "audit-terminal-wrapped", "Narrow terminal audit table with wrapped details from the live run (identities masked)")
+            live.tm("kill-session", "-t", session)
+
     try:
         record("installed-source-identical", live.source_sha256 == live.installed_sha256,
                "extension tests the installed bytes that will be published")
@@ -399,6 +519,9 @@ def main():
                              ("themes", themes_and_fallback),
                              ("file-browser-exports", file_browser_exports)]:
             scenario(name, action)
+        if tuple(int(part) for part in live.version.split(".")) >= (4, 39, 0):
+            scenario("terminal-design", terminal_design)
+            scenario("audit-terminal", audit_terminal)
         session_logs = list(exports.glob("kdash_session_*.log"))
         record("session-export-aggregation", bool(session_logs) and all("# end of export" in p.read_text() for p in session_logs),
                f"{len(session_logs)} session logs aggregate their explicit exports")

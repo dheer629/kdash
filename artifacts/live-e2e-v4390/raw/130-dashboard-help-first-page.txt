@@ -1,0 +1,24 @@
+ KDASH │ HELP │ PODS VIEW │ context kdash-local │ namespace kdash-e2e                                             v4.39.0 │ any key returns
+
+ PODS - every pod and container of the namespace, live usage against what it asked for.
+   Health line (every view): ready pods, restarts, OOM risk, OOMKilled, pods without a memory
+               limit, CPU / memory against limits, degraded / rolling workloads, events of 15 min.
+   Grouped by workload (Deployment / StatefulSet / ...): the workload line is the sum of its pods.
+   ACTUAL      CPU in millicores (1000m = 1 core) and memory in MiB, measured by metrics-server.
+               T = trend since the last poll: up / down / flat.
+   ASSIGNED    requests (reserved for scheduling) and limits (hard cap) from the pod spec.
+   UTILISATION used as % of request and of limit. Red at >= 90% of the limit:
+               CPU is throttled, memory is about to be OOM-killed.
+   RDY / RST   ready containers / all containers, and restarts.
+   Detail line CPU and memory sparkline of the pod (last 40 session samples + now; memory
+               coloured by % of its limit, pk = peak), node, pool, pod IP, QoS class, status
+               and the last exit reason (OOMKilled ...).
+   Timeline    namespace CPU and memory over the session (z window, c hides the graphs).
+
+ KEYS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1-9 / Tab  switch view          n  pick another namespace     /  search box (n/N next/prev, Tab: pod filter)
+   s          next sort key        o  reverse the sort order     w  PODS grouped / flat
+   j k arrows scroll               h l arrows  pan left / right   g G  top / bottom
+   d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
+   x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
+ -- lines 1-21 of 55: Space next page, any other key returns --

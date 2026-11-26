@@ -1,0 +1,50 @@
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:24:30 IST
+┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ────────┐
+│ match .*   sort cpu ▼ high first                     │ ! pods 14/18 ready   restarts 549           │ cpu     60m ░░░░░░░░   3% lim       │ workloads 14                │
+│ poll 2s  spec 5s/30s   session 09:24:02 up 28s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     1Mi ░░░░░░░░   0% lim       │ events 15m ! 1  ^ 0         │
+└──────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴─────────────────────────────┘
+ DATA ● pods fresh 5s old  metrics available │ C certs (2 critical, 3 expiring)  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  ›
+ FMEA   failure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection
+
+  11 HIGH   9 MEDIUM   40 LOW   48 of 50 modes visible to kubernetes-super-admin  scored 2s ago - r re-scores, : access shows your rights
+
+WORKSHEET  60 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
+┌────┬────────┬────┬────┬────┬─────┬────────┬───────────────────────────────────────┬──────────────────────────────────────────┬─────────────────────────────────────────┐
+│ #  │ AP     │  S │  O │  D │ RPN │ ID     │ OBJECT                                │ FAILURE MODE                             │ NOW                                     │
+├────┼────────┼────┼────┼────┼─────┼────────┼───────────────────────────────────────┼──────────────────────────────────────────┼─────────────────────────────────────────┤
+│ 1  │ HIGH   │ 10 │ 2* │ 10 │ 200 │ CP-03  │ cluster                               │ No recent backup                         │ not visible on this cluster: etcd       │
+│    │        │    │    │    │     │        │                                       │                                          │ snapshot age (RKE2/K3s)                 │
+│ 2  │ HIGH   │  8 │ 10 │  4 │ 320 │ PVC-01 │ kdash-e2e/z-unbound                   │ Pending                                  │ claim is Pending - not bound to a       │
+│    │        │    │    │    │     │        │                                       │                                          │ volume                                  │
+│ 3  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/missing-backend             │ No endpoints                             │ selector app=does-not-exist matches no  │
+│    │        │    │    │    │     │        │                                       │                                          │ pod in this scope                       │
+│ 4  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-loadbalancer            │ No endpoints                             │ selector app=app-server matches no pod  │
+│    │        │    │    │    │     │        │                                       │                                          │ in this scope                           │
+│ 5  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-nodeport                │ No endpoints                             │ selector app=app-server matches no pod  │
+│    │        │    │    │    │     │        │                                       │                                          │ in this scope                           │
+│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash                     │ CrashLoopBackOff                         │ CrashLoopBackOff, 463 restarts (last:   │
+│    │        │    │    │    │     │        │                                       │                                          │ Error)                                  │
+│ 7  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending                   │ Pending, unschedulable                   │ Pending                                 │
+│ 8  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-unschedulable             │ Pending, unschedulable                   │ Pending                                 │
+│ 9  │ HIGH   │  7 │ 10 │  4 │ 280 │ SVC-03 │ kdash-e2e/functionality-loadbalancer  │ External IP pending                      │ LoadBalancer without an external IP     │
+│ 10 │ HIGH   │  7 │ 10 │  4 │ 280 │ SVC-03 │ kdash-e2e/web-loadbalancer            │ External IP pending                      │ LoadBalancer without an external IP     │
+│ 11 │ HIGH   │  5 │ 10 │  5 │ 250 │ HPA-02 │ kdash-e2e/functionality-legacy        │ Pinned at maxReplicas                    │ at maxReplicas 1                        │
+│ 12 │ MEDIUM │ 10 │ 2* │  5 │ 100 │ CP-02  │ cluster                               │ Quorum lost or unhealthy                 │ ok                                      │
+│ 13 │ MEDIUM │  8 │ 2* │ 10 │ 160 │ PVC-02 │ -                                     │ Volume full                              │ not visible on this cluster: kubelet    │
+│    │        │    │    │    │     │        │                                       │                                          │ volume stats (Prometheus), used vs      │
+│    │        │    │    │    │     │        │                                       │                                          │ capacity                                │
+│ 14 │ MEDIUM │  7 │ 2* │  5 │  70 │ PVC-03 │ -                                     │ Attach or mount failure                  │ all 4 pvcs ok                           │
+│ 15 │ MEDIUM │  7 │  4 │  2 │  56 │ PVC-04 │ storageclass/local-path               │ Reclaim policy Delete on stateful data   │ 11 bound volume(s) deleted with their   │
+│    │        │    │    │    │     │        │                                       │                                          │ claims (reclaimPolicy Delete)           │
+│ 16 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/deployment/app-server       │ All replicas on one node                 │ 2 of 2 replicas on dev                  │
+│ 17 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/statefulset/db-stateful     │ All replicas on one node                 │ 2 of 2 replicas on dev                  │
+│ 18 │ MEDIUM │  6 │ 10 │  4 │ 240 │ POD-04 │ kdash-e2e/z-imagepull                 │ ImagePullBackOff                         │ ImagePullBackOff - the image cannot be  │
+│    │        │    │    │    │     │        │                                       │                                          │ pulled                                  │
+│ 19 │ MEDIUM │  6 │ 10 │  2 │ 120 │ CFG-02 │ kdash-e2e/kdash-secrets-live-mismatch │ Certificate inside it expiring or broken │ CA kdash-secrets-live-                  │
+│    │        │    │    │    │     │        │                                       │                                          │ match.example.invalid expires in 47 h   │
+│    │        │    │    │    │     │        │                                       │                                          │ (2026-11-28 03:16 UTC)                  │
+│ 20 │ MEDIUM │  6 │ 10 │  2 │ 120 │ CFG-02 │ kdash-e2e/kdash-secrets-live-valid    │ Certificate inside it expiring or broken │ CA kdash-secrets-live-                  │
+│    │        │    │    │    │     │        │                                       │                                          │ match.example.invalid expires in 47 h   │
+M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
+ ALERT 09:24:25 STATUS z-crash  - 5 MEMORY / x report | ○ LIVE 09:24:31  next 2s  data 2s old  spec 6/30s  fetch 0.0s  poll 2s  AUDITED | fmea | rows 1-41/163 | ? help

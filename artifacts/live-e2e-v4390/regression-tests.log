@@ -1,0 +1,19 @@
+test-build	0	PASS: 12 build/import checks (no cluster required)
+test-capture-terminal	0	PASS: 23 terminal replay checks preserve bright colors, bold, reset, RGB/indexed payloads and reverse video
+test-events	0	All Events tests passed.
+test-fmea	0	PASS: 83 FMEA fixture checks
+test-health	0	9 health fixture tests passed.
+test-inspector	0	PASS: inspector identity, bounded opt-in logs, search and highlighting, level filter, container drill-down, export, failures, filters and report isolation
+test-interactive	0	interactive regression checks passed
+test-log-history	0	PASS: 22 rotated-log decoding, ordering, gzip, byte-cap, access and incomplete-read checks
+test-login-cleanup	0	PASS: 27 login-cleanup checks, exact helper/tag scope, keep tree, detached login and TERM/KILL
+test-login-flow	0	PASS: 39 login-flow PTY checks (no cluster or identity provider required)
+test-mode-switch	0	PASS: 198 mode-switch terminal checks, guarded writes, detail panes, follow and parent state
+test-runtime	0	PASS: runtime doctor, CLI scoping/filters, missing metrics, empty/error transitions, command deadline, panel wiring and asynchronous recovery
+test-transfer-download-regressions	0	PASS: downloads verify before replacing destinations; keep both and hardlink caching preserve data; failed or incomplete verification leaves no partial files
+test-transfer-progress	0	PASS: progress reaches 100% only after success; verification is cancellable and all nested workers stop
+test-transfer-upload-regressions	0	PASS: uploads preserve files, links and empty directories; corruption, incomplete verification and failed stream stages return failure
+test-transfer-verification	0	PASS: transfer fingerprints and archive checks catch corruption; mismatches fail and are audited; keep both and namespace defaults preserve user data
+test-transfer	0	PASS: Python ZIP fallback preserves regular files and six file/directory/dangling links without reading host targets
+test-uninstall	0	Passed 12 uninstall integration tests.
+test-visuals	0	PASS: 24 frame encoding, junction, clipping and width combinations (C/UTF-8, ASCII/Unicode, color/mono, 80/100/170 columns)

@@ -304,9 +304,9 @@ toolkit_panel() {
     HEADER_ONLY=1 render_core
     # tables fit the window and carry colour markers (made into escapes after cleaning)
     local panel_size="${PAINT_SZ:-}"
-    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-${panel_size#* }}" TK_GLYPH="${BARCHR:-unicode}"
+    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-${panel_size#* }}" TK_GLYPH="${BARCHR:-unicode}" TK_STICKY=1
     [ -n "$TK_COLS" ] || TK_COLS="$(tput cols 2>/dev/null || echo 160)"
-    export TK_COLOR TK_COLS TK_GLYPH
+    export TK_COLOR TK_COLS TK_GLYPH TK_STICKY
     # read commands shown in this view, by finding number: Enter runs them (check_run_prompt)
     RB_CAPTURE="$TOOLKIT_DIR/run-$view.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="Enter runs the read commands of a finding now"
     case "$view" in
@@ -320,8 +320,9 @@ toolkit_panel() {
         secrets) sm_render ;;
         doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
     esac | toolkit_clean | tk_colorize > "$BODYF"
+    sticky_index
     RB_CAPTURE=""; RB_RUN_HINT=""
-    export -n TK_COLOR TK_COLS TK_GLYPH
+    export -n TK_COLOR TK_COLS TK_GLYPH TK_STICKY
     case "$view" in
       secrets) printf 'Y secrets | / search | > export | Enter run checks | r re-read | C certs (endpoints, nodes) | M fmea | K check | j/k scroll | h/l pan (wide tables) | : commands | q quit\n' > "$FTRF" ;;
       fmea|access) printf 'M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
@@ -337,10 +338,10 @@ render_cached() {
     local sig="$RENDER_GEN|$MODEL_GEN|$RC_GEN|${PAINT_SZ:-}|$THEME|$COLOR|${KDASH_COLUMNS:-}" d="$TMPD/rc/$VIEW"
     case "$VIEW" in pods|nodes|workloads|ip|mem|io|alerts) ;; *) render; return ;; esac
     if [ "$RC_USE" = 1 ] && [ "${KDASH_VIEW_CACHE:-1}" != 0 ] && [ "${RC_SIG[$VIEW]:-}" = "$sig" ] && [ -f "$d/${BODYF##*/}" ]; then
-        cp -f -- "$d/${HDRF##*/}" "$d/${BODYF##*/}" "$d/${FTRF##*/}" "${BODYF%/*}/" && return 0
+        cp -f -- "$d/${HDRF##*/}" "$d/${BODYF##*/}" "$d/${FTRF##*/}" "$d/${STICKYF##*/}" "${BODYF%/*}/" && return 0
     fi
     render
-    mkdir -p -- "$d" && cp -f -- "$HDRF" "$BODYF" "$FTRF" "$d/" && RC_SIG[$VIEW]="$sig"
+    mkdir -p -- "$d" && cp -f -- "$HDRF" "$BODYF" "$FTRF" "$STICKYF" "$d/" && RC_SIG[$VIEW]="$sig"
 }
 render() {
     case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access|secrets) toolkit_panel "$VIEW" ;;
@@ -352,16 +353,21 @@ render() {
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
     # status strip: how fresh the data is (dot: green = fresh with metrics), then the shortcuts as chips
-    local sd="" sb="" sg="" sy="" sr="" sdot sv="|" smet=available
+    local sd="" sb="" sg="" sy="" sr="" sdot sv="|" smet=available sh="" sst="" smc="" sk=""
     [ "$TOP_OK" = 1 ] || smet=unavailable
-    if [ "${COLOR:-1}" = 1 ]; then sd=$'\033[90m'; sb=$'\033[1m'; sg=$'\033[32m'; sy=$'\033[33m'; sr=$'\033[0m'; fi
+    if [ "${COLOR:-1}" = 1 ]; then sd=$'\033[90m'; sb=$'\033[1m'; sg=$'\033[32m'; sy=$'\033[33m'; sr=$'\033[0m'
+      # DATA as a header band; the state in colour (ok / problem); the keys in the info colour
+      sh=$'\033[1;7m'; sk=$'\033[1;94m'
+      if [ "$status" = fresh ]; then sst=$'\033[1;32m'; else sst=$'\033[1;31m'; fi
+      if [ "$TOP_OK" = 1 ]; then smc=$'\033[1;32m'; else smc=$'\033[1;35m'; fi
+    fi
     [ "${BARCHR:-unicode}" = ascii ] && sdot="*" || { sdot=$'\342\227\217'; sv=$'\342\224\202'; }
     if [ "$status" = fresh ] && [ "$TOP_OK" = 1 ]; then sdot="$sg$sdot$sr"; else sdot="$sy$sdot$sr"; fi
     local strip hdrall
     # the certificate and FMEA badges come first: they are findings, the rest are shortcuts
     local sp=" ${sd}${sv}${sr} "
-    strip=" ${sb}DATA${sr} ${sdot} pods ${sb}${status}${sr} ${sd}${age} old${sr}  metrics ${sb}${smet}${sr}${sp}${sb}C${sr} certs${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+  ${sb}M${sr} fmea ($FMEA_BADGE)}"
-    strip+="${sp}${sb}/${sr} search${sp}${sb}K${sr} check${sp}${sb}i${sr} inspect${sp}${sb}8${sr} services  ${sb}9${sr} storage  ${sb}E${sr} events  ${sb}!${sr} explain${sp}${sb}:${sr} commands"
+    strip="${sh} DATA ${sr}${sdot} pods ${sst}${status}${sr} ${sd}${age} old${sr}  metrics ${smc}${smet}${sr}${sp}${sk}C${sr} certs${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+  ${sk}M${sr} fmea ($FMEA_BADGE)}"
+    strip+="${sp}${sk}/${sr} search${sp}${sk}K${sr} check${sp}${sk}i${sr} inspect${sp}${sk}8${sr} services  ${sk}9${sr} storage  ${sk}E${sr} events  ${sk}!${sr} explain${sp}${sk}:${sr} commands"
     hdrall="$(< "$HDRF")"
     if [[ "$hdrall" == *$'\001DATASTRIP\001'* ]]; then printf '%s\n' "${hdrall/$'\001DATASTRIP\001'/$strip}" > "$HDRF"
     else printf '%s\n' "$strip" >> "$HDRF"; fi

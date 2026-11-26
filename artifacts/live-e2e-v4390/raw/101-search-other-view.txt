@@ -1,0 +1,50 @@
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:54:47 IST
+┌─ SCOPE ─────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ────────────────────┬─ WORKLOADS · EVENTS ────────┐
+│ match .*   sort cpu ▼ high first                    │ ! pods 14/18 ready   restarts 554           │ cpu     61m ░░░░░░░░   3% lim        │ workloads 14                │
+│ poll 2s  spec 9s/30s   session 09:54:38 up 9s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim        │ events 15m ! 0  ^ 0         │
+└─────────────────────────────────────────────────────┴─────────────────────────────────────────────┴──────────────────────────────────────┴─────────────────────────────┘
+ DATA ● pods fresh 9s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ WORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes
+ workloads 14: Deployment 1  StatefulSet 2  DaemonSet 1  CronJob 1  Job 1  Pod 7  ReplicationController 1   pods 18 (14 ready)   0 degraded  0 rolling out  2 HA risk  0 ›
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+► WORKLOADS   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec ─────────────────────────
+  KIND        WORKLOAD                      READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Pod         z-oom                           1/1    -     1     1    51m / 10m        1Mi /     8Mi / 16Mi       3 N/A
+      ├─ cpu ░░░               mem ░░░               last 3 samples, sum of its pods
+      └─ z-oom                          Running              1/1 dev                          cpu    51m  mem     1Mi  rst 3  10.244.0.157
+  Deployment  app-server                      2/2    2     2     1     6m / 50m        1Mi /    24Mi / 192Mi     41 HA_RISK
+      ├─ cpu ░░░               mem ░░░               last 3 samples, sum of its pods
+      ├─ app-server-8fb4699bc-cx5vz     Running              2/2 dev                          cpu     3m  mem     1Mi  rst 21  10.244.0.166
+      ├─ app-server-8fb4699bc-t7zxj     Running              2/2 dev                          cpu     3m  mem     0Mi  rst 20  10.244.0.163
+      └─ image busybox:1.36 busybox:1.36
+  StatefulSet db-stateful                     2/2    2     2     1     2m / 40m        0Mi /    64Mi / 128Mi      6 HA_RISK
+      ├─ cpu ░░░               mem ░░░               last 3 samples, sum of its pods
+      ├─ db-stateful-0                  Running              1/1 dev                          cpu     1m  mem     0Mi  rst 3  10.244.0.159
+      ├─ db-stateful-1                  Running              1/1 dev                          cpu     1m  mem     0Mi  rst 3  10.244.0.177
+      └─ image busybox:1.36
+  DaemonSet   node-agent                      1/1    1     1     1     1m / 10m        0Mi /    16Mi / 32Mi       4 PER_NODE
+      ├─ cpu ░░░               mem ░░░               last 3 samples, sum of its pods
+      ├─ node-agent-ctvg6               Running              1/1 dev                          cpu     1m  mem     0Mi  rst 4  10.244.0.152
+      └─ image busybox:1.36
+  Replicatio~ functionality-legacy            1/1    -     1     1     1m / 10m        0Mi /     8Mi / 32Mi       3 SINGLE
+      ├─ cpu ░░░               mem ░░░               last 3 samples, sum of its pods
+      └─ functionality-legacy-67ks7     Running              1/1 dev                          cpu     1m  mem     0Mi  rst 3  10.244.0.167
+  Pod         kdash-secrets-live-consumer     1/1    -     1     1     0m / 50m        0Mi /    32Mi / 128Mi      3 N/A
+      ├─ cpu ░░░               mem ░░░               last 3 samples, sum of its pods
+      └─ kdash-secrets-live-consumer    Running              1/1 dev                          cpu     0m  mem     0Mi  rst 3  10.244.0.156
+  StatefulSet test-sts                        1/1    1     1     1     0m / -          0Mi /       - / -         26 SINGLE
+      ├─ cpu ░░░               mem ░░░               last 3 samples, sum of its pods
+      ├─ test-sts-0                     Running              1/1 dev                          cpu     0m  mem     0Mi  rst 26  10.244.0.176
+      └─ image busybox:1.36
+  CronJob     nightly-report                  3/3    -     3     1      - / 30m          - /    48Mi / 96Mi       0 N/A  rollout scheduled
+      ├─ cpu                   mem                   last 3 samples, sum of its pods
+      ├─ nightly-report-29927770-swnlm  Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.196
+      ├─ nightly-report-29927775-pb7gh  Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.197
+      ├─ nightly-report-29927780-b69zh  Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.200
+┌─ SEARCH ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────── match 1 of 4 matching lines in this view ─┐
+│ / app-server                                                                                                                                                           │
+└─ n next   N prev   / edit   Esc close ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hi›
+ ○ LIVE 09:54:49  next 2s  data 2s old  spec 11/30s  fetch 0.0s  poll 2s  AUDITED | workloads | rows 1-34/74 | ? help  1-9 view  n/N match  s sort(cpu)  / search

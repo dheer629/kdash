@@ -1,0 +1,50 @@
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:56:59 IST
+┌─ SCOPE ────────────────────────────────────────────────┬─ POD HEALTH ───────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                       │ ! pods 14/18 ready   restarts 555          │ cpu     58m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 29s/30s   session 09:55:30 up 1m29s      │ OOM risk 0   OOMKilled 0   no-limit 1      │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
+└────────────────────────────────────────────────────────┴────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 29s old  metrics available │ C certs  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : ›
+ ACCESS   what you may read, checked with kubectl auth whoami / can-i - every FMEA check runs only where this allows
+
+ user kubernetes-super-admin   groups system:masters system:authenticated   context kdash-local   scope kdash-e2e   checked 15s ago
+
+PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) and never asks for more
+┌──────────────────────────────────────────────────────────┬─────────────┬─────────┬─────────────────────────────────────────────────────────────────────────────────────┐
+│ PERMISSION                                               │ SCOPE       │ ALLOWED │ NEEDED BY                                                                           │
+├──────────────────────────────────────────────────────────┼─────────────┼─────────┼─────────────────────────────────────────────────────────────────────────────────────┤
+│ get /readyz                                              │ cluster     │ ● yes   │ CP-01 CP-02                                                                         │
+│ get pods.metrics.k8s.io                                  │ kdash-e2e   │ ● yes   │ POD-08                                                                              │
+│ list cronjobs.batch                                      │ kdash-e2e   │ ● yes   │ JOB-02                                                                              │
+│ list daemonsets.apps                                     │ kdash-e2e   │ ● yes   │ WRK-05                                                                              │
+│ list deployments.apps                                    │ kdash-e2e   │ ● yes   │ WRK-01 WRK-02 WRK-03 PDB-02 CRD-01                                                  │
+│ list endpointslices.discovery.k8s.io                     │ kdash-e2e   │ ● yes   │ SVC-01                                                                              │
+│ list etcdsnapshotfiles.k3s.cattle.io                     │ cluster     │ ● yes   │ CP-03                                                                               │
+│ list events                                              │ kdash-e2e   │ ● yes   │ POD-03 POD-06 PVC-03 CFG-01 ACC-01                                                  │
+│ list horizontalpodautoscalers.autoscaling                │ kdash-e2e   │ ● yes   │ HPA-01 HPA-02                                                                       │
+│ list ingresses.networking.k8s.io                         │ kdash-e2e   │ ● yes   │ ING-01 ING-02                                                                       │
+│ list jobs.batch                                          │ kdash-e2e   │ ● yes   │ JOB-01                                                                              │
+│ list mutatingwebhookconfigurations.admissionregistration │ cluster     │ ● yes   │ ADM-01                                                                              │
+│ .k8s.io                                                  │             │         │                                                                                     │
+│ list namespaces                                          │ cluster     │ ● yes   │ NS-01                                                                               │
+│ list networkpolicies.networking.k8s.io                   │ kdash-e2e   │ ● yes   │ NET-01                                                                              │
+│ list nodes                                               │ cluster     │ ● yes   │ NOD-01 NOD-02 NOD-03 NOD-04                                                         │
+│ list persistentvolumeclaims                              │ kdash-e2e   │ ● yes   │ PVC-01 PVC-02 PVC-03                                                                │
+│ list persistentvolumes                                   │ cluster     │ ● yes   │ PVC-04                                                                              │
+│ list poddisruptionbudgets.policy                         │ kdash-e2e   │ ● yes   │ PDB-01 PDB-02                                                                       │
+│ list pods                                                │ kdash-e2e   │ ● yes   │ POD-01 POD-02 POD-03 POD-04 POD-05 POD-06 POD-07 POD-08 POD-09 WRK-04 WRK-06 WRK-   │
+│                                                          │             │         │ 07 SVC-02 CFG-01                                                                    │
+│ list pods                                                │ kube-system │ ● yes   │ DNS-01                                                                              │
+│ list resourcequotas                                      │ kdash-e2e   │ ● yes   │ QTA-01                                                                              │
+│ list secrets                                             │ kdash-e2e   │ ● yes   │ CFG-02                                                                              │
+│ list services                                            │ kdash-e2e   │ ● yes   │ SVC-01 SVC-02 SVC-03 ING-01                                                         │
+│ list statefulsets.apps                                   │ kdash-e2e   │ ● yes   │ WRK-03 WRK-04                                                                       │
+│ list storageclasses.storage.k8s.io                       │ cluster     │ ● yes   │ PVC-05                                                                              │
+│ list validatingwebhookconfigurations.admissionregistrati │ cluster     │ ● yes   │ ADM-01                                                                              │
+│ on.k8s.io                                                │             │         │                                                                                     │
+└──────────────────────────────────────────────────────────┴─────────────┴─────────┴─────────────────────────────────────────────────────────────────────────────────────┘
+
+COVERAGE  1 level   full = every check runs; partial = a fallback signal, D + 2; none = no access, D 10 and never counted as OK
+┌────────┬───────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
+ exported to /var/tmp/kdash-extended-exports-di3zf4hz/kdash_view-access_kdash-e2e_20261126-095659.log | ○ LIVE 09:57:01  next 2s  data 2s old  fetch 0.0s  AUDITED

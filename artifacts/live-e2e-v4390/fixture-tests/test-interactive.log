@@ -1,0 +1,9 @@
+== 1. with interactive mode off (the default) exec and cp are refused
+== 2. with --allow-interactive the same two verbs run, marked as writes
+== 3. the 12s command cap applies to reads, never to an attachment
+== 4. the shell: the exact argv, and the audit events around it
+== 5. upload and download: argv, direction and path hygiene
+== 6. path hygiene: credential-looking paths, absolute paths, control bytes
+== 7. off by default: the keys explain themselves and nothing runs
+== 8. the wiring is published: flag, keys, help and the embedded module
+interactive regression checks passed

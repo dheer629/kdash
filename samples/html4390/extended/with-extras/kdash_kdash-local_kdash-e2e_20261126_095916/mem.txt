@@ -1,0 +1,74 @@
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                                                        read-only │ audited │ Dheeraj V 
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SERVICES   9 STORAGE   E EVENTS   ! EXPLAIN   2026-11-26 09:59:16 IST
+┌─ SCOPE ─────────────────────────────────────────────┬─ POD HEALTH ─────────────────────────────────────────────┬─ USAGE vs LIMITS ────────────────────────────────┬─ WORKLOADS ──────────────────────┐
+│ match .*   sort mem ▼ high first                    │ ! pods 14/18 ready   restarts 555                        │ cpu     59m ░░░░░░░░   3% lim                    │ workloads 14                     │
+│ poll 2s  spec 0s/30s                                │ OOM risk 0   OOMKilled 0   no-limit 1                    │ mem     2Mi ░░░░░░░░   0% lim                    │                                  │
+└─────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────┴──────────────────────────────────────────────────┴──────────────────────────────────┘
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ MEMORY   live namespace memory dashboard
+┌─ USAGE and RISK ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ MEMORY used      2Mi  req    276Mi  lim    976Mi   used/req    0.7%  used/lim    0.2%  ░░░░░░░░░░░░░░░░░░░░░░░░                                                                                      │
+│ window 09:59:15 -> 09:59:16 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all                                                                                 │
+│ CPU    used      59m  req     315m  lim    1750m   used/req   18.7%  used/lim    3.4%  ░                                                                                                             │
+│ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 555                                                                                                             │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+► TIMELINE  09:59:15 -> 09:59:16 IST  (all since kdash started, host clock) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   MEMORY used - namespace                                                                              CPU used - namespace                                                                            
+         one sample so far - the chart starts with the 2nd (run kdash live)                                   one sample so far - the chart starts with the 2nd (run kdash live)                        
+  events: recorded in live mode (session history)
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (live sessions) ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  builds from the session samples while kdash runs live (no samples yet)
+
+► MEMORY BY WORKER NODE ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory                           ns trend                                                                               
+  dev                          role:contro~      2Mi   7524Mi   0.0  30.9  █▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░  ░
+
+► PODS BY MEMORY USED  (top 15, --top N) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD                           NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK                                                                                    
+  app-server-8fb4699bc-cx5vz    dev                             1Mi     12Mi     96Mi   8.3   1.0 ░░░░░░░░  21  
+  z-oom                         dev                             1Mi      8Mi     16Mi  12.5   6.2 ░░░░░░░░   3  
+  app-server-8fb4699bc-t7zxj    dev                             0Mi     12Mi     96Mi   0.0   0.0 ░░░░░░░░  20  
+  db-stateful-0                 dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   3  
+  db-stateful-1                 dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   3  
+  functionality-legacy-67ks7    dev                             0Mi      8Mi     32Mi   0.0   0.0 ░░░░░░░░   3  
+  kdash-secrets-live-consumer   dev                             0Mi     32Mi    128Mi   0.0   0.0 ░░░░░░░░   3  
+  node-agent-ctvg6              dev                             0Mi     16Mi     32Mi   0.0   0.0 ░░░░░░░░   4  
+  test-sts-0                    dev                             0Mi        -        -     -     - n/a       26  NO_LIMIT
+  completed-check-m9swm         dev                               -      4Mi     32Mi     -     - n/a        0  
+  nightly-report-29927775-pb7gh dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29927780-b69zh dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29927785-mz769 dev                               -     16Mi     32Mi     -     - n/a        0  
+  sync-pod                      dev                               -        -        -     -     - n/a        0  
+  z-crash                       dev                               -      4Mi     32Mi     -     - n/a      469  
+
+► OOM RISK  (>= 90% of memory limit) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► MEMORY GROWTH FORECAST  (linear trend of the last 30m, a restart starts the trend again) ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+  needs a live session with 2m of samples (every 2s) - the forecast appears here
+
+► RECENT OOMKilled  (last container termination) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  none
+
+► NO MEMORY LIMIT  (unbounded containers) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  test-sts-0
+
+► MEMORY BY WORKLOAD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  KIND        WORKLOAD                         PODS     USED      REQ      LIM  %LIM MEM/LIM                                                                                                            
+  Deployment  app-server                          2      1Mi     24Mi    192Mi   0.5 ░░░░░░░░
+  Pod         z-oom                               1      1Mi      8Mi     16Mi   6.2 █░░░░░░░
+  DaemonSet   node-agent                          1      0Mi     16Mi     32Mi   0.0 ░░░░░░░░
+  Pod         kdash-secrets-live-consumer         1      0Mi     32Mi    128Mi   0.0 ░░░░░░░░
+  Replicatio~ functionality-legacy                1      0Mi      8Mi     32Mi   0.0 ░░░░░░░░
+  StatefulSet db-stateful                         2      0Mi     64Mi    128Mi   0.0 ░░░░░░░░
+  StatefulSet test-sts                            1      0Mi        -        -     - n/a     
+  CronJob     nightly-report                      3        -     48Mi     96Mi     - n/a     
+  Job         completed-check                     1        -      4Mi     32Mi     - n/a     
+  Pod         sync-pod                            1        -        -        -     - n/a     
+  Pod         z-crash                             1        -      4Mi     32Mi     - n/a     
+  Pod         z-imagepull                         1        -     32Mi    128Mi     - n/a     
+  Pod         z-pending                           1        -      4Mi     32Mi     - n/a     
+  Pod         z-unschedulable                     1        -     32Mi    128Mi     - n/a     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 1 polls.  metrics refresh about every 15 s.

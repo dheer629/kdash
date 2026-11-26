@@ -1,0 +1,24 @@
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:22 IST
+ match .* label=role=server   sort cpu ▼ high first
+ pods 2/2 ready rst 41 oom 0 oomk 0 nolim 0 cpu 5m 1% lim mem 0Mi 0% lim wl 1
+ DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+► Deployment app-server  (2 p~ 2/2  41 │      5 ·       0 · │     50    500      24     192 │  10.0   1.0   0.0   0.0
+  app-server-8fb4699bc-cx5vz   2/2  21 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.166   qos Burstable   status Running   last-exit Unknown
+    ├─ app                     Y    11 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0   0.0   0.0
+        last-exit Unknown
+    └─ sidecar                 Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+        last-exit Unknown
+  app-server-8fb4699bc-t7zxj   2/2  20 │      2 ·       0 · │     25    250      12      96 │   8.0   0.8   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.163   qos Burstable   status Running   last-exit Unknown
+    ├─ app                     Y    10 │      1 ·       0 · │     20    200       8      64 │   5.0   0.5   0.0   0.0
+        last-exit Unknown
+    └─ sidecar                 Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+        last-exit Unknown
+────────────────────────────────────────────────────────────────────────────────
+TOTAL (2 pods, 1 workloads)         41 │      5 ·       - · │     50    500      24     192 │  10.0   1.0     -     -
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.

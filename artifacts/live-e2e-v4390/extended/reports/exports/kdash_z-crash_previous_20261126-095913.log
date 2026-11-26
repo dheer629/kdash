@@ -1,0 +1,67 @@
+# kdash 4.39.0 - quick export (key >)
+# screen   : pod detail, pane previous | pod kdash-e2e/z-crash | container crash | read: 1 lines 76 B since 2026-11-26 04:24:38, whole log (nothing rotated yet)
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-26 09:59:13 +0530 by operator on Dheeraj (session 20261126-095856-675087)
+# note     : logs and describe output can hold sensitive values (tokens, addresses, payloads) - review before sharing
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                               PREVIOUS LOGS
+┌─ PREVIOUS LOGS ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        z-crash                                                                                                                                                    │
+│ CONTAINER  crash   ● CrashLoopBackOff   not-ready   restarts 469   last exit Error exit=42   busybox:1.36                                                             │
+└─ rows 1-1 / 1 · 1 lines 76 B since 2026-11-26 04:24:38, whole log (nothing rotated yet) ──────────────────────────────────────────────────────────────────────────────┘
+2026-11-26T04:24:38.163101860Z ERROR intentional validation failure exit=42
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
+│ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
+│ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │
+│ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
+│ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
+└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
+ reading the whole log, older rotated files too when allowed (up to 256.0 MiB)
+
+================================================================================
+ THE WHOLE PREVIOUS PANE (1 lines, every line and column - nothing cut)
+================================================================================
+2026-11-26T04:24:38.163101860Z ERROR intentional validation failure exit=42
+
+# end of export

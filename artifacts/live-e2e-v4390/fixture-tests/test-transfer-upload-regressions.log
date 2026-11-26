@@ -1,0 +1,1 @@
+PASS: uploads preserve files, links and empty directories; corruption, incomplete verification and failed stream stages return failure

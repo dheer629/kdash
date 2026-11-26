@@ -226,11 +226,19 @@ def main():
             live.key(session, "0", "g", "?", delay=1)
             live.capture(session, "94-secrets-help", "Secrets map help and read-only behavior", "SECRETS MAP")
             live.key(session, "x", "Enter", delay=1)
-            live.capture(session, "95-secrets-run-prompt", "Secrets finding read-command prompt", "finding|commands")
-            live.key(session, "Escape", "x", delay=2)
-            live.key(session, "Y", "e", delay=1)
-            live.text(session, "c", delay=3)
-            live.capture(session, "96-secrets-export", "Secrets map HTML export from the live dashboard")
+            live.capture(session, "95-secrets-run-prompt", "Secrets finding read-command prompt",
+                         "run the read commands of finding #")
+            live.key(session, "Escape")
+            before = set((live.out / "reports").glob("kdash_namespace_report*.html"))
+            live.key(session, "x")
+            live.wait(session, r"report: .*\.html", timeout=120)
+            created_reports = sorted(set((live.out / "reports").glob("kdash_namespace_report*.html")) - before)
+            report = created_reports[-1] if len(created_reports) == 1 else None
+            report_text = report.read_text() if report else ""
+            record("dashboard-html-export", 'data-tab="secrets"' in report_text and 'id="sm_1"' in report_text,
+                   str(report.relative_to(live.out)) if report else "no new namespace report")
+            live.capture(session, "96-secrets-export", "Secrets map in a namespace HTML report exported from the dashboard",
+                         r"report: .*\.html")
             live.key(session, "Q", delay=1)
             live.render()
         all_checks_finished = True

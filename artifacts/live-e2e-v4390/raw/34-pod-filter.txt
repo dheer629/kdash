@@ -1,0 +1,50 @@
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                              read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:18:54 IST
+┌─ SCOPE ─────────────────────────────────────┬─ POD HEALTH ─────────────────────────────┬─ USAGE vs LIMITS ───────┬─ WORKLOADS · EVENTS ────┐
+│ match app-server   sort cpu ▼ high first    │ pods 2/2 ready   restarts 41             │ cpu      5m   1% lim    │ workloads 1             │
+│ poll 2s  spec 11s/30s                       │ OOM risk 0   OOMKilled 0   no-limit 0    │ mem     0Mi   0% lim    │ events 15m ! 1  ^ 1     │
+└─────────────────────────────────────────────┴──────────────────────────────────────────┴─────────────────────────┴─────────────────────────┘
+ DATA ● pods fresh 11s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+► TIMELINE  09:16:21 -> 09:18:54 IST  (all since kdash started, z window, c hides graphs) ──────────────────────────────────────────────────
+   CPU used - namespace                                                    MEMORY used - namespace
+     70m┤              ·               ·             ·                       1Mi┤              ·               ·             ·
+        │████████████████████████████████████────────────────────████─          │████████████████████████████████████        ·           ████
+        │████████████████████████████████████        ·           ████           │████████████████████████████████████        ·           ████
+     35m┤████████████████████████████████████        ·           ████        1Mi┤████████████████████████████████████        ·           ████
+        │████████████████████████████████████        ·           ████           │████████████████████████████████████        ·           ████
+        │████████████████████████████████████        ·           ████▄          │████████████████████████████████████        ·           ████
+      0m└┴─────────────┴───────────────┴─────────────┴───────────────┴       0Mi└┴─────────────┴───────────────┴─────────────┴───────────────┴
+         09:16:21                  09:17:37                   09:18:54           09:16:21                  09:17:37                   09:18:54
+  events                                                         !        events                                                         !
+  now 5m  min 5m  avg 58m  max 61m @ 09:16:37                             now 0Mi  min 0Mi  avg 1Mi  max 1Mi @ 09:18:51
+  request 50m ─  limit 500m (above)  1% of limit                          request 24Mi (above)  limit 192Mi (above)  0% of limit
+
+► PODS ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                             │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)
+WORKLOAD / POD / CONTAINER           RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+► Deployment app-server  (2 pods)    2/2  41 │      5 ·       0 · │     50    500      24     192 │  10.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+  app-server-8fb4699bc-cx5vz         2/2  21 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ░░░░░░░░          mem ░░░░░░░░          pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.166   qos Burstable   status Running   last-exit Unkn›
+    ├─ app                           Y    11 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+        last-exit Unknown
+    └─ sidecar                       Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+        last-exit Unknown
+  app-server-8fb4699bc-t7zxj         2/2  20 │      2 ·       0 · │     25    250      12      96 │   8.0   0.8 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+      cpu ░░░░░░░░          mem ░░░░░░░░          pk 0Mi    node dev   pool role:control-plane,master   ip 10.244.0.163   qos Burstable   status Running   last-exit Unkn›
+    ├─ app                           Y    10 │      1 ·       0 · │     20    200       8      64 │   5.0   0.5 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+        last-exit Unknown
+    └─ sidecar                       Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0 ░░░░░░░░   0.0   0.0 ░░░░░░░░
+        last-exit Unknown
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (2 pods, 1 workloads)               41 │      5 ·       - · │     50    500      24     192 │  10.0   1.0 ░░░░░░░░     -     - n/a
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+ ○ LIVE 09:18:57  next 2s  data 4s old  spec 14/30s  fetch 0.0s  poll 2s  AUDITED | pods | ? help  1-9 view  n ns  s sort(cpu)  / search  > export  P pause  x html

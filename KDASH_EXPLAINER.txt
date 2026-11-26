@@ -1,4 +1,4 @@
-KDASH 4.28.1 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
+KDASH 4.39.0 - EXPLAINER: THE DASHBOARD AND ITS RECORDED EVIDENCE
 =========================================================================
 
 WHAT THIS FILE IS
@@ -8,11 +8,12 @@ exercise in this repository produced. It explains what every view answers, how t
 read the numbers without over-claiming, where the proof of each statement lives,
 and which limitations must be stated whenever this output is shared. It is
 deliberately plain text: it can be read in the same terminal as the dashboard.
-The source version is now 4.28.1. Recorded WSL validation is indexed by
+The source version is 4.39.0. Recorded WSL validation is indexed by
 artifacts/latest-e2e.txt, with the live screen manifest, results and cluster
-inventory in that run. The newest complete screen set is in samples/cli_4281/ and
-report samples in samples/html4281/, captured from 4.28.1 and including RUNBOOK,
-CHECK and CERTIFICATES screens. The release-time 4.27.4 captures remain in
+inventory in that run. The 4.39.0 screens are in samples/cli_4390/ and the reports
+are in samples/html4390/. See docs/VALIDATION-4.39.0.md for feature coverage.
+The 4.37.0 and 4.32.0 galleries are indexed in samples/README.md.
+The release-time 4.27.4 captures remain in
 samples/cli_4274/ and samples/html4274/, with their original results in
 artifacts/live-e2e-20261107-083145/results.json. The earlier 4.27.3 samples
 remain in samples/cli_4273/ and samples/html4273/. The detailed historical
@@ -27,7 +28,7 @@ CURRENT SOURCE: INSTALL AND NAVIGATE
   sha256sum -c SHA256SUMS
   bash kdash-bundle.sh
   exec bash -l
-  kdash --version                         # kdash 4.28.1
+  kdash --version                         # kdash 4.39.0
 
 The bundle installs without a build or a cluster connection. Published historical
 releases and the separate release-publishing workflow are described in RELEASES.md;
@@ -98,6 +99,16 @@ Enter/i opens a live pod list and inspector. In the list, j/k or arrows move,
 digits jump to a row, / matches every word against pod/status/node, u limits it
 to pods needing attention, s changes sort and ? shows the keys. The list refreshes
 while idle. Inspector panes keep bounded logs separate from automatic reports.
+
+Column headers stay visible as you scroll long dashboard and diagnostic tables.
+On paged help screens, Space advances and b goes back. Pod detail groups
+conditions, resource requests and limits, and container states into tables.
+Log colours identify timestamps, sources, warnings and errors. The > key
+exports the current view or pane as plain text.
+
+Y or --secrets opens the Secrets map. It shows usage and certificate metadata
+for readable objects, including workload references and expiry. Report exports
+include metadata and omit Secret values and private keys.
 
 F opens structured filters, AND-combined with the pod-name regex. Status matches
 the effective displayed status (NotReady, Terminating, Evicted, waiting reasons).
@@ -221,8 +232,8 @@ for both the installed copy and the repository file.
 artifacts/   the run itself: step logs, per-namespace live terminal capture, the
              recorded session, the reports and the audit log, plus run-metadata.json,
              controller-actions.json and RUN_INVENTORY.md
-samples/     the shareable result: the newest screen set (4.28.1) in samples/cli_4281/
-             and reports in samples/html4281/; historical 4.19.2 screens and the
+samples/     the shareable result: the 4.39.0 screens in samples/cli_4390/
+             and reports in samples/html4390/; historical 4.19.2 screens and the
              views of the 4.12.0 run and the 4.13.1 views and inspector
              (samples/cli_413/), the 4.19.2 HTML reports (samples/html419/) and
              the older HTML reports with checksums (samples/html/)
@@ -344,13 +355,12 @@ capacity planning, for a weekly pattern, or for a memory-leak verdict. Say so.
   * The live terminal capture (tmux capture-pane, .ansi and .txt) is the exact
     screen at one moment, including colours and the pinned header/footer. It is
     viewport evidence: a long table continues below the visible 50 rows.
-  * The rendered PNG screenshots in samples/cli_4281/ (4.28.1, including RUNBOOK,
-    CHECK and CERTIFICATES),
+  * samples/cli_4390/native/ contains native captures of the live xterm window.
+    The companion PNGs in samples/cli_4390/,
     samples/cli/ (4.12.0 run) and samples/cli_413/ (4.13.1: services, storage, events,
     explanations, doctor, inspector) replay those captures cell by cell. They are a
-    faithful render of the captured screen, and each image states its namespace, view
-    and source file. They are not operating-system window screenshots and must be
-    described that way.
+    faithful render of the captured screen. The capture manifests record the
+    geometry, view and source file.
   * The text/TSV/CSV exports and the session TSV files hold every row that was
     collected, so they are the right source for counts, sums and diffs.
   * The HTML report holds the same data with charts, filters, per-table CSV export
@@ -365,7 +375,8 @@ them together.
 ----------------------
   * x, while live: one HTML file with every tab (0 Overview, 1 Pods, 2 Node Pools,
     3 Workloads, 4 IP Pool, 5 Memory, 6 Net & Disk IO, 7 History) plus the history
-    recorded since that run started. This is the flagship report of a live run.
+    recorded since that run started. Live reports also include FMEA and Secrets
+    map tabs when diagnostic extras are enabled.
   * --snapshot all: six standalone HTML files (views 1-6), plus an
     index.html that lists every snapshot in the report directory (newest first).
   * --snapshot with no selection: one combined namespace report.
@@ -396,7 +407,7 @@ over the previous line, so an edited or removed line inside a file is detectable
   kdash --audit [N]        last N events (default 40)
   kdash --audit-grep RE    only matching events
   kdash --audit-all        include the central log (root / auditors)
-  kdash --audit-verify     verify every chain; non-zero exit when a file was edited
+  kdash --audit-verify     verify every chain; non-zero for mismatches or errors
   kdash --audit-report DIR audit log as HTML plus CSV
 
 Honest statement of the limit: a chain proves continuity inside the file it is in.
@@ -457,7 +468,7 @@ Two practical findings are baked into it:
     its own. Without that, captures come back with a status line and the wrong height.
 12. LIMITATIONS - OF THIS VERSION AND OF THIS RUN
 --------------------------------------------------
-Current behavior (4.28.1, including FMEA and access review, the diagnostic features added in 4.13.0, the
+Current behavior (4.39.0, including FMEA and access review, the diagnostic features added in 4.13.0, the
 certificates and login view of 4.24.1 and the runbook, instant check and OIDC-login
 handling of 4.27.3):
   * the all-namespaces route (-A) is fixed: the flag now follows the resource

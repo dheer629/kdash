@@ -1,0 +1,296 @@
+[
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261126-095740.log",
+    "mode": "0o600",
+    "sha256": "22f3e5c4fdaab9e79d1960e1b2fa770cadf7311f23678438d667fe65df5c3fb6",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261126-095749.log",
+    "mode": "0o600",
+    "sha256": "2eff0646fbe7d4f581fd574a9de88cf681dbefa2830d676817aee849e3284d6b",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261126-095753.log",
+    "mode": "0o600",
+    "sha256": "7095d22c722bc9384dc4ebfcf62113569187196e49448106adeb62377c6918cb",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_current_20261126-100118.log",
+    "mode": "0o600",
+    "sha256": "e89aa9634dd3f071ced03152f55521368a2c7e484d78e9d70269306cf350caf1",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_describe_20261126-095800.log",
+    "mode": "0o600",
+    "sha256": "be47a68bd6f71de6e1b6181a314eff7201f9bb7932d8a5b2189e76df93228689",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_events_20261126-095805.log",
+    "mode": "0o600",
+    "sha256": "d547613cd61f9ae7846040562d71674d80d610b6b50c3cd1e47da4052b4cbe90",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_explain_20261126-095810.log",
+    "mode": "0o600",
+    "sha256": "5b6d5a6a1710edc5bbde2fe9b44599a2d3c2a9a88497415ee85398350d644bde",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261126-095835.log",
+    "mode": "0o600",
+    "sha256": "aa7f27ca2907636ab3d804f4dc38ea149ebed8c0eadbe96f9d2818c65f0da924",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261126-095844.log",
+    "mode": "0o600",
+    "sha256": "622dd829a4c86f94c26d970ba1792358c3b5e2b9e3f8047b4a5f8af441fb3f1b",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_found_20261126-095853.log",
+    "mode": "0o600",
+    "sha256": "8425403467d0c52e30c37599c6351302333cb7c0fbab041cd260e0f089868d41",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_app-server-8fb4699bc-cx5vz_summary_20261126-095722.log",
+    "mode": "0o600",
+    "sha256": "43abcef11ff4d4dfbe222b74a3ad06e88d86a620d399d7ede00b6e28bda1ebee",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_containers_app-server-8fb4699bc-cx5vz_20261126-095730.log",
+    "mode": "0o600",
+    "sha256": "e1b09b6cb057b8fee3163a1604ce8caa5c7812aaab35f1ccd407b58cb102bf6d",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_files_app-server-8fb4699bc-cx5vz_20261126-100025.log",
+    "mode": "0o600",
+    "sha256": "e34b490d7adb72c04018fee5fcfdc1cb4c17d23fa9fa526c8d448493e2944119",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_files_local_20261126-100013.log",
+    "mode": "0o600",
+    "sha256": "cdbedc4419925362c5bd2fd0cacf4378637e1ab0538decfbbb163ff183fdcee0",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_namespace-list_kdash-local_20261126-095703.log",
+    "mode": "0o600",
+    "sha256": "fc644f78aee9b79e8b08471190841ad3ae9254b8cc8afc2035d3f32f6d024b97",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_pod-list_kdash-e2e_20261126-095708.log",
+    "mode": "0o600",
+    "sha256": "c1f5e0e436826571e0c2f958c1eb8684435b4331ec2df0a0878cdc17d27bcfc7",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-095438-618107.log",
+    "mode": "0o600",
+    "sha256": "9576645c4b65617c9db81863f6bf1d2f2c078494cf5b8b2d43aedbb0d6c7757e",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-095506-622102.log",
+    "mode": "0o600",
+    "sha256": "739a2779c671be3a23b8065d14ec81e50054aaa014d3d752acd24e9704a8e254",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-095530-624835.log",
+    "mode": "0o600",
+    "sha256": "7a1ce53c792ef07920a6de68d93a9dfbb2a00b1f5d5b1047a67179c6dff00b39",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-095712-656554.log",
+    "mode": "0o600",
+    "sha256": "71ad6dfafaabc3d3e359d7ff3e3842abbc58e5a4aabb8c1f016ad4dc84e58856",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-095813-666337.log",
+    "mode": "0o600",
+    "sha256": "a450897d60a4d344c6b6272dfe9de97f091564c042e1704e35c88fbf346f971e",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-095856-675087.log",
+    "mode": "0o600",
+    "sha256": "7505bc53563981a4357ec0027f414e6f936e0eacab464532da64eef6925e7fe3",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-095929-687449.log",
+    "mode": "0o600",
+    "sha256": "a8bbd0b1ffe5ea23c2436aa69dfd872c19577c059ec925ee9ecdef01c5a26496",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-100003-697973.log",
+    "mode": "0o600",
+    "sha256": "a3360022110d19e0666eee565040807ce003f5e08ba78781854930a3a21cad2e",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_session_20261126-100049-706656.log",
+    "mode": "0o600",
+    "sha256": "732fca951fa05957f3b7a9da67c836facdb01f3b059a30f17638f8baecc2c7c4",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-access_kdash-e2e_20261126-095659.log",
+    "mode": "0o600",
+    "sha256": "9c3124531eb021a48c64e4a6dd4ef495f5c3fd55752f11014cd839ccc1b56996",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-alerts_kdash-e2e_20261126-095606.log",
+    "mode": "0o600",
+    "sha256": "4164156aebab613ed159671b6d4da1d6e710dd96464b354350e5299387852395",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-certs_kdash-e2e_20261126-095631.log",
+    "mode": "0o600",
+    "sha256": "24167c9a2527541709ffd93bbc46360ebea459dec34f7c76b0720efd5eab009e",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-certs_kdash-e2e_20261126-095939.log",
+    "mode": "0o600",
+    "sha256": "5076957220969ca91ecd4398620945b574e4b73215c2c2ff325b51bfb9b843d5",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-check_kdash-e2e_20261126-095642.log",
+    "mode": "0o600",
+    "sha256": "f8800401d1557b5d70ed87776872a3aad13975da50c6ddba8c90868340dcbdb8",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-events_kdash-e2e_20261126-095621.log",
+    "mode": "0o600",
+    "sha256": "219068d94b9c4b0c2431471dff917ccfa096589aab8bb03589b938069d5c75b2",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-explain_kdash-e2e_20261126-095626.log",
+    "mode": "0o600",
+    "sha256": "620745843ebed114599ff9c599f1104e3c390f1d90db01ec922e750f58260be0",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-fmea_kdash-e2e_20261126-095647.log",
+    "mode": "0o600",
+    "sha256": "e369b898e1268bc9590e631b933b5173c20d3b865327ef888c861fc466fc70fe",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-io_kdash-e2e_20261126-095601.log",
+    "mode": "0o600",
+    "sha256": "b2f086399b5c2a4e78f8896736a9cace551dbac05ce9b6e354eb3ea13fa02519",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-ip_kdash-e2e_20261126-095551.log",
+    "mode": "0o600",
+    "sha256": "be2fd4a38dbe496ab2711518357b1e82d000a72144ed69af12507f6e75ebd73b",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-mem_kdash-e2e_20261126-095556.log",
+    "mode": "0o600",
+    "sha256": "f9c6d07454a508f9a8c74d02db0ec8a6b649768446e73bbc55f8145df1e8dec2",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-nodes_kdash-e2e_20261126-095541.log",
+    "mode": "0o600",
+    "sha256": "190ff8dd57c51a6baf06749ed1a0c952e0f38bd226433187f3443ffd9472af00",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-pods_kdash-e2e_20261126-095515.log",
+    "mode": "0o600",
+    "sha256": "df60d32c53ddd9c9304a151a9cfa0f8224d6074fd02ae740831fd6465e96092d",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-pods_kdash-e2e_20261126-095527.log",
+    "mode": "0o600",
+    "sha256": "5c20965081d93cde507e9d8d5683cb9fa07b3afee6e627c8eff9d320196916a8",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-pods_kdash-e2e_20261126-095536.log",
+    "mode": "0o600",
+    "sha256": "0938fb6cb443ea7a493f808996ac8cd6d8ff1909cbd2800f4c54cbf0e2ff8997",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-runbook_kdash-e2e_20261126-095636.log",
+    "mode": "0o600",
+    "sha256": "a64abf5f0abdc146b6f729e094d15ab2b608627498b76199e6f13580290eb5d0",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-secrets_kdash-e2e_20261126-095652.log",
+    "mode": "0o600",
+    "sha256": "0c7fb680b4483317750e0acf8e5d1c4b915bc197dc20e0bbfd3c7b8f6178de50",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-services_kdash-e2e_20261126-095611.log",
+    "mode": "0o600",
+    "sha256": "70920a4a5210026d47d0802144c352ae1cd06b64d3c20491ff58faaa2ec204f1",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-storage_kdash-e2e_20261126-095616.log",
+    "mode": "0o600",
+    "sha256": "aa49f97d11d3be9d9debaa46cbe316f468242e0d2413af01688242da58b35df4",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-workloads_kdash-e2e_20261126-095449.log",
+    "mode": "0o600",
+    "sha256": "6392d62ee7a63cd003a8e33f6fb8fb5b29d3884ecff21a1c470d4ee5f48c4ce4",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-workloads_kdash-e2e_20261126-095500.log",
+    "mode": "0o600",
+    "sha256": "06536bc42f672858050b77a3caa7bc372d932cb9ce35d55797f5a891a6d0321e",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_view-workloads_kdash-e2e_20261126-095546.log",
+    "mode": "0o600",
+    "sha256": "17ddc5d9912a918ea2cdf48affe0a636f86f223c742a7a957d3d5ae85a755418",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/kdash_z-crash_previous_20261126-095913.log",
+    "mode": "0o600",
+    "sha256": "a0070df1b729ae1359a9b05652e856c7c0e0afe5e9bc77ac231990ad30d4f9c1",
+    "symlink": false
+  },
+  {
+    "file": "reports/exports/latest.log",
+    "mode": "0o600",
+    "sha256": "e89aa9634dd3f071ced03152f55521368a2c7e484d78e9d70269306cf350caf1",
+    "symlink": true
+  }
+]

@@ -1,0 +1,50 @@
+[1;7m KDASH │ FIND IN LOGS │ context kdash-local │ namespace kdash-e2e                                                                    kdash-e2e/app-server-8fb4699bc-cx5vz
+
+[0m Search the full current log of every container, and the previous log of each container that restarted.
+
+   [1mp[0m  this pod        app-server-8fb4699bc-cx5vz                      4 container log(s)
+   [1mw[0m  its workload    Deployment app-server                           2 pod(s), 8 log(s)
+   [1mn[0m  the namespace   kdash-e2e                                      18 pod(s), 32 log(s)
+
+ [90mOlder log files will also be requested from the nodes (get nodes/proxy, read-only); results show what was accessible.[39m
+ [90mEsc cancels.[39m
+
+ > pod app-server-8fb4699bc-cx5vz
+
+ Extended regular expression; a lowercase pattern ignores case. Up / Down recall earlier searches.
+ find / [
+ [35mThat is not a valid regular expression - try again.[39m
+ find /
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

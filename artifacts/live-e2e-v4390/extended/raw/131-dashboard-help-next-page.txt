@@ -1,0 +1,24 @@
+ KDASH │ HELP │ PODS VIEW │ context kdash-local │ namespace kdash-e2e                                             v4.39.0 │ any key returns
+
+   >          quick export: the screen and every line of the view to a log file - on every screen
+              (KDASH_EXPORT_DIR, default ~/kdash_reports/exports; latest.log = the newest export)
+   P          pause / resume live   + -  poll interval 1..60 s
+   T          colour theme         z  chart window (all/15m/1h/6h/24h)
+   Z          NODE POOLS auto zoom / true scale     c  PODS timeline graphs on / off
+   ?          this help            q  quit
+   Enter / i  inspect a pod: s summary, d describe, e events, ! why, l current logs,
+              p previous logs, c choose container, / find (& only matches), n N jumps,
+              L log level, f follow logs, w export the pane, > quick export, ? keys, q back
+   :          command palette (fixed commands, never shell text)   F  structured filters
+   L          OIDC login: runs the login helper in the foreground and shows its URL (with the
+              ssh -L tunnel command when the callback is on this host); kdash continues afterwards.
+              An expired login opens this by itself (KDASH_LOGIN_AUTO=0: only with L)
+   K          CHECK NOW: everything wrong right now in every area, most severe first, with next
+              commands; Enter runs the read commands of a finding at once (also in 8 / 9 / ! / C)
+   R          runbooks with this cluster's names filled in: etcd restore, certificate rotation,
+              node NotReady, API unreachable, OIDC login ( [ and ] switch runbook )
+   Y          secrets map: certificates and keys in Secrets, expiry, who manages and uses them, the
+              path in the container and on the node, what needs a restart after a rotation
+   M          FMEA: every failure mode of every object you can read, ranked by Action Priority,
+              with next commands; only what your RBAC allows is checked (: access shows it)
+ -- lines 22-42 of 55: Space next page, b back, any other key returns --

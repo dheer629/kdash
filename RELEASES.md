@@ -1,41 +1,29 @@
 # Releases and downloads
 
-The current source version is **4.37.0**. It adds whole-view dashboard search,
-cross-container log searches, kubelet-rotated log reads when permitted, and a
-`>` quick export from dashboard views, pod panes and selection lists. Search
-boxes and prompts support cursor editing and session history. Fixed colour
-roles, changed-line redraws, parallel API reads and background model builds
-improve terminal use over slower connections. The Certificates view now includes
-certificates in Secrets; the Secrets scan has its own timeout and prints UTC
-expiry dates. Live combined HTML reports add FMEA and Secrets tabs and bundles
-include the corresponding worksheets. It retains the nine resource views, Events and explanations,
-FMEA/access review, runbooks, instant checks, OIDC handling, guarded container
-shells and verified file transfers, HTML/history reports and audit trail.
+The current source version is **4.39.0**. It keeps table column headers visible
+while scrolling, makes pod detail easier to scan with aligned tables and log
+colours, and pages help on short terminals. Audit verification batches SHA-256
+work. Kubelet I/O detection retries when the first node inventory is pending.
 
 Current validation is indexed by
 [`artifacts/latest-e2e.txt`](artifacts/latest-e2e.txt), with versioned terminal
-and report galleries in [`samples/cli_4370/`](samples/cli_4370/README.md) and
-[`samples/html4370/`](samples/html4370/README.md). The prior
+and report galleries in [`samples/cli_4390/`](samples/cli_4390/README.md) and
+[`samples/html4390/`](samples/html4390/README.md). Earlier versions include the
+[4.37.0 terminal gallery](samples/cli_4370/README.md),
+[4.37.0 HTML reports](samples/html4370/README.md),
 [4.32.0 terminal gallery](samples/cli_4320/README.md),
-[HTML reports](samples/html4320/README.md) and earlier versions remain available.
-The local cluster uses certificate authentication; controlled OIDC helpers test
+[4.32.0 HTML reports](samples/html4320/README.md). The
+[4.39.0 validation checklist](docs/VALIDATION-4.39.0.md) gives the scope, results
+and coverage limits.
+The local cluster uses certificate authentication. Controlled OIDC helpers test
 the login flow separately.
-The 2026-11-20 local validation run (`live-e2e-v4370`) passed 303 live checks,
-30 Secrets checks, 33 browser checks and all 19 fixture suites; 125 CLI
-screenshots and the combined HTML reports are published in the galleries above.
-See `docs/VALIDATION-4.37.0.md` for the row-by-row evidence and limits.
 Published versions have their own immutable GitHub Releases, so you can download
-an exact historical release at any time:
-<https://github.com/dheer629/kdash/releases>
-
-Version **4.37.0** is prepared for publication; its links become available when
-that release is published. The published **4.27.4** release and assets remain
-available. Versions 4.28.1 and 4.32.0 have source snapshots; their release assets
-were not published. Use the exact source commits or archives below.
+an exact historical release at any time. [All GitHub Releases](https://github.com/dheer629/kdash/releases)
 
 | Version | Tag / commit | What it adds | Download |
 |---|---|---|---|
-| 4.37.0 | `v4.37.0` | whole-view search, cross-container and rotated logs, quick exports, terminal performance and certificate coverage | [release (pending publication)](https://github.com/dheer629/kdash/releases/tag/v4.37.0) |
+| 4.39.0 | `v4.39.0` | pinned table headers, structured pod detail, coloured logs and paged help, batched audit verification | [release](https://github.com/dheer629/kdash/releases/tag/v4.39.0) |
+| 4.37.0 | [`c739a9f`](https://github.com/dheer629/kdash/tree/c739a9fe27ac6330fc1a4f6b46b05910ad4f78c3) | whole-view search, cross-container and rotated logs, quick exports, terminal performance and certificate coverage | [source archive](https://github.com/dheer629/kdash/archive/c739a9fe27ac6330fc1a4f6b46b05910ad4f78c3.tar.gz) |
 | 4.32.0 | [`195a0f1`](https://github.com/dheer629/kdash/tree/195a0f107ab9f26400ef0ef064df99f571488efa) | secrets map (`Y`, `--secrets`): certificates, keys, expiry, usage and rotation restart paths, never reads secrets | [source commit](https://github.com/dheer629/kdash/tree/195a0f107ab9f26400ef0ef064df99f571488efa) · [source archive](https://github.com/dheer629/kdash/archive/195a0f107ab9f26400ef0ef064df99f571488efa.tar.gz) |
 | 4.28.1 | [`0e61c53`](https://github.com/dheer629/kdash/tree/0e61c539ae8827c12d5028bcf61b3e6c104d7a6d) | FMEA worksheet, RBAC access review, S/O/D Action Priority, trends, site overrides and structured exports | [source commit](https://github.com/dheer629/kdash/tree/0e61c539ae8827c12d5028bcf61b3e6c104d7a6d) · [source archive](https://github.com/dheer629/kdash/archive/0e61c539ae8827c12d5028bcf61b3e6c104d7a6d.tar.gz) |
 | 4.27.4 | `v4.27.4` | scoped OIDC helper cleanup, protected active login, persistent continue-without-login pause, issuer discovery hints | [release](https://github.com/dheer629/kdash/releases/tag/v4.27.4) |
@@ -61,7 +49,7 @@ cd kdash
 sha256sum -c SHA256SUMS
 bash kdash-bundle.sh
 exec bash -l
-kdash --version                              # kdash 4.37.0
+kdash --version                              # kdash 4.39.0
 ```
 
 For an existing checkout, update it without discarding local changes, then verify
@@ -117,7 +105,7 @@ configuration, reports and audit history.
 4. Commit and publish the change through the repository's configured branch rules.
    Run `bash scripts/validate-all.sh` again on the clean, published checkout.
 5. Only when publishing a release, tag that commit, for example
-   `git tag -a v4.37.0 -m "kdash 4.37.0" && git push origin v4.37.0`.
+   `git tag -a v4.39.0 -m "kdash 4.39.0" && git push origin v4.39.0`.
 
 Pushing the tag runs [.github/workflows/release.yml](.github/workflows/release.yml). It
 validates the tree, packages that commit with `scripts/package-release.sh`, and creates

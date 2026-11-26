@@ -115,7 +115,13 @@ if secret_captures:
             image = image.relative_to(root)
         relative_image = image.relative_to(Path(gallery_path)).as_posix()
         assert (root / capture['png']).exists(), capture['png']
-        t += (f'| [ANSI replay]({relative_image}) | {capture["title"].replace("|", "/")} | '
+        native_image = capture.get('native_png')
+        native_link = ''
+        if native_image:
+            assert (root / native_image).is_file(), native_image
+            native_relative = Path(native_image).relative_to(Path(gallery_path)).as_posix()
+            native_link = f'[native]({native_relative}) / '
+        t += (f'| {native_link}[ANSI replay]({relative_image}) | {capture["title"].replace("|", "/")} | '
               f'{capture["columns"]} x {capture["rows"]} | '
               f'[capture]({src}/secrets/{capture["file"]}) |\n')
 t += f'''
@@ -127,7 +133,11 @@ Earlier captures retain their original version: {previous_galleries('cli_*/READM
 (gallery / 'README.md').write_text(t,encoding='utf8',newline='\n')
 
 shutil.copytree(run / 'reports', html, dirs_exist_ok=True,
-                ignore=shutil.ignore_patterns('sessions', 'inspector', '*.lock'))
+                ignore=shutil.ignore_patterns('sessions', 'inspector', 'exports', '*.lock'))
+extended_reports = run / 'extended' / 'reports'
+if extended_reports.is_dir():
+    shutil.copytree(extended_reports, html / 'extended', dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('sessions', 'inspector', 'exports', '*.lock'))
 fmea_note = ''
 if (run / 'logs/fmea-json.log').is_file():
     (html / 'fmea').mkdir(exist_ok=True)
@@ -139,7 +149,7 @@ secrets_note = ''
 secrets_reports = run / 'secrets' / 'reports'
 if secrets_reports.is_dir():
     shutil.copytree(secrets_reports, html / 'secrets', dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns('sessions', 'inspector', '*.lock'))
+                    ignore=shutil.ignore_patterns('sessions', 'inspector', 'exports', '*.lock'))
     secrets_note = '\nThe Secrets map has a static HTML report under `secrets/` and a tab in current\ncombined namespace reports. Its live\n' \
                    'fixture and browser checks verify certificate metadata and workload usage;\n' \
                    'secret values and private-key material are not included.\n'
@@ -168,6 +178,9 @@ namespace HTML tabs. Missing metrics remain unavailable instead of becoming zero
 {secrets_note}
 Reports are self-contained for local viewing and include table search/sort,
 CSV/JSON export, themes, timezone selection and chart controls where data exists.
+Multi-megabyte full-log export dumps stay in the evidence bundle (checks, raw
+terminal captures and representative export files) instead of being committed
+here; the run's `SHA256SUMS` covers every published byte.
 
 | File | Bytes |
 |---|---:|

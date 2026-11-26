@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                        LOGS
+┌─ LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
+│ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
+└─ rows 1-38 / 481 · 481 shown · only /WARN (481) · 962 lines 103.6 KiB since 2026-11-26 03:32:29, whole log (nothing rotated yet) ─────────────────────────────────────┘
+2026-11-26T03:32:29.406790334Z 2026-11-26T03:32:29+00:00 WARN request=0 demonstration warning from live workload
+2026-11-26T03:32:31.408980424Z 2026-11-26T03:32:31+00:00 WARN request=1 demonstration warning from live workload
+2026-11-26T03:32:33.411238642Z 2026-11-26T03:32:33+00:00 WARN request=2 demonstration warning from live workload
+2026-11-26T03:32:35.413019370Z 2026-11-26T03:32:35+00:00 WARN request=3 demonstration warning from live workload
+2026-11-26T03:32:37.414632800Z 2026-11-26T03:32:37+00:00 WARN request=4 demonstration warning from live workload
+2026-11-26T03:32:39.417218420Z 2026-11-26T03:32:39+00:00 WARN request=5 demonstration warning from live workload
+2026-11-26T03:32:41.419021237Z 2026-11-26T03:32:41+00:00 WARN request=6 demonstration warning from live workload
+2026-11-26T03:32:43.420784061Z 2026-11-26T03:32:43+00:00 WARN request=7 demonstration warning from live workload
+2026-11-26T03:32:45.422604952Z 2026-11-26T03:32:45+00:00 WARN request=8 demonstration warning from live workload
+2026-11-26T03:32:47.424465653Z 2026-11-26T03:32:47+00:00 WARN request=9 demonstration warning from live workload
+2026-11-26T03:32:49.426079384Z 2026-11-26T03:32:49+00:00 WARN request=10 demonstration warning from live workload
+2026-11-26T03:32:51.427628427Z 2026-11-26T03:32:51+00:00 WARN request=11 demonstration warning from live workload
+2026-11-26T03:32:53.429348299Z 2026-11-26T03:32:53+00:00 WARN request=12 demonstration warning from live workload
+2026-11-26T03:32:55.431026896Z 2026-11-26T03:32:55+00:00 WARN request=13 demonstration warning from live workload
+2026-11-26T03:32:57.432531465Z 2026-11-26T03:32:57+00:00 WARN request=14 demonstration warning from live workload
+2026-11-26T03:32:59.434528507Z 2026-11-26T03:32:59+00:00 WARN request=15 demonstration warning from live workload
+2026-11-26T03:33:01.436142646Z 2026-11-26T03:33:01+00:00 WARN request=16 demonstration warning from live workload
+2026-11-26T03:33:03.437739610Z 2026-11-26T03:33:03+00:00 WARN request=17 demonstration warning from live workload
+2026-11-26T03:33:05.439395035Z 2026-11-26T03:33:05+00:00 WARN request=18 demonstration warning from live workload
+2026-11-26T03:33:07.440954717Z 2026-11-26T03:33:07+00:00 WARN request=19 demonstration warning from live workload
+2026-11-26T03:33:09.443028239Z 2026-11-26T03:33:09+00:00 WARN request=20 demonstration warning from live workload
+2026-11-26T03:33:11.445425533Z 2026-11-26T03:33:11+00:00 WARN request=21 demonstration warning from live workload
+2026-11-26T03:33:13.447030598Z 2026-11-26T03:33:13+00:00 WARN request=22 demonstration warning from live workload
+2026-11-26T03:33:15.448802424Z 2026-11-26T03:33:15+00:00 WARN request=23 demonstration warning from live workload
+2026-11-26T03:33:17.450552963Z 2026-11-26T03:33:17+00:00 WARN request=24 demonstration warning from live workload
+2026-11-26T03:33:19.451766469Z 2026-11-26T03:33:19+00:00 WARN request=25 demonstration warning from live workload
+2026-11-26T03:33:21.454158505Z 2026-11-26T03:33:21+00:00 WARN request=26 demonstration warning from live workload
+2026-11-26T03:33:23.455756769Z 2026-11-26T03:33:23+00:00 WARN request=27 demonstration warning from live workload
+2026-11-26T03:33:25.457769613Z 2026-11-26T03:33:25+00:00 WARN request=28 demonstration warning from live workload
+2026-11-26T03:33:27.459310977Z 2026-11-26T03:33:27+00:00 WARN request=29 demonstration warning from live workload
+2026-11-26T03:33:29.460871866Z 2026-11-26T03:33:29+00:00 WARN request=30 demonstration warning from live workload
+2026-11-26T03:33:31.462434642Z 2026-11-26T03:33:31+00:00 WARN request=31 demonstration warning from live workload
+2026-11-26T03:33:33.464002266Z 2026-11-26T03:33:33+00:00 WARN request=32 demonstration warning from live workload
+2026-11-26T03:33:35.465604629Z 2026-11-26T03:33:35+00:00 WARN request=33 demonstration warning from live workload
+2026-11-26T03:33:37.467234989Z 2026-11-26T03:33:37+00:00 WARN request=34 demonstration warning from live workload
+2026-11-26T03:33:39.468730397Z 2026-11-26T03:33:39+00:00 WARN request=35 demonstration warning from live workload
+2026-11-26T03:33:41.470787294Z 2026-11-26T03:33:41+00:00 WARN request=36 demonstration warning from live workload
+2026-11-26T03:33:43.472185855Z 2026-11-26T03:33:43+00:00 WARN request=37 demonstration warning from live workload
+┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
+│ s  summary  │ l  logs       │ S  shell      │ W  wrap off  │ j/k         scroll    │ /    find           │ r  reload                                                  │
+│ d  describe │ p  prev logs  │ U  upload     │ J  JSON on   │ g/G         top / end │ &    only matches   │ ?  keys                                                    │
+│ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
+│ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
+└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
+ match 1/481

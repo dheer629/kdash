@@ -1,0 +1,68 @@
+# kdash 4.39.0 - quick export (key >)
+# screen   : dashboard, view CERTIFICATES (C) | pod filter .* | sort cpu
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-26 09:56:31 +0530 by operator on Dheeraj (session 20261126-095530-624835)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:56:30 IST
+┌─ SCOPE ─────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ────────────────────┬─ WORKLOADS · EVENTS ────────┐
+│ match .*   sort cpu ▼ high first                    │ ! pods 14/18 ready   restarts 555           │ cpu     59m ░░░░░░░░   3% lim        │ workloads 14                │
+│ poll 2s  spec 0s/30s   session 09:55:30 up 1m       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim        │ events 15m ! 0  ^ 0         │
+└─────────────────────────────────────────────────────┴─────────────────────────────────────────────┴──────────────────────────────────────┴─────────────────────────────┘
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ CERTIFICATES AND LOGINS   expiry of the TLS certificates and logins this cluster and your access depend on - TLS handshakes only, nothing is changed
+
+Checking certificates in the background (TLS handshakes to the API, nodes and ingress hosts)...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
+ exported to /var/tmp/kdash-extended-exports-di3zf4hz/kdash_view-explain_kdash-e2e_20261126-095626.log | ○ LIVE 09:56:31  next 1s  data 1s old  fetch 0.0s  AUDITED
+
+================================================================================
+ THE WHOLE CERTIFICATES VIEW (3 lines, every line and column - nothing cut)
+================================================================================
+ CERTIFICATES AND LOGINS   expiry of the TLS certificates and logins this cluster and your access depend on - TLS handshakes only, nothing is changed
+
+Checking certificates in the background (TLS handshakes to the API, nodes and ingress hosts)...
+
+# end of export

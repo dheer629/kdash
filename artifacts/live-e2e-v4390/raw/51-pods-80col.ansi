@@ -1,0 +1,30 @@
+[1;7m KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited
+[0m [1;7m 1 PODS [0m [38;5;243m 2 NODES [39m [38;5;243m 3 WLOADS [39m [38;5;243m 4 IP [39m [38;5;243m 5 MEM [39m [38;5;243m 6 IO [39m [38;5;243m 7 ALERTS [39m  [1m09:23:41[0m[38;5;243m IST[39m
+ [38;5;243mmatch[39m .*   [1m[38;5;63msort cpu ▼ high first[0m
+[38;5;243m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m rst [38;5;163m548[38;5;243m oom [38;5;29m0[38;5;243m oomk [38;5;29m0[38;5;243m nolim [38;5;163m1[38;5;243m cpu [39m59m [38;5;29m3%[38;5;243m lim mem [39m1Mi [38;5;29m0%[38;5;243m lim[39m
+    [38;5;243m wl [39m14[38;5;243m ev15m [38;5;29m! 0[39m [38;5;29m^ 0[39m
+[1m[38;5;231m[48;5;24m DATA [0m[38;5;29m●[39m pods [1m[38;5;29mfresh[0m [38;5;243m2s old[39m  metrics [1m[38;5;29mavailable[0m [38;5;243m│[39m [1m[38;5;63mC[0m certs (1 expiring) [38;5;243m│[39m [1m[38;5;63m/[0m search [38;5;243m›
+[39m [1m[38;5;98mPOD / CONTAINER RESOURCES[0m[38;5;243m   actual usage vs requests and limits, grouped by wo›
+[1m[38;5;63m►[0m [1mTIMELINE[0m[38;5;243m  09:23:39 -> 09:23:41 IST  (all since kdash started, z window, c hid›
+[39m  [1m[38;5;231m[48;5;24m CPU used - namespace
+[0m  [38;5;243m       one sample so far - the chart starts with the 2nd (run kdash live)
+[39m  [1m[38;5;231m[48;5;24m MEMORY used - namespace
+[0m  [38;5;243m       one sample so far - the chart starts with the 2nd (run kdash live)
+
+[1m[38;5;63m►[0m [1mPODS[0m [38;5;243m───────────────────────────────────────────────────────────────────────[39m
+                                       [38;5;243m│[39m [1m[38;5;63m  ACTUAL (live)   [0m [38;5;243m│[39m [1m[38;5;98m   ASSIGNED (req [0m[38;5;243m›
+[1m[38;5;231m[48;5;24mWORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  ME[0m[38;5;243m›
+[1m[38;5;98m► Pod z-oom  (1 pod)          [0m [38;5;29m1/1[39m [38;5;163m  3[39m [38;5;243m│[39m     50 [38;5;243m·[39m       1 [38;5;243m·[39m [38;5;243m│[39m     10     50    [38;5;243m›
+[38;5;29m  z-oom                       [39m [38;5;29m1/1[39m [38;5;163m  3[39m [38;5;243m│[39m     50 [38;5;243m·[39m       1 [38;5;243m·[39m [38;5;243m│[39m     10     50    [38;5;243m›
+[39m      [38;5;243mcpu [38;5;29m░░              [38;5;243m  mem [38;5;29m░░              [38;5;243m  pk 1Mi  [39m  [38;5;243mnode dev   pool rol›
+[39m    └─ hog                     [38;5;29mY  [39m [38;5;163m  3[39m [38;5;243m│[39m     50 [38;5;243m·[39m       1 [38;5;243m·[39m [38;5;243m│[39m     10     50    [38;5;243m›
+[39m        [38;5;163mlast-exit Unknown[39m
+[38;5;243m................................................................................
+[1m[38;5;98m► Deployment app-server  (2 p~[0m [38;5;29m2/2[39m [38;5;163m 41[39m [38;5;243m│[39m      5 [38;5;243m·[39m       0 [38;5;243m·[39m [38;5;243m│[39m     50    500    [38;5;243m›
+[38;5;29m  app-server-8fb4699bc-cx5vz  [39m [38;5;29m2/2[39m [38;5;163m 21[39m [38;5;243m│[39m      3 [38;5;243m·[39m       0 [38;5;243m·[39m [38;5;243m│[39m     25    250    [38;5;243m›
+[39m      [38;5;243mcpu [38;5;29m░░              [38;5;243m  mem [38;5;29m░░              [38;5;243m  pk 0Mi  [39m  [38;5;243mnode dev   pool rol›
+[39m    ├─ app                     [38;5;29mY  [39m [38;5;163m 11[39m [38;5;243m│[39m      2 [38;5;243m·[39m       0 [38;5;243m·[39m [38;5;243m│[39m     20    200    [38;5;243m›
+────────────────────────────────────────────────────────────────────────────────
+[1m[39mTOTAL (18 pods, 14 workloads) [0m     [38;5;163m548[39m [38;5;243m│[39m     59 [38;5;243m·[39m       1 [38;5;243m·[39m [38;5;243m│[39m    315   1750    [38;5;243m›
+[39m [38;5;243mlegend[39m cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9[38;5;243m›
+[38;5;231m[48;5;127m AUDITED session 20261126-092338-251386 - every action is logged; use is your r>

@@ -1,0 +1,247 @@
+{
+  "version": "4.39.0",
+  "source_sha256": "847c298bc86e960985ecee4aa64ff3a8bd34c6c7526f19fe62e638b56f395ea0",
+  "report": "reports/kdash_namespace_report_kdash-local_kdash-e2e_20261126_091930.html",
+  "report_sha256": "130d451b59f61239435a9101e3ddf6ab6b8032b7c1487ac5a623d24c139fcd2c",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "html-real-workloads",
+      "status": "PASS",
+      "detail": "actual fixture workload present"
+    },
+    {
+      "name": "html-tab-overview",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-pods",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-nodes",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-workloads",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-ip",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-mem",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-io",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-history",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-search",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-theme",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-timezone",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-sort",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-csv-download",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-json-download",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-history-charts",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-fmea",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-fmea-real-data",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-fmea-search",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-fmea-sort",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-fmea-csv",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-tab-secrets",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-secrets-real-data",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-secrets-search",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-secrets-sort",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-combined-secrets-csv",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-no-script-errors",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-fmea-real-rows",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-fmea-no-script-errors",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-secrets-real-data",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-secrets-no-values",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-secrets-tables",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "html-secrets-no-script-errors",
+      "status": "PASS",
+      "detail": ""
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "samples/html4390/screenshots/overview.png",
+      "sha256": "5b937a39ac6fb80a4646d8f2ca378e09f6928950b98ae37100bff54c7fe0d34b",
+      "tab": "overview"
+    },
+    {
+      "file": "samples/html4390/screenshots/pods.png",
+      "sha256": "f510831f8e350e29f268f9c3b9e58f4013aab8d4d91eb804f8bba10ae7a4f8ab",
+      "tab": "pods"
+    },
+    {
+      "file": "samples/html4390/screenshots/nodes.png",
+      "sha256": "bba2d1bf8cc41252413b02fd0ee7387a9c4b927e54e1183e154dc97a9cb14262",
+      "tab": "nodes"
+    },
+    {
+      "file": "samples/html4390/screenshots/workloads.png",
+      "sha256": "544a4dfd7db5df27efa47b23c6501dcfb7d8b1045d524aace3062721ab030362",
+      "tab": "workloads"
+    },
+    {
+      "file": "samples/html4390/screenshots/ip.png",
+      "sha256": "2faa4b9cbf25b14c299212ade65f0579184e4abce36d349fae9c80fc1c5766c7",
+      "tab": "ip"
+    },
+    {
+      "file": "samples/html4390/screenshots/mem.png",
+      "sha256": "5fc68bf5ea3c50d47fa8af8a7ed188242bbc167380405c5f51ac0d0ed5fc75c5",
+      "tab": "mem"
+    },
+    {
+      "file": "samples/html4390/screenshots/io.png",
+      "sha256": "b767dee2aa4972d88babd2d04b5d094618079350e77d59976b099c11441213b1",
+      "tab": "io"
+    },
+    {
+      "file": "samples/html4390/screenshots/history.png",
+      "sha256": "cb33e841937341d76d93d43e634814220312a3ff4342c256f52cfc15baa938d9",
+      "tab": "history"
+    },
+    {
+      "file": "samples/html4390/screenshots/combined-fmea.png",
+      "sha256": "e2a21df3ec97dc7c8ac5f0bdea1a262a55dfd0082bf768d767fb21673b582622",
+      "tab": "combined-fmea"
+    },
+    {
+      "file": "samples/html4390/screenshots/combined-secrets.png",
+      "sha256": "5fbab97cda10eccf688c8ca74a96f7705b30df91f4a4f3c0c9dc22cecceb1bf3",
+      "tab": "combined-secrets"
+    },
+    {
+      "file": "samples/html4390/screenshots/fmea.png",
+      "sha256": "7a6a3f092fb0197690198b99f4d9ac328d725e1871837aefed532b9949d6e375",
+      "tab": "fmea"
+    },
+    {
+      "file": "samples/html4390/screenshots/secrets.png",
+      "sha256": "6f7a0c7e652793e68888b6eddd08ccaa1c4e499b700906786e5aa326652993ef",
+      "tab": "secrets"
+    }
+  ],
+  "errors": [],
+  "additional_reports": [
+    {
+      "report": "reports/fmea/fmea_kdash-local_kdash-e2e_20261126_091609.html",
+      "sha256": "f5fd322efd5151e8602a0e5f58bd0859ca6e846a5098751318aa3e1a6ae2c62e"
+    },
+    {
+      "report": "secrets/reports/secrets/secrets_kdash-local_kdash-e2e_20261126_093402.html",
+      "sha256": "0426ae521ea5dfeea5ceb6f92124f795e74d9c0ce49231a79a1da039395eb16a"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+PASS: 22 rotated-log decoding, ordering, gzip, byte-cap, access and incomplete-read checks

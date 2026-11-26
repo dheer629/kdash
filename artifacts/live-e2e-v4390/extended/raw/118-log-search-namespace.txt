@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                FIND IN LOGS
+┌─ FIND IN LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
+│ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
+└─ rows 39-76 / 12427 · /INFO|WARN|ERROR in namespace kdash-e2e: 32 of 32 logs read, 153627 lines, 153624 matching ─────────────────────────────────────────────────────┘
+2026-11-06T12:38:09.400936105Z [completed-check-m9swm/check] INFO completed live validation job
+2026-11-26T03:27:27.768077891Z [db-stateful-0/db previous] 2026-11-26T03:27:27+00:00 INFO db heartbeat
+2026-11-26T03:27:28.642482458Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:28+00:00 INFO request=0 service=app-server healthy=true
+2026-11-26T03:27:28.643057985Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:28+00:00 WARN request=0 demonstration warning from live workload
+2026-11-26T03:27:28.764306362Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-26T03:27:28+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:29.886337813Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:29+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:30.644995197Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:30+00:00 INFO request=1 service=app-server healthy=true
+2026-11-26T03:27:30.646201106Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:30+00:00 WARN request=1 demonstration warning from live workload
+2026-11-26T03:27:31.765684692Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-26T03:27:31+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:31.972231415Z [db-stateful-1/db previous] 2026-11-26T03:27:31+00:00 INFO db heartbeat
+2026-11-26T03:27:32.647257548Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:32+00:00 INFO request=2 service=app-server healthy=true
+2026-11-26T03:27:32.647900955Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:32+00:00 WARN request=2 demonstration warning from live workload
+2026-11-26T03:27:32.769008532Z [db-stateful-0/db previous] 2026-11-26T03:27:32+00:00 INFO db heartbeat
+2026-11-26T03:27:32.887268423Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:32+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:34.649074601Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:34+00:00 INFO request=3 service=app-server healthy=true
+2026-11-26T03:27:34.649690666Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:34+00:00 WARN request=3 demonstration warning from live workload
+2026-11-26T03:27:34.859296739Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-26T03:27:34+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:35.888183275Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:35+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:36.650668434Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:36+00:00 INFO request=4 service=app-server healthy=true
+2026-11-26T03:27:36.651302919Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:36+00:00 WARN request=4 demonstration warning from live workload
+2026-11-26T03:27:36.973223107Z [db-stateful-1/db previous] 2026-11-26T03:27:36+00:00 INFO db heartbeat
+2026-11-26T03:27:37.770074271Z [db-stateful-0/db previous] 2026-11-26T03:27:37+00:00 INFO db heartbeat
+2026-11-26T03:27:37.860147274Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-26T03:27:37+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:38.652282737Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:38+00:00 INFO request=5 service=app-server healthy=true
+2026-11-26T03:27:38.652839378Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:38+00:00 WARN request=5 demonstration warning from live workload
+2026-11-26T03:27:38.889048066Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:38+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:40.654121374Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:40+00:00 INFO request=6 service=app-server healthy=true
+2026-11-26T03:27:40.654734316Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:40+00:00 WARN request=6 demonstration warning from live workload
+2026-11-26T03:27:40.861394924Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-26T03:27:40+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:41.974491767Z [db-stateful-1/db previous] 2026-11-26T03:27:41+00:00 INFO db heartbeat
+2026-11-26T03:27:41.985892668Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:41+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:42.655983532Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:42+00:00 INFO request=7 service=app-server healthy=true
+2026-11-26T03:27:42.656814275Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:42+00:00 WARN request=7 demonstration warning from live workload
+2026-11-26T03:27:42.772322163Z [db-stateful-0/db previous] 2026-11-26T03:27:42+00:00 INFO db heartbeat
+2026-11-26T03:27:43.862404415Z [app-server-8fb4699bc-t7zxj/sidecar previous] 2026-11-26T03:27:43+00:00 INFO sidecar heartbeat
+2026-11-26T03:27:44.657771276Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:44+00:00 INFO request=8 service=app-server healthy=true
+2026-11-26T03:27:44.658383352Z [app-server-8fb4699bc-t7zxj/app previous] 2026-11-26T03:27:44+00:00 WARN request=8 demonstration warning from live workload
+2026-11-26T03:27:44.986756247Z [app-server-8fb4699bc-cx5vz/sidecar previous] 2026-11-26T03:27:44+00:00 INFO sidecar heartbeat
+┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
+│ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
+│ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │
+│ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
+│ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
+└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
+ match 1/12389

@@ -7,6 +7,26 @@ the detailed per-release notes.
 
 ## [Unreleased]
 
+## [4.39.0] - 2026-11-26
+
+### Changed
+
+- Keep column headers visible while scrolling dashboard and diagnostic tables.
+  Add header bands to tables, charts, pickers and the command palette.
+- Format pod conditions, container requests and limits, and container states
+  as tables. Structure Describe, Events, Why and cross-container log search
+  panes. Highlight log timestamps, source labels, warnings and errors.
+- Explain empty inspector panes and apply layout and colours on screen while
+  keeping exports plain text.
+- Highlight shortcuts in help and paginate on short terminals.
+- Batch SHA-256 calculations for `--audit-verify`.
+
+### Fixed
+
+- Retry kubelet I/O source detection after node inventory loads on startup.
+- Keep UTF-8 characters intact when wrapping or clipping inspector text.
+- Return a verification error when audit records or their hashes cannot be read.
+
 ## [4.37.0] - 2026-11-19
 
 ### Added

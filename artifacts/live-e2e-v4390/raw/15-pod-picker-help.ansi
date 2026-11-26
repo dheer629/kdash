@@ -1,0 +1,50 @@
+[1;7m KDASH │ SELECT POD │ KEYS │ context kdash-local │ namespace kdash-e2e                                                                                    any key returns
+
+[0m  [1m[38;5;98mMOVE[0m        [1m[38;5;63mj / k / arrows[0m     one row          [1m[38;5;63mPgDn / PgUp / space / b[0m  one page
+              [1m[38;5;63mg / G / Home / End[0m first / last     [1m[38;5;63m12 (digits)[0m  jump to row 12 of the list
+  [1m[38;5;98mFIND[0m        [1m[38;5;63m/[0m                  type to filter: every word must match the pod name,
+                                 status or node (e.g. "/fileserver3 failed")
+              [1m[38;5;63mEsc[0m                clear the filter    [1m[38;5;63mu[0m  only pods that need attention
+              [1m[38;5;63ms[0m                  sort: name, status (worst first), restarts, cpu, mem, mem% of limit
+              [1m[38;5;63mF[0m                  structured filters (label / status / node / workload)
+  [1m[38;5;98mACT ON THE[0m  [1m[38;5;63mEnter / i[0m          summary          [1m[38;5;63ml[0m  current logs      [1m[38;5;63mp[0m  previous logs
+  [1m[38;5;98mSELECTED[0m    [1m[38;5;63md[0m                  describe         [1m[38;5;63me[0m  events            [1m[38;5;63mw[0m  why (event hypotheses)
+  [1m[38;5;98mPOD[0m         [1m[38;5;63mc[0m                  pick a container first, then inspect
+              [1m[38;5;63mS / U / D[0m          shell / upload / download (interactive mode)
+              [1m[38;5;63mX[0m                  interactive mode on / off (asks first; also: kdx, kdash -X)
+  [1m[38;5;98mOTHER[0m       [1m[38;5;63mr[0m                  re-read now (the list also refreshes every poll)
+              [1m[38;5;63mq[0m                  back to the dashboard     [1m[38;5;63mQ[0m  quit kdash (from any screen)
+              [1m[38;5;63m>[0m                  export the screen and the whole list to a log file
+
+  [1mColours:[0m [38;5;29mgreen running and ready[39m, [38;5;163mmagenta pending / starting / terminating[39m,
+[1m[38;5;196m  red failing / not ready / >= 90% of memory limit[0m, [38;5;243mgrey completed[39m.
+  "needs attention" = failing, pending or restarted pods.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

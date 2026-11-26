@@ -29,8 +29,9 @@ cat > "$TOOLS/kubectl" <<'STUB'
 #!/usr/bin/env bash
 set -uo pipefail
 verb=""; resource=""; fmt=""; next=""; verb_pos=-1; resource_pos=-1; scope_pos=-1; index=0
+logged_call=""
 for arg in "$@"; do
-  logged="${arg//$'\n'/\\n}"; printf '%s\t' "$logged" >> "$FIXTURE_CALLS"
+  logged="${arg//$'\n'/\\n}"; logged_call+="$logged"$'\t'
   case "$next" in
     context|ns|selector) next=""; index=$((index+1)); continue ;;
     output) fmt="$arg"; next=""; index=$((index+1)); continue ;;
@@ -45,7 +46,7 @@ for arg in "$@"; do
   esac
   index=$((index+1))
 done
-printf '\n' >> "$FIXTURE_CALLS"
+printf '%s\n' "$logged_call" >> "$FIXTURE_CALLS"
 # -A is a verb/resource flag; reject the historic broken global-flag placement.
 if [ "$scope_pos" -ge 0 ] && [ "$scope_pos" -lt "$resource_pos" ]; then
   printf 'fixture: --all-namespaces appeared before verb/resource\n' >&2; exit 92
@@ -110,6 +111,18 @@ grep -Eq 'pods[[:space:]]+.*PASS[[:space:]]+readable' "$TEST_ROOT/doctor" || fai
 grep -Eq 'metrics[[:space:]]+.*INFO[[:space:]]+API or metrics unavailable' "$TEST_ROOT/doctor" || fail 'doctor did not classify unavailable metrics'
 assert_has "$TEST_ROOT/doctor" 'requests / limits'
 assert_has "$TEST_ROOT/doctor" 'Read-only checks complete'
+run_cli --audit-verify > "$TEST_ROOT/audit-intact"
+assert_has "$TEST_ROOT/audit-intact" 'chain intact'
+cat > "$TOOLS/sha256sum" <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in ./[0-9]*) exit 1 ;; esac
+exec /usr/bin/sha256sum "$@"
+STUB
+chmod 755 "$TOOLS/sha256sum"
+if run_cli --audit-verify > "$TEST_ROOT/audit-error"; then fail 'audit verification accepted a hash worker failure'; fi
+assert_has "$TEST_ROOT/audit-error" 'could not verify the audit chain'
+assert_absent "$TEST_ROOT/audit-error" 'chain intact'
+rm -- "$TOOLS/sha256sum"
 # Explicit machine-readable output must never fall back to boxed terminal text.
 for diagnostic in services storage events explain; do
   run_cli --once -n default -v "$diagnostic" -o csv > "$TEST_ROOT/$diagnostic.csv"
@@ -276,12 +289,14 @@ extract_function() {
   set -uo pipefail
   source "$REPO/src/runtime.sh"
   source "$REPO/src/events.sh"
+  # Load the real core header index alongside the mocked panel rendering.
+  source <(sed -n '/^STICKY_AWK=/,/^}$/p' "$REPO/kdash")
   TMPD="$TEST_ROOT/panel"; mkdir -p "$TMPD"
-  HDRF="$TMPD/hdr"; BODYF="$TMPD/body"; FTRF="$TMPD/ftr"
+  HDRF="$TMPD/hdr"; BODYF="$TMPD/body"; FTRF="$TMPD/ftr"; STICKYF="$TMPD/sticky"
   TOOLKIT_DIR="$TMPD/toolkit"; mkdir -p "$TOOLKIT_DIR"
   NS=default; CTX_NAME=fixture-context
   render_core() { printf 'STANDARD-HEADER 1 PODS 8 SERVICES\n' > "$HDRF"; }
-  health_render_services() { printf 'SERVICES AND BACKENDS\n'; }
+  health_render_services() { printf 'SERVICES AND BACKENDS\n~{H}SERVICE  ENDPOINTS\nweb      1\n'; }
   health_render_storage() { printf 'PERSISTENT STORAGE\n'; }
   events_render() { printf 'KUBERNETES EVENTS\n'; }
   explain_render() { printf 'INCIDENT EVIDENCE\n'; }
@@ -290,6 +305,11 @@ extract_function() {
     assert_has "$HDRF" 'STANDARD-HEADER'
     assert_has "$FTRF" '9 storage'
     assert_has "$BODYF" "$(case "$panel" in services) printf 'SERVICES AND BACKENDS' ;; storage) printf 'PERSISTENT STORAGE' ;; events) printf 'KUBERNETES EVENTS' ;; explain) printf 'INCIDENT EVIDENCE' ;; esac)"
+    if [ "$panel" = services ]; then
+      assert_has "$STICKYF" '1 1 3'
+      assert_has "$BODYF" 'SERVICE  ENDPOINTS'
+      assert_absent "$BODYF" '~{H}'
+    fi
   done
   printf 'panel views keep the standard header and their own body and footer\n'
 )

@@ -53,6 +53,9 @@ function sev(s,   t) { t = tolower(s)
 function own(s) { if (s ~ /^\{[rygbd]\}/) { OC = substr(s, 2, 1); return substr(s, 4) } OC = ""; return s }
 function occ(c) { return c == "r" ? "1;31" : c == "y" ? "35" : c == "g" ? "32" : c == "b" ? "1" : c == "d" ? "90" : "" }
 BEGIN { FS = "\t"; TKC = (ENVIRON["TK_COLOR"] == "1"); W = ENVIRON["TK_COLS"] + 0; WRAP = (ENVIRON["KDASH_TABLE_WRAP"] != "0")
+  # on the screen the title starts a section and the frame top + header row stay on top
+  # while the table scrolls (~{S} / ~{H}: see STICKY_AWK)
+  MS = (ENVIRON["TK_STICKY"] == "1") ? "~{S}" : ""; MH = (ENVIRON["TK_STICKY"] == "1") ? "~{H}" : ""
   VLB = (length("\342\226\210") != 1); DOT = (ENVIRON["TK_GLYPH"] == "ascii") ? "*" : "\342\227\217"; HR = (ENVIRON["TK_GLYPH"] == "ascii") ? "-" : "\342\224\200" }
 NR == 1 { nc = split($0, H, "\t")
   for (i = 1; i <= nc; i++) { RA[i] = (substr(H[i], 1, 1) == ">"); if (RA[i]) H[i] = substr(H[i], 2)
@@ -63,7 +66,7 @@ NR == 1 { nc = split($0, H, "\t")
 END {
   t = K("1", title); if (nr > 0 && count != "0") t = t "  " K("90", nr (nr == 1 ? " " one : " " many))
   if (sub_ != "") t = t K("90", "   " sub_)
-  print ""; print t
+  print ""; print MS t
   if (nr == 0) { print "  " K("90", empty != "" ? empty : "none"); exit }
   if (W > 0) for (i = 1; i < nc; i++) if (WD[i] > 56) WD[i] = 56     # no width given (a pipe, a file): nothing is cut
   # framed: │ c1 │ c2 │ ... │  -> 1 + sum(width + 3) characters
@@ -77,11 +80,13 @@ END {
   if (ENVIRON["TK_GLYPH"] == "ascii") { BTL = BTR = BBL = BBR = BLT = BRT = BTT = BBT = BX = "+"; BH = "-"; BV = "|" }
   else { BTL = "\342\224\214"; BTR = "\342\224\220"; BBL = "\342\224\224"; BBR = "\342\224\230"; BLT = "\342\224\234"; BRT = "\342\224\244"
          BTT = "\342\224\254"; BBT = "\342\224\264"; BX = "\342\224\274"; BH = "\342\224\200"; BV = "\342\224\202" }
-  print K("90", hline(BTL, BTT, BTR))
-  # header and rows: a cell that does not fit wraps onto further lines of the same row
+  print MH K("90", hline(BTL, BTT, BTR))
+  # header and rows: a cell that does not fit wraps onto further lines of the same row.
+  # The header row is one band inside the frame.
   mx = 1; for (i = 1; i <= nc; i++) { m = wrap(H[i], WD[i]); HN[i] = m; for (k = 1; k <= m; k++) HS[i, k] = SG[k]; if (m > mx) mx = m }
-  for (k = 1; k <= mx; k++) { h = K("90", BV); for (i = 1; i <= nc; i++) h = h " " K("1", pad(k <= HN[i] ? HS[i, k] : "", WD[i], RA[i])) " " K("90", BV); print h }
-  print K("90", hline(BLT, BX, BRT))
+  for (k = 1; k <= mx; k++) { h = ""; for (i = 1; i <= nc; i++) h = h (i > 1 ? BV : "") " " pad(k <= HN[i] ? HS[i, k] : "", WD[i], RA[i]) " "
+    print MH K("90", BV) K("1;7", h) K("90", BV) }
+  print MH K("90", hline(BLT, BX, BRT))
   for (n = 1; n <= nr; n++) { mx = 1
     for (i = 1; i <= nc; i++) { m = wrap(CE[n, i], WD[i]); RN[i] = m; for (k = 1; k <= m; k++) RW[i, k] = SG[k]; if (m > mx) mx = m
       c = occ(CL[n, i]); if (ST[i] && c == "") { c = sev(substr(CE[n, i], length(DOT) + 2)) }
@@ -89,7 +94,7 @@ END {
     for (k = 1; k <= mx; k++) { line = K("90", BV)
       for (i = 1; i <= nc; i++) line = line " " K(CC[i], pad(k <= RN[i] ? RW[i, k] : "", WD[i], RA[i])) " " K("90", BV)
       print line } }
-  print K("90", hline(BBL, BBT, BBR))
+  print MS K("90", hline(BBL, BBT, BBR))
 }
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
 '

@@ -1,0 +1,24 @@
+[1;7m KDASH │ HELP │ PODS VIEW │ context kdash-local │ namespace kdash-e2e                                             v4.39.0 │ any key returns
+
+[0m   [1m[38;5;63m>[0m          quick export: the screen and every line of the view to a log file - on every screen
+              (KDASH_EXPORT_DIR, default ~/kdash_reports/exports; latest.log = the newest export)
+   [1m[38;5;63mP[0m          pause / resume live   [1m[38;5;63m+ -[0m  poll interval 1..60 s
+   [1m[38;5;63mT[0m          colour theme         [1m[38;5;63mz[0m  chart window (all/15m/1h/6h/24h)
+   [1m[38;5;63mZ[0m          NODE POOLS auto zoom / true scale     [1m[38;5;63mc[0m  PODS timeline graphs on / off
+   [1m[38;5;63m?[0m          this help            [1m[38;5;63mq[0m  quit
+   [1m[38;5;63mEnter / i[0m  inspect a pod: s summary, d describe, e events, ! why, l current logs,
+              p previous logs, c choose container, / find (& only matches), n N jumps,
+              L log level, f follow logs, w export the pane, > quick export, ? keys, q back
+   [1m[38;5;63m:[0m          command palette (fixed commands, never shell text)   [1m[38;5;63mF[0m  structured filters
+   [1m[38;5;63mL[0m          OIDC login: runs the login helper in the foreground and shows its URL (with the
+              ssh -L tunnel command when the callback is on this host); kdash continues afterwards.
+              An expired login opens this by itself (KDASH_LOGIN_AUTO=0: only with L)
+   [1m[38;5;63mK[0m          CHECK NOW: everything wrong right now in every area, most severe first, with next
+              commands; Enter runs the read commands of a finding at once (also in 8 / 9 / ! / C)
+   [1m[38;5;63mR[0m          runbooks with this cluster's names filled in: etcd restore, certificate rotation,
+              node NotReady, API unreachable, OIDC login ( [ and ] switch runbook )
+   [1m[38;5;63mY[0m          secrets map: certificates and keys in Secrets, expiry, who manages and uses them, the
+              path in the container and on the node, what needs a restart after a rotation
+   [1m[38;5;63mM[0m          FMEA: every failure mode of every object you can read, ranked by Action Priority,
+              with next commands; only what your RBAC allows is checked (: access shows it)
+[1m[38;5;231m[48;5;24m -- lines 22-42 of 55: Space next page, b back, any other key returns --[0m

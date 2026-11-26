@@ -1,0 +1,222 @@
+FMEA  -  failure modes of every object you can read, ranked by Action Priority (AIAG-VDA) - S severity, O occurrence, D detection
+
+ 11 HIGH  9 MEDIUM  40 LOW   48 of 50 modes visible to kubernetes-super-admin   (scored 0s ago - r re-scores)
+
+WORKSHEET  60 rows   * = O estimated (under 7 days of saved runs) - s sorts AP / RPN / S, t filters the kind
+┌────┬────────┬────┬────┬────┬─────┬────────┬──────────────────────┬──────────────────────┬──────────────────────────┐
+│ #  │ AP     │  S │  O │  D │ RPN │ ID     │ OBJECT               │ FAILURE MODE         │ NOW                      │
+├────┼────────┼────┼────┼────┼─────┼────────┼──────────────────────┼──────────────────────┼──────────────────────────┤
+│ 1  │ HIGH   │ 10 │ 2* │ 10 │ 200 │ CP-03  │ cluster              │ No recent backup     │ not visible on this      │
+│    │        │    │    │    │     │        │                      │                      │ cluster: etcd snapshot   │
+│    │        │    │    │    │     │        │                      │                      │ age (RKE2/K3s)           │
+│ 2  │ HIGH   │  8 │ 10 │  4 │ 320 │ PVC-01 │ kdash-e2e/z-unbound  │ Pending              │ claim is Pending - not   │
+│    │        │    │    │    │     │        │                      │                      │ bound to a volume        │
+│ 3  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/missing-   │ No endpoints         │ selector app=does-not-   │
+│    │        │    │    │    │     │        │ backend              │                      │ exist matches no pod in  │
+│    │        │    │    │    │     │        │                      │                      │ this scope               │
+│ 4  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-       │ No endpoints         │ selector app=app-server  │
+│    │        │    │    │    │     │        │ loadbalancer         │                      │ matches no pod in this   │
+│    │        │    │    │    │     │        │                      │                      │ scope                    │
+│ 5  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-       │ No endpoints         │ selector app=app-server  │
+│    │        │    │    │    │     │        │ nodeport             │                      │ matches no pod in this   │
+│    │        │    │    │    │     │        │                      │                      │ scope                    │
+│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash    │ CrashLoopBackOff     │ CrashLoopBackOff, 461    │
+│    │        │    │    │    │     │        │                      │                      │ restarts (last: Error)   │
+│ 7  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending  │ Pending,             │ Pending                  │
+│    │        │    │    │    │     │        │                      │ unschedulable        │                          │
+│ 8  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-         │ Pending,             │ Pending                  │
+│    │        │    │    │    │     │        │ unschedulable        │ unschedulable        │                          │
+│ 9  │ HIGH   │  7 │ 10 │  4 │ 280 │ SVC-03 │ kdash-e2e/           │ External IP pending  │ LoadBalancer without an  │
+│    │        │    │    │    │     │        │ functionality-       │                      │ external IP              │
+│    │        │    │    │    │     │        │ loadbalancer         │                      │                          │
+│ 10 │ HIGH   │  7 │ 10 │  4 │ 280 │ SVC-03 │ kdash-e2e/web-       │ External IP pending  │ LoadBalancer without an  │
+│    │        │    │    │    │     │        │ loadbalancer         │                      │ external IP              │
+│ 11 │ HIGH   │  5 │ 10 │  5 │ 250 │ HPA-02 │ kdash-e2e/           │ Pinned at            │ at maxReplicas 1         │
+│    │        │    │    │    │     │        │ functionality-legacy │ maxReplicas          │                          │
+│ 12 │ MEDIUM │ 10 │ 2* │  5 │ 100 │ CP-02  │ cluster              │ Quorum lost or       │ ok                       │
+│    │        │    │    │    │     │        │                      │ unhealthy            │                          │
+│ 13 │ MEDIUM │  8 │ 2* │ 10 │ 160 │ PVC-02 │ -                    │ Volume full          │ not visible on this      │
+│    │        │    │    │    │     │        │                      │                      │ cluster: kubelet volume  │
+│    │        │    │    │    │     │        │                      │                      │ stats (Prometheus),      │
+│    │        │    │    │    │     │        │                      │                      │ used vs capacity         │
+│ 14 │ MEDIUM │  7 │ 2* │  5 │  70 │ PVC-03 │ -                    │ Attach or mount      │ all 4 pvcs ok            │
+│    │        │    │    │    │     │        │                      │ failure              │                          │
+│ 15 │ MEDIUM │  7 │  4 │  2 │  56 │ PVC-04 │ storageclass/local-  │ Reclaim policy       │ 11 bound volume(s)       │
+│    │        │    │    │    │     │        │ path                 │ Delete on stateful   │ deleted with their       │
+│    │        │    │    │    │     │        │                      │ data                 │ claims (reclaimPolicy    │
+│    │        │    │    │    │     │        │                      │                      │ Delete)                  │
+│ 16 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/           │ All replicas on one  │ 2 of 2 replicas on dev   │
+│    │        │    │    │    │     │        │ deployment/app-      │ node                 │                          │
+│    │        │    │    │    │     │        │ server               │                      │                          │
+│ 17 │ MEDIUM │  7 │  4 │  2 │  56 │ WRK-07 │ kdash-e2e/           │ All replicas on one  │ 2 of 2 replicas on dev   │
+│    │        │    │    │    │     │        │ statefulset/db-      │ node                 │                          │
+│    │        │    │    │    │     │        │ stateful             │                      │                          │
+│ 18 │ MEDIUM │  6 │ 10 │  4 │ 240 │ POD-04 │ kdash-e2e/z-         │ ImagePullBackOff     │ ImagePullBackOff - the   │
+│    │        │    │    │    │     │        │ imagepull            │                      │ image cannot be pulled   │
+│ 19 │ MEDIUM │  6 │ 10 │  2 │ 120 │ CFG-02 │ kdash-e2e/kdash-     │ Certificate inside   │ CA certificate kdash-    │
+│    │        │    │    │    │     │        │ secrets-live-        │ it expiring or       │ secrets-live-            │
+│    │        │    │    │    │     │        │ mismatch             │ broken               │ match.example.invalid    │
+│    │        │    │    │    │     │        │                      │                      │ (tls.crt) expires in 1   │
+│    │        │    │    │    │     │        │                      │                      │ d; managed by hand       │
+│ 20 │ MEDIUM │  6 │ 10 │  2 │ 120 │ CFG-02 │ kdash-e2e/kdash-     │ Certificate inside   │ CA certificate kdash-    │
+│    │        │    │    │    │     │        │ secrets-live-valid   │ it expiring or       │ secrets-live-            │
+│    │        │    │    │    │     │        │                      │ broken               │ match.example.invalid    │
+│    │        │    │    │    │     │        │                      │                      │ (tls.crt) expires in 1   │
+│    │        │    │    │    │     │        │                      │                      │ d; managed by hand       │
+│ 21 │ LOW    │ 10 │ 2* │  3 │  60 │ CP-01  │ cluster              │ Unreachable or slow  │ ok                       │
+│ 22 │ LOW    │ 10 │ 2* │  2 │  40 │ CRT-01 │ cluster              │ API or kubelet cert  │ ok                       │
+│    │        │    │    │    │     │        │                      │ expiring             │                          │
+│ 23 │ LOW    │  9 │ 2* │  4 │  72 │ ADM-01 │ -                    │ Webhook down with    │ all 2 webhooks ok        │
+│    │        │    │    │    │     │        │                      │ failurePolicy Fail   │                          │
+│ 24 │ LOW    │  9 │ 2* │  4 │  72 │ DNS-01 │ -                    │ DNS failing          │ no dns in scope          │
+│ 25 │ LOW    │  9 │ 2* │  4 │  72 │ WRK-01 │ -                    │ All replicas         │ all 1 deployments ok     │
+│    │        │    │    │    │     │        │                      │ unavailable          │                          │
+│ 26 │ LOW    │  8 │ 2* │  4 │  64 │ NOD-01 │ -                    │ NotReady             │ all 1 nodes ok           │
+│ 27 │ LOW    │  8 │ 2* │  4 │  64 │ WRK-04 │ -                    │ Ordinal stuck,       │ all 2 statefulsets ok    │
+│    │        │    │    │    │     │        │                      │ later pods never     │                          │
+│    │        │    │    │    │     │        │                      │ start                │                          │
+│ 28 │ LOW    │  8 │ 2* │  3 │  48 │ ACC-02 │ cluster              │ Provider             │ ok                       │
+│    │        │    │    │    │     │        │                      │ unreachable or       │                          │
+│    │        │    │    │    │     │        │                      │ token expired        │                          │
+│ 29 │ LOW    │  7 │ 2* │  4 │  56 │ CFG-01 │ -                    │ Referenced object    │ all 18 pods ok           │
+│    │        │    │    │    │     │        │                      │ missing              │                          │
+│ 30 │ LOW    │  7 │ 2* │  4 │  56 │ JOB-02 │ -                    │ Not running on       │ all 1 cronjobs ok        │
+│    │        │    │    │    │     │        │                      │ schedule             │                          │
+│ 31 │ LOW    │  7 │ 2* │  4 │  56 │ NOD-02 │ -                    │ Memory, disk or PID  │ all 1 nodes ok           │
+│    │        │    │    │    │     │        │                      │ pressure             │                          │
+│ 32 │ LOW    │  7 │ 2* │  3 │  42 │ ING-01 │ -                    │ Backend Service      │ all 2 ingresses ok       │
+│    │        │    │    │    │     │        │                      │ missing              │                          │
+│ 33 │ LOW    │  7 │ 2* │  3 │  42 │ QTA-01 │ -                    │ Quota nearly used up │ all 1 quotas ok          │
+│ 34 │ LOW    │  7 │ 2* │  2 │  28 │ ING-02 │ -                    │ TLS secret missing   │ all 2 ingresses ok       │
+│    │        │    │    │    │     │        │                      │ or expiring          │                          │
+│ 35 │ LOW    │  6 │ 2* │  8 │  96 │ NET-01 │ -                    │ Default deny blocks  │ all 1 netpols ok         │
+│    │        │    │    │    │     │        │                      │ needed traffic       │                          │
+│ 36 │ LOW    │  6 │ 2* │  6 │  72 │ ACC-01 │ cluster              │ Permission denied    │ ok                       │
+│ 37 │ LOW    │  6 │ 2* │  5 │  60 │ CRD-01 │ -                    │ Operator not running │ all 1 deployments ok     │
+│ 38 │ LOW    │  6 │ 2* │  5 │  60 │ JOB-01 │ -                    │ Failed after         │ all 4 jobs ok            │
+│    │        │    │    │    │     │        │                      │ backoffLimit         │                          │
+│ 39 │ LOW    │  6 │ 2* │  5 │  60 │ POD-05 │ -                    │ Readiness probe      │ all 18 pods ok           │
+│    │        │    │    │    │     │        │                      │ failing              │                          │
+│ 40 │ LOW    │  6 │  4 │  2 │  48 │ CFG-02 │ kdash-e2e/           │ Certificate inside   │ cert-manager             │
+│    │        │    │    │    │     │        │ functionality-       │ it expiring or       │ certificate expires in   │
+│    │        │    │    │    │     │        │ certificate          │ broken               │ 18 d (2026-12-14 09:16   │
+│    │        │    │    │    │     │        │                      │                      │ UTC)                     │
+│ 41 │ LOW    │  6 │  4 │  2 │  48 │ CFG-02 │ kdash-e2e/           │ Certificate inside   │ certificate              │
+│    │        │    │    │    │     │        │ functionality-tls    │ it expiring or       │ functionality.local.test │
+│    │        │    │    │    │     │        │                      │ broken               │  (ca.crt) expires in 18  │
+│    │        │    │    │    │     │        │                      │                      │ d; cert-manager:         │
+│    │        │    │    │    │     │        │                      │                      │ functionality-           │
+│    │        │    │    │    │     │        │                      │                      │ certificate (issuer      │
+│    │        │    │    │    │     │        │                      │                      │ functionality-           │
+│    │        │    │    │    │     │        │                      │                      │ selfsigned) should       │
+│    │        │    │    │    │     │        │                      │                      │ renew it                 │
+│ 42 │ LOW    │  6 │ 2* │  4 │  48 │ HPA-01 │ -                    │ Cannot read metrics  │ all 2 hpas ok            │
+│ 43 │ LOW    │  6 │ 2* │  4 │  48 │ POD-02 │ -                    │ OOMKilled            │ all 18 pods ok           │
+│ 44 │ LOW    │  6 │ 2* │  4 │  48 │ WRK-02 │ -                    │ Rollout stuck        │ all 1 deployments ok     │
+│ 45 │ LOW    │  6 │  4 │  2 │  48 │ WRK-03 │ kdash-e2e/           │ Single replica       │ 1 replica                │
+│    │        │    │    │    │     │        │ statefulset/test-sts │                      │                          │
+│ 46 │ LOW    │  6 │ 2* │  4 │  48 │ WRK-05 │ -                    │ Missing on some      │ all 1 daemonsets ok      │
+│    │        │    │    │    │     │        │                      │ nodes                │                          │
+│ 47 │ LOW    │  6 │ 2* │  3 │  36 │ SVC-02 │ -                    │ targetPort not       │ all 11 services ok       │
+│    │        │    │    │    │     │        │                      │ exposed by the pods  │                          │
+│ 48 │ LOW    │  5 │ 2* │  6 │  60 │ POD-06 │ -                    │ Liveness probe       │ all 18 pods ok           │
+│    │        │    │    │    │     │        │                      │ kills a healthy pod  │                          │
+│ 49 │ LOW    │  5 │ 2* │  5 │  50 │ POD-07 │ -                    │ Evicted              │ all 18 pods ok           │
+│ 50 │ LOW    │  5 │ 2* │  5 │  50 │ POD-09 │ -                    │ Stuck Terminating    │ all 18 pods ok           │
+│ 51 │ LOW    │  5 │  4 │  2 │  40 │ PDB-02 │ kdash-e2e/           │ Missing for a multi- │ 2 replicas, no           │
+│    │        │    │    │    │     │        │ deployment/app-      │ replica workload     │ PodDisruptionBudget      │
+│    │        │    │    │    │     │        │ server               │                      │                          │
+│ 52 │ LOW    │  5 │  4 │  2 │  40 │ PDB-02 │ kdash-e2e/           │ Missing for a multi- │ 2 replicas, no           │
+│    │        │    │    │    │     │        │ statefulset/db-      │ replica workload     │ PodDisruptionBudget      │
+│    │        │    │    │    │     │        │ stateful             │                      │                          │
+│ 53 │ LOW    │  5 │ 2* │  3 │  30 │ NOD-04 │ -                    │ Limits far above     │ all 1 nodes ok           │
+│    │        │    │    │    │     │        │                      │ allocatable          │                          │
+│ 54 │ LOW    │  5 │ 2* │  2 │  20 │ PDB-01 │ -                    │ Allows 0 disruptions │ all 2 pdbs ok            │
+│ 55 │ LOW    │  4 │  4 │  6 │  96 │ POD-08 │ kdash-e2e/z-oom      │ CPU near its limit   │ cpu 51m of 50m limit     │
+│    │        │    │    │    │     │        │                      │                      │ (throttling not          │
+│    │        │    │    │    │     │        │                      │                      │ measured)                │
+│ 56 │ LOW    │  4 │ 2* │  4 │  32 │ NS-01  │ -                    │ Stuck Terminating    │ all 14 namespaces ok     │
+│ 57 │ LOW    │  4 │  4 │  2 │  32 │ PVC-05 │ storageclass/local-  │ Expansion not        │ 2 bound claim(s) cannot  │
+│    │        │    │    │    │     │        │ path                 │ allowed              │ grow online              │
+│ 58 │ LOW    │  4 │  4 │  2 │  32 │ WRK-06 │ kdash-e2e/pod/sync-  │ No requests or       │ 1 pod(s) BestEffort -    │
+│    │        │    │    │    │     │        │ pod                  │ limits               │ no requests or limits    │
+│ 59 │ LOW    │  4 │  4 │  2 │  32 │ WRK-06 │ kdash-e2e/           │ No requests or       │ 1 pod(s) BestEffort -    │
+│    │        │    │    │    │     │        │ statefulset/test-sts │ limits               │ no requests or limits    │
+│ 60 │ LOW    │  4 │ 2* │  2 │  16 │ NOD-03 │ -                    │ Cordoned and         │ all 1 nodes ok           │
+│    │        │    │    │    │     │        │                      │ forgotten            │                          │
+└────┴────────┴────┴────┴────┴─────┴────────┴──────────────────────┴──────────────────────┴──────────────────────────┘
+  AP follows the AIAG-VDA 2019 table; RPN (S x O x D) is shown but does not rank. "no access" rows are never counted as OK.
+
+NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (printed only)  -  kdash --fmea --run N runs the read commands of row N
+
+  #2  CRITICAL  kdash-e2e/z-unbound  PVC-01 Pending: claim is Pending - not bound to a volume
+      read   kubectl --context kdash-local -n kdash-e2e describe pvc z-unbound  # the provisioner's reason is in the events
+      read   kubectl --context kdash-local get storageclass kdash-e2e-intentionally-missing -o wide  # provisioner and binding mode
+
+  #3  CRITICAL  kdash-e2e/missing-backend  SVC-01 No endpoints: selector app=does-not-exist matches no pod in this scope
+      read   kubectl --context kdash-local -n kdash-e2e get service missing-backend -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      read   kubectl --context kdash-local -n kdash-e2e get pods --show-labels  # labels the pods really have
+      CHANGE kubectl --context kdash-local -n kdash-e2e edit service missing-backend  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+  #4  CRITICAL  kdash-e2e/web-loadbalancer  SVC-01 No endpoints: selector app=app-server matches no pod in this scope
+      read   kubectl --context kdash-local -n kdash-e2e get service web-loadbalancer -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      CHANGE kubectl --context kdash-local -n kdash-e2e edit service web-loadbalancer  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+  #5  CRITICAL  kdash-e2e/web-nodeport  SVC-01 No endpoints: selector app=app-server matches no pod in this scope
+      read   kubectl --context kdash-local -n kdash-e2e get service web-nodeport -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
+      CHANGE kubectl --context kdash-local -n kdash-e2e edit service web-nodeport  # make spec.selector match the pod labels (or fix the labels on the workload)
+
+  #6  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 461 restarts (last: Error)
+      read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
+
+  #7  CRITICAL  kdash-e2e/z-pending  POD-03 Pending, unschedulable: Pending
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-pending  # the scheduler's message is in the events
+      read   kubectl --context kdash-local -n kdash-e2e get pvc  # an unbound claim also keeps a pod Pending
+
+  #8  CRITICAL  kdash-e2e/z-unschedulable  POD-03 Pending, unschedulable: Pending
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-unschedulable  # the scheduler's message is in the events
+
+  #9  CRITICAL  kdash-e2e/functionality-loadbalancer  SVC-03 External IP pending: LoadBalancer without an external IP
+      read   kubectl --context kdash-local -n kdash-e2e describe service functionality-loadbalancer  # the load balancer events
+      note   the LoadBalancer controller (cloud, MetalLB, kube-vip) assigns the IP - check its pods and IP pool
+
+  #10  CRITICAL  kdash-e2e/web-loadbalancer  SVC-03 External IP pending: LoadBalancer without an external IP
+      read   kubectl --context kdash-local -n kdash-e2e describe service web-loadbalancer  # the load balancer events
+      note   the LoadBalancer controller (cloud, MetalLB, kube-vip) assigns the IP - check its pods and IP pool
+
+  #11  CRITICAL  kdash-e2e/functionality-legacy  HPA-02 Pinned at maxReplicas: at maxReplicas 1
+      read   kubectl --context kdash-local -n kdash-e2e describe hpa functionality-legacy  # conditions and the metrics it reads
+      read   kubectl --context kdash-local top pods -n kdash-e2e  # metrics-server answers?
+
+  #15  WARNING  storageclass/local-path  PVC-04 Reclaim policy Delete on stateful data: 11 bound volume(s) deleted with their claim
+      read   kubectl --context kdash-local get pv -o custom-columns=NAME:.metadata.name,CLAIM:.spec.claimRef.name,CLASS:.spec.storageClassName,RECLAIM:.spec.persistentVolumeReclaimPolicy  # volumes and their reclaim policy
+      CHANGE kubectl --context kdash-local patch pv PV-NAME -p '{"spec":{"persistentVolumeReclaimPolicy":"Retain"}}'  # keep the data of an important volume when its claim is deleted
+
+  #16  WARNING  kdash-e2e/deployment/app-server  WRK-07 All replicas on one node: 2 of 2 replicas on dev
+      read   kubectl --context kdash-local -n kdash-e2e get pods -o wide | grep app-server  # where the replicas run
+      note   add podAntiAffinity or topologySpreadConstraints (topologyKey kubernetes.io/hostname) in the chart
+
+  #17  WARNING  kdash-e2e/statefulset/db-stateful  WRK-07 All replicas on one node: 2 of 2 replicas on dev
+      read   kubectl --context kdash-local -n kdash-e2e get pods -o wide | grep db-stateful  # where the replicas run
+      note   add podAntiAffinity or topologySpreadConstraints (topologyKey kubernetes.io/hostname) in the chart
+
+  #18  WARNING  kdash-e2e/z-imagepull  POD-04 ImagePullBackOff: ImagePullBackOff - the image cannot be pulled
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-imagepull  # the pull error is in the events
+      read   kubectl --context kdash-local -n kdash-e2e get pod z-imagepull -o jsonpath='{range .spec.containers[*]}{.name}: {.image}{"\n"}{end}pullSecrets: {.spec.imagePullSecrets[*].name}{"\n"}'  # image references and pull secrets
+      note   check the tag exists in the registry and the pull secret is valid; the registry must be reachable from the node
+
+  #19  WARNING  kdash-e2e/kdash-secrets-live-mismatch  CFG-02 Certificate inside it expiring or broken: CA certificate kdash-secrets-live-match.e
+      read   kubectl --context kdash-local -n kdash-e2e describe secret kdash-secrets-live-mismatch  # type, key names and sizes (never the values)
+      read   kubectl --context kdash-local -n kdash-e2e get secret kdash-secrets-live-mismatch -o custom-columns=NAME:.metadata.name,TYPE:.type,OWNER:.metadata.ownerReferences[*].name,CREATED:.metadata.creationTimestamp  # type, owner and age
+      note   inspect the certificate: kubectl --context kdash-local -n kdash-e2e get secret kdash-secrets-live-mismatch -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -subject -issuer -dates
+      note   cert-manager: cmctl renew <certificate> -n kdash-e2e (or delete the Secret: it is issued again). By hand: replace it with the next line
+      CHANGE kubectl --context kdash-local -n kdash-e2e create secret tls kdash-secrets-live-mismatch --cert=NEW.crt --key=NEW.key --dry-run=client -o yaml | kubectl apply -f -  # then restart the workloads marked "restart needed" in WHERE USED
+
+  #20  WARNING  kdash-e2e/kdash-secrets-live-valid  CFG-02 Certificate inside it expiring or broken: CA certificate kdash-secrets-live-match.e
+      read   kubectl --context kdash-local -n kdash-e2e describe secret kdash-secrets-live-valid  # type, key names and sizes (never the values)
+      read   kubectl --context kdash-local -n kdash-e2e get secret kdash-secrets-live-valid -o custom-columns=NAME:.metadata.name,TYPE:.type,OWNER:.metadata.ownerReferences[*].name,CREATED:.metadata.creationTimestamp  # type, owner and age
+      note   inspect the certificate: kubectl --context kdash-local -n kdash-e2e get secret kdash-secrets-live-valid -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -subject -issuer -dates
+      note   cert-manager: cmctl renew <certificate> -n kdash-e2e (or delete the Secret: it is issued again). By hand: replace it with the next line
+      CHANGE kubectl --context kdash-local -n kdash-e2e create secret tls kdash-secrets-live-valid --cert=NEW.crt --key=NEW.key --dry-run=client -o yaml | kubectl apply -f -  # then restart the workloads marked "restart needed" in WHERE USED
+

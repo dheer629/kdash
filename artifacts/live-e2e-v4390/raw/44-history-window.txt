@@ -1,0 +1,50 @@
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:19:26 IST
+┌─ SCOPE ────────────────────────────────────────────────┬─ POD HEALTH ───────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort mem ▲ low first                        │ ! pods 14/18 ready   restarts 548          │ cpu     59m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 3s  spec 24s/30s   session 09:16:21 up 3m05s      │ OOM risk 0   OOMKilled 0   no-limit 1      │ mem     1Mi ░░░░░░░░   0% lim       │ events 15m ! 2  ^ 1        │
+└────────────────────────────────────────────────────────┴────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 24s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ MEMORY   live namespace memory dashboard
+┌─ USAGE and RISK ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ MEMORY used      1Mi  req    276Mi  lim    976Mi   used/req    0.4%  used/lim    0.1%  ░░░░░░░░░░░░░░░░░░░░░░░░                                                        │
+│ window 09:16:21 -> 09:19:26 IST (UTC+05:30)   3m05s, last 15m (have 3m05s)   samples 48 every 2s   z: 15m 1h 6h 24h all                                                │
+│ CPU    used      59m  req     315m  lim    1750m   used/req   18.7%  used/lim    3.4%  _______█████_                                                                   │
+│ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 548                                                                               │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+► TIMELINE  09:16:21 -> 09:19:26 IST  (last 15m (have 3m05s), host clock) ──────────────────────────────────────────────────────────────────────────────────────────────
+   MEMORY used - namespace                                                               CPU used - namespace
+     1Mi┤                 ·                   ·                 ·                          70m┤                 ·                   ·                 ·
+        │████████████████████████████████████ ·                 · █████  ███████████          │▄██████▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄███████████ ·                 · █████  ▄▄▄▄██████▄
+        │████████████████████████████████████ ·                 · █████  ███████████          │████████████████████████████████████ ·                 · █████  ███████████
+        │████████████████████████████████████ ·                 · █████  ███████████          │████████████████████████████████████ ·                 · █████  ███████████
+     1Mi┤████████████████████████████████████ ·                 · █████  ███████████       35m┤████████████████████████████████████ ·                 · █████  ███████████
+        │████████████████████████████████████ ·                 · █████  ███████████          │████████████████████████████████████ ·                 · █████  ███████████
+        │████████████████████████████████████ ·                 · █████  ███████████          │████████████████████████████████████ ·                 · █████  ███████████
+        │████████████████████████████████████ ·                 · █████  ███████████          │████████████████████████████████████ ·                 · █████▄▄███████████
+     0Mi└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴        0m└┴────────────────┴───────────────────┴─────────────────┴──────────────────┴
+         09:16:21                         09:17:53                          09:19:26           09:16:21                         09:17:53                          09:19:26
+  events                                                          !       !             events                                                          !       !
+  now 1Mi  min 0Mi  avg 1Mi  max 1Mi @ 09:19:26                                         now 59m  min 5m  avg 57m  max 61m @ 09:16:37
+  request 276Mi (above)  limit 976Mi (above)  0% of limit                               request 315m (above)  limit 1750m (above)  3% of limit
+  EVENTS 6 in window   ! 2 critical   ^ 1 warning
+  09:19:02       ! STATUS           z-crash                                  NotReady -> CrashLoopBackOff on dev
+  09:18:58       - FILTER           kdash-e2e                                pod filter changed to .*
+  09:18:53       - FILTER           kdash-e2e                                pod filter changed to app-server
+  09:18:43       ^ RESTART          z-crash                                  restarts +1 (now 462), last exit Error
+  09:18:43       ! STATUS           z-crash                                  CrashLoopBackOff -> NotReady on dev
+  09:16:21       - SESSION          kdash-e2e                                kdash 4.39.0 started on Dheeraj by dheer - filter .*
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (09:16:21 -> 09:19:26 IST) ──────────────────────────────────────────────────────────────────────────────────
+  POD  (16)                     │09:16:21                                            09:17:53                                             09:19:26 │  %LIM now  RST
+  app-server-8fb4699bc-cx5vz    │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  app-server-8fb4699bc-t7zxj    │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   0.0 now
+  completed-check-m9swm         │                                                                                                                  │   0.0 now
+  db-stateful-0                 │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                      ░░░░░░░░░ ░░░░░░░░░░░░░░░░░ │   0.0 now
+  db-stateful-1                 │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                      ░░░░░░░░░ ░░░░░░░░░░░░░░░░░ │   0.0 now
+  functionality-legacy-67ks7    │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                      ░░░░░░░░░ ░░░░░░░░░░░░░░░░░ │   0.0 now
+  kdash-secrets-live-consumer   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    ░░░░░░░░░░░░░░                                      ░░░░░░░░░ ░░░░░░░░░░░░░░░░░ │   0.0 now
+  nightly-report-29927735-m6d6c │                                                                                                                  │   0.0 now
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 13 polls.  metrics refresh about every 15 s.
+ chart window: last 15m | ○ LIVE 09:19:27  next 2s  data 1s old  spec 25/30s  fetch 0.0s  poll 3s  AUDITED | mem | rows 1-33/93 | ? help  1-9 view  n ns  s sort(mem rev)

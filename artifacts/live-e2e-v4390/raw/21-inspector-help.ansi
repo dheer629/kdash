@@ -1,0 +1,50 @@
+[1;7m KDASH │ POD DETAIL │ KEYS │ context kdash-local │ namespace kdash-e2e                                                                                    any key returns
+
+[0m [1m[38;5;98mFIND[0m                          [1m[38;5;98mPANES[0m                       [1m[38;5;98mNAVIGATE[0m
+  [1m[38;5;63m/[0m  find in this pane         [1m[38;5;63ms[0m  summary                  [1m[38;5;63mj k arrows[0m  line
+  [1m[38;5;63m&[0m  show only matches         [1m[38;5;63md[0m  describe                 [1m[38;5;63mspace b[0m  page
+  [1m[38;5;63mn N[0m  next / previous match   [1m[38;5;63me[0m  events                   [1m[38;5;63mPgUp PgDn[0m  page
+  [1m[38;5;63mL[0m  log level: all, ERROR,    [1m[38;5;63m![0m  why (event hypotheses)    [1m[38;5;63mg G Home End[0m  top/bottom
+     WARN, INFO, DEBUG         [1m[38;5;63ml[0m  current logs             [1m[38;5;63mc[0m  choose container
+  [1m[38;5;63mf[0m  follow logs               [1m[38;5;63mp[0m  previous logs            [1m[38;5;63mr[0m  reload now
+  [1m[38;5;63mw[0m  export what you see       [1m[38;5;63mq Esc[0m  back                [1m[38;5;63m?[0m  this help
+  [1m[38;5;63m>[0m  quick export to a log file: the screen and the whole pane (KDASH_EXPORT_DIR)
+
+ [1m[38;5;98mLONG AND MANY LINES[0m [38;5;243m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m  [1m[38;5;63mW[0m  wrap on/off: on (default) shows every line in full; off cuts at the edge, <- -> pan
+  [1m[38;5;63mJ[0m  readable JSON: time, level and message of JSON log lines; J again shows them raw
+  [1m[38;5;63m+[0m  read 4x more lines        [1m[38;5;63mA[0m  read the whole log, the older files the kubelet rotated too (KDASH_LOG_MAX_BYTES)
+     older files are on the node: read with get nodes/proxy when your RBAC allows it (KDASH_NODE_LOGS=0: never)
+     the rule shows what was read and since when: "newest only", "current file", "whole log: 3 rotated files + the current file"
+
+ [1m[38;5;63mS[0m  shell in the container    [1m[38;5;63mU[0m  upload a file             [1m[38;5;63mD[0m  download a file
+ S/U/D need --allow-interactive: they run in your name and are audited writes.
+ / keeps the context around every match and highlights it; & hides everything else.
+ A search covers the whole log: / reads all of it first (the rotated files too, with get nodes/proxy), so the count covers every line.
+ F searches the logs of every container of this pod, its workload or the namespace (and the
+ previous instance of restarted containers); matches of all logs are merged in time order.
+ Prompts: Up / Down recall earlier entries, Left / Right / Home / End edit, Esc cancels.
+ A lowercase pattern ignores case: /error finds ERROR and error.
+ n and N wrap around and put the match at the top of the pane.
+ c lists every container with readiness, restarts, state and last exit: pick one
+ and l/p read that container. Search and level stay active across panes.
+ w writes the filtered pane to /workspace/kdash/artifacts/live-e2e-v4390/reports/inspector/ (review it before sharing).
+
+ any key returns
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                     SUMMARY
+┌─ SUMMARY ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
+│ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
+└─ rows 1-28 / 28 · 28 lines ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+POD ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Name               app-server-8fb4699bc-cx5vz
+  Namespace          kdash-e2e
+  UID                8ba4b795-9a96-4841-8a09-fc662595c9d0
+  Created            2026-11-07T13:50:06Z
+  Phase              Running
+  Node               dev
+  Pod IP             10.244.0.166
+  Service account    default
+  Owner              ReplicaSet/app-server-8fb4699bc
+
+CONDITIONS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  TYPE                        STATUS
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+
+CONTAINERS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NAME      IMAGE          CPU REQUEST / LIMIT   MEMORY REQUEST / LIMIT
+  app       busybox:1.36   20m / 200m            8Mi / 64Mi
+  sidecar   busybox:1.36   5m / 50m              4Mi / 32Mi
+
+CONTAINER STATUS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NAME      READY   RESTARTS   STATE                                LAST EXIT
+  app       true    11         Running since 2026-11-26T03:32:29Z   Unknown (exit 255)
+  sidecar   true    10         Running since 2026-11-26T03:32:29Z   Unknown (exit 255)
+
+
+
+
+
+
+
+
+
+
+┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
+│ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
+│ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │
+│ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
+│ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
+└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
+ interactive actions are off (read-only). Press X to turn them on, or start kdash with kdx / kdash -X.

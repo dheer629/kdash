@@ -497,8 +497,8 @@ spec:
         self.capture(s, "85-runbook", "RUNBOOK printed etcd recovery procedure with live cluster inventory", "RUNBOOK - etcd-restore")
         self.key(s, "]", delay=2)
         self.capture(s, "87-runbook-topic", "RUNBOOK next topic displays certificate rotation instructions", "RUNBOOK - cert-rotate")
-        self.key(s, "[", delay=2)
-        self.record("runbook-topic-cycle", "RUNBOOK - etcd-restore" in self.screen(s),
+        self.key(s, "[")
+        self.record("runbook-topic-cycle", self.seen(s, "RUNBOOK - etcd-restore"),
                     "right bracket selects the next procedure and left bracket returns")
         self.key(s, "K", delay=3)
         self.wait(s, "FINDINGS", timeout=120)
@@ -564,6 +564,15 @@ spec:
                 raise RuntimeError(body)
             time.sleep(0.4)
         raise RuntimeError(f"{session}: did not show {pattern!r}\n" + self.screen(session))
+
+    def seen(self, session, pattern, timeout=15):
+        """Wait for a pattern without raising, so the assertion can record the result."""
+        until = time.monotonic() + timeout
+        while time.monotonic() < until:
+            if re.search(pattern, self.screen(session), re.I):
+                return True
+            time.sleep(0.4)
+        return False
 
     def key(self, session, *keys, delay=1):
         self.tm("send-keys", "-t", session, *keys)

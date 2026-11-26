@@ -1,0 +1,63 @@
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:04 IST
+ match .*   sort cpu ▼ high first
+ ! pods 14/19 ready rst 547 oom 0 oomk 0 nolim 1 cpu 59m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ ALERTS   live critical summary of every section, with the action for each signal
+   CRITICAL    4 critical   8 warning   0 new   0 cleared in 5 min   rules run every refresh (2s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000
+────────────────────────────────────────────────────────────────────────────────
+► SECTIONS ───────────────────────────────────────────────────────────────────
+  ● PODS       14/19 ready  rst 547  2 crit 3 warn                            
+  ● MEMORY     1Mi / 1008Mi lim  0.1%  0 >=90%  1 no-limit  ░                 
+  ● NODES      1 hosting  0 NotReady  max node mem 29.3% dev                  
+  ● WORKLOADS  14  0 degraded  2 HA risk  0 rolling                           
+  ● IP         15 pod IPs  4 no IP  0 duplicate  11 svc                       
+  ● TRAFFIC    no IO source (not-sampled)                                     
+
+► ACTIVE ALERTS  12 (4 critical, 8 warning)   critical first, NEW first, action under each
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE       
+  ! -      PODS      z-crash                        CrashLoopBackOff   restarts 461, r~ 
+                   ↳ kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100
+  ! -      PODS      z-imagepull                    ImagePullBackOff   image / config ~ 
+                   ↳ kubectl -n kdash-e2e describe pod z-imagepull
+  ! -      WORKLOADS Pod/z-pending                  UNSCHEDULED        1 pod(s) not pl~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector reason=FailedScheduling
+  ! -      WORKLOADS Pod/z-unschedulable            UNSCHEDULED        1 pod(s) not pl~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector reason=FailedScheduling
+  ^ -      PODS      z-oom                          CPU_LIMIT_PRESSURE cpu 50m = 100% ~ 
+                   ↳ kubectl -n kdash-e2e top pod z-oom --containers
+  ^ -      PODS      z-pending                      Pending            node (unschedul~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending
+  ^ -      PODS      z-unschedulable                Pending            node (unschedul~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-unschedulable
+  ^ -      MEMORY    1 pod(s)                       NO_MEM_LIMIT       can grow until ~ 
+                   ↳ kubectl -n kdash-e2e get pods -o custom-columns=POD:.metadata.name,LIM:.spec.containers[*].resources.limits.memory
+  ^ -      WORKLOADS Deployment/app-server          HA_RISK            2 replicas on 1~ 
+                   ↳ kubectl -n kdash-e2e get pods -o wide | grep app-server   (topologySpreadConstraints)
+  ^ -      WORKLOADS StatefulSet/db-stateful        HA_RISK            2 replicas on 1~ 
+                   ↳ kubectl -n kdash-e2e get pods -o wide | grep db-stateful   (topologySpreadConstraints)
+  ^ -      IP        z-pending                      NO_IP              status Pending   
+                   ↳ kubectl -n kdash-e2e describe pod z-pending
+  ^ -      IP        z-unschedulable                NO_IP              status Pending   
+                   ↳ kubectl -n kdash-e2e describe pod z-unschedulable
+
+► LIVE TOP CONSUMERS ─────────────────────────────────────────────────────────
+  memory % of limit                                                           
+    6.2 z-oom
+    0.0 app-server-8fb4699bc-cx5vz
+    0.0 app-server-8fb4699bc-t7zxj
+    0.0 db-stateful-0
+    0.0 db-stateful-1
+  CPU % of limit                                                              
+  100.0 z-oom
+    2.0 functionality-legacy-67ks7
+    2.0 node-agent-ctvg6
+    1.2 app-server-8fb4699bc-cx5vz
+    1.0 db-stateful-0
+  traffic in+out
+
+► EVENTS  last hour ──────────────────────────────────────────────────────────
+  events: recorded in live mode (session history)
+────────────────────────────────────────────────────────────────────────────────
+ legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS.  x = HTML report.

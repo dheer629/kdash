@@ -1,42 +1,42 @@
 # kdash samples
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser checks** and **125 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.37.0 in namespace `kdash-e2e`.
-[Inspect the recorded checks](../artifacts/live-e2e-v4370/checks.tsv).
+Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser checks** and **136 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.39.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](../artifacts/live-e2e-v4390/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
 
 
 
-The 125 published screenshots comprise 91 baseline views, 29 extension scenarios
-(search, full logs, exports, themes, compatibility and file browsers) and 5
-Secrets-map screens. Every capture links its raw ANSI screen and native xterm grab.
+The 136 published screenshots comprise 91 baseline views, 40 extension scenarios
+(search, full logs, exports, themes, compatibility, terminal design and the audit
+table) and 5 Secrets-map screens. Every capture links its raw ANSI screen and
+native xterm grab. The 324 live checks are 200 baseline plus 124 extension checks;
+31 Secrets checks, 33 browser checks and all 19 fixture suites pass alongside them.
 
 
-
-
-
-The current **4.37.0** terminal gallery is [`cli_4370/`](cli_4370/README.md),
+The current **4.39.0** terminal gallery is [`cli_4390/`](cli_4390/README.md),
 captured from the installed utility against real Kubernetes workloads in local WSL.
 Its raw ANSI/plain-text screens and verification results are indexed by
 [`../artifacts/latest-e2e.txt`](../artifacts/latest-e2e.txt). The corresponding
-report files are in [`html4370/`](html4370/README.md). The `native/` gallery contains
-actual live WSL xterm screenshots; companion PNGs replay saved ANSI captures.
-Current values and local namespace names are preserved unchanged.
+report files are in [`html4390/`](html4390/README.md). The `native/` gallery contains
+live WSL xterm screenshots. Companion PNGs replay saved ANSI captures.
 
-Version 4.37.0 adds dashboard search, multi-container log searches, older
-kubelet log reads when permitted, quick plain-text exports, editable prompts
-and terminal rendering improvements. It retains the Secrets map, FMEA/access
-review, existing resource views, reports, guarded shell/file operations and
-audit trail. Inspect the recorded checks for coverage and limitations.
-The [4.32.0 terminal gallery](cli_4320/README.md) and
-[HTML reports](html4320/README.md) remain historical evidence.
+New captures show column headers pinned while scrolling, paged help, the
+restyled command palette, pod detail tables and log severity colours. The
+gallery also covers dashboard views, reports, Secrets, FMEA, Access, and
+interactive shell and file-transfer flows.
+[4.39.0 feature checklist](../docs/VALIDATION-4.39.0.md)
 
-The release-time **4.27.4** [terminal gallery](cli_4274/README.md),
-[HTML reports](html4274/README.md) and
-[original run](../artifacts/live-e2e-20261107-083145/results.json) remain intact,
-separate from the refreshed galleries above.
+Earlier versions include the [4.37.0 terminal gallery](cli_4370/README.md),
+[4.37.0 HTML reports](html4370/README.md),
+[4.32.0 terminal gallery](cli_4320/README.md) and
+[4.32.0 HTML reports](html4320/README.md).
+
+The release-time **4.27.4** evidence includes the
+[terminal gallery](cli_4274/README.md), [HTML reports](html4274/README.md) and
+[original run](../artifacts/live-e2e-20261107-083145/results.json).
 
 Earlier captures remain available under their original versions:
 **4.27.3** in [`cli_4273/`](cli_4273/README.md) and [`html4273/`](html4273/README.md),

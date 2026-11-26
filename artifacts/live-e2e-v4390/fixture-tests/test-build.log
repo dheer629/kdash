@@ -1,0 +1,13 @@
+PASS: import, build and check preserve synchronized files byte for byte
+PASS: check detects a stale embedded module refuses without changing files
+PASS: normal build propagates source module edits into both entry points
+PASS: bundle import recovers CLI, modules and uninstaller without changing the bundle
+PASS: normal build protects a newer bundle refuses without changing files
+PASS: import rejects a malformed payload marker refuses without changing files
+PASS: import rejects malformed module markers refuses without changing files
+PASS: import rejects an unknown module boundary refuses without changing files
+PASS: import rejects a duplicated module boundary refuses without changing files
+PASS: check detects a stale embedded uninstaller refuses without changing files
+PASS: normal build and import synchronize the standalone uninstaller
+PASS: build rejects a malformed uninstaller marker refuses without changing files
+PASS: 12 build/import checks (no cluster required)

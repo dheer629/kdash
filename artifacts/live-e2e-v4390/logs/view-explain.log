@@ -1,0 +1,115 @@
+WHY - INCIDENT EVIDENCE  -  warning events grouped into possible explanations - timing alone does not establish a cause
+
+DATA SOURCES   context kdash-local
+┌────────┬───────┬────────┬───────────┬────────────────┐
+│ SOURCE │ STATE │   READ │ SCOPE     │ DETAIL         │
+├────────┼───────┼────────┼───────────┼────────────────┤
+│ events │ ● ok  │ 1s ago │ kdash-e2e │ read succeeded │
+└────────┴───────┴────────┴───────────┴────────────────┘
+
+WARNING EVIDENCE  19 items   one row per object and category, newest first, up to 20
+┌────┬───────────┬──────────────────────────────────────────────┬──────────────────────────────┬───────┬────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ #  │ LAST SEEN │ OBJECT                                       │ REASON                       │ COUNT │ CATEGORY   │ MESSAGE                                                                                                                                                                                                                                                                                                 │
+├────┼───────────┼──────────────────────────────────────────────┼──────────────────────────────┼───────┼────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1  │ 2m        │ PersistentVolumeClaim/z-unbound              │ ProvisioningFailed           │    42 │ storage    │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                                                                                                                                                                 │
+│ 2  │ 2m        │ Pod/z-crash                                  │ BackOff                      │    44 │ restart    │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)                                                                                                                                                                                               │
+│ 3  │ 7m        │ Pod/z-unschedulable                          │ FailedScheduling             │     2 │ scheduling │ 0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.                                                                                                                                          │
+│ 4  │ 7m        │ Pod/z-pending                                │ FailedScheduling             │     2 │ scheduling │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.                                                                                                                                             │
+│ 5  │ 11m       │ Pod/z-imagepull                              │ Failed                       │     4 │ image      │ Error: ErrImagePull                                                                                                                                                                                                                                                                                     │
+│ 6  │ 12m       │ HorizontalPodAutoscaler/app-server-hpa       │ FailedComputeMetricsReplicas │     1 │ other      │ invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io) │
+│ 7  │ 12m       │ HorizontalPodAutoscaler/functionality-legacy │ FailedComputeMetricsReplicas │     1 │ other      │ invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io) │
+│ 8  │ 12m       │ Pod/app-server-8fb4699bc-t7zxj               │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "92efc864477f4bd39ec6e1fa6fd9bbdb8cf2919e989aa5c46a36c5f70bbc38fc": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 9  │ 12m       │ Pod/functionality-legacy-67ks7               │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "e96b9efb25811f4cf625b128bbc39817af019c2bc764e475d38bf071099e01eb": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 10 │ 12m       │ Pod/z-imagepull                              │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "f669a6bc02af61e5d6d6693cb81c68a62eb289245c8d6a88f8c6088de5277a9e": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 11 │ 12m       │ Pod/db-stateful-1                            │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "a92c2438fd500aff83b6a208ea142cd4c74db3682e954fbff3c1e2cfd69a055b": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 12 │ 12m       │ Pod/z-crash                                  │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "82c5ac7813fb1524d6ebbdbeea1c043cdbe7f50ff98f8495a91af0aa4ccf69d7": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 13 │ 12m       │ Pod/app-server-8fb4699bc-cx5vz               │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "f85247adf97fc20ee5c80888e691d8416699f0a22b8f9cf49e025d2c6a2f1a4f": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 14 │ 12m       │ Pod/node-agent-ctvg6                         │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "eab07474c74d237b3d00905c08bd6626c492642eeffe5cb8cdcf3e58306a4ebc": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 15 │ 12m       │ Pod/test-sts-0                               │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "65402bf64d829734e39d15150c930e3c2c4113abccb54f203fd8447aace68c46": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 16 │ 12m       │ Pod/z-oom                                    │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "1e823592f96bcd0b051c7fcaac930dad5b582d22719441404f10332d12ede2d0": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 17 │ 12m       │ Pod/db-stateful-0                            │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "e980e2b3a347c74ba2cc7ae397e31c24342b2fe6ede7b4bef15d6bd04989c850": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 18 │ 12m       │ Pod/kdash-secrets-live-consumer              │ FailedCreatePodSandBox       │     1 │ other      │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "32ae2e8f26f079be3c1eebfcb1d6cd72614828e4673cd42b3efbd92c2b00a685": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory         │
+│ 19 │ 33m       │ CronJob/nightly-report                       │ TooManyMissedTimes           │     1 │ other      │ too many missed start times. Set or decrease .spec.startingDeadlineSeconds or check clock skew                                                                                                                                                                                                          │
+└────┴───────────┴──────────────────────────────────────────────┴──────────────────────────────┴───────┴────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+POSSIBLE EXPLANATIONS  5 categories   hypotheses to check, not conclusions
+┌────────────┬──────────────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY   │ EVIDENCE                                                         │ POSSIBLE EXPLANATION                                                                                   │
+├────────────┼──────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ storage    │ #1                                                               │ volume binding, provisioning, attachment or mounting may block startup - not evidence of a full volume │
+│ restart    │ #2                                                               │ a container may be exiting repeatedly - the event alone does not say why                               │
+│ scheduling │ #3, #4                                                           │ scheduler constraints, capacity or an unbound claim may block placement - read the scheduler message   │
+│ image      │ #5                                                               │ image reference, registry access or pull credentials may prevent the container from starting           │
+│ other      │ #6, #7, #8, #9, #10, #11, #12, #13, #14, #15, #16, #17, #18, #19 │ needs object-specific investigation - its presence alone does not establish a cause                    │
+└────────────┴──────────────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
+
+  #1    evidence #1  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe persistentvolumeclaim z-unbound
+      read   kubectl --context kdash-local -n kdash-e2e get pvc
+
+  #2    evidence #2  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash
+      read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100
+
+  #3    evidence #3  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-unschedulable
+
+  #4    evidence #4  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-pending
+
+  #5    evidence #5  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-imagepull
+
+  #6    evidence #6  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe horizontalpodautoscaler app-server-hpa
+
+  #7    evidence #7  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe horizontalpodautoscaler functionality-legacy
+
+  #8    evidence #8  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-t7zxj
+
+  #9    evidence #9  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod functionality-legacy-67ks7
+
+  #11    evidence #11  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod db-stateful-1
+
+  #13    evidence #13  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-cx5vz
+
+  #14    evidence #14  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod node-agent-ctvg6
+
+  #15    evidence #15  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod test-sts-0
+
+  #16    evidence #16  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod z-oom
+
+  #17    evidence #17  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod db-stateful-0
+
+  #18    evidence #18  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe pod kdash-secrets-live-consumer
+
+  #19    evidence #19  (WARNING EVIDENCE above)
+      read   kubectl --context kdash-local -n kdash-e2e describe cronjob nightly-report
+
+  >   storage  volume problems  see key 9 STORAGE: its findings carry their own next commands
+
+  >   restart  crash loop  what usually fixes it
+      note   the previous logs (above) show the exit reason; a config or Secret change is the usual cause - compare with the last rollout:
+      read   kubectl --context kdash-local -n kdash-e2e rollout history deployment/DEPLOYMENT  # what changed and when
+
+  >   scheduling  pods not placed  what usually fixes it
+      read   kubectl --context kdash-local describe nodes | grep -A 8 'Allocated resources'  # free capacity per node
+      note   reduce requests, add capacity, or fix the nodeSelector / affinity / taint tolerations the scheduler message names
+
+  >   image  pull failures  what usually fixes it
+      read   kubectl --context kdash-local -n kdash-e2e get pods -o jsonpath='{range .items[*]}{.metadata.name}: {.spec.containers[*].image} pullSecrets={.spec.imagePullSecrets[*].name}{"\n"}{end}'  # the image references and pull secrets
+      note   check the tag exists in the registry and the pull secret is valid; the registry must be reachable from the nodes
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.

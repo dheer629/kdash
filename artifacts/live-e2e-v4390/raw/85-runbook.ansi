@@ -1,0 +1,50 @@
+[1;7m KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [38;5;243m 3 WORKLOADS [39m [38;5;243m 4 IP POOL [39m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [38;5;243m 8 SVCS [39m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-26 09:24:14[0m[38;5;243m IST[39m
+[38;5;243m┌─ [1m[39mSCOPE[0m[38;5;243m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[38;5;243m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[38;5;243m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[38;5;243m ───────┐
+│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msort cpu ▼ high first[0m                      [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m549[39m           [38;5;243m│[39m [38;5;243mcpu [39m    59m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14               [38;5;243m│
+│[39m [38;5;243mpoll 2s  spec 12s/30s   session [39m09:24:02[38;5;243m up [39m12s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    1Mi [38;5;29m░░░░░░░░[39m [38;5;29m  0%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;29m^ 0[39m        [38;5;243m│
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+[1m[38;5;231m[48;5;24m DATA [0m[38;5;29m●[39m pods [1m[38;5;29mfresh[0m [38;5;243m12s old[39m  metrics [1m[38;5;29mavailable[0m [38;5;243m│[39m [1m[38;5;63mC[0m certs (2 critical, 3 expiring) [38;5;243m│[39m [1m[38;5;63m/[0m search [38;5;243m│[39m [1m[38;5;63mK[0m check [38;5;243m│[39m [1m[38;5;63mi[0m inspect [38;5;243m│[39m [1m[38;5;63m8[0m services  [1m[38;5;63m9[0m storage  [1m[38;5;63mE[0m events  [1m[38;5;63m![0m explain [38;5;243m│[39m [1m[38;5;63m:[0m comman[38;5;243m›
+[1m[38;5;231m[48;5;24m RUNBOOK - etcd-restore [0m  [38;5;243mprinted procedures with your cluster's names filled in - kdash never runs them[39m
+[38;5;243mrunbooks:[39m  [1 etcd-restore]   2 cert-rotate    3 node-notready    4 api-unreachable    5 oidc-login    [38;5;243m[ ] previous / next   (kdash --runbook NAME)[39m
+
+[1;4mWHEN TO USE[0m  [38;5;243metcd data is lost or corrupted, or the cluster must go back to a known state[39m
+  [1m[38;5;196m![0m [1mA restore rolls the WHOLE cluster back to the snapshot time: everything created or changed after it is lost.[0m
+  [1m[38;5;196m![0m [1mRestoring onto NEW hosts needs the ORIGINAL server token (it decrypts the bootstrap data in the snapshot).[0m
+  [1m[38;5;196m![0m [1mSnapshots contain the cluster CA keys and all Secrets: copy and store them like secrets.[0m
+
+[1mSNAPSHOTS[0m
+  [38;5;243munknown (unavailable) - list them on a server: sudo rke2 etcd-snapshot ls[39m
+
+[1;4mA. RESTORE ONTO THE EXISTING SERVERS[0m  [38;5;243mservers: dev[39m
+
+  [1mSTEP 0[0m  prepare (nothing changes yet)
+      [38;5;29mread  [39m [38;5;63m[on dev][39m sudo rke2 etcd-snapshot ls  [38;5;243m# confirm the snapshot is on this node[39m
+      [38;5;29mread  [39m [38;5;63m[on dev][39m sudo cat /var/lib/rancher/rke2/server/token  [38;5;243m# save the server token in your secret store first - needed for any restore onto new hosts[39m
+      [38;5;29mread  [39m kdash --report  [38;5;243m# evidence of the current state before you change it[39m
+
+  [1mSTEP 1[0m  stop rke2-server on every server
+      [1m[38;5;163mCHANGE[0m [38;5;63m[on dev][39m sudo systemctl stop rke2-server  [38;5;243m# all servers must be down before the reset[39m
+
+  [1mSTEP 2[0m  reset the cluster from the snapshot (on dev only)
+      [1m[38;5;163mCHANGE[0m [38;5;63m[on dev][39m sudo rke2 server --cluster-reset --cluster-reset-restore-path=/var/lib/rancher/rke2/server/db/snapshots/<SNAPSHOT-NAME>  [38;5;243m# wait for: Managed etcd c›
+[39m      [38;5;243mnote  [39m [38;5;243mif config.yaml has etcd-s3 settings and you restore this LOCAL file, add --etcd-s3=false[39m
+
+  [1mSTEP 3[0m  start rke2-server on dev
+      [1m[38;5;163mCHANGE[0m [38;5;63m[on dev][39m sudo systemctl start rke2-server  [38;5;243m# the reset flag file is removed on this normal start[39m
+      [38;5;29mread  [39m kubectl --context kdash-local get nodes -o wide  [38;5;243m# wait until dev is Ready[39m
+
+  [1mSTEP 4[0m  on every OTHER server: back up and delete the old etcd data
+      [1m[38;5;163mCHANGE[0m [38;5;63m[on the other servers (none found)][39m sudo mv /var/lib/rancher/rke2/server/db /var/lib/rancher/rke2/server/db.bak-$(date +%Y%m%d%H%M%S)  [38;5;243m# RKE2 asks to back u›
+
+[39m  [1mSTEP 5[0m  start rke2-server on the other servers, one at a time
+      [1m[38;5;163mCHANGE[0m [38;5;63m[on the other servers (none found)][39m sudo systemctl start rke2-server  [38;5;243m# they rejoin the restored cluster; wait for Ready before the next[39m
+
+  [1mSTEP 6[0m  verify
+      [38;5;29mread  [39m kubectl --context kdash-local get nodes -o wide  [38;5;243m# all servers and agents Ready[39m
+      [38;5;29mread  [39m kubectl --context kdash-local get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded  [38;5;243m# what has not come back yet[39m
+      [38;5;29mread  [39m kdash --doctor && kdash --certs  [38;5;243m# API, access and certificates[39m
+      [38;5;243mnote  [39m [38;5;243mnodes are restored from the snapshot too: delete nodes that no longer exist (kubectl --context kdash-local delete node NAME) and re-run workloads changed af›
+
+[39mK check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l[38;5;243m›
+[7m[39m certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ○ LIVE 09:24:15  next 1s  data 1s old  fetch >

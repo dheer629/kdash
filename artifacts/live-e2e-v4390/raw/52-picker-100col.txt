@@ -1,0 +1,40 @@
+ KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e           18 of 18 pods
+ pods    ● CrashLoopBackOff 1  ● ImagePullBackOff 1  ● Pending 2  ● Running 9  ● Succeeded 5
+ / search   view all (u)   X enables shell / upload / download   sort name
+┌─────────────────────────────────────┬──────────────────┬───────┬─────┬────────┬─────────┬───────┐
+│ POD                                 │ STATUS           │ READY │ RST │    CPU │     MEM │  %LIM │
+├─────────────────────────────────────┼──────────────────┼───────┼─────┼────────┼─────────┼───────┤
+│ app-server-8fb4699bc-cx5vz          │ Running          │ 2/2   │  21 │     3m │     0Mi │    0% │
+│ app-server-8fb4699bc-t7zxj          │ Running          │ 2/2   │  20 │     2m │     0Mi │    0% │
+│ completed-check-m9swm               │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ db-stateful-0                       │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │
+│ db-stateful-1                       │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │
+│ functionality-legacy-67ks7          │ Running          │ 1/1   │   3 │     1m │     0Mi │    0% │
+│ kdash-secrets-live-consumer         │ Running          │ 1/1   │   3 │     0m │     0Mi │    0% │
+│ nightly-report-29927740-mqxh6       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ nightly-report-29927745-vvwzh       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ nightly-report-29927750-c7zrv       │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ node-agent-ctvg6                    │ Running          │ 1/1   │   4 │     1m │     0Mi │    0% │
+│ sync-pod                            │ Succeeded        │ 0/1   │   0 │      - │       - │     - │
+│ test-sts-0                          │ Running          │ 1/1   │  26 │     0m │     0Mi │     - │
+│ z-crash                             │ CrashLoopBackOff │ 0/1   │ 462 │      - │       - │     - │
+│ z-imagepull                         │ ImagePullBackOff │ 0/1   │   0 │      - │       - │     - │
+│ z-oom                               │ Running          │ 1/1   │   3 │    50m │     1Mi │    6% │
+│ z-pending                           │ Pending          │ 0/1   │   0 │      - │       - │     - │
+│ z-unschedulable                     │ Pending          │ 0/1   │   0 │      - │       - │     - │
+└─────────────────────────────────────┴──────────────────┴───────┴─────┴────────┴─────────┴───────┘
+
+
+
+
+
+
+
+
+── 1 / 18   2 failing   2 pending / starting ───────────────────────────────── live · refresh 2s ──
+┌─ MOVE ───────────┬─ FIND ───────────┬─ INSPECT ─────────┬─ SHELL · FILES ───┬─ LEAVE ───────────┐
+│ j/k ↑↓   move    │ /  search        │ Enter  summary    │ S  shell          │ q / Q  back / qu~ │
+│ PgUp/PgDn page   │ u  needs attent~ │ l / p  logs / pr~ │ U  upload         │ >      export to~ │
+│ g / G    first ~ │ s  sort: name    │ d / e  describe ~ │ D  download       │ r      refresh n~ │
+│ 12       go to ~ │ F  filters       │ w / c  why / con~ │ X  enable S / U ~ │ ?      all keys   │
+└──────────────────┴──────────────────┴───────────────────┴───────────────────┴───────────────────┘

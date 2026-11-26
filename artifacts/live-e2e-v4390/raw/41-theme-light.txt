@@ -1,0 +1,50 @@
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                  read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:19:17 IST
+┌─ SCOPE ──────────────────────────────────────────────┬─ POD HEALTH ─────────────────────────────┬─ USAGE vs LIMITS ─────────────────┬─ WORKLOADS · EVENTS ─────┐
+│ match .*   sort mem ▲ low first                      │ ! pods 14/18 ready   restarts 548        │ cpu     60m ░░░░░░░░   3% lim     │ workloads 14             │
+│ poll 3s  spec 15s/30s   session 09:16:21 up 2m56s    │ OOM risk 0   OOMKilled 0   no-limit 1    │ mem     1Mi ░░░░░░░░   0% lim     │ events 15m ! 2  ^ 1      │
+└──────────────────────────────────────────────────────┴──────────────────────────────────────────┴───────────────────────────────────┴──────────────────────────┘
+ DATA ● pods fresh 15s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+► TIMELINE  09:16:21 -> 09:19:17 IST  (all since kdash started, z window, c hides graphs) ──────────────────────────────────────────────────────────────────────
+   CPU used - namespace                                                              MEMORY used - namespace
+     70m┤                ·                  ·                ·                         1Mi┤                ·                  ·                ·
+        │████████████████████████████████████                ·    ████  ████████          │████████████████████████████████████                ·    ████  ████████
+        │████████████████████████████████████                ·    ████  ████████          │████████████████████████████████████                ·    ████  ████████
+     35m┤████████████████████████████████████                ·    ████  ████████       1Mi┤████████████████████████████████████                ·    ████  ████████
+        │████████████████████████████████████                ·    ████  ████████          │████████████████████████████████████                ·    ████  ████████
+        │████████████████████████████████████                ·    ████▄▄████████          │████████████████████████████████████                ·    ████  ████████
+      0m└┴───────────────┴──────────────────┴────────────────┴─────────────────┴       0Mi└┴───────────────┴──────────────────┴────────────────┴─────────────────┴
+         09:16:21                       09:17:49                        09:19:17           09:16:21                       09:17:49                        09:19:17
+  events                                                          !      !          events                                                          !      !
+  now 60m  min 5m  avg 57m  max 61m @ 09:16:37                                      now 1Mi  min 0Mi  avg 1Mi  max 1Mi @ 09:19:17
+  request 315m (above)  limit 1750m (above)  3% of limit                            request 276Mi (above)  limit 976Mi (above)  0% of limit
+
+► PODS ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                 │   ACTUAL (live)    │    ASSIGNED (req / limit)     │      UTILISATION (used vs req / lim)
+WORKLOAD / POD / CONTAINER                               RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM CPU/LIM  m%REQ m%LIM MEM/LIM
+► Job completed-check  (1 pod)                           0/1   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+  completed-check-m9swm                                  0/1   0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip -   qos Burstable   status Succeeded
+    └─ check                                             N     0 │      - ·       - · │      5     50       4      32 │     -     - n/a          -     - n/a
+..................................................................................................................................................................
+► CronJob nightly-report  (3 pods)                       0/3   0 │      - ·       - · │     30    150      48      96 │     -     - n/a          -     - n/a
+  nightly-report-29927735-m6d6c                          0/1   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.181   qos Burstable   status Succeeded
+    └─ report                                            N     0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+  nightly-report-29927740-mqxh6                          0/1   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.183   qos Burstable   status Succeeded
+    └─ report                                            N     0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+  nightly-report-29927745-vvwzh                          0/1   0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip 10.244.0.186   qos Burstable   status Succeeded
+    └─ report                                            N     0 │      - ·       - · │     10     50      16      32 │     -     - n/a          -     - n/a
+..................................................................................................................................................................
+► Pod sync-pod  (1 pod)                                  0/1   0 │      - ·       - · │      -      -       -       - │     -     - n/a          -     - n/a
+  sync-pod                                               0/1   0 │      - ·       - · │      -      -       -       - │     -     - n/a          -     - n/a
+      cpu                   mem                             node dev   pool role:control-plane,master   ip -   qos BestEffort   status Succeeded
+    └─ sync-pod                                          N     0 │      - ·       - · │      -      -       -       - │     -     - n/a          -     - n/a
+..................................................................................................................................................................
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TOTAL (18 pods, 14 workloads)                                548 │     60 ·       1 · │    315   1750     276     976 │  19.0   3.4 ░░░░░░░░   0.4   0.1 ░░░░░░░░
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+ colour theme: light - for white backgrounds (T: next) | ○ LIVE 09:19:19  next 1s  data 2s old  spec 17/30s  fetch 0.0s  poll 3s  AUDITED | pods | rows 1-38/113 | ? help

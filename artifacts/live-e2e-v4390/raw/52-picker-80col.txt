@@ -1,0 +1,30 @@
+ KDASH │ SELECT POD │ READ-ONLY │ context kdash-local │ namespace kdash-e2e
+ pods    ● CrashLoopBackOff 1  ● ImagePullBackOff 1  ● Pending 2  ● Running 9
+ / search   view all (u)   X enables shell / upload / download   sort name
+┌──────────────────────────┬─────────┬───────┬─────┬────────┬─────────┬───────┐
+│ POD                      │ STATUS  │ READY │ RST │    CPU │     MEM │  %LIM │
+├──────────────────────────┼─────────┼───────┼─────┼────────┼─────────┼───────┤
+│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  21 │     3m │     0Mi │    0% │
+│ app-server-8~699bc-t7zxj │ Running │ 2/2   │  20 │     2m │     0Mi │    0% │
+│ completed-check-m9swm    │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ db-stateful-0            │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
+│ db-stateful-1            │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
+│ functionalit~egacy-67ks7 │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
+│ kdash-secret~ve-consumer │ Running │ 1/1   │   3 │     0m │     0Mi │    0% │
+│ nightly-repo~27740-mqxh6 │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~27745-vvwzh │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~27750-c7zrv │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ node-agent-ctvg6         │ Running │ 1/1   │   4 │     1m │     0Mi │    0% │
+│ sync-pod                 │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ test-sts-0               │ Running │ 1/1   │  26 │     0m │     0Mi │     - │
+│ z-crash                  │ CrashLo │ 0/1   │ 462 │      - │       - │     - │
+│ z-imagepull              │ ImagePu │ 0/1   │   0 │      - │       - │     - │
+│ z-oom                    │ Running │ 1/1   │   3 │    50m │     1Mi │    6% │
+└──────────────────────────┴─────────┴───────┴─────┴────────┴─────────┴───────┘
+── 1 / 18   ↓ 2 below   2 failing ──────────────────────── live · refresh 2s ──
+┌─ MOVE ───────┬─ FIND ───────┬─ INSPECT ─────┬─ SHELL ───────┬─ LEAVE ───────┐
+│ j/k ↑↓ move  │ /  search    │ Enter summary │ S  shell      │ q / Q back /~ │
+│ PgUp/PgDn p~ │ u  needs at~ │ l / p logs /~ │ U  upload     │ >     export~ │
+│ g / G first~ │ s  sort: na~ │ d / e descri~ │ D  download   │ r     refres~ │
+│ 12   go to ~ │ F  filters   │ w / c why / ~ │ X  enable S ~ │ ?     all ke~ │
+└──────────────┴──────────────┴───────────────┴───────────────┴───────────────┘

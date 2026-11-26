@@ -24,7 +24,7 @@
 #===============================================================================
 set -uo pipefail
 
-KDASH_VERSION="4.37.0"
+KDASH_VERSION="4.39.0"
 
 for _cf in /etc/kdash.conf "${XDG_CONFIG_HOME:-$HOME/.config}/kdash.conf"; do
   [ -r "$_cf" ] && . "$_cf"
@@ -301,19 +301,33 @@ audit_show() {            # last N events, newest last - one framed table
         print hl(GBL, GBT, GBR) }'
 }
 audit_verify() {          # recompute every chain; rc 0 = intact, 1 = broken
-  local f bad=0 fs
+  # Every line is checked against the hash stored on the line before it, so the lines
+  # are independent: one awk writes the hash input of each event to its own file and one
+  # sha256sum hashes them all (a sha256sum per line took ~50 s on a 22,000-line month).
+  # The report is the same: the first line that does not match, per file.
+  local f bad=0 fs d r
   fs="$(audit_files)"; [ -n "$fs" ] || { printf 'no audit log yet in %s\n' "$AUDIT_DIR"; return 0; }
+  d="$(umask 077; mktemp -d "${TMPDIR:-/tmp}/kdash_verify.XXXXXX")" || { printf 'audit verify: no temporary directory\n'; return 1; }
   while IFS= read -r f; do
-    local prev=0 ln=0 line body h want ok=1 n=0
-    while IFS= read -r line; do
-      ln=$((ln + 1)); case "$line" in '#'*|'') continue ;; esac
-      n=$((n + 1)); body="${line%$'\t'h=*}"; h="${line##*$'\t'h=}"
-      want="$(printf '%s\t%s' "$prev" "$body" | sha256sum)"; want="${want:0:16}"
-      if [ "$h" != "$want" ]; then printf 'BROKEN  %s line %d (expected %s, found %s) - edited, inserted or deleted line before here\n' "$f" "$ln" "$want" "$h"; ok=0; bad=1; break; fi
-      prev="$h"
-    done < "$f"
-    [ "$ok" = 1 ] && printf 'OK      %s  (%d events, chain intact)\n' "$f" "$n"
+    if ! rm -rf -- "$d/m" || ! mkdir -p -- "$d/m" ||
+      ! LC_ALL=C awk -v d="$d/m" -v lf="$d/list" 'BEGIN { prev = "0"; printf "" > lf }
+      /^#/ || $0 == "" { next }
+      { n++; p = 0; s = $0; while ((i = index(s, "\th=")) > 0) { p += i; s = substr(s, i + 3); p += 2 }
+        if (p) { body = substr($0, 1, p - 3); h = substr($0, p + 1) } else { body = $0; h = $0 }
+        printf "%s\t%s", prev, body > (d "/" n); close(d "/" n)
+        printf "%d\t%d\t%s\n", n, FNR, h > lf; prev = h }
+      END { close(lf) }' "$f" ||
+      ! ( cd -- "$d/m" && find . -type f -exec sha256sum {} + ) > "$d/sums" ||
+      ! r="$(LC_ALL=C awk -v f="$f" 'FILENAME == ARGV[1] { k = $2; sub(/^\*/, "", k); sub(/^\.\//, "", k); W[k] = substr($1, 1, 16); next }
+      { if (!($1 in W) || W[$1] != $3) { printf "BROKEN  %s line %d (expected %s, found %s) - edited, inserted or deleted line before here\n", f, $2, W[$1], $3; bad = 1; exit } n = $1 }
+      END { if (!bad) printf "OK      %s  (%d events, chain intact)\n", f, n }' "$d/sums" "$d/list")"; then
+      printf 'ERROR   %s (could not verify the audit chain)\n' "$f"
+      bad=1
+      continue
+    fi
+    printf '%s\n' "$r"; case "$r" in BROKEN*) bad=1 ;; esac
   done <<< "$fs"
+  rm -rf -- "$d"
   audit AUDIT_VERIFY "result=$([ "$bad" = 0 ] && echo intact || echo BROKEN)"
   return "$bad"
 }
@@ -909,7 +923,8 @@ read -r -a KC <<< "${KDASH_KUBECTL:-kubectl}"
 # light use stronger shades for one background; mono keeps bold / reverse only. Yellow is
 # never used. 16-colour terminals (TERM=linux, vt*, dumb, ansi; or KDASH_COLORS=16) keep
 # the ANSI codes. Roles: 32 ok, 94 info, 35 warning, 1;31 critical, 90 secondary,
-# 1;35 titles, 36 commands; reverse / background chips for verdicts and the status line.
+# 1;35 titles, 36 commands, 1;7 header bands (table column headers, chart and panel
+# titles, the DATA label); reverse / background chips for verdicts and the status line.
 theme_map() {
   UI_MAPK=(); UI_MAPV=()
   [ "${COLOR:-1}" = 1 ] || return 0
@@ -920,7 +935,8 @@ theme_map() {
   # chips: white text on a dark colour reads on any background (no yellow, no bold black)
   local chips='7;1;31=1;38;5;231;48;5;160 7;1;35=1;38;5;231;48;5;127 7;1;32=1;38;5;231;48;5;28
     1;30;42=1;38;5;231;48;5;28 1;30;43=1;38;5;231;48;5;127 1;97;41=1;38;5;231;48;5;160 1;41;97=1;38;5;231;48;5;160
-    41;97=38;5;231;48;5;160 41;97;1=1;38;5;231;48;5;160 45;97=38;5;231;48;5;127 1;43;30=1;38;5;231;48;5;127 1;47;30=1;38;5;16;48;5;252'
+    41;97=38;5;231;48;5;160 41;97;1=1;38;5;231;48;5;160 45;97=38;5;231;48;5;127 1;43;30=1;38;5;231;48;5;127 1;47;30=1;38;5;16;48;5;252
+    1;7=1;38;5;231;48;5;24'
   case "${THEME:-safe}:$depth" in
     mono:*) spec='32= 1;32=1 31= 1;31=1 35= 1;35=1 94= 1;94=1 36= 33= 1;33=1 90= 2= 0;2=0
               7;1;31=7;1 7;1;35=7;1 7;1;32=7;1 1;30;42=7;1 1;30;43=7;1 1;97;41=7;1 1;41;97=7;1 41;97=7 41;97;1=7;1 45;97=7 1;43;30=7;1 1;47;30=7;1' ;;
@@ -930,7 +946,7 @@ theme_map() {
               36=38;5;24 33=38;5;90 1;33=1;38;5;90 90=38;5;241 2=38;5;241 0;2=0;38;5;241
               7;1;31=1;38;5;231;48;5;124 7;1;35=1;38;5;231;48;5;90 7;1;32=1;38;5;231;48;5;22 1;30;42=1;38;5;231;48;5;22
               1;30;43=1;38;5;231;48;5;90 1;97;41=1;38;5;231;48;5;124 1;41;97=1;38;5;231;48;5;124 41;97=38;5;231;48;5;124
-              41;97;1=1;38;5;231;48;5;124 45;97=38;5;231;48;5;90 1;43;30=1;38;5;231;48;5;90 1;47;30=1;38;5;16;48;5;252' ;;
+              41;97;1=1;38;5;231;48;5;124 45;97=38;5;231;48;5;90 1;43;30=1;38;5;231;48;5;90 1;47;30=1;38;5;16;48;5;252 1;7=1;38;5;231;48;5;24' ;;
     *:256) spec="32=38;5;29 1;32=1;38;5;29 31=38;5;196 1;31=1;38;5;196 35=38;5;163 1;35=1;38;5;98 94=38;5;63 1;94=1;38;5;63
               36=38;5;63 33=38;5;163 1;33=1;38;5;163 90=38;5;243 2=38;5;243 0;2=0;38;5;243 $chips" ;;
     dark:16) spec='35=95 1;35=1;95 94=96 1;94=1;96 32=92 1;32=1;92 33=95 1;33=1;95 2=90 0;2=0;90 1;30;43=1;97;45 1;43;30=1;97;45' ;;
@@ -999,7 +1015,7 @@ audit START "mode=$AUDIT_MODE view=$VIEW filter=$FILTER kubeconfig=$KUBECONF_SHO
 SPEC="$TMPD/spec"; TOPC="$TMPD/top"; TOPP="$TMPD/topprev"
 NODES="$TMPD/nodes"; TOPN_F="$TMPD/topnode"; SVC="$TMPD/svc"; CLUS="$TMPD/cluster"; WLS="$TMPD/workloads"
 MODEL="$TMPD/model"; HIST="$TMPD/hist.tsv"; NHIST="$TMPD/nodehist.tsv"
-HDRF="$TMPD/hdr"; BODYF="$TMPD/body"; FTRF="$TMPD/ftr"
+HDRF="$TMPD/hdr"; BODYF="$TMPD/body"; FTRF="$TMPD/ftr"; STICKYF="$TMPD/sticky"
 mkdir -p "$MODEL"
 : > "$SPEC"; : > "$TOPC"; : > "$TOPP"; : > "$NODES"; : > "$TOPN_F"; : > "$SVC"; : > "$CLUS"; : > "$WLS"; : > "$HIST"; : > "$NHIST"
 LOOPED=0
@@ -1317,7 +1333,7 @@ function palinit() {
 function C(k, s) {
   if (!color) return s
   if (!PALOK) palinit()
-  if (MONO) { if (k == "7;1") k = "7"; else if (k ~ /^1;/ || k == "1") k = "1"; else return s }
+  if (MONO) { if (k == "7;1") k = "7"; else if (k == "1;7") k = "1;7"; else if (k ~ /^1;/ || k == "1") k = "1"; else return s }
   else if (k in PAL) k = PAL[k]
   return sprintf("\033[%sm%s\033[0m", k, s)
 }
@@ -1496,7 +1512,7 @@ function sbox(label, w,   ln, n, i, S, mx, pw, tl, tr, bl, br, hz, plain) {
   for (i = 1; i <= n; i++) print C("90", VB) S[i] sprintf("%" (pw - 2 - vlen(S[i])) "s", "") C("90", VB) > hdrf
   print C("90", bl rule(hz, pw - 2) br) > hdrf
 }
-function header(title, w,   tstr, tw, sauth) {
+function header(title, w,   tstr, tw, sauth, i_) {
   SUMF = hdrf ".sum"; printf "" > SUMF; close(SUMF)
   SG = "\037"; NAR = (termw + 0 > 0 && termw + 0 < 110)
   # the tab bar needs roughly 15 characters for the version and 25 for the clock
@@ -1516,7 +1532,9 @@ function header(title, w,   tstr, tw, sauth) {
   if (nswarn)  print C("35", " ! your context binds no namespace - showing \"default\". Use: kdash -n <namespace>") > hdrf
   if (!topok)  print C("35", " ! kubectl top unavailable - live usage shows \"-\", requests / limits still live") > hdrf
   print "\001DATASTRIP\001" > hdrf      # render() puts the status strip here
-  if (title != "") printf " %s\n", C("1;35", title) > hdrf
+  if (title != "") { i_ = index(title, "   ")
+    if (i_ > 1) printf " %s%s\n", C("1;35", substr(title, 1, i_ - 1)), C("90", substr(title, i_)) > hdrf
+    else printf " %s\n", C("1;35", title) > hdrf }
 }
 # one line of health for every view: readiness, restarts, memory risks, CPU / memory
 # against limits, workloads and critical / warning events of the last 15 minutes
@@ -1602,7 +1620,19 @@ function hpanel(w,   pw, v, n, i, T, A, B, D, l4, CW, tot, ex, bw, np, ph, cc, c
   return 1
 }
 function note(s) { print C("90", " " s) > hdrf }
-function sect(s, w) { printf "%s %s %s\n", C("1;94", ARW), C("1", s), C("90", rule(HR, w - length(s) - 4)) > bodyf }
+# ---- headers. A section starts with a title line; a table has its column header as a
+# band (one colour across the table, readable on white and black terminals) directly
+# above its rows. On the screen (stk=1) the header lines carry a mark that render_core
+# turns into the sticky index: while a table scrolls, its header stays on top.
+function plain(s) { gsub(/\033\[[0-9;?]*[A-Za-z]/, "", s); return s }
+function band(s, w,   p) { s = plain(s); p = w - vlen(s); return C("1;7", s (p > 0 ? sprintf("%" p "s", "") : "")) }
+function lw() { return (LINEW + 0 > 0) ? LINEW + 0 : W + 0 }
+function thead(s, w, tail) { print (stk ? "\034" : "") band(s, (tail != "" ? 0 : w)) tail > bodyf }
+function thgrp(s) { print (stk ? "\034" : "") s > bodyf }
+# section title: name in bold, what it shows in grey, a rule to the edge
+function sect2(t, d, w,   r) { if (w + 0 < 1) w = W + 0; r = w - vlen(t) - vlen(d) - 4
+  printf "%s%s %s%s%s\n", (stk ? "\035" : ""), C("1;94", ARW), C("1", t), C("90", d), (r > 2 ? " " C("90", rule(HR, r - 1)) : "") > bodyf }
+function sect(s, w,   i) { i = index(s, "  "); if (i > 1) sect2(substr(s, 1, i - 1), substr(s, i), w); else sect2(s, "", w) }
 function ipnet(ip,   a, n) {
   if (ip == "" || ip == "-") return "-"
   if (index(ip, ":")) { n = split(ip, a, ":"); return a[1] ":" a[2] ":" a[3] ":" a[4] "::/64" }
@@ -1695,7 +1725,7 @@ function tchart(slot, title, n, t0, t1, w, h, req, lim, kind, ucol,
     if (vmin < 0 || TC_V[i] < vmin) vmin = TC_V[i]; if (TC_V[i] >= vmax) { vmax = TC_V[i]; tpk = TC_T[i] }
     vsum += TC_V[i]; vn++; vlast = TC_V[i] }
   if (vn < 2) {
-    TL[slot, ++TLN[slot]] = C("1", padr(title, w))
+    TL[slot, ++TLN[slot]] = band(" " title, w)
     TL[slot, ++TLN[slot]] = C("90", padr(sprintf("%" YL "s%s", "", (vn == 0 ? "no data in this time window" : "one sample so far - the chart starts with the 2nd (run kdash live)")), w))
     TLW[slot] = w; return
   }
@@ -1712,7 +1742,7 @@ function tchart(slot, title, n, t0, t1, w, h, req, lim, kind, ucol,
   }
   rg = top - lo; if (rg <= 0) rg = 1
   q1_ = int(PW / 4); q2_ = int((PW + 1) / 2); q3_ = int(PW * 3 / 4)       # faint time guides
-  TL[slot, ++TLN[slot]] = C("1", padr(title, w - 24)) C("90", sprintf("%24s", zoom ? "zoomed: from " tvax(lo, kind) : ""))
+  TL[slot, ++TLN[slot]] = band(" " padr(title, w - 26) sprintf("%24s", zoom ? "zoomed: from " tvax(lo, kind) : "") " ", w)
   lr = (lim > 0 && lim <= top && lim >= lo) ? int((lim - lo) / rg * h) + 1 : 0; if (lr > h) lr = h
   rr = (req > 0 && req <= top && req >= lo) ? int((req - lo) / rg * h) + 1 : 0; if (rr > h) rr = h
   for (c = 1; c <= PW; c++) B[c] = -1
@@ -2233,7 +2263,7 @@ function spk(l,   k, t, s) { k = split(l, t, " "); if (k > SPW) k = SPW; s = spa
 # one column per time slice of the chart window, shade + colour = % of memory limit,
 # ! = the pod restarted in that slice
 function hcell(v) { if (v < 0) return " "; if (v >= 90) return C("1;31", FILL); if (v >= 75) return C("35", OTH); if (v >= 50) return C("94", MID); return C("32", EMPTY) }
-function heatmap(LW,   ln, a, n, i, j, k, R, ht0, ht1, nb, nol, NW_, CW_, cv, cc, b0, b1, mx, rb, RBX, s, p2_, l1, l2, l3, sp, nshow, nrs) {
+function heatmap(LW,   ln, a, n, i, j, k, R, ht0, ht1, nb, nol, NW_, CW_, cv, cc, b0, b1, mx, rb, RBX, s, p2_, l1, l2, l3, sp, nshow, nrs, HAX) {
   n = 0; nb = 0
   while ((getline ln < heatf) > 0) { split(ln, a, "\t")
     if (a[1] == "#HEAT") { ht0 = a[2] + 0; ht1 = a[3] + 0; nb = a[4] + 0; continue }
@@ -2248,6 +2278,13 @@ function heatmap(LW,   ln, a, n, i, j, k, R, ht0, ht1, nb, nol, NW_, CW_, cv, cc
   NW_ = 24; for (i = 1; i <= n; i++) { split(R[i], a, "\t"); if (length(a[1]) > NW_) NW_ = length(a[1]) } if (NW_ > 46) NW_ = 46
   CW_ = LW - 2 - NW_ - 1 - 1 - 24; if (CW_ > 120) CW_ = 120; if (CW_ < 20) CW_ = 20
   nshow = (n > topn) ? topn : n
+  # time axis of the strip (host clock), in the header above the rows and again below them
+  sp = ht1 - ht0; p2_ = int((CW_ + 1) / 2)
+  l1 = (sp > 21600) ? tmd(ht0) " " thm(ht0) : thms(ht0); l3 = (sp > 21600) ? tmd(ht1) " " thm(ht1) : thms(ht1); l2 = (sp > 21600) ? thm(ht0 + sp / 2) : thms(ht0 + sp / 2)
+  s = sprintf("%" CW_ "s", ""); s = tput_(s, 1, l1); if (CW_ - length(l3) + 1 > length(l1) + 1) s = tput_(s, CW_ - length(l3) + 1, l3)
+  j = p2_ - int(length(l2) / 2); if (j > length(l1) + 2 && j + length(l2) < CW_ - length(l3)) s = tput_(s, j, l2)
+  HAX = s
+  thead(sprintf("  %s %s%s %s %5s %s", padr("POD  (" n ")", NW_), VB, HAX, VB, "%LIM", "now  RST"), lw())
   for (k = 1; k <= nshow; k++) { split(R[IX[k]], a, "\t"); split(a[5], cv, " ")
     split("", RBX); if (a[6] != "-") { nrs = split(a[6], rb, ","); for (j = 1; j <= nrs; j++) RBX[rb[j] + 0] = 1 }
     s = ""
@@ -2258,12 +2295,8 @@ function heatmap(LW,   ln, a, n, i, j, k, R, ht0, ht1, nb, nol, NW_, CW_, cv, cc
     }
     printf "  %s %s%s %s %s\n", padr(a[1], NW_), C("90", VB), s, C("90", VB), fpct(a[3] + 0, 5) C("90", " now") (a[4] + 0 > 0 ? C("1;31", sprintf(" %3d", a[4])) C("90", " rst") : "") > bodyf
   }
-  # time axis under the cells (host clock)
-  sp = ht1 - ht0; p2_ = int((CW_ + 1) / 2)
-  l1 = (sp > 21600) ? tmd(ht0) " " thm(ht0) : thms(ht0); l3 = (sp > 21600) ? tmd(ht1) " " thm(ht1) : thms(ht1); l2 = (sp > 21600) ? thm(ht0 + sp / 2) : thms(ht0 + sp / 2)
-  s = sprintf("%" CW_ "s", ""); s = tput_(s, 1, l1); if (CW_ - length(l3) + 1 > length(l1) + 1) s = tput_(s, CW_ - length(l3) + 1, l3)
-  j = p2_ - int(length(l2) / 2); if (j > length(l1) + 2 && j + length(l2) < CW_ - length(l3)) s = tput_(s, j, l2)
-  printf "  %s  %s\n", sprintf("%" NW_ "s", ""), C("90", s) > bodyf
+  # the time axis again under the cells
+  printf "  %s  %s\n", sprintf("%" NW_ "s", ""), C("90", HAX) > bodyf
   printf "  %s  %s %s  %s %s  %s %s  %s %s  %s %s%s\n", sprintf("%" NW_ "s", ""), C("32", EMPTY), C("90", "< 50%"), C("94", MID), C("90", "< 75%"), C("35", OTH), C("90", "< 90%"), C("1;31", FILL), C("90", ">= 90% of limit"),
     C("1;31", "!"), C("90", "restart"), C("90", (n > nshow ? "   " (n - nshow) " more pod(s) (--top N)" : "") (nol ? "   " nol " pod(s) without memory limit not shown" : "")) > bodyf
 }
@@ -2378,15 +2411,15 @@ END {
   WID = WNAME + 1 + 3 + 1 + 3
   LINEW = WID + 3 + WACT + 3 + WASG + 3 + WUTL; if (LINEW > W) LINEW = W
   header("POD / CONTAINER RESOURCES   actual usage vs requests and limits" (group ? ", grouped by workload (w = flat list)" : "   (w = group by workload)"), LINEW)
-  printf "%s %s %s %s %s %s %s\n", sprintf("%-" (WID) "s" "", ""), C("90", VB), C("1;94", ctr("ACTUAL (live)", WACT)),
-    C("90", VB), C("1;35", ctr("ASSIGNED (req / limit)", WASG)), C("90", VB), C("1;35", ctr("UTILISATION (used vs req / lim)", WUTL)) > hdrf
-  printf "%s %s %s %s %s %s %s\n",
-    sprintf("%-" (WNAME) "s" " %-3s %3s", (group ? "WORKLOAD / " : "") (allns ? "NAMESPACE / POD / CONTAINER" : "POD / CONTAINER"), "RDY", "RST"), C("90", VB),
-    sprintf("%6s %s %7s %s", "CPUm", "T", "MEM Mi", "T"), C("90", VB),
-    sprintf("%6s %6s %7s %7s", "CPUreq", "CPUlim", "MEMreq", "MEMlim"), C("90", VB),
-    (showbar ? sprintf("%5s %5s %-" (BW) "s" " %5s %5s %-" (BW) "s" "", "c%REQ", "c%LIM", "CPU/LIM", "m%REQ", "m%LIM", "MEM/LIM") : sprintf("%5s %5s  %5s %5s", "c%REQ", "c%LIM", "m%REQ", "m%LIM")) > hdrf
-  print C("90", rule(HR, LINEW)) > hdrf
   close(hdrf)
+  # the column header goes right above the pod rows (under the timeline when it is shown)
+  PH1 = sprintf("%s %s %s %s %s %s %s", sprintf("%-" (WID) "s" "", ""), C("90", VB), C("1;94", ctr("ACTUAL (live)", WACT)),
+    C("90", VB), C("1;35", ctr("ASSIGNED (req / limit)", WASG)), C("90", VB), C("1;35", ctr("UTILISATION (used vs req / lim)", WUTL)))
+  PH2 = sprintf("%s %s %s %s %s %s %s",
+    sprintf("%-" (WNAME) "s" " %-3s %3s", (group ? "WORKLOAD / " : "") (allns ? "NAMESPACE / POD / CONTAINER" : "POD / CONTAINER"), "RDY", "RST"), VB,
+    sprintf("%6s %s %7s %s", "CPUm", "T", "MEM Mi", "T"), VB,
+    sprintf("%6s %6s %7s %7s", "CPUreq", "CPUlim", "MEMreq", "MEMlim"), VB,
+    (showbar ? sprintf("%5s %5s %-" (BW) "s" " %5s %5s %-" (BW) "s" "", "c%REQ", "c%LIM", "CPU/LIM", "m%REQ", "m%LIM", "MEM/LIM") : sprintf("%5s %5s  %5s %5s", "c%REQ", "c%LIM", "m%REQ", "m%LIM")))
 
   for (r = 1; r <= T_cnt["K"]; r++) { k = fld("K", r, 1); kc[k] = kc[k] (kc[k] == "" ? "" : "\036") r }
   if (graphs && np > 0) {
@@ -2404,6 +2437,7 @@ END {
       sect("PODS", LINEW)
     }
   }
+  if (np > 0) { thgrp(PH1); thead(PH2, LINEW) }
   if (np == 0) {
     print C("1;31", nodata != "" ? " " nodata : " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf)
     print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit
@@ -2548,12 +2582,12 @@ END {
   ixsort(npo); for (i = 1; i <= npo; i++) PO[i] = IX[i]
 
   # ---- graphs: this namespace | whole cluster (or your namespaces), per pool, memory and CPU
-  printf "%s %s %s%s\n", C("1;94", ARW), C("1", cl ? "NAMESPACE vs " (part ? (sel ? "SELECTED NAMESPACES" : "YOUR NAMESPACES") : "CLUSTER") : "NAMESPACE vs ITS LIMITS") C("90", "  share of pool allocatable:  "), \
+  printf "%s%s %s %s%s\n", (stk ? "\035" : ""), C("1;94", ARW), C("1", cl ? "NAMESPACE vs " (part ? (sel ? "SELECTED NAMESPACES" : "YOUR NAMESPACES") : "CLUSTER") : "NAMESPACE vs ITS LIMITS") C("90", "  share of pool allocatable:  "), \
     C("32", FILL) C("90", " used   ") C("35", REQ) C("90", " requested, not used   ") C("90", EMPTY " free"),
     (ZF > 1 ? "   " C("7;1", " zoom x" ZF " ") C("90", " left bars magnified, % values true - Z: true scale") : (zoom ? "" : C("90", "   zoom off - Z: auto zoom"))) > bodyf
-  printf "%s %3s %9s %s %s %s%s\n", padr("POOL [ns nodes/all]", PW), "", "ALLOC", C("90", VB),
-    C("1;32", padr("THIS NAMESPACE  " ns, GW)) " " C("90", sprintf("%14s", "used / req")),
-    " " C("90", VB) " ", (cl ? C("1;94", padr(CLW, GW)) " " C("90", sprintf("%14s", "used / req")) : C("1;94", padr("THIS NAMESPACE vs ITS LIMITS", GW)) " " C("90", sprintf("%14s", "of limit"))) > bodyf
+  thead(sprintf("%s %3s %9s %s %s %s%s", padr("POOL [ns nodes/all]", PW), "", "ALLOC", VB,
+    padr("THIS NAMESPACE  " ns, GW) " " sprintf("%14s", "used / req"),
+    " " VB " ", (cl ? padr(CLW, GW) " " sprintf("%14s", "used / req") : padr("THIS NAMESPACE vs ITS LIMITS", GW) " " sprintf("%14s", "of limit"))), LINEW)
   nempty = 0; elist = ""; eam = 0; eac = 0
   for (o = 1; o <= npo; o++) {
     split(T_row["L", PO[o]], g, "\t")
@@ -2573,13 +2607,12 @@ END {
   CBZ = 1
   if (!nm_ok && !cl) { zmx = 0; for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); if (nv(f[16]) > 0 && nv(f[13]) > 0 && nv(f[13]) / nv(f[16]) > zmx) zmx = nv(f[13]) / nv(f[16]) } CBZ = zoomf(zmx) }
   oleg = nm_ok ? C("94", OTH) " other ns used" : (SCU ? C("94", OTH) " other " (part ? "readable " : "") "ns used" : (cl ? C("35", REQ) " other ns requested" : C("90", "other ns: no RBAC") (CBZ > 1 ? " " C("7;1", " x" CBZ " ") : "")))
-  printf "%s %s\n", C("1;94", ARW), C("1", "WORKER NODES RUNNING THIS NAMESPACE") C("90", "  grouped by pool") > bodyf
-  printf "%-" (NW) "s" " %-9s %11s %s %s %s %s\n", "", "", "", C("90", VB), C("1;94", ctr("CPU millicores", 26)), C("90", VB),
-    C("1;35", ctr("MEMORY GiB", 46)) (BWN > 0 ? " " C("90", VB) " " C("1", ctr("node memory", BWN)) : "") > bodyf
-  printf "%s %-9s %11s %s %6s %6s %6s %5s %s %7s %7s %7s %7s %5s %5s %6s%s\n", padr("POOL [ns nodes/all] / NODE", NW), "STATUS", "PODS ns/all", C("90", VB),
-    "nsUsed", "nsReq", "alloc", "%al", C("90", VB), "nsUsed", "nsReq", "nsLim", "alloc", "%al", "node%", "clReq%",
-    (BWN > 0 ? " " C("90", VB) " " C("32", FILL) " ns " oleg " " C("90", EMPTY " free") : "") > bodyf
-  print C("90", rule(HR, LINEW)) > bodyf
+  sect2("WORKER NODES RUNNING THIS NAMESPACE", "  grouped by pool", LINEW)
+  thgrp(sprintf("%-" (NW) "s" " %-9s %11s %s %s %s %s", "", "", "", C("90", VB), C("1;94", ctr("CPU millicores", 26)), C("90", VB),
+    C("1;35", ctr("MEMORY GiB", 46)) (BWN > 0 ? " " C("90", VB) " " C("1", ctr("node memory", BWN)) : "")))
+  thead(sprintf("%s %-9s %11s %s %6s %6s %6s %5s %s %7s %7s %7s %7s %5s %5s %6s", padr("POOL [ns nodes/all] / NODE", NW), "STATUS", "PODS ns/all", VB,
+    "nsUsed", "nsReq", "alloc", "%al", VB, "nsUsed", "nsReq", "nsLim", "alloc", "%al", "node%", "clReq%"), LINEW,
+    (BWN > 0 ? " " C("90", VB) " " C("32", FILL) " ns " oleg " " C("90", EMPTY " free") : ""))
   nio = readtab("io_nodes.tsv", "J"); for (i = 1; i <= nio; i++) { split(T_row["J", i], f, "\t"); IOD[f[1]] = (f[10] != "-" || f[4] != "-") ? sprintf("   net ns in %s out %s / node in %s out %s", hbn(nv(f[10])), hbn(nv(f[11])), hbn(nv(f[4])), hbn(nv(f[5]))) : "" }
   for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); PN[f[1]] = PN[f[1]] (PN[f[1]] == "" ? "" : " ") i
     if (f[5] + 0 == 0 && f[2] != "(unscheduled)") { ZN[++nz] = i } }
@@ -2617,10 +2650,10 @@ END {
   # ---- every other node, one line each
   if (nz > 0) {
     print "" > bodyf
-    if (!allnodes) printf "%s %s\n", C("1;94", ARW), C("90", nz " node(s) run no pods of this namespace - press a to list them") > bodyf
+    if (!allnodes) printf "%s%s %s\n", (stk ? "\035" : ""), C("1;94", ARW), C("90", nz " node(s) run no pods of this namespace - press a to list them") > bodyf
     else {
-      printf "%s %s\n", C("1;94", ARW), C("1", "OTHER NODES") C("90", "  no pods of this namespace (a hides this list)") > bodyf
-      printf "  %s %-9s %-16s %9s %9s %8s %6s %6s %s\n", padr("NODE", NW - 2), "STATUS", "POOL", "CPU alloc", "MEM alloc", "pods all", "node%", "clReq%", (BWN > 0 ? C("90", VB) " node memory" : "") > bodyf
+      sect2("OTHER NODES", "  no pods of this namespace (a hides this list)", LINEW)
+      thead(sprintf("  %s %-9s %-16s %9s %9s %8s %6s %6s %s", padr("NODE", NW - 2), "STATUS", "POOL", "CPU alloc", "MEM alloc", "pods all", "node%", "clReq%", (BWN > 0 ? VB " node memory" : "")), LINEW)
       split("", SV); split("", IX)
       for (k = 1; k <= nz; k++) { split(T_row["N", ZN[k]], f, "\t"); IX[k] = ZN[k]; SV[ZN[k]] = (sortkey == "name") ? f[2] : (nv(f[27]) >= 0 ? nv(f[27]) : nv(f[17])) }
       ixsort(nz)
@@ -2636,8 +2669,8 @@ END {
   # ---- namespace by namespace (whole cluster, or the namespaces you can read)
   if (cl && ncn > 0) {
     print "" > bodyf
-    printf "%s %s\n", C("1;94", ARW), C("1", part ? (sel ? "SELECTED NAMESPACES" : "YOUR NAMESPACES") : "NAMESPACES") C("90", "  " (sco ? "usage and requests" : "requests") " of each namespace " (part ? (sel ? "compared" : "you can read") : "in the cluster") (part ? "" : " (top 20 by sort key)") (sco ? " - bar: share of the memory used by all of them" : " - bar: share of cluster memory")) > bodyf
-    printf "  %-34s %9s %5s %5s %9s %9s %9s %9s %9s %7s %7s %s\n", "NAMESPACE", "PODS rdy", "WKLD", "NODES", "CPU used", "CPU req", "MEM used", "MEM req", "MEM lim", "%used", "%clMem", C("90", VB) (sco ? " share of memory used" : " share of cluster memory") > bodyf
+    printf "%s%s %s\n", (stk ? "\035" : ""), C("1;94", ARW), C("1", part ? (sel ? "SELECTED NAMESPACES" : "YOUR NAMESPACES") : "NAMESPACES") C("90", "  " (sco ? "usage and requests" : "requests") " of each namespace " (part ? (sel ? "compared" : "you can read") : "in the cluster") (part ? "" : " (top 20 by sort key)") (sco ? " - bar: share of the memory used by all of them" : " - bar: share of cluster memory")) > bodyf
+    thead(sprintf("  %-34s %9s %5s %5s %9s %9s %9s %9s %9s %7s %7s %s", "NAMESPACE", "PODS rdy", "WKLD", "NODES", "CPU used", "CPU req", "MEM used", "MEM req", "MEM lim", "%used", "%clMem", VB (sco ? " share of memory used" : " share of cluster memory")), LINEW)
     split("", SV); split("", IX)
     for (k = 1; k <= ncn; k++) { split(T_row["Z", k], f, "\t"); IX[k] = k
       SV[k] = (sortkey == "name") ? f[1] : (sortkey == "cpu") ? (sco ? nv(f[10]) : nv(f[4])) : (sortkey == "cpupct") ? nv(f[4]) : (sortkey == "restarts") ? f[2] + 0 : (sortkey == "mem" && sco) ? nv(f[11]) : nv(f[5]) }
@@ -2691,8 +2724,8 @@ END {
   for (i = 1; i <= nw; i++) { split(T_row["Y", i], f, "\t"); IX[i] = i; SV[i] = skey(f[2], nv(f[9]), nv(f[19]), nv(f[10]), nv(f[12]), f[20]) }
   ixsort(nw); for (i = 1; i <= nw; i++) WO[i] = IX[i]
 
-  printf "%s %s\n", C("1;94", ARW), C("1", "WORKLOADS") C("90", "   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec") > bodyf
-  printf "  %-11s %-" (WN) "s" " %7s %4s %5s %5s %15s %26s %4s %s\n", "KIND", "WORKLOAD", "READY", "UPD", "PODS", "NODES", "CPU used / req", "MEM used / req / lim", "RST", "STATUS" > bodyf
+  sect2("WORKLOADS", "   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec", lw())
+  thead(sprintf("  %-11s %-" (WN) "s" " %7s %4s %5s %5s %15s %26s %4s %s", "KIND", "WORKLOAD", "READY", "UPD", "PODS", "NODES", "CPU used / req", "MEM used / req / lim", "RST", "STATUS"), lw())
   for (o = 1; o <= nw; o++) {
     split(T_row["Y", WO[o]], f, "\t")
     des = f[14]; rd = (des != "-" && f[1] != "CronJob") ? f[15] "/" des : f[4] "/" f[3]
@@ -2723,8 +2756,8 @@ END {
   print "" > bodyf
   nh = 0; for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); if (f[5] + 0 > 0) { HN[++nh] = f[2]; HP[f[2]] = f[1]; HC[f[2]] = f[5] } }
   CW = 4; maxc = int((LINEW - 2 - 11 - 1 - WN - 2 - 20) / CW); if (maxc < 1) maxc = 1; shown = (nh > maxc) ? maxc : nh
-  printf "%s %s\n", C("1;94", ARW), C("1", "SPREAD OVER WORKER NODES") C("90", "   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node") > bodyf
-  x = sprintf("  %-11s %-" (WN) "s" " ", "KIND", "WORKLOAD"); for (c = 1; c <= shown; c++) x = x sprintf("%" (CW) "s" "", "N" c); print x "  VERDICT" > bodyf
+  sect2("SPREAD OVER WORKER NODES", "   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node", lw())
+  x = sprintf("  %-11s %-" (WN) "s" " ", "KIND", "WORKLOAD"); for (c = 1; c <= shown; c++) x = x sprintf("%" (CW) "s" "", "N" c); thead(x "  VERDICT", lw())
   for (i = 1; i <= np; i++) { split(T_row["P", i], f, "\t"); MX[f[12] "\034" f[13] "\034" f[7]]++ }
   for (o = 1; o <= nw; o++) {
     split(T_row["Y", WO[o]], f, "\t"); g = f[1] "\034" f[2]; x = sprintf("  %-11s %-" (WN) "s" " ", clip(f[1], 11), clip(f[2], WN))
@@ -2760,19 +2793,19 @@ END {
   if (nip == 0) { print C("1;31", nodata != "" ? " " nodata : " no pods match \"" filt "\" in namespace " ns) > bodyf; close(bodyf); print C("90", rule(DHR, LINEW)) > ftrf; close(ftrf); exit }
 
   sect("POD SUBNETS (observed, /24)", LINEW)
-  printf "  %-20s %6s  %s\n", "SUBNET", "PODS", "NODES" > bodyf
+  thead(sprintf("  %-20s %6s  %s", "SUBNET", "PODS", "NODES"), lw())
   for (i = 1; i <= nsn; i++) { split(T_row["S", i], f, "\t"); printf "  %-20s %6s  %s\n", f[1], f[2], C("90", f[3]) > bodyf }
   print "" > bodyf
   sect("NODE IP BLOCKS (per worker node)", LINEW)
   NW = 30
-  printf "  %-" (NW) "s" " %-14s %-16s %-18s %6s %5s %5s %s  %s\n", "NODE", "POOL", "NODE IP", "POD CIDR", "CIDR#", "NSIPS", "HOST", sprintf("%-10s", "CIDR USE"), "IP BLOCKS (observed /26)" > bodyf
+  thead(sprintf("  %-" (NW) "s" " %-14s %-16s %-18s %6s %5s %5s %s  %s", "NODE", "POOL", "NODE IP", "POD CIDR", "CIDR#", "NSIPS", "HOST", sprintf("%-10s", "CIDR USE"), "IP BLOCKS (observed /26)"), lw())
   for (i = 1; i <= nb; i++) { split(T_row["B", i], f, "\t")
     printf "  %-" (NW) "s" " %-14s %-16s %-18s %6s %5s %5s %s  %s\n", clip(f[1], NW), clip(f[2], 14), clip(f[3], 16), clip(f[4], 18), f[5], f[6], f[7],
       mkbar(pct(nv(f[6]), nv(f[5])), 10), C("94", f[8]) > bodyf }
   print "" > bodyf
   sect("SERVICES", LINEW)
   SW = 36
-  printf "  %-" (SW) "s" " %-22s %-16s %-24s %s\n", "SERVICE", "TYPE", "CLUSTER IP", "EXTERNAL / LB", "PORTS" > bodyf
+  thead(sprintf("  %-" (SW) "s" " %-22s %-16s %-24s %s", "SERVICE", "TYPE", "CLUSTER IP", "EXTERNAL / LB", "PORTS"), lw())
   for (i = 1; i <= nsv; i++) { split(T_row["V", i], f, "\t")
     ext = (f[5] != "-") ? f[5] : ""; if (f[6] != "-") ext = ext (ext == "" ? "" : " ") f[6]; if (ext == "") ext = "-"
     printf "  %-" (SW) "s" " %-22s %-16s %s %s\n", clip((allns ? f[1] "/" : "") f[2], SW), clip(f[3], 22), clip(f[4], 16),
@@ -2781,7 +2814,7 @@ END {
   print "" > bodyf
   sect("POD IP ASSIGNMENTS", LINEW)
   PW = 44
-  printf "  %-16s %-" (PW) "s" " %-26s %-16s %-28s %s\n", "POD IP", "POD", "NODE", "HOST IP", "WORKLOAD", "NOTE" > bodyf
+  thead(sprintf("  %-16s %-" (PW) "s" " %-26s %-16s %-28s %s", "POD IP", "POD", "NODE", "HOST IP", "WORKLOAD", "NOTE"), lw())
   for (i = 1; i <= nip; i++) { split(T_row["I", i], f, "\t")
     printf "  %-16s %-" (PW) "s" " %-26s %-16s %-28s %s\n", f[2], clip(f[1], PW), clip(f[3], 26), clip(f[5], 16), clip(f[7], 28),
       (f[9] != "-" ? vrd(f[9]) : (f[8] != "Running" ? vrd(f[8]) : "")) > bodyf }
@@ -2841,7 +2874,7 @@ END {
   print "" > bodyf
   NW = 28; BWM = LINEW - NW - 14 - 8 - 8 - 6 - 6 - 22 - 8; if (BWM > 36) BWM = 36; if (BWM < 10) BWM = 10
   sect("MEMORY BY WORKER NODE", LINEW)
-  printf "  %-" (NW) "s" " %-12s %8s %8s %5s %5s  %-" (BWM) "s" "  %s\n", "NODE", "POOL", "NS USED", "ALLOC", "NS%", "NODE%", "node memory", "ns trend" > bodyf
+  thead(sprintf("  %-" (NW) "s" " %-12s %8s %8s %5s %5s  %-" (BWM) "s" "  %s", "NODE", "POOL", "NS USED", "ALLOC", "NS%", "NODE%", "node memory", "ns trend"), lw())
   # worker nodes in sort-key order (memory view: cpu -> mem, cpupct -> mempct)
   split("", SV); split("", IX); m_ = 0
   for (i = 1; i <= nn; i++) { split(T_row["N", i], f, "\t"); if (f[2] == "(unscheduled)" || f[5] + 0 == 0) continue
@@ -2856,7 +2889,7 @@ END {
   x = LINEW - 26 - 9 - 9 - 9 - 6 - 6 - 10 - 4 - 18 - 4; if (PW > x) PW = x; if (PW > 64) PW = 64; if (PW < 24) PW = 24
   split("", SV); split("", IX); for (i = 1; i <= nm; i++) { split(T_row["R", i], f, "\t"); IX[i] = i; SV[i] = skey(f[1], -1, -1, nv(f[6]), nv(f[8]), f[11]) }
   ixsort(nm)
-  printf "  %-" (PW) "s" " %-26s %8s %8s %8s %5s %5s %-8s %3s  %s\n", "POD", "NODE", "USED", "REQ", "LIM", "%REQ", "%LIM", "MEM/LIM", "RST", "RISK" > bodyf
+  thead(sprintf("  %-" (PW) "s" " %-26s %8s %8s %8s %5s %5s %-8s %3s  %s", "POD", "NODE", "USED", "REQ", "LIM", "%REQ", "%LIM", "MEM/LIM", "RST", "RISK"), lw())
   for (i = 1; i <= nm && i <= topn; i++) { split(T_row["R", IX[i]], f, "\t")
     printf "  %-" (PW) "s" " %-26s %8s %8s %8s %s %s %s %s  %s\n", clip(f[1], PW), clip(f[2], 26), hmem(nv(f[6])), hmem(nv(f[7])), hmem(nv(f[8])),
       fpct(nv(f[9])), fpct(nv(f[10])), mkbar(nv(f[10]), 8), C(f[11] + 0 > 0 ? "35" : "90", sprintf("%3s", f[11])), (f[13] != "-" ? vrd(f[13]) : "") > bodyf }
@@ -2880,7 +2913,7 @@ END {
   print "" > bodyf
   sect("MEMORY BY WORKLOAD", LINEW)
   WW = PW + 14
-  printf "  %-11s %-" (WW - 12) "s" " %5s %8s %8s %8s %5s %-8s\n", "KIND", "WORKLOAD", "PODS", "USED", "REQ", "LIM", "%LIM", "MEM/LIM" > bodyf
+  thead(sprintf("  %-11s %-" (WW - 12) "s" " %5s %8s %8s %8s %5s %-8s", "KIND", "WORKLOAD", "PODS", "USED", "REQ", "LIM", "%LIM", "MEM/LIM"), lw())
   split("", SV); split("", IX); for (i = 1; i <= nw; i++) { split(T_row["Y", i], f, "\t"); IX[i] = i; SV[i] = skey(f[2], -1, -1, nv(f[10]), nv(f[12]), f[20]) }
   ixsort(nw)
   for (i = 1; i <= nw && i <= topn; i++) { split(T_row["Y", IX[i]], f, "\t")
@@ -2932,6 +2965,7 @@ END {
   n = tsload(sesf, 26, TW0); if (n < 2) n = tsload(iohistf, 3, TW0); n = tsnow(n, M["ns_net_tx"])
   tchart("o", "NETWORK out (egress) - namespace", n, TW0, now, CW, 6, -1, -1, "B", "94")
   if (LINEW >= 130) tshow("i", "o"); else { tshow("i", ""); tshow("o", "") }
+  print "" > bodyf                       # a blank line between the network and the disk charts
   n = tsload(sesf, 27, TW0); n = tsnow(n, M["ns_disk_r"])
   tchart("r", "DISK read - namespace", n, TW0, now, CW, 4, -1, -1, "B", "32")
   n = tsload(sesf, 28, TW0); n = tsnow(n, M["ns_disk_w"])
@@ -2941,8 +2975,8 @@ END {
 
   # ---- worker nodes: whole node and this namespace on it
   NW = 24; for (i = 1; i <= nio; i++) { split(T_row["I", i], f, "\t"); if (length(f[1]) > NW) NW = length(f[1]) } if (NW > 44) NW = 44
-  printf "%s %s\n", C("1;94", ARW), C("1", "WORKER NODES") C("90", "   whole node (all namespaces) and this namespace on it, bytes per second") > bodyf
-  printf "  %-" (NW) "s" " %-14s %4s %s %8s %8s %8s %8s %6s %6s %s %8s %8s %6s %s\n", "NODE", "POOL", "PODS", C("90", VB), "node in", "node out", "disk rd", "disk wr", "r-IOPS", "w-IOPS", C("90", VB), "ns in", "ns out", "ns%", C("90", VB) " ns share of node traffic" > bodyf
+  sect2("WORKER NODES", "   whole node (all namespaces) and this namespace on it, bytes per second", lw())
+  thead(sprintf("  %-" (NW) "s" " %-14s %4s %s %8s %8s %8s %8s %6s %6s %s %8s %8s %6s %s", "NODE", "POOL", "PODS", C("90", VB), "node in", "node out", "disk rd", "disk wr", "r-IOPS", "w-IOPS", C("90", VB), "ns in", "ns out", "ns%", C("90", VB) " ns share of node traffic"), lw())
   split("", SV); split("", IX)
   for (i = 1; i <= nio; i++) { split(T_row["I", i], f, "\t"); IX[i] = i
     SV[i] = (sortkey == "name") ? f[1] : (sortkey == "mem") ? sum2(nv(f[6]), nv(f[7])) : (sortkey == "cpupct") ? nv(f[4]) : (sortkey == "mempct") ? nv(f[5]) : (sortkey == "restarts") ? sum2(nv(f[8]), nv(f[9])) : sum2(nv(f[4]), nv(f[5])) }
@@ -2958,8 +2992,8 @@ END {
   print "" > bodyf
   PWD_ = 30; for (i = 1; i <= nip; i++) { split(T_row["Q", i], f, "\t"); if (length(f[1]) > PWD_) PWD_ = length(f[1]) }
   x = LINEW - 2 - 28 - 9 * 4 - 7 * 2 - 30; if (PWD_ > x) PWD_ = x; if (PWD_ > 64) PWD_ = 64; if (PWD_ < 24) PWD_ = 24
-  printf "%s %s\n", C("1;94", ARW), C("1", "PODS") C("90", "   bytes per second   (" sortlabel() " - s cycles: cpu = network, mem = disk, cpupct = in, mempct = out, restarts = IOPS)") > bodyf
-  printf "  %-" (PWD_) "s" " %-26s %8s %8s %8s %8s %6s %6s %s\n", "POD", "NODE", "in", "out", "disk rd", "disk wr", "r-IOPS", "w-IOPS", C("90", VB) " share of namespace traffic" > bodyf
+  sect2("PODS", "   bytes per second   (" sortlabel() " - s cycles: cpu = network, mem = disk, cpupct = in, mempct = out, restarts = IOPS)", lw())
+  thead(sprintf("  %-" (PWD_) "s" " %-26s %8s %8s %8s %8s %6s %6s %s", "POD", "NODE", "in", "out", "disk rd", "disk wr", "r-IOPS", "w-IOPS", C("90", VB) " share of namespace traffic"), lw())
   split("", SV); split("", IX); nst = sum2(nv(M["ns_net_rx"]), nv(M["ns_net_tx"]))
   for (i = 1; i <= nip; i++) { split(T_row["Q", i], f, "\t"); IX[i] = i
     SV[i] = (sortkey == "name") ? f[1] : (sortkey == "mem") ? sum2(nv(f[6]), nv(f[7])) : (sortkey == "cpupct") ? nv(f[4]) : (sortkey == "mempct") ? nv(f[5]) : (sortkey == "restarts") ? sum2(nv(f[8]), nv(f[9])) : sum2(nv(f[4]), nv(f[5])) }
@@ -3010,7 +3044,25 @@ render_core() {
       -v now="$NOW_S" -v tzoff="$TZ_OFF" -v tzname="$TZ_NAME" -v win="$WIN_S" -v sstart="${SESSION_T0:-0}" -v smp="${SAMPLE_EVERY:-15}" \
       -v sesf="$([ "${SESSION_ON:-0}" = 1 ] && printf '%s' "$SDIR/ns.tsv")" -v evf="$([ "${SESSION_ON:-0}" = 1 ] && printf '%s' "$SDIR/events.tsv")" \
       -v fcf="$TMPD/forecast.tsv" -v fcwin="${FC_WIN:-1800}" -v heatf="$TMPD/heat.tsv" -v graphs="${POD_GRAPHS:-1}" -v author="$KDASH_AUTHOR" -v alstate="${ALERT_STATE:-}" -v tsvout="${ALERT_TSV:-}" -v thr_mem="${KDASH_ALERT_MEM:-}" -v thr_net="${KDASH_ALERT_NET_MBPS:-}" -v thr_iops="${KDASH_ALERT_IOPS:-}" -v sparkf="$([ -s "$TMPD/podspark.tsv" ] && printf '%s' "$TMPD/podspark.tsv")" \
-      -v hdrf="$HDRF" -v bodyf="$BODYF" -v ftrf="$FTRF" -v spectxt="$spec_txt" "$AWKLIB$VIEW_COMMON$prog" < /dev/null
+      -v hdrf="$HDRF" -v bodyf="$BODYF" -v ftrf="$FTRF" -v spectxt="$spec_txt" -v stk=1 "$AWKLIB$VIEW_COMMON$prog" < /dev/null
+  [ "${HEADER_ONLY:-0}" = 1 ] || sticky_index
+}
+# header marks in the body -> $STICKYF (one line per table: first header line, header
+# lines, end of its section; 0-based body lines) and the body without the marks. A mark
+# is \034 (column header line) or \035 (a section starts), or ~{H} / ~{S} from the
+# toolkit tables (their output is cleaned of control characters).
+STICKY_AWK='
+{ c = substr($0, 1, 1); h = (c == "\034"); s_ = (c == "\035")
+  if (!h && !s_ && substr($0, 1, 2) == "~{") { if (substr($0, 1, 4) == "~{H}") h = 2; else if (substr($0, 1, 4) == "~{S}") s_ = 2 }
+  if (h) { if (!inh) { if (nb && !(nb in E)) E[nb] = NR - 1; nb++; S[nb] = NR - 1; K[nb] = 0; inh = 1 }
+           K[nb]++; print substr($0, (h == 2 ? 5 : 2)); next }
+  inh = 0
+  if (s_) { if (nb && !(nb in E)) E[nb] = NR - 1; print substr($0, (s_ == 2 ? 5 : 2)); next }
+  print }
+END { for (i = 1; i <= nb; i++) printf "%d %d %d\n", S[i], K[i], ((i in E) ? E[i] : NR) > sf }'
+sticky_index() {
+  : > "$STICKYF"
+  LC_ALL=C awk -v sf="$STICKYF" "$STICKY_AWK" "$BODYF" > "$BODYF.s" && mv -f -- "$BODYF.s" "$BODYF"
 }
 
 #---- 7 ALERTS: one live page of every critical / warning signal with its action ----
@@ -3147,7 +3199,7 @@ END {
   OW = 30; for (i = 1; i <= AN; i++) if (length(AOBJ[i]) > OW) OW = length(AOBJ[i]); if (OW > 52) OW = 52; if (LINEW < 130 && OW > 32) OW = 32
   VW = LINEW - 2 - 2 - 7 - 10 - OW - 1 - 19 - (LINEW >= 130 ? 11 : 0); if (VW > 36) VW = 36; if (VW < 16) VW = 16
   if (AN == 0) printf "  %s\n", C("32", "no critical or warning signal right now - every rule passed on the live data") > bodyf
-  else printf "  %s %-6s %-9s %-" OW "s %-18s %-" VW "s %s\n", " ", "AGE", "SECTION", "OBJECT", "SIGNAL", "LIVE VALUE", (LINEW >= 130 ? "TREND" : "") > bodyf
+  else thead(sprintf("  %s %-6s %-9s %-" OW "s %-18s %-" VW "s %s", " ", "AGE", "SECTION", "OBJECT", "SIGNAL", "LIVE VALUE", (LINEW >= 130 ? "TREND" : "")), lw())
   for (j = 1; j <= AN; j++) { i = IX[j]; k = AKEY[i]; nw_ = (alstate != "" && FIRST[k] >= now - 30)
     sc_ = (AS[i] == "C") ? "1;31" : "35"
     printf "  %s %s %-9s %s %s %s %s\n", C(sc_, AS[i] == "C" ? "!" : "^"), (nw_ ? C("7;1;31", sprintf("%-5s", "NEW")) " " : C("90", sprintf("%-6s", alstate != "" ? age(FIRST[k]) : "-"))), ASEC[i],
@@ -3506,7 +3558,9 @@ io_detect() {
     tried="$tried ${p}: $(_klass "$err")"
   done
   [ -z "$cand" ] && tried="$tried no Prometheus service in the namespace"
-  # kubelet cAdvisor through the API node proxy
+  # kubelet cAdvisor through the API node proxy. Before the first model there is no node
+  # to ask: try again on the next tick instead of giving up on the kubelet for 10 minutes.
+  if [ ! -s "$MODEL/nodes.tsv" ]; then IO_STATE="off"; IO_DETECT_AT=0; return 0; fi
   nd="$(awk -F'\t' 'NR > 1 && $5 > 0 && $2 != "(unscheduled)" { print $2; exit }' "$MODEL/nodes.tsv" 2>/dev/null)"
   if [ -n "$nd" ]; then
     { "${KC[@]}" get --raw "/api/v1/nodes/$nd/proxy/metrics/cadvisor" --request-timeout=10s 2>"$err" | head -c 400 > "$TMPD/io.probe"; } 2>/dev/null
@@ -5396,7 +5450,7 @@ function hlx(s,   p, t, k, m, n, i, j, c, out, vis, r, inm, on, of) {
 }
 BEGIN { hp = ENVIRON["KD_HP"]; sbox = ENVIRON["KD_SBOX"]; hq = (hic == "1") ? tolower(hp) : hp }
 FNR == 1 { off = (FILENAME == bf) ? hoff : 0; if (FILENAME == ff) kpad() }
-FILENAME == bf && (FNR < b1 || FNR > b2) { next }
+FILENAME == bf && (FNR < b1 || FNR > b2) && (FNR < p1 || FNR > p2) { next }
 FILENAME == bf && hp != "" { $0 = hlx($0) }
 END { kpad() }
 '
@@ -5546,11 +5600,24 @@ paint() {
   local dsb=""
   if [ "${DS_ON:-0}" = 1 ]; then budget=$(( budget - 3 )); ds_box "$cols"; dsb="$DS_BOX"; fi
   [ "$budget" -lt 3 ] && budget=3
+  # the column header of the table at the top of the screen stays there while the table
+  # scrolls (index from render: first header line, header lines, end of the section)
+  local -a _st=(); local r_ x_ s_ k_ e_ pk=0 p1=0 p2=0 kend=0 bs
+  [ ! -s "${STICKYF:-}" ] || mapfile -t _st < "$STICKYF"
+  for r_ in "${_st[@]}"; do s_="${r_%% *}"; x_="${r_#* }"; k_="${x_%% *}"; e_="${x_#* }"; [ "$e_" -lt "$bn" ] || kend=$k_; done
   max=$(( bn - budget )); [ "$max" -lt 0 ] && max=0
+  [ "$max" = 0 ] || [ "$kend" -ge $(( budget - 2 )) ] || max=$(( max + kend ))
   [ "$SCROLL" -gt "$max" ] && SCROLL=$max
   [ "$SCROLL" -lt 0 ] && SCROLL=0
   [ "$HSCROLL" -lt 0 ] && HSCROLL=0
-  shown=$(( bn - SCROLL )); [ "$shown" -gt "$budget" ] && shown=$budget; [ "$shown" -lt 0 ] && shown=0
+  bs=$SCROLL
+  if [ "$SCROLL" -gt 0 ]; then
+    for r_ in "${_st[@]}"; do s_="${r_%% *}"; x_="${r_#* }"; k_="${x_%% *}"; e_="${x_#* }"
+      if [ "$s_" -lt "$SCROLL" ] && [ "$SCROLL" -lt "$e_" ] && [ "$k_" -lt $(( budget - 2 )) ]; then pk=$k_; p1=$(( s_ + 1 )); p2=$(( s_ + k_ )); fi
+    done
+    if [ "$pk" -gt 0 ]; then [ "$bs" -ge "$p2" ] || bs=$p2; budget=$(( budget - pk )); fi
+  fi
+  shown=$(( bn - bs )); [ "$shown" -gt "$budget" ] && shown=$budget; [ "$shown" -lt 0 ] && shown=0
   local now age nxt spin live bg="7" lt speck
   printf -v now '%(%s)T' -1
   printf -v lt '%(%H:%M:%S)T' "$now" 2>/dev/null || lt="$(date +%H:%M:%S)"
@@ -5570,7 +5637,7 @@ paint() {
   live="$live  spec ${speck}/${SPEC_TTL}s  fetch $(( FETCH_MS / 1000 )).$(( FETCH_MS % 1000 / 100 ))s  poll ${INTERVAL}s  AUDITED"
   local view_seg keys seg k hs=""
   [ "$HSCROLL" -gt 0 ] && hs=" | col +$HSCROLL (h/l)"
-  if [ "$bn" -gt "$budget" ]; then view_seg="$VIEW | rows $((SCROLL+1))-$((SCROLL+shown))/$bn$hs"; else view_seg="$VIEW$hs"; fi
+  if [ "$bn" -gt "$budget" ]; then view_seg="$VIEW | rows $((bs+1))-$((bs+shown))/$bn$hs"; else view_seg="$VIEW$hs"; fi
   local srev=""; [ "$SORT_REV" != 1 ] || srev=" rev"
   local kn="n ns"; [ "${DS_ON:-0}" != 1 ] || [ -z "$DS_PAT" ] || kn="n/N match"
   keys=("? help" "1-9 view" "$kn" "s sort($SORT$srev)" "/ search" "> export" "P pause" "x html" "q/Q quit" "j/k scroll" "o order" "+/- poll" "z window" "Z zoom" "e menu" "T theme" "8/9 svc" "E events" "! why" "i inspect" ": commands" "S/U/D attach")
@@ -5591,7 +5658,7 @@ paint() {
   local hp="" hic=0
   if [ "${DS_ON:-0}" = 1 ] && [ "$DS_MODE" = find ] && [ -n "$DS_PAT" ] && [ "${DS_BAD:-0}" = 0 ]; then hp="$DS_PAT"; hic="$(inspector_icase "$DS_PAT")"; fi
   frame=$(KD_HP="$hp" KD_SBOX="$dsb" LC_ALL=C awk -v w="$cols" -v off=0 -v hoff="$HSCROLL" -v ml="$ML" -v mr="$MR" -v bf="$BODYF" -v ff="$FTRF" \
-      -v b1="$((SCROLL + 1))" -v b2="$((SCROLL + budget))" -v npad="$((budget - shown))" -v hic="$hic" -v hcur="${DS_CUR:-0}" \
+      -v b1="$((bs + 1))" -v b2="$((bs + budget))" -v p1="$p1" -v p2="$p2" -v npad="$((budget - shown))" -v hic="$hic" -v hcur="${DS_CUR:-0}" \
       "$CLIP_PRE_AWK$CLIP_AWK" "$HDRF" "$BODYF" "$FTRF"; printf x)
   frame=$'\033[H'"${frame%x}${status}"$'\033[K'
   # every 10 s the whole frame is sent anyway, so anything else that wrote to the screen cannot stay
@@ -5667,8 +5734,7 @@ cycle_window() {
 show_help() {
   local b=$'\033[1m' d=$'\033[2m' n=$'\033[0m'
   [ "$COLOR" = 1 ] || { b=""; d=""; n=""; }
-  ui_screen "HELP | $(printf '%s' "$VIEW" | tr '[:lower:]' '[:upper:]') VIEW" "v$KDASH_VERSION | any key returns"
-  case "$VIEW" in
+  { case "$VIEW" in
     pods) cat <<'H'
  PODS - every pod and container of the namespace, live usage against what it asked for.
    Health line (every view): ready pods, restarts, OOM risk, OOMKilled, pods without a memory
@@ -5822,12 +5888,12 @@ H
  KEYS
    1-9 / Tab  switch view          n  pick another namespace     /  search box (n/N next/prev, Tab: pod filter)
    s          next sort key        o  reverse the sort order     w  PODS grouped / flat
-   j k arrows scroll               h l arrows  pan left / right  g G  top / bottom
+   j k arrows scroll               h l arrows  pan left / right   g G  top / bottom
    d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
    x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
    >          quick export: the screen and every line of the view to a log file - on every screen
               (KDASH_EXPORT_DIR, default ~/kdash_reports/exports; latest.log = the newest export)
-   P          pause / resume live  + -  poll interval 1..60 s
+   P          pause / resume live   + -  poll interval 1..60 s
    T          colour theme         z  chart window (all/15m/1h/6h/24h)
    Z          NODE POOLS auto zoom / true scale     c  PODS timeline graphs on / off
    ?          this help            q  quit
@@ -5860,8 +5926,9 @@ H
  COLOURS   green = fine / this namespace     blue = information / other namespaces
            magenta = warning / requested      bold red = critical     grey = secondary / free
 H
+  } | help_page "HELP | $(printf '%s' "$VIEW" | tr '[:lower:]' '[:upper:]') VIEW" "v$KDASH_VERSION | any key returns" dash && {
   printf '\033[?25l'
-  IFS= read -rsn1 _k </dev/tty || true
+  IFS= read -rsn1 _k </dev/tty || true; }
   printf '\033[2J'
 }
 cycle_theme() { case "$THEME" in safe) THEME=dark ;; dark) THEME=light ;; light) THEME=mono ;; *) THEME=safe ;; esac; theme_map; }
@@ -5965,9 +6032,9 @@ ns_pick() { # start|live -> PICKED (a namespace, or "*" for all); 1 = cancelled
     bx_layout "$W" 4 3 "$wn" 11 5 24
     local -a cw=("${BX_CW[@]}")
     bx_sep "$W" t "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_TL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
-    out="$V_"; for ((kk = 0; kk < 5; kk++)); do
+    out="$V_${PC_HB:-}"; for ((kk = 0; kk < 5; kk++)); do
       if [ "${al:kk:1}" = r ]; then printf -v cell " %*s " "${cw[kk]}" "${hd[kk]}"; else printf -v cell " %-*s " "${cw[kk]}" "${hd[kk]}"; fi
-      out+="${PC_B}${cell}${PC_R}${V_}"; done
+      out+="${cell}${BX_V}"; done; out="${out%"$BX_V"}${PC_R}${V_}"
     buf+="$out"$'\033[K\n'
     bx_sep "$W" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
     local shown=$((nv - top < rows ? nv - top : rows)); [ "$shown" -ge 1 ] || shown=1
@@ -6420,9 +6487,9 @@ toolkit_panel() {
     HEADER_ONLY=1 render_core
     # tables fit the window and carry colour markers (made into escapes after cleaning)
     local panel_size="${PAINT_SZ:-}"
-    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-${panel_size#* }}" TK_GLYPH="${BARCHR:-unicode}"
+    local TK_COLOR="${COLOR:-1}" TK_COLS="${KDASH_COLUMNS:-${panel_size#* }}" TK_GLYPH="${BARCHR:-unicode}" TK_STICKY=1
     [ -n "$TK_COLS" ] || TK_COLS="$(tput cols 2>/dev/null || echo 160)"
-    export TK_COLOR TK_COLS TK_GLYPH
+    export TK_COLOR TK_COLS TK_GLYPH TK_STICKY
     # read commands shown in this view, by finding number: Enter runs them (check_run_prompt)
     RB_CAPTURE="$TOOLKIT_DIR/run-$view.tsv"; : > "$RB_CAPTURE"; RB_RUN_HINT="Enter runs the read commands of a finding now"
     case "$view" in
@@ -6436,8 +6503,9 @@ toolkit_panel() {
         secrets) sm_render ;;
         doctor) if [ -f "$TOOLKIT_DIR/doctor.txt" ]; then cat "$TOOLKIT_DIR/doctor.txt"; else printf 'Checking capabilities in background...\n'; fi ;;
     esac | toolkit_clean | tk_colorize > "$BODYF"
+    sticky_index
     RB_CAPTURE=""; RB_RUN_HINT=""
-    export -n TK_COLOR TK_COLS TK_GLYPH
+    export -n TK_COLOR TK_COLS TK_GLYPH TK_STICKY
     case "$view" in
       secrets) printf 'Y secrets | / search | > export | Enter run checks | r re-read | C certs (endpoints, nodes) | M fmea | K check | j/k scroll | h/l pan (wide tables) | : commands | q quit\n' > "$FTRF" ;;
       fmea|access) printf 'M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit\n' > "$FTRF" ;;
@@ -6453,10 +6521,10 @@ render_cached() {
     local sig="$RENDER_GEN|$MODEL_GEN|$RC_GEN|${PAINT_SZ:-}|$THEME|$COLOR|${KDASH_COLUMNS:-}" d="$TMPD/rc/$VIEW"
     case "$VIEW" in pods|nodes|workloads|ip|mem|io|alerts) ;; *) render; return ;; esac
     if [ "$RC_USE" = 1 ] && [ "${KDASH_VIEW_CACHE:-1}" != 0 ] && [ "${RC_SIG[$VIEW]:-}" = "$sig" ] && [ -f "$d/${BODYF##*/}" ]; then
-        cp -f -- "$d/${HDRF##*/}" "$d/${BODYF##*/}" "$d/${FTRF##*/}" "${BODYF%/*}/" && return 0
+        cp -f -- "$d/${HDRF##*/}" "$d/${BODYF##*/}" "$d/${FTRF##*/}" "$d/${STICKYF##*/}" "${BODYF%/*}/" && return 0
     fi
     render
-    mkdir -p -- "$d" && cp -f -- "$HDRF" "$BODYF" "$FTRF" "$d/" && RC_SIG[$VIEW]="$sig"
+    mkdir -p -- "$d" && cp -f -- "$HDRF" "$BODYF" "$FTRF" "$STICKYF" "$d/" && RC_SIG[$VIEW]="$sig"
 }
 render() {
     case "$VIEW" in services|storage|events|explain|doctor|certs|runbook|check|fmea|access|secrets) toolkit_panel "$VIEW" ;;
@@ -6468,16 +6536,21 @@ render() {
     [ "${SPEC_OK:-0}" != 1 ] || status=fresh
     [ "${SPEC_OK:-0}" = 1 ] || { [ ! -s "$SPEC" ] || status=STALE; }
     # status strip: how fresh the data is (dot: green = fresh with metrics), then the shortcuts as chips
-    local sd="" sb="" sg="" sy="" sr="" sdot sv="|" smet=available
+    local sd="" sb="" sg="" sy="" sr="" sdot sv="|" smet=available sh="" sst="" smc="" sk=""
     [ "$TOP_OK" = 1 ] || smet=unavailable
-    if [ "${COLOR:-1}" = 1 ]; then sd=$'\033[90m'; sb=$'\033[1m'; sg=$'\033[32m'; sy=$'\033[33m'; sr=$'\033[0m'; fi
+    if [ "${COLOR:-1}" = 1 ]; then sd=$'\033[90m'; sb=$'\033[1m'; sg=$'\033[32m'; sy=$'\033[33m'; sr=$'\033[0m'
+      # DATA as a header band; the state in colour (ok / problem); the keys in the info colour
+      sh=$'\033[1;7m'; sk=$'\033[1;94m'
+      if [ "$status" = fresh ]; then sst=$'\033[1;32m'; else sst=$'\033[1;31m'; fi
+      if [ "$TOP_OK" = 1 ]; then smc=$'\033[1;32m'; else smc=$'\033[1;35m'; fi
+    fi
     [ "${BARCHR:-unicode}" = ascii ] && sdot="*" || { sdot=$'\342\227\217'; sv=$'\342\224\202'; }
     if [ "$status" = fresh ] && [ "$TOP_OK" = 1 ]; then sdot="$sg$sdot$sr"; else sdot="$sy$sdot$sr"; fi
     local strip hdrall
     # the certificate and FMEA badges come first: they are findings, the rest are shortcuts
     local sp=" ${sd}${sv}${sr} "
-    strip=" ${sb}DATA${sr} ${sdot} pods ${sb}${status}${sr} ${sd}${age} old${sr}  metrics ${sb}${smet}${sr}${sp}${sb}C${sr} certs${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+  ${sb}M${sr} fmea ($FMEA_BADGE)}"
-    strip+="${sp}${sb}/${sr} search${sp}${sb}K${sr} check${sp}${sb}i${sr} inspect${sp}${sb}8${sr} services  ${sb}9${sr} storage  ${sb}E${sr} events  ${sb}!${sr} explain${sp}${sb}:${sr} commands"
+    strip="${sh} DATA ${sr}${sdot} pods ${sst}${status}${sr} ${sd}${age} old${sr}  metrics ${smc}${smet}${sr}${sp}${sk}C${sr} certs${CERT_BADGE:+ ($CERT_BADGE)}${FMEA_BADGE:+  ${sk}M${sr} fmea ($FMEA_BADGE)}"
+    strip+="${sp}${sk}/${sr} search${sp}${sk}K${sr} check${sp}${sk}i${sr} inspect${sp}${sk}8${sr} services  ${sk}9${sr} storage  ${sk}E${sr} events  ${sk}!${sr} explain${sp}${sk}:${sr} commands"
     hdrall="$(< "$HDRF")"
     if [[ "$hdrall" == *$'\001DATASTRIP\001'* ]]; then printf '%s\n' "${hdrall/$'\001DATASTRIP\001'/$strip}" > "$HDRF"
     else printf '%s\n' "$strip" >> "$HDRF"; fi
@@ -6574,6 +6647,9 @@ function sev(s,   t) { t = tolower(s)
 function own(s) { if (s ~ /^\{[rygbd]\}/) { OC = substr(s, 2, 1); return substr(s, 4) } OC = ""; return s }
 function occ(c) { return c == "r" ? "1;31" : c == "y" ? "35" : c == "g" ? "32" : c == "b" ? "1" : c == "d" ? "90" : "" }
 BEGIN { FS = "\t"; TKC = (ENVIRON["TK_COLOR"] == "1"); W = ENVIRON["TK_COLS"] + 0; WRAP = (ENVIRON["KDASH_TABLE_WRAP"] != "0")
+  # on the screen the title starts a section and the frame top + header row stay on top
+  # while the table scrolls (~{S} / ~{H}: see STICKY_AWK)
+  MS = (ENVIRON["TK_STICKY"] == "1") ? "~{S}" : ""; MH = (ENVIRON["TK_STICKY"] == "1") ? "~{H}" : ""
   VLB = (length("\342\226\210") != 1); DOT = (ENVIRON["TK_GLYPH"] == "ascii") ? "*" : "\342\227\217"; HR = (ENVIRON["TK_GLYPH"] == "ascii") ? "-" : "\342\224\200" }
 NR == 1 { nc = split($0, H, "\t")
   for (i = 1; i <= nc; i++) { RA[i] = (substr(H[i], 1, 1) == ">"); if (RA[i]) H[i] = substr(H[i], 2)
@@ -6584,7 +6660,7 @@ NR == 1 { nc = split($0, H, "\t")
 END {
   t = K("1", title); if (nr > 0 && count != "0") t = t "  " K("90", nr (nr == 1 ? " " one : " " many))
   if (sub_ != "") t = t K("90", "   " sub_)
-  print ""; print t
+  print ""; print MS t
   if (nr == 0) { print "  " K("90", empty != "" ? empty : "none"); exit }
   if (W > 0) for (i = 1; i < nc; i++) if (WD[i] > 56) WD[i] = 56     # no width given (a pipe, a file): nothing is cut
   # framed: │ c1 │ c2 │ ... │  -> 1 + sum(width + 3) characters
@@ -6598,11 +6674,13 @@ END {
   if (ENVIRON["TK_GLYPH"] == "ascii") { BTL = BTR = BBL = BBR = BLT = BRT = BTT = BBT = BX = "+"; BH = "-"; BV = "|" }
   else { BTL = "\342\224\214"; BTR = "\342\224\220"; BBL = "\342\224\224"; BBR = "\342\224\230"; BLT = "\342\224\234"; BRT = "\342\224\244"
          BTT = "\342\224\254"; BBT = "\342\224\264"; BX = "\342\224\274"; BH = "\342\224\200"; BV = "\342\224\202" }
-  print K("90", hline(BTL, BTT, BTR))
-  # header and rows: a cell that does not fit wraps onto further lines of the same row
+  print MH K("90", hline(BTL, BTT, BTR))
+  # header and rows: a cell that does not fit wraps onto further lines of the same row.
+  # The header row is one band inside the frame.
   mx = 1; for (i = 1; i <= nc; i++) { m = wrap(H[i], WD[i]); HN[i] = m; for (k = 1; k <= m; k++) HS[i, k] = SG[k]; if (m > mx) mx = m }
-  for (k = 1; k <= mx; k++) { h = K("90", BV); for (i = 1; i <= nc; i++) h = h " " K("1", pad(k <= HN[i] ? HS[i, k] : "", WD[i], RA[i])) " " K("90", BV); print h }
-  print K("90", hline(BLT, BX, BRT))
+  for (k = 1; k <= mx; k++) { h = ""; for (i = 1; i <= nc; i++) h = h (i > 1 ? BV : "") " " pad(k <= HN[i] ? HS[i, k] : "", WD[i], RA[i]) " "
+    print MH K("90", BV) K("1;7", h) K("90", BV) }
+  print MH K("90", hline(BLT, BX, BRT))
   for (n = 1; n <= nr; n++) { mx = 1
     for (i = 1; i <= nc; i++) { m = wrap(CE[n, i], WD[i]); RN[i] = m; for (k = 1; k <= m; k++) RW[i, k] = SG[k]; if (m > mx) mx = m
       c = occ(CL[n, i]); if (ST[i] && c == "") { c = sev(substr(CE[n, i], length(DOT) + 2)) }
@@ -6610,7 +6688,7 @@ END {
     for (k = 1; k <= mx; k++) { line = K("90", BV)
       for (i = 1; i <= nc; i++) line = line " " K(CC[i], pad(k <= RN[i] ? RW[i, k] : "", WD[i], RA[i])) " " K("90", BV)
       print line } }
-  print K("90", hline(BBL, BBT, BBR))
+  print MS K("90", hline(BBL, BBT, BBR))
 }
 function hline(l, j, r,   s, i, k) { s = l; for (i = 1; i <= nc; i++) { for (k = 0; k < WD[i] + 2; k++) s = s BH; s = s (i < nc ? j : r) } return s }
 '
@@ -7381,8 +7459,103 @@ inspector_containers() { # ns pod -> TYPE<TAB>NAME<TAB>IMAGE (including init/deb
     inspector_clean
 }
 
-inspector_summary() { # ns pod output-file
-  inspector_query "$3" get pod "$2" -n "$1" -o 'jsonpath=Name: {.metadata.name}{"\n"}Namespace: {.metadata.namespace}{"\n"}UID: {.metadata.uid}{"\n"}Created: {.metadata.creationTimestamp}{"\n"}Phase: {.status.phase}{"\n"}Reason: {.status.reason}{"\n"}Message: {.status.message}{"\n"}Node: {.spec.nodeName}{"\n"}Pod IP: {.status.podIP}{"\n"}Service account: {.spec.serviceAccountName}{"\n"}{range .metadata.ownerReferences[*]}Owner: {.kind}/{.name}{"\n"}{end}{"\nCONDITIONS\n"}{range .status.conditions[*]}{.type}{"\t"}{.status}{"\t"}{.reason}{"\t"}{.message}{"\n"}{end}{"\nCONTAINERS (requests / limits)\n"}{range .spec.containers[*]}{.name}{"\t"}{.image}{"\n"}  CPU: {.resources.requests.cpu} / {.resources.limits.cpu}{"\t"}Memory: {.resources.requests.memory} / {.resources.limits.memory}{"\n"}{end}{"\nCONTAINER STATUS\n"}{range .status.containerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\n"}  Waiting: {.state.waiting.reason} {.state.waiting.message}{"\n"}  Running since: {.state.running.startedAt}{"\n"}  Terminated: {.state.terminated.reason} exit={.state.terminated.exitCode}{"\n"}  Previous: {.lastState.terminated.reason} exit={.lastState.terminated.exitCode}{"\n"}{end}{"\nINIT CONTAINER STATUS\n"}{range .status.initContainerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\t"}{.state.waiting.reason}{.state.terminated.reason}{"\n"}{end}'
+# ---- pod detail panes: structure and colour -----------------------------------------
+# Body files are plain text (inspector_clean removed every control byte the cluster
+# sent). Panes kdash lays out itself (summary, describe, events, why) may carry markers
+# that only kdash writes: \001[<sgr>m a colour, \001R a space and a rule to the right edge, \001P
+# spaces to the edge (a header band). The view turns them into colours for the screen;
+# search, line counts and exports see the plain text.
+# Summary: the pod, its conditions, containers (requests / limits) and container state
+# as aligned tables instead of raw "Key: value" lines; empty fields are left out.
+INSPECTOR_SUM_AWK='
+function K(c, s) { return (mk == "1" && c != "" && s != "") ? "\001[" c "m" s "\001[0m" : s }
+function bad(v) { return v ~ /CrashLoop|Error|Failed|OOMKilled|ImagePull|ErrImage|Evicted|Unknown|CannotRun|DeadlineExceeded|CreateContainer|InvalidImage|Unschedulable/ }
+function stc(v) { if (v ~ /^(Running|Succeeded|Completed)/) return "32"; if (bad(v)) return "1;31"; return (v == "" || v == "-") ? "" : "35" }
+function title(s) { if (started) print ""; started = 1; print K("1", s) (mk == "1" ? K("90", "\001R") : "") }
+function hdr(a, b, c, d, e, f) { split("", V); split("", C); NRW = 0; NC = 0
+  H[++NC] = a; H[++NC] = b; if (c != "") H[++NC] = c; if (d != "") H[++NC] = d; if (e != "") H[++NC] = e; if (f != "") H[++NC] = f }
+function cell(c, v, col) { V[NRW, c] = v; C[NRW, c] = col }
+function flush(   r, c, w, out, v, use, last) {
+  for (c = 1; c <= NC; c++) { w[c] = length(H[c]); use[c] = (c == 1) }
+  for (r = 1; r <= NRW; r++) for (c = 1; c <= NC; c++) { v = V[r, c]; if (v != "" && v != "-") use[c] = 1; if (length(v) > w[c]) w[c] = length(v) }
+  last = 1; for (c = 1; c <= NC; c++) if (use[c]) last = c
+  out = " "; for (c = 1; c <= NC; c++) if (use[c]) out = out " " (c < last ? sprintf("%-" w[c] "s", H[c]) "  " : H[c])
+  print (mk == "1") ? "\001[1;7m" out "\001P\001[0m" : out
+  for (r = 1; r <= NRW; r++) { out = " "
+    for (c = 1; c <= NC; c++) if (use[c]) { v = V[r, c]; if (v == "") v = "-"; out = out " " K(C[r, c], v) (c < last ? sprintf("%" (w[c] - length(v) + 2) "s", "") : "") }
+    sub(/ +$/, "", out); print out } }
+function endsec() {
+  if (sec == "cond" || sec == "spec" || sec == "st") { title(stitle); if (NRW) flush(); else print "  " K("90", "none reported") }
+  else if (sec == "init" && NRW) { title(stitle); flush() }
+  sec = "" }
+function lim(s,   q) { n_ = split(s, q, " / "); return (q[1] == "" ? "-" : q[1]) " / " (q[2] == "" ? "-" : q[2]) }
+BEGIN { sec = "pod"; started = 0 }
+$0 == "CONDITIONS" { endsec(); sec = "cond"; stitle = "CONDITIONS"; hdr("TYPE", "STATUS", "REASON", "MESSAGE"); next }
+$0 == "CONTAINERS (requests / limits)" { endsec(); sec = "spec"; stitle = "CONTAINERS"; hdr("NAME", "IMAGE", "CPU REQUEST / LIMIT", "MEMORY REQUEST / LIMIT"); next }
+$0 == "CONTAINER STATUS" { endsec(); sec = "st"; stitle = "CONTAINER STATUS"; hdr("NAME", "READY", "RESTARTS", "STATE", "LAST EXIT", "MESSAGE"); next }
+$0 == "INIT CONTAINER STATUS" { endsec(); sec = "init"; stitle = "INIT CONTAINERS"; hdr("NAME", "READY", "RESTARTS", "STATE"); next }
+$0 == "" { next }
+sec == "pod" { if (!started) title("POD")
+  p = index($0, ": "); if (!p && $0 ~ /:$/) p = length($0)
+  if (!p) { print "                     " $0; next }
+  k = substr($0, 1, p - 1); v = substr($0, p + 2); sub(/^ +/, "", v); sub(/ +$/, "", v); if (v == "") next
+  col = (k == "Phase") ? stc(v) : (k == "Reason") ? (bad(v) ? "1;31" : "35") : (k == "Message") ? "35" : (k == "Name") ? "1" : ""
+  print "  " K("90", sprintf("%-17s", k)) "  " K(col, v); next }
+sec == "cond" { n = split($0, f, "\t"); NRW++
+  cell(1, f[1], ""); cell(2, f[2], (f[2] == "True") ? ((f[1] == "DisruptionTarget") ? "35" : "32") : (f[2] == "False" ? "1;31" : "35")); cell(3, f[3], ""); cell(4, f[4], ""); next }
+sec == "spec" { if ($0 ~ /^  CPU: /) { n = split($0, f, "\t"); c_ = f[1]; sub(/^  CPU: /, "", c_); m_ = f[2]; sub(/^Memory: /, "", m_)
+    cell(3, lim(c_), ""); m_ = lim(m_); cell(4, m_, (m_ ~ / \/ -$/) ? "35" : ""); next }
+  n = split($0, f, "\t"); NRW++; cell(1, f[1], "1"); cell(2, f[2], ""); next }
+sec == "st" {
+  if ($0 ~ /^  Waiting: /) { v = substr($0, 12); sub(/^ +/, "", v); sub(/ +$/, "", v); if (v != "") { r_ = v; sub(/ .*/, "", r_); m_ = substr(v, length(r_) + 2); cell(4, "Waiting: " r_, stc(r_)); cell(6, m_, "") }; next }
+  if ($0 ~ /^  Running since: /) { v = substr($0, 18); sub(/ +$/, "", v); if (v != "" && V[NRW, 4] == "") cell(4, "Running since " v, "32"); next }
+  if ($0 ~ /^  Terminated: /) { v = substr($0, 15); x_ = v; sub(/.*exit=/, "", x_); sub(/ *exit=.*/, "", v); sub(/^ +/, "", v)
+    if ((v != "" || x_ != "") && V[NRW, 4] == "") cell(4, "Terminated: " (v == "" ? "-" : v) (x_ == "" ? "" : " (exit " x_ ")"), stc(v == "" ? "Error" : v)); next }
+  if ($0 ~ /^  Previous: /) { v = substr($0, 13); x_ = v; sub(/.*exit=/, "", x_); sub(/ *exit=.*/, "", v); sub(/^ +/, "", v)
+    if (v != "" || x_ != "") cell(5, (v == "" ? "-" : v) (x_ == "" ? "" : " (exit " x_ ")"), (v ~ /^Completed$/ && x_ == "0") ? "" : "1;31"); next }
+  n = split($0, f, "\t"); NRW++; r_ = f[2]; sub(/^ready=/, "", r_); x_ = f[3]; sub(/^restarts=/, "", x_)
+  cell(1, f[1], "1"); cell(2, r_, (r_ == "true") ? "32" : "1;31"); cell(3, x_, (x_ + 0 > 0) ? "35" : ""); next }
+sec == "init" { n = split($0, f, "\t"); NRW++; r_ = f[2]; sub(/^ready=/, "", r_); x_ = f[3]; sub(/^restarts=/, "", x_)
+  cell(1, f[1], "1"); cell(2, r_, (r_ == "true") ? "32" : ""); cell(3, x_, (x_ + 0 > 0) ? "35" : ""); cell(4, f[4], stc(f[4])); next }
+{ print }
+END { endsec() }
+'
+# Describe: the top-level sections as titles with a rule, keys in the secondary colour,
+# states coloured (Running / Ready True green, Waiting magenta, CrashLoop / OOMKilled /
+# False / a non-zero exit code red), the Conditions and Events headers as bands.
+INSPECTOR_DESC_AWK='
+function K(c, s) { return (c != "" && s != "") ? "\001[" c "m" s "\001[0m" : s }
+function vc(k, v) {
+  if (v ~ /^<(none|nil|unset)>$/) return "90"
+  if (k == "Status" || k == "State") return (v ~ /^(Running|Succeeded|Completed)/) ? "32" : ((v ~ /^(Failed|Unknown)/) ? "1;31" : "35")
+  if (k == "Reason") return (v == "Completed") ? "" : ((v ~ /CrashLoop|Error|OOMKilled|ImagePull|ErrImage|Evicted|CannotRun|DeadlineExceeded|CreateContainer|InvalidImage/) ? "1;31" : "35")
+  if ((k == "Ready" || k == "ContainersReady" || k == "Started") && v ~ /^(True|true)$/) return "32"
+  if ((k == "Ready" || k == "ContainersReady") && v ~ /^(False|false)$/) return "1;31"
+  if (k == "Restart Count") return (v + 0 > 0) ? "35" : ""
+  if (k == "Exit Code") return (v + 0 != 0) ? "1;31" : ""
+  if (k == "Name" && ind == 0) return "1"
+  return "" }
+{ s = $0 }
+s ~ /^[A-Z][A-Za-z0-9 -]*:$/ { sec = substr(s, 1, length(s) - 1); th = (sec == "Conditions" || sec == "Events"); print K("1;35", s) K("90", "\001R"); next }
+s ~ /^[A-Z]/ { th = 0 }
+th && s ~ /^  [A-Z]/ { th = 0; print "\001[1;7m" s "\001P\001[0m"; next }
+sec == "Events" && s ~ /^  -+( |$)/ { print K("90", s); next }
+sec == "Events" && match(s, /^  (Warning|Normal) +[^ ]+/) { t = substr(s, 3, RLENGTH - 2); print "  " K((t ~ /^Warning/) ? "35" : "", t) substr(s, RLENGTH + 1); next }
+sec == "Conditions" && match(s, /^  [A-Za-z]+ +(True|False|Unknown)/) { t = substr(s, 1, RLENGTH); v = t; sub(/.* /, "", v); t = substr(t, 1, length(t) - length(v))
+  print t K((v == "True") ? "32" : "1;31", v) substr(s, RLENGTH + 1); next }
+match(s, /^ *[A-Za-z][A-Za-z0-9._\/-]*( [A-Za-z0-9._\/()-]+)*:( |$)/) {
+  L0 = RLENGTH; k = substr(s, 1, L0); ind = match(k, /[^ ]/) - 1; k = substr(k, ind + 1); sub(/: ?$/, "", k)
+  rest = substr(s, L0 + 1); g = rest; sub(/[^ ].*/, "", g); v = substr(rest, length(g) + 1)
+  if (v == "") { print substr(s, 1, ind) K((ind == 2 || ind == 0) ? "1" : "90", k ":"); next }
+  print substr(s, 1, ind) K("90", k ":") ((substr(s, L0, 1) == " ") ? " " : "") g K(vc(k, v), v); next }
+{ print }
+'
+inspector_summary() { # ns pod output-file [1 = colour markers for the pod detail screen]
+  local rc=0
+  inspector_query "$3" get pod "$2" -n "$1" -o 'jsonpath=Name: {.metadata.name}{"\n"}Namespace: {.metadata.namespace}{"\n"}UID: {.metadata.uid}{"\n"}Created: {.metadata.creationTimestamp}{"\n"}Phase: {.status.phase}{"\n"}Reason: {.status.reason}{"\n"}Message: {.status.message}{"\n"}Node: {.spec.nodeName}{"\n"}Pod IP: {.status.podIP}{"\n"}Service account: {.spec.serviceAccountName}{"\n"}{range .metadata.ownerReferences[*]}Owner: {.kind}/{.name}{"\n"}{end}{"\nCONDITIONS\n"}{range .status.conditions[*]}{.type}{"\t"}{.status}{"\t"}{.reason}{"\t"}{.message}{"\n"}{end}{"\nCONTAINERS (requests / limits)\n"}{range .spec.containers[*]}{.name}{"\t"}{.image}{"\n"}  CPU: {.resources.requests.cpu} / {.resources.limits.cpu}{"\t"}Memory: {.resources.requests.memory} / {.resources.limits.memory}{"\n"}{end}{"\nCONTAINER STATUS\n"}{range .status.containerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\n"}  Waiting: {.state.waiting.reason} {.state.waiting.message}{"\n"}  Running since: {.state.running.startedAt}{"\n"}  Terminated: {.state.terminated.reason} exit={.state.terminated.exitCode}{"\n"}  Previous: {.lastState.terminated.reason} exit={.lastState.terminated.exitCode}{"\n"}{end}{"\nINIT CONTAINER STATUS\n"}{range .status.initContainerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\t"}{.state.waiting.reason}{.state.terminated.reason}{"\n"}{end}' || rc=$?
+  # the raw "Key: value" lines become sections and aligned tables (a failed read stays as it is)
+  if [ "$rc" = 0 ] && [ -s "$3" ]; then awk -v mk="${4:-0}" "$INSPECTOR_SUM_AWK" "$3" > "$3.f" && mv -f -- "$3.f" "$3"; fi
+  return "$rc"
 }
 
 # ---- older log files (rotated by the kubelet) -------------------------------------------
@@ -7576,9 +7749,16 @@ inspector_logs() { # ns pod container current|previous output-file
   return "$rc"
 }
 
+# Events and WHY are kdash's own tables: drawn at the width of the pane (nothing wraps)
+# with their colours as markers (~[..m -> \001[..m after the control bytes are removed).
+inspector_tk() { # render-function args... -> the output at the pane width
+  local m=$'\001' tc=0
+  [ "${COLOR:-1}" != 1 ] || tc=1
+  TK_COLOR="$tc" TK_COLS="$(( ${INSPECTOR_COLS:-160} - 1 ))" TK_GLYPH="${BARCHR:-unicode}" "$@" | inspector_clean | sed "s/~\[\([0-9;]*m\)/${m}[\1/g"
+}
 inspector_events() { # ns pod output-file
   if declare -F events_render >/dev/null; then
-    events_render "$1" "$2" | inspector_clean > "$3"
+    inspector_tk events_render "$1" "$2" > "$3"
   else
     inspector_query "$3" get events -n "$1" --field-selector="involvedObject.kind=Pod,involvedObject.name=$2" \
       --sort-by=.metadata.creationTimestamp -o wide
@@ -7587,7 +7767,7 @@ inspector_events() { # ns pod output-file
 
 inspector_explain() { # ns pod output-file
   if declare -F explain_render >/dev/null; then
-    explain_render "$1" "$2" | inspector_clean > "$3"
+    inspector_tk explain_render "$1" "$2" > "$3"
   else
     printf 'Failure explanations are unavailable. Inspect conditions, Events and previous logs for evidence.\n' > "$3"
   fi
@@ -7730,13 +7910,42 @@ inspector_level_cycle() {
 
 # Build the view: level filter, then search filter, plus the line numbers of the matches
 # inside that view (so n/N can jump) and the counts for the header.
-inspector_view_build() { # body view matches [width]
-  local body="$1" view="$2" matchf="$3" icase=0 w="${4:-0}"
+inspector_view_build() { # body view matches [width] [1 = for the screen (colours, empty-pane note) / 0 = plain, for exports]
+  local body="$1" view="$2" matchf="$3" icase=0 w="${4:-0}" deco="${5:-1}" edge="${4:-0}" hr=$'\342\224\200'
   [ -z "${INSPECTOR_SEARCH:-}" ] || icase="$(inspector_icase "$INSPECTOR_SEARCH")"
   [ "${INSPECTOR_WRAP:-1}" = 1 ] || w=0
-  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v icase="$icase" -v lvl="${INSPECTOR_LEVEL_PAT:-}" \
-      -v only="${INSPECTOR_ONLY:-0}" -v matchf="$matchf" -v metaf="$view.meta" -v w="$w" -v json="${INSPECTOR_JSON:-0}" '
-    BEGIN { pat = ENVIRON["KD_PAT"] }
+  [ "$edge" -gt 0 ] 2>/dev/null || edge=$(( ${INSPECTOR_COLS:-100} - 1 ))
+  [ "${BARCHR:-unicode}" != ascii ] || hr=-
+  KD_PAT="${INSPECTOR_SEARCH:-}" KD_EMPTY="${INSPECTOR_EMPTY:-}" KD_MARKED="${INSPECTOR_MARKED:-1}" awk -v icase="$icase" -v lvl="${INSPECTOR_LEVEL_PAT:-}" \
+      -v only="${INSPECTOR_ONLY:-0}" -v matchf="$matchf" -v metaf="$view.meta" -v w="$w" -v json="${INSPECTOR_JSON:-0}" \
+      -v deco="$deco" -v edge="$edge" -v hr="$hr" -v color="${COLOR:-1}" -v lvn="${INSPECTOR_LEVEL_NAME:-all}" '
+    BEGIN { pat = ENVIRON["KD_PAT"]; emsg = ENVIRON["KD_EMPTY"]; mkp = (ENVIRON["KD_MARKED"] != "0"); VLB = (length("\342\224\200") != 1); ESC = sprintf("%c", 27); SOH = sprintf("%c", 1)
+            # byte classes only where awk counts bytes (a UTF-8 gawk rejects them)
+            if (VLB) { HI = "[\200-\377]"; CONT = "[\200-\277]" } }
+    # widths in characters, also where awk counts bytes (mawk, C locale)
+    function vl(s,   t) { if (!VLB || s !~ HI) return length(s); t = s; return length(s) - gsub(CONT, "", t) }
+    function usub(s, a, n,   i, L, c, k, out) {
+      if (!VLB || s !~ HI) return substr(s, a, n)
+      L = length(s); k = 0; out = ""
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1); if (c !~ CONT) { k++; if (k >= a + n) break }; if (k >= a) out = out c }
+      return out }
+    # markers -> colours (or nothing), a fill -> the rule / the spaces to the right edge
+    function paint(s, plain,   p, f, fl, fs) {
+      if (color == "1") gsub(/\001\[/, ESC "[", s); else gsub(/\001\[[0-9;]*m/, "", s)
+      p = index(s, SOH "R"); fl = hr; if (!p) { p = index(s, SOH "P"); fl = " " }
+      if (p) { f = edge - vl(plain); fs = ""; if (fl != " " && f > 1) { fs = " "; f-- } else if (fl != " ") f = 0
+               while (f-- > 0) fs = fs fl; s = substr(s, 1, p - 1) fs substr(s, p + 2) }
+      return s }
+    # visible characters o+1 .. o+n of a coloured line; the colour codes before them are
+    # kept, so a continuation row goes on in the colour it had
+    function epart(s, o, n,   i, j, L, c, k, out, any, q) {
+      L = length(s); k = 0; out = ""; any = 0
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1)
+        if (c == ESC) { j = i; while (j < L && substr(s, j, 1) != "m") j++; q = substr(s, i, j - i + 1); i = j
+          if (k <= o && q == ESC "[0m") { out = ""; any = 0 } else { out = out q; any = (q != ESC "[0m") }; continue }
+        if (!(VLB && c ~ CONT)) { k++; if (k > o + n) break }
+        if (k > o) out = out c }
+      return out (any ? ESC "[0m" : "") }
     function hit(line) {
       if (pat == "") return 0
       return (icase ? (tolower(line) ~ tolower(pat)) : (line ~ pat))
@@ -7760,17 +7969,28 @@ inspector_view_build() { # body view matches [width]
       lv = jstr(rest, "severity"); if (lv == "") lv = jstr(rest, "level")
       if (ts ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T/) ts = substr(ts, 6, 5) " " substr(ts, 12, 12)
       return ts "  " tag sprintf("%-7s", toupper(lv == "" ? "-" : lv)) "  " m }
-    { line = (json == "1") ? readable($0) : $0
+    { if (mkp && index($0, SOH)) { mk = 1; raw = $0; plain = raw; gsub(/\001\[[0-9;]*m/, "", plain); gsub(/\001[RP]/, "", plain) } else { mk = 0; plain = $0 }
+      line = (json == "1" && !mk) ? readable(plain) : plain
       if (lvl != "" && line !~ lvl) next
       m = hit(line)
       if (only == "1" && pat != "" && !m) next
       lines++
       if (m) { hits++; print n + 1 > matchf }
-      if (w < 20 || length(line) <= w) { n++; print line; next }
+      if (w < 20 || length(line) <= w || (VLB && vl(line) <= w)) { n++; if (mk && deco == "1") print paint(raw, line); else print line; next }
       # wrap: the whole line is shown, continuation rows are indented
-      n++; print substr(line, 1, w); rest = substr(line, w + 1)
-      while (rest != "") { n++; print "    " substr(rest, 1, w - 4); rest = substr(rest, w - 3) } }
-    END { printf "%d %d %d\n", n + 0, hits + 0, lines + 0 > metaf }
+      if (mk && deco == "1" && color == "1") { pr = paint(raw, line); tl = vl(line); n++; print epart(pr, 0, w)
+        for (o = w; o < tl; o += w - 4) { n++; print "    " epart(pr, o, w - 4) }
+        next }
+      n++; print usub(line, 1, w); rest = usub(line, w + 1, 1e9)
+      while (rest != "") { n++; print "    " usub(rest, 1, w - 4); rest = usub(rest, w - 3, 1e9) } }
+    END {
+      # an empty pane says why (the note is not a line of the pane: counts and exports stay 0)
+      if (deco == "1" && n == 0) {
+        if (NR > 0 && lvl != "") t = "No line at log level " lvn " or above in the " NR " lines read - L switches the level."
+        else if (NR > 0 && only == "1" && pat != "") t = "No line matches /" pat " - / searches again, & shows every line."
+        else t = (emsg != "") ? emsg : "Nothing to show."
+        print (color == "1" ? ESC "[90m" : "") "  " t (color == "1" ? ESC "[0m" : "") }
+      printf "%d %d %d\n", n + 0, hits + 0, lines + 0 > metaf }
   ' "$body" > "$view"
   INSPECTOR_VIEW_LINES=0; INSPECTOR_MATCHES=0; INSPECTOR_VIEW_LOGICAL=0
   [ -r "$view.meta" ] && read -r INSPECTOR_VIEW_LINES INSPECTOR_MATCHES INSPECTOR_VIEW_LOGICAL < "$view.meta"
@@ -7779,11 +7999,48 @@ inspector_view_build() { # body view matches [width]
 
 # Print the visible slice, clipped to the terminal width and with the matches marked.
 # Clipping happens before the colour codes are added so the width stays exact.
-inspector_show() { # view first last cols color [horizontal offset]
+inspector_show() { # view first last cols color [horizontal offset] [1 = log lines: level words coloured]
   local icase="" view="$1" hoff="${6:-0}"
   [ -z "${INSPECTOR_SEARCH:-}" ] || icase="$(inspector_icase "$INSPECTOR_SEARCH")"
-  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v first="$2" -v last="$3" -v w="$4" -v color="$5" -v hoff="$hoff" -v icase="$icase" '
-    BEGIN { pat = ENVIRON["KD_PAT"]; if (icase == "1") pat = tolower(pat) }
+  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v first="$2" -v last="$3" -v w="$4" -v color="$5" -v hoff="$hoff" -v icase="$icase" -v lv="${7:-0}" '
+    BEGIN { pat = ENVIRON["KD_PAT"]; if (icase == "1") pat = tolower(pat); VLB = (length("\342\224\200") != 1); ESC = sprintf("%c", 27)
+            if (VLB) { HI = "[\200-\377]"; CONT = "[\200-\277]" }
+            DIM = (color == "1") ? ESC "[2m>" ESC "[0m" : ">" }
+    function vl(s,   t) { if (!VLB || s !~ HI) return length(s); t = s; return length(s) - gsub(CONT, "", t) }
+    function usub(s, a, n,   i, L, c, k, out) {
+      if (!VLB || s !~ HI) return substr(s, a, n)
+      L = length(s); k = 0; out = ""
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1); if (c !~ CONT) { k++; if (k >= a + n) break }; if (k >= a) out = out c }
+      return out }
+    # a coloured line: skip o visible characters, keep w (MORE = 1 when the line goes on)
+    function ecut(s, o, w,   t, i, j, L, c, k, out, keep, any, q) {
+      t = s; gsub(/\033\[[0-9;]*m/, "", t); MORE = (vl(t) - o > w); keep = MORE ? w - 1 : w
+      L = length(s); k = 0; out = ""; any = 0
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1)
+        if (c == ESC) { j = i; while (j < L && substr(s, j, 1) != "m") j++; q = substr(s, i, j - i + 1); i = j
+          if (k <= o && q == ESC "[0m") { out = ""; any = 0 } else { out = out q; any = (q != ESC "[0m") }; continue }
+        if (!(VLB && c ~ CONT)) { k++; if (k > o + keep) break }
+        if (k > o) out = out c }
+      return out (any ? ESC "[0m" : "") }
+    # log lines: the first level word - klog E / W, ERROR FATAL PANIC ... red, WARN magenta,
+    # level=error / "level":"warn" as well
+    function cw(s, c, a, n) { return substr(s, 1, a - 1) ESC "[" c "m" substr(s, a, n) ESC "[0m" substr(s, a + n) }
+    function lvc(s,   pre, q) {
+      pre = ""
+      if (match(s, /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9:.,+Z-]+ /) || match(s, /^[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9.]+ /)) {
+        pre = ESC "[90m" substr(s, 1, RLENGTH - 1) ESC "[0m "; s = substr(s, RLENGTH + 1) }
+      if (substr(s, 1, 1) == "[" && (q = index(s, "] ")) > 2 && q < 160) { pre = pre ESC "[94m" substr(s, 1, q) ESC "[0m "; s = substr(s, q + 2) }
+      return pre lvw(s) }
+    function lvw(s,   l, a, n, u) {
+      if (match(s, /(^|[ \t])[EF][01][0-9][0-3][0-9] [0-2][0-9]:[0-5][0-9]:/)) { a = RSTART; if (substr(s, a, 1) ~ /[ \t]/) a++; return cw(s, "1;31", a, 5) }
+      if (match(s, /(^|[ \t])W[01][0-9][0-3][0-9] [0-2][0-9]:[0-5][0-9]:/)) { a = RSTART; if (substr(s, a, 1) ~ /[ \t]/) a++; return cw(s, "35", a, 5) }
+      if (match(s, /(^|[^A-Za-z])(ERROR|FATAL|PANIC|CRITICAL|SEVERE|EMERG|ALERT|CRIT|ERR|Exception|Traceback)([^A-Za-z]|$)/)) u = "1;31"
+      else if (match(s, /(^|[^A-Za-z])(WARN|WARNING)([^A-Za-z]|$)/)) u = "35"
+      if (u != "") { a = RSTART; n = RLENGTH; if (substr(s, a, 1) !~ /[A-Za-z]/) { a++; n-- }; if (substr(s, a + n - 1, 1) !~ /[A-Za-z]/) n--; return cw(s, u, a, n) }
+      l = tolower(s)
+      if (match(l, /(level|lvl|severity)"?[=:] ?"?(error|fatal|panic|crit[a-z]*|err|emerg|alert)/)) return cw(s, "1;31", RSTART, RLENGTH)
+      if (match(l, /(level|lvl|severity)"?[=:] ?"?warn[a-z]*/)) return cw(s, "35", RSTART, RLENGTH)
+      return s }
     function hl(s, p,   out, rest, hay, at, len) {
       if (p == "" || color != "1") return s
       out = ""; rest = s
@@ -7799,8 +8056,17 @@ inspector_show() { # view first last cols color [horizontal offset]
       return out
     }
     NR > last { exit }
-    NR >= first && NR <= last { s = substr($0, 1 + hoff); more = (length(s) > w)
-      s = substr(s, 1, more ? w - 1 : w); print hl(s, pat) (more ? (color == "1" ? "\033[2m>\033[0m" : ">") : "") }
+    NR >= first && NR <= last { r = $0
+      if (index(r, ESC)) {
+        p = r; gsub(/\033\[[0-9;]*m/, "", p)
+        # a line with a search match is shown plain, the match marked; others keep their colours
+        if (pat == "" || !(((icase == "1") ? tolower(p) : p) ~ pat)) { print ecut(r, hoff, w) (MORE ? DIM : ""); next }
+        r = p }
+      s = usub(r, 1 + hoff, 1e9); more = (vl(s) > w); s = usub(s, 1, more ? w - 1 : w)
+      t = hl(s, pat)
+      # log lines: timestamp, [pod/container] tag and level word coloured - around the search marks too
+      if (color == "1") { if (lv == "1") t = lvc(t); else if (t == s && s ~ /^Read failed \(exit [0-9]+\)/) t = ESC "[1;31m" s ESC "[0m" }
+      print t (more ? DIM : "") }
   ' "$view"
 }
 # Container inventory with live state: the spec gives name, image and type, the status
@@ -7923,9 +8189,9 @@ inspector_container_picker() { # ns pod dir
     bx_layout "$W" 7 2 "$w_n" "$w_t" "$w_r" 3 "$w_s" "$w_l" 20
     local -a cw=("${BX_CW[@]}")
     bx_sep "$W" t "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_TL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
-    out="$V_"; for ((kk = 0; kk < 8; kk++)); do
+    out="$V_${PC_HB:-}"; for ((kk = 0; kk < 8; kk++)); do
       if [ "${al:kk:1}" = r ]; then printf -v cell " %*s " "${cw[kk]}" "${hd[kk]:0:${cw[kk]}}"; else printf -v cell " %-*s " "${cw[kk]}" "${hd[kk]:0:${cw[kk]}}"; fi
-      out+="${PC_B}${cell}${PC_R}${V_}"; done
+      out+="${cell}${BX_V}"; done; out="${out%"$BX_V"}${PC_R}${V_}"
     buf+="$out"$'\033[K\n'
     bx_sep "$W" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
     local shown=$((n - top < rows ? n - top : rows))
@@ -8061,12 +8327,106 @@ inspector_export() { # view-file ns pod container pane [total-lines] [matching-l
   printf '%s' "$file"
 }
 
+# ---- help screens: titles, keys and the colour legend in colour --------------------
+# The help texts stay plain heredocs; HELP_AWK adds colour roles on the way out (the
+# theme maps them like every other screen): section titles in the accent colour with a
+# rule, keys in bold blue, terms of a view's help in bold, the colour legend in its own
+# colours. mode: dash (view help, then KEYS), keys (key list from the start), cols (the
+# pod list help: label / key / text columns). The text itself is not changed.
+HELP_AWK='
+function C(c, s) { return (s == "") ? s : ESC "[" c "m" s ESC "[0m" }
+function rule(n,   r) { r = ""; while (n-- > 0) r = r HR; return r }
+function legend(seg) {
+  if (seg ~ /^green /) return C("32", seg); if (seg ~ /^blue /) return C("94", seg); if (seg ~ /^magenta /) return C("35", seg)
+  if (seg ~ /^bold red /) return C("1;31", seg); if (seg ~ /^(red|bold red) /) return C("1;31", seg); if (seg ~ /^grey /) return C("90", seg)
+  return "" }
+function kseg(seg, first, g, rest,   k, t) {
+  if ((t = legend(seg)) != "") return t
+  if (first && length(g) > 3) return seg
+  if (first && keys && seg ~ /^[A-Z][A-Z][A-Z]+$/) return C("1;35", seg)
+  if (match(seg, /  [^ ]/)) { k = substr(seg, 1, RSTART - 1); if (length(k) <= 12 && (first || keys)) return C(keys ? "1;94" : "1", k) substr(seg, RSTART) ; return seg }
+  if (first && rest != "" && length(seg) <= 12) return C(keys ? "1;94" : "1", seg)
+  return seg }
+function segs(s,   out, rest, g, seg, first) {
+  out = ""; rest = s; first = 1
+  while (rest != "") {
+    g = ""; if (match(rest, /^ +/)) { g = substr(rest, 1, RLENGTH); rest = substr(rest, RLENGTH + 1) }
+    if (rest == "") { out = out g; break }
+    if (match(rest, /   /)) { seg = substr(rest, 1, RSTART - 1); rest = substr(rest, RSTART) } else { seg = rest; rest = "" }
+    out = out g ((first || keys) ? kseg(seg, first, g, rest) : seg); first = 0 }
+  return out }
+function colours(s,   t) {   # "Colours: green running and ready, magenta pending ..." (pod list help)
+  t = s
+  if (match(t, /green [^,.]*/)) t = substr(t, 1, RSTART - 1) C("32", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  if (match(t, /magenta [^,.]*/)) t = substr(t, 1, RSTART - 1) C("35", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  if (match(t, /(^|  )red [^,.]*/)) t = substr(t, 1, RSTART - 1) C("1;31", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  if (match(t, /grey [^,.]*/)) t = substr(t, 1, RSTART - 1) C("90", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  return t }
+BEGIN { ESC = sprintf("%c", 27); keys = (mode != "dash"); w += 0 }
+# a line of section titles only: " KEYS", " FIND      PANES      NAVIGATE"
+$0 ~ /^ ?[A-Z][A-Z0-9 &\/-]*[A-Z0-9]$/ {
+  s = $0; ind = s; sub(/[^ ].*/, "", ind); t = substr(s, length(ind) + 1)
+  if (t !~ /   /) { n = w - length(s) - 1; print ind C("1;35", t) (n > 2 ? " " C("90", rule(n)) : ""); if (t == "KEYS") keys = 1; next }
+  out = ind; while (match(t, /   +/)) { out = out C("1;35", substr(t, 1, RSTART - 1)) substr(t, RSTART, RLENGTH); t = substr(t, RSTART + RLENGTH) }
+  print out C("1;35", t); next }
+# the title of a view help: " PODS - every pod ..."
+mode == "dash" && !keys && match($0, /^ [A-Z][A-Z0-9 &]+ - /) { print " " C("1;35", substr($0, 2, RLENGTH - 4)) substr($0, RLENGTH - 2); next }
+# the view help: a term in columns 4-14, its text from column 16
+mode == "dash" && !keys && /^   [^ ]/ && substr($0, 15, 1) == " " { t = substr($0, 4, 11); sub(/ +$/, "", t); print "   " C("1", t) substr($0, 4 + length(t)); next }
+# KEYS: the key in columns 4-13, its text from column 15, more key / text pairs after a gap
+mode == "dash" && keys && /^   [^ ]/ && substr($0, 14, 1) == " " { t = substr($0, 4, 10); sub(/ +$/, "", t); print "   " C("1;94", t) segs2(substr($0, 4 + length(t))); next }
+# " COLOURS   green = ... " legend lines and their continuation
+/^ COLOURS   / { print " " C("1;35", "COLOURS") segs(substr($0, 9)); next }
+/^           (green|blue|magenta|bold red|grey) = / { print segs($0); next }
+/^  Colours: / { print "  " C("1", "Colours:") colours(substr($0, 11)); next }
+/^  red failing/ { print colours($0); next }
+mode == "cols" && /^  [A-Z][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ]  [^ ]/ {
+  lab = substr($0, 3, 10); key = substr($0, 15, 19); txt = substr($0, 34)
+  sub(/ +$/, "", lab); kt = key; sub(/ +$/, "", kt)
+  print "  " C("1;35", lab) sprintf("%" (12 - length(lab)) "s", "") (kt == "" ? key : C("1;94", kt) substr(key, length(kt) + 1)) segs2(txt); next }
+mode == "cols" && /^              [^ ]/ {
+  key = substr($0, 15, 19); txt = substr($0, 34); kt = key; sub(/ +$/, "", kt)
+  if (kt ~ /^[^ ].*[^ ]$|^[^ ]$/ && key ~ / $/) { print "              " C("1;94", kt) substr(key, length(kt) + 1) segs2(txt); next } }
+{ print segs($0) }
+function segs2(s,   out, rest, g, seg) {   # "summary          l  current logs" -> the later key / text pairs
+  out = ""; rest = s
+  while (rest != "") {
+    if (match(rest, /   +/)) { seg = substr(rest, 1, RSTART - 1); g = substr(rest, RSTART, RLENGTH); rest = substr(rest, RSTART + RLENGTH) } else { seg = rest; g = ""; rest = "" }
+    if (out != "" && match(seg, /^[^ ]+( [^ ]+)*  [^ ]/)) { k = seg; sub(/  .*/, "", k); if (length(k) <= 24) seg = C("1;94", k) substr(seg, length(k) + 1) }
+    out = out seg g }
+  return out }
+'
+# A help taller than the window is shown a page at a time (the top of it - the view's own
+# help - used to scroll away): Space / j / f next page, b previous, any other key returns.
+# 0 = the last page is on the screen (the caller waits for a key), 1 = a key returned already.
+help_page() { # title right mode: help text on stdin
+  local -a HL; local i=0 j n rows k
+  mapfile -t HL < <(help_paint "$3" "")
+  picker_size; rows=$((PK_ROWS - 3)); [ "$rows" -ge 5 ] || rows=5
+  n=${#HL[@]}
+  while :; do
+    ui_screen "$1" "$2"
+    for ((j = i; j < i + rows && j < n; j++)); do printf '%s\033[K\n' "${HL[j]}"; done
+    [ $((i + rows)) -lt "$n" ] || return 0
+    k=" -- lines $((i + 1))-$((i + rows)) of $n: Space next page$([ "$i" = 0 ] || printf ', b back'), any other key returns --"
+    if [ "${COLOR:-1}" = 1 ]; then ui_mapl $'\033[1;7m'"$k"$'\033[0m'; printf '%s' "$UI_ML"; else printf '%s' "$k"; fi
+    IFS= read -rsn1 k </dev/tty || k=q
+    case "$k" in ' '|j|f) i=$((i + rows)) ;; b|k) i=$((i - rows)); [ "$i" -ge 0 ] || i=0 ;; *) return 1 ;; esac
+  done
+}
+help_paint() { # mode [width]: help text on stdin -> screen
+  if [ "${COLOR:-1}" != 1 ]; then cat; return 0; fi
+  local ln hr=$'\342\224\200'
+  [ "${BARCHR:-unicode}" != ascii ] || hr=-
+  [ -n "${2:-}" ] || picker_size
+  awk -v mode="${1:-keys}" -v w="${2:-${PK_COLS:-120}}" -v HR="$hr" "$HELP_AWK" | while IFS= read -r ln; do ui_mapl "$ln"; printf '%s\n' "$UI_ML"; done
+}
+
 inspector_help() {
-  ui_screen "POD DETAIL | KEYS" "any key returns"
-  printf ' FIND                          PANES                       NAVIGATE\n'
+  { printf ' FIND                          PANES                       NAVIGATE\n'
   printf '  /  find in this pane         s  summary                  j k arrows  line\n'
-  printf '  &  show only matches         d  describe                 space b     page\n'
-  printf '  n N  next / previous match   e  events                   PgUp PgDn   page\n'
+  printf '  &  show only matches         d  describe                 space b  page\n'
+  printf '  n N  next / previous match   e  events                   PgUp PgDn  page\n'
   printf '  L  log level: all, ERROR,    !  why (event hypotheses)    g G Home End  top/bottom\n'
   printf '     WARN, INFO, DEBUG         l  current logs             c  choose container\n'
   printf '  f  follow logs               p  previous logs            r  reload now\n'
@@ -8090,8 +8450,10 @@ inspector_help() {
   printf ' c lists every container with readiness, restarts, state and last exit: pick one\n'
   printf ' and l/p read that container. Search and level stay active across panes.\n'
   printf ' w writes the filtered pane to %s/inspector/ (review it before sharing).\n\n' "$(inspector_report_dir)"
+  } | help_page "POD DETAIL | KEYS" "any key returns" keys && {
   printf '\033[?25h any key returns'
-  IFS= read -rsn1 _ </dev/tty || true
+  IFS= read -rsn1 _ </dev/tty || true; }
+  printf '\033[?25l'
 }
 
 inspector_pane_title() { # pane -> title shown in the bar
@@ -8269,10 +8631,11 @@ inspector_find_all() { # ns pod dir -> d/found, d/found.info; 0 = a result was w
   done
   for c in "${JP[@]}"; do wait "$c" 2>/dev/null; done
   # the result: what was read, then the matching lines of every log in time order
-  local nread=0 nlines=0 nhit=0 r ln_ hi_ st w1=6 rc_ olderfiles=0
+  local nread=0 nlines=0 nhit=0 r ln_ hi_ st w1=6 rc_ olderfiles=0 m=$'\001' sc
   for ((c = 0; c < n; c++)); do r="${LP[c]}/${LC[c]}"; [ "${LM[c]}" = current ] || r+=" (previous)"; [ "${#r}" -le "$w1" ] || w1=${#r}; done
   {
-    printf '%-*s  %10s  %7s  %s\n' "$w1" "LOG" "LINES" "MATCH" "RESULT"
+    # \001 markers (kdash's own lines only): the header band and the result colours
+    printf '%s[1;7m%-*s  %10s  %7s  %s%sP%s[0m\n' "$m" "$w1" "LOG" "LINES" "MATCH" "RESULT" "$m" "$m"
     for ((c = 0; c < n; c++)); do
       r="${LP[c]}/${LC[c]}"; [ "${LM[c]}" = current ] || r+=" (previous)"
       ln_=-; hi_=-; st="not read (stopped)"
@@ -8291,12 +8654,13 @@ inspector_find_all() { # ns pod dir -> d/found, d/found.info; 0 = a result was w
       if [ "$nlok" = 1 ]; then
         nodelog_result "$fd/$c.oldn"; st+=", $NODELOG_RESULT"; olderfiles=$((olderfiles + NODELOG_READ))
       fi
-      printf '%-*s  %10s  %7s  %s\n' "$w1" "$r" "$ln_" "$hi_" "$st"
+      case "$st" in ok*) sc=32 ;; "no access"*) sc=35 ;; INCOMPLETE*|failed*) sc="1;31" ;; *) sc=90 ;; esac
+      printf '%-*s  %10s  %7s  %s\n' "$w1" "$r" "$ln_" "$hi_" "${m}[${sc}m${st}${m}[0m"
     done
     if [ "$nlok" = 1 ]; then printf '\nRotated history: %s file(s) read from nodes; per-log coverage and failures appear above.\n' "$olderfiles"
     else nodelog_can || true; printf '\nNot searched: the older log files the kubelet rotated - %s.\n' "$NODELOG_WHY"; fi
-    printf 'Matching lines of all logs, oldest first (G jumps to the newest); each line is tagged [pod/container]:\n'
-    printf -- '----------------------------------------------------------------------------------------------------\n'
+    printf '%s[1mMatching lines of all logs%s[0m, oldest first (G jumps to the newest); each line is tagged [pod/container]:\n' "$m" "$m"
+    printf -- '%s[90m----------------------------------------------------------------------------------------------------%s[0m\n' "$m" "$m"
     cat "$fd"/*.hits 2>/dev/null | LC_ALL=C sort -s -k1,1
     [ "$nhit" -gt 0 ] || printf '(no line matched)\n'
   } > "$d/found"
@@ -8308,7 +8672,7 @@ inspector_find_all() { # ns pod dir -> d/found, d/found.info; 0 = a result was w
 inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   local ns="$1" pod="$2" d="$3" pane="${INSPECTOR_PANE:-summary}" loaded="" reload=1 viewdirty=1 rows_stale=1
   local body="$3/body" view="$3/view" matchf="$3/matches"
-  local offset=0 count=0 total=0 matches=0 msg="" rows pid rc keep_offset=0 follow=0 atbottom=0 vcols=0 hoff=0
+  local offset=0 count=0 total=0 matches=0 msg="" rows pid rc keep_offset=0 follow=0 atbottom=0 vcols=0 hoff=0 bcols=0 lvp=0
   INSPECTOR_JUMPED=""
   local container file="" target=0 idx=0 cline="" pinfo=""
   # speed: one frame per key through ui_flush (only changed lines are sent, no screen clear),
@@ -8328,6 +8692,10 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   while :; do
     # bar + framed header (4), the key rows (3, more when a narrow screen wraps them), 1 message row
     inspector_size; picker_colors; inspector_keylines; rows=$((INSPECTOR_ROWS - 6 - ${#IK_LINES[@]})); [ "$ityping" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3
+    # events / why are tables drawn for the width: a new width draws them again
+    if [ "$loaded" = "$pane" ] && [ "$reload" != 1 ] && [ "${bcols:-0}" != "$INSPECTOR_COLS" ]; then
+      case "$pane" in events|explain) reload=1; keep_offset=1 ;; esac
+    fi
     if [ "$loaded" != "$pane" ] || [ "$reload" = 1 ]; then
       picker_colors
       ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $(inspector_pane_title "$pane") "
@@ -8343,8 +8711,9 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
           if [ ! -f "${TOOLKIT_DIR:-}/events.status" ] || [ "$INSPECTOR_REFRESH_EVENTS" = 1 ]; then events_collect; fi
         fi
         case "$pane" in
-          summary) inspector_summary "$ns" "$pod" "$body" ;;
-          describe) inspector_query "$body" describe pod "$pod" -n "$ns" ;;
+          summary) inspector_summary "$ns" "$pod" "$body" 1 ;;
+          describe) if inspector_query "$body" describe pod "$pod" -n "$ns" && [ -s "$body" ]; then
+                      awk "$INSPECTOR_DESC_AWK" "$body" > "$body.f" && mv -f -- "$body.f" "$body"; fi ;;
           events) inspector_events "$ns" "$pod" "$body" ;;
           explain) inspector_explain "$ns" "$pod" "$body" ;;
           current|previous)
@@ -8378,7 +8747,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
         INSPECTOR_TAIL_SET="$iwas_t"; INSPECTOR_BYTES_SET="$iwas_b"; [ -n "$iwas_t" ] || unset INSPECTOR_TAIL_SET; [ -n "$iwas_b" ] || unset INSPECTOR_BYTES_SET
         msg="whole-log read stopped - the search covers the $(cat "$body.info" 2>/dev/null)"
       fi
-      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; viewdirty=1; ifl=1; rgen=$((rgen + 1))
+      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; bcols="$INSPECTOR_COLS"; viewdirty=1; ifl=1; rgen=$((rgen + 1))
       if [ -n "$iopen" ]; then         # the read / asked for is done (or stopped): open the box now
         sv_search="${INSPECTOR_SEARCH:-}"; sv_only="${INSPECTOR_ONLY:-0}"; ityping=1; ibad=0
         if [ "$iopen" = '&' ]; then INSPECTOR_ONLY=1; else INSPECTOR_ONLY=0; fi
@@ -8393,6 +8762,13 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     fi
     [ "${vcols:-0}" = "$INSPECTOR_COLS" ] || viewdirty=1
     if [ "$viewdirty" = 1 ]; then
+      case "$pane" in
+        summary|describe) INSPECTOR_MARKED=1; INSPECTOR_EMPTY="Nothing came back for this pane: the API answered without data for this pod. r reads it again." ;;
+        events|explain) INSPECTOR_MARKED=1; INSPECTOR_EMPTY="Nothing to show for this pod. r reads the events again." ;;
+        current) INSPECTOR_MARKED=0; INSPECTOR_EMPTY="No log lines: the container has written nothing to its current log yet. p shows the previous instance, F searches every container." ;;
+        previous) INSPECTOR_MARKED=0; INSPECTOR_EMPTY="No previous log: the container has not restarted, or its earlier instance is gone. l shows the current log." ;;
+        *) INSPECTOR_MARKED=1; INSPECTOR_EMPTY="" ;;
+      esac
       inspector_view_build "$body" "$view" "$matchf" "$((INSPECTOR_COLS - 1))"
       viewdirty=0; count="$INSPECTOR_VIEW_LINES"; matches="$INSPECTOR_MATCHES"; vcols="$INSPECTOR_COLS"
       total="$(awk 'END { print NR }' "$body" 2>/dev/null || printf 0)"
@@ -8457,7 +8833,8 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     bx_bot "$IW" "${PC_B}${pinfo}${PC_R}" ""
     frame=$'\033[H'"${hdr}${BX_LINE}"$'\033[K\n'
     if [ "${INSPECTOR_WRAP:-1}" = 1 ]; then t_=0; else t_=$hoff; fi
-    btxt="$(inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$t_"; printf x)"; btxt="${btxt%x}"
+    case "$pane" in current|previous|found) lvp=1 ;; *) lvp=0 ;; esac
+    btxt="$(inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$t_" "$lvp"; printf x)"; btxt="${btxt%x}"
     t_="${btxt//[!$'\n']/}"; nb=${#t_}
     frame+="${btxt//$'\n'/$'\033[K\n'}"
     for ((; nb < rows; nb++)); do frame+=$'\033[K\n'; done
@@ -8598,14 +8975,14 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
            *) msg='follow applies to the log panes (l current, p previous)' ;;
          esac ;;
       w) # the export has whole lines (not the wrapped screen rows)
-         inspector_view_build "$body" "$view.x" "$matchf.x" 0
+         inspector_view_build "$body" "$view.x" "$matchf.x" 0 0
          local xn="$INSPECTOR_VIEW_LINES"; INSPECTOR_VIEW_LINES="$count"; INSPECTOR_MATCHES="$matches"
          if file="$(inspector_export "$view.x" "$ns" "$pod" "$container" "$pane" "$total" "$matches")"; then
            msg="exported $xn complete line(s) to $file"
            declare -F audit >/dev/null && audit INSPECT_EXPORT "namespace=$ns pod=$pod container=${container:--} pane=$pane lines=$xn search=${INSPECTOR_SEARCH:-none} level=${INSPECTOR_LEVEL_NAME:-all} file=$file"
          else msg='export failed: is the report directory writable?'; fi ;;
       '>') # quick export: the screen, then the whole pane in whole lines (search / level as shown)
-         inspector_view_build "$body" "$view.x" "$matchf.x" 0
+         inspector_view_build "$body" "$view.x" "$matchf.x" 0 0
          INSPECTOR_VIEW_LINES="$count"; INSPECTOR_MATCHES="$matches"
          local xt="pod detail, pane $pane | pod $ns/$pod | container ${container:-(none)}"
          case "$pane" in current|previous) [ ! -s "$body.info" ] || xt+=" | read: $(< "$body.info")" ;;
@@ -8712,9 +9089,9 @@ END { for (i = 1; i <= 22; i++) close(F[i]); print wns, wst, wnd, wpod > (d "/pk
 picker_colors() {
   if [ "${COLOR:-1}" = 1 ]; then
     PC_R=$'\033[0m'; PC_B=$'\033[1m'; PC_D=$'\033[90m'; PC_INV=$'\033[7m'; PC_OK=$'\033[32m'; PC_BAD=$'\033[1;31m'
-    PC_WARN=$'\033[35m'; PC_INFO=$'\033[1;94m'; PC_TITLE=$'\033[7;1m'; PC_ACT=$'\033[1;97;41m'
+    PC_WARN=$'\033[35m'; PC_INFO=$'\033[1;94m'; PC_TITLE=$'\033[7;1m'; PC_ACT=$'\033[1;97;41m'; PC_HB=$'\033[1;7m'
   else
-    PC_R=""; PC_B=""; PC_D=""; PC_INV=""; PC_OK=""; PC_BAD=""; PC_WARN=""; PC_INFO=""; PC_TITLE=""; PC_ACT=""
+    PC_R=""; PC_B=""; PC_D=""; PC_INV=""; PC_OK=""; PC_BAD=""; PC_WARN=""; PC_INFO=""; PC_TITLE=""; PC_ACT=""; PC_HB=""
   fi
   if [ "${BARCHR:-unicode}" = ascii ]; then PC_PTR=">"; PC_UP="^"; PC_DN="v"; PC_CARET="_"; PC_SEP="|"; PC_HR="-"; PC_DOT="*"; PC_MID="-"
   else PC_PTR=$'\342\226\272'; PC_UP=$'\342\206\221'; PC_DN=$'\342\206\223'; PC_CARET=$'\342\226\214'
@@ -9195,9 +9572,9 @@ picker_draw() {
   local V_="${BX_C}${BX_V}${BX_R}" ncol=${#cw[@]} k cell out sty
   # rows are built with printf on plain text, colour is wrapped around the padded cell
   bx_sep "$W" t "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_TL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
-  out="$V_"; for ((k = 0; k < ncol; k++)); do
+  out="$V_${PC_HB:-}"; for ((k = 0; k < ncol; k++)); do
     if [ "${al:k:1}" = r ]; then printf -v cell " %*s " "${cw[k]}" "${hd[k]:0:${cw[k]}}"; else printf -v cell " %-*s " "${cw[k]}" "${hd[k]:0:${cw[k]}}"; fi
-    out+="${PC_B}${cell}${PC_R}${V_}"; done
+    out+="${cell}${BX_V}"; done; out="${out%"$BX_V"}${PC_R}${V_}"
   buf+="$out"$'\033[K\n'
   bx_sep "$W" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
   local shown=$((nv - top < rows ? nv - top : rows)); [ "$shown" -ge 1 ] || shown=1
@@ -9303,9 +9680,8 @@ picker_key() { # timeout
 }
 
 picker_help() {
-  ui_screen "SELECT POD | KEYS" "any key returns"
-  cat <<'H'
-  MOVE        j / k / arrows     one row          PgDn / PgUp / space / b   one page
+  help_page "SELECT POD | KEYS" "any key returns" cols <<'H' && IFS= read -rsn1 _k </dev/tty
+  MOVE        j / k / arrows     one row          PgDn / PgUp / space / b  one page
               g / G / Home / End first / last     12 (digits)  jump to row 12 of the list
   FIND        /                  type to filter: every word must match the pod name,
                                  status or node (e.g. "/fileserver3 failed")
@@ -9325,7 +9701,7 @@ picker_help() {
   red failing / not ready / >= 90% of memory limit, grey completed.
   "needs attention" = failing, pending or restarted pods.
 H
-  IFS= read -rsn1 _k </dev/tty || true
+  true
 }
 
 # After a shell / copy: "kdswitch" in the container asks for the pods related to the
@@ -9544,7 +9920,22 @@ inspector_filter_prompt() {
 inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
-  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n secrets                 Certificates and keys in Secrets: expiry, users, paths (also Y)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  # one line per command: the command in bold blue (arguments and separators grey), what it does
+  local pl_ ln_
+  pl_=$'shell [FILTER]\tShell in a pod: one match opens it, otherwise the filtered list\nquit\tLeave kdash (also Q on any screen)\nsecrets\tCertificates and keys in Secrets: expiry, users, paths (also Y)\nfmea | access\tFailure modes ranked by Action Priority | your RBAC access (also M)\ninspect\tChoose a pod and inspect it\nfilter\tStructured pod filters\npods / nodes / workloads / ip / mem / io / alerts\t\ncheck / services / storage / events / explain / doctor / certs\t\nrunbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\t\nhelp\tDashboard help'
+  printf '%s\n' "$pl_" | awk -F '\t' -v c="${COLOR:-1}" -v w="${PK_COLS:-100}" '
+    function C(k, s) { return (c == "1" && s != "") ? "\033[" k "m" s "\033[0m" : s }
+    function cmd(s,   out, t) { out = ""
+      while (s != "") {
+        if (match(s, /^\[[^]]*\]/)) { t = substr(s, 1, RLENGTH); out = out C("90", t); s = substr(s, RLENGTH + 1); continue }
+        if (match(s, /^ [\/|] /)) { out = out C("90", substr(s, 1, 3)); s = substr(s, 4); continue }
+        if (match(s, /^[a-z][a-z-]*/)) { out = out C("1;94", substr(s, 1, RLENGTH)); s = substr(s, RLENGTH + 1); continue }
+        out = out substr(s, 1, 1); s = substr(s, 2) }
+      return out }
+    BEGIN { h = sprintf(" %-23s %s", "COMMAND", "WHAT IT DOES"); if (c == "1") { p = w - 1 - length(h); while (p-- > 0) h = h " "; h = "\033[1;7m" h "\033[0m" }; print h }
+    { pad = 24 - length($1); g = (pad > 0 && $2 != "") ? sprintf("%" pad "s", "") : ""; print " " cmd($1) g ($2 != "" ? $2 : "") }
+    END { print ""; print " " C("90", "Commands use fixed handlers and never execute shell text.") }' | while IFS= read -r ln_; do ui_mapl "$ln_"; printf '%s\n' "$UI_ML"; done
+  printf '\033[?25h : '
   ui_edit_line command " : " palette || { printf '\033[?25l'; return 0; }; printf '\033[?25l'
   case "$command" in
     '') return 0 ;; inspect|i) inspector_open ;; filter|F) inspector_filter_prompt ;;

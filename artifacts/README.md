@@ -1,32 +1,19 @@
 # kdash validation artifacts
 
 <!-- CURRENT_LIVE_RESULT -->
-Run `live-e2e-v4370` records **303 passed live checks**, **33 passed browser checks** and **125 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.37.0 in namespace `kdash-e2e`.
-[Inspect the recorded checks](live-e2e-v4370/checks.tsv).
+Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser checks** and **136 CLI terminal screenshots**, with companion ANSI replays, from the installed kdash 4.39.0 in namespace `kdash-e2e`.
+[Inspect the recorded checks](live-e2e-v4390/checks.tsv).
 <!-- END_CURRENT_LIVE_RESULT -->
 
 
 
 
 
-The run combines 200 baseline checks with 103 search/log/export extension checks,
-30 Secrets checks, 19 fixture suites and 33 browser checks. It includes one real
-rotated kubelet log (103,840 lines, 11.1 MiB) plus the current file. Representative
-quick-export logs are under `reports/exports/`; multi-megabyte full-log dumps are
-summarized by their checks and raw captures instead of being committed.
-
-Published text replaces the validation host operator identity with
-`operator@validation-host`; `REDACTION.md` records this. The hash-chained audit log
-is unchanged and still verifies, and `audit-verify-before-redaction.txt` records
-that result.
 
 
-
-
-The current **4.37.0** live validation is named by
-[`latest-e2e.txt`](latest-e2e.txt), pointing to `live-e2e-<timestamp>/`.
-That run records the installed utility against the local WSL Kubernetes cluster,
-using the dedicated `kdash-e2e` namespace. Its files include:
+The current **4.39.0** validation uses the installed utility against the local
+WSL Kubernetes cluster in the dedicated `kdash-e2e` namespace.
+[Run pointer](latest-e2e.txt) · [Feature checklist](../docs/VALIDATION-4.39.0.md)
 
 | File | Evidence |
 |---|---|
@@ -36,27 +23,31 @@ using the dedicated `kdash-e2e` namespace. Its files include:
 | `raw/*.ansi`, `raw/*.txt` | saved live terminal screens with colours/plain text |
 | `logs/` | command output and verification logs |
 | `reports/` | generated reports, tables, audit output and session history |
+| `extended/` | terminal layout, search, log, export and report checks |
 | `fixture-tests/`, `fixture-tests.json`, `regression-tests.log` | every fixture suite, exit status, log and source hash before/after |
-| `secrets/` | separate live Secrets-map checks, five captures, exports and safety trace |
+| `secrets/` | Secrets-map checks, captures, exports and safety trace |
 | `transfer-live/` | real upload/download, corruption detection and `/bin` hardlink fingerprints |
-| `REDACTION.md`, `audit-verify-before-redaction.txt` | publication substitutions and the audit-chain result recorded before redaction |
+| `audit/` | append-only hash-chained audit log written by the live run |
+| `REDACTION.md`, `audit-verify.txt` | publication substitutions and the audit-chain result after publication |
 
 The current screenshots are in
-[`../samples/cli_4370/`](../samples/cli_4370/README.md) and report samples in
-[`../samples/html4370/`](../samples/html4370/README.md). The terminal gallery
-publishes actual live xterm screenshots alongside faithful ANSI replays of the
+[`../samples/cli_4390/`](../samples/cli_4390/README.md) and report samples in
+[`../samples/html4390/`](../samples/html4390/README.md). The terminal gallery
+publishes live xterm screenshots alongside ANSI replays of the
 captured screens. Their SHA-256 hashes and the installed CLI hash are recorded
 in `results.json`. Actual cluster context, workload and namespace names, metrics,
 addresses and timestamps are preserved. Personal workstation paths are removed
-where needed. Missing metrics or denied reads remain visible as unavailable.
+where needed; the isolated test configuration (consent record, default namespace
+and recent namespaces) is not published. The operator identity in published text
+is replaced with `operator@validation-host` as recorded in `REDACTION.md`; the
+audit chain is untouched and `audit-verify.txt` records that it still verifies.
+Missing metrics or denied reads remain visible as unavailable.
 
-Version 4.37.0 adds dashboard search, multi-container log searches, older
-kubelet log reads when permitted, quick plain-text exports, editable prompts
-and terminal rendering improvements. It retains the Secrets map, FMEA/access
-review, existing resource views, reports, guarded shell/file operations and
-audit trail. Inspect the recorded checks for coverage and limitations.
-The [4.32.0 terminal gallery](../samples/cli_4320/README.md) and
-[HTML reports](../samples/html4320/README.md) remain historical evidence.
+Earlier versions include the [4.37.0 live run](live-e2e-v4370/results.json),
+[4.37.0 terminal gallery](../samples/cli_4370/README.md),
+[4.37.0 HTML reports](../samples/html4370/README.md),
+[4.32.0 terminal gallery](../samples/cli_4320/README.md) and
+[4.32.0 HTML reports](../samples/html4320/README.md).
 
 The release-time [4.27.4 run](live-e2e-20261107-083145/results.json),
 [terminal gallery](../samples/cli_4274/README.md) and

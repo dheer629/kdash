@@ -1,0 +1,30 @@
+ KDASH │ SELECT NAMESPACE │ context kdash-local       14 of 14 │ now: kdash-e2e
+ namespaces from the API   ● 14 you can open   ● 0 no access
+ / filters by name   recent namespaces are listed first
+┌─────┬──────────────────────────────────┬─────────────┬───────┬──────────────┐
+│   # │ NAMESPACE                        │ ACCESS      │  PODS │ NOTE         │
+├─────┼──────────────────────────────────┼─────────────┼───────┼──────────────┤
+│   1 │ kdash-e2e                        │ open        │    13 │ current, rec │
+│   2 │ algorithm-learn                  │ open        │     4 │              │
+│   3 │ cert-manager                     │ open        │     3 │              │
+│   4 │ default                          │ open        │     7 │              │
+│   5 │ flux-system                      │ open        │     4 │              │
+│   6 │ kdash-e2e-qa-20261114-fast       │ open        │     4 │              │
+│   7 │ kdash-e2e-secrets-keycheck-v4390 │ open        │     - │              │
+│   8 │ kube-flannel                     │ open        │     1 │              │
+│   9 │ kube-node-lease                  │ open        │     - │              │
+│  10 │ kube-public                      │ open        │     - │              │
+│  11 │ kube-system                      │ open        │     3 │              │
+│  12 │ learnalgorithm                   │ open        │     4 │              │
+│  13 │ local-path-storage               │ open        │     1 │              │
+│  14 │ podinfo-demo                     │ open        │     2 │              │
+└─────┴──────────────────────────────────┴─────────────┴───────┴──────────────┘
+
+── choose a namespace ───────────────────────────────────── 1 / 14 · audited ──
+┌─ MOVE ───────────┬─ FIND ───────────┬─ LEAVE ───────────┬─ CHOOSE ──────────┐
+│ j/k ↑↓   move    │ /  filter by na~ │ q / Esc  cancel,~ │ Enter  open kdas~ │
+│ PgUp/PgDn page   │ t  type a name ~ │ Q        quit kd~ │ A      all names~ │
+│ g / G    first ~ │ r  re-check acc~ │ >        export ~ │ d      open kdas~ │
+│ 12       go to ~ │    14 namespaces │          n reope~ │ x      forget th~ │
+└──────────────────┴──────────────────┴───────────────────┴───────────────────┘
+

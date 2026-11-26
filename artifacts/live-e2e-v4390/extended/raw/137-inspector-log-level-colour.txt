@@ -1,0 +1,50 @@
+ KDASH │ POD DETAIL │ kdash-local │ kdash-e2e                                                                                                                        LOGS
+┌─ LOGS ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
+│ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
+│ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
+└─ rows 1-20 / 20 · 20 lines 2.2 KiB since 2026-11-26 04:30:52, newest only (+ more, A all) ────────────────────────────────────────────────────────────────────────────┘
+2026-11-26T04:30:52.463388671Z 2026-11-26T04:30:52+00:00 INFO request=1750 service=app-server healthy=true
+2026-11-26T04:30:52.463936689Z 2026-11-26T04:30:52+00:00 WARN request=1750 demonstration warning from live workload
+2026-11-26T04:30:54.465169986Z 2026-11-26T04:30:54+00:00 INFO request=1751 service=app-server healthy=true
+2026-11-26T04:30:54.465804219Z 2026-11-26T04:30:54+00:00 WARN request=1751 demonstration warning from live workload
+2026-11-26T04:30:56.466835043Z 2026-11-26T04:30:56+00:00 INFO request=1752 service=app-server healthy=true
+2026-11-26T04:30:56.467549609Z 2026-11-26T04:30:56+00:00 WARN request=1752 demonstration warning from live workload
+2026-11-26T04:30:58.468510831Z 2026-11-26T04:30:58+00:00 INFO request=1753 service=app-server healthy=true
+2026-11-26T04:30:58.469176124Z 2026-11-26T04:30:58+00:00 WARN request=1753 demonstration warning from live workload
+2026-11-26T04:31:00.470231443Z 2026-11-26T04:31:00+00:00 INFO request=1754 service=app-server healthy=true
+2026-11-26T04:31:00.470788511Z 2026-11-26T04:31:00+00:00 WARN request=1754 demonstration warning from live workload
+2026-11-26T04:31:02.471768098Z 2026-11-26T04:31:02+00:00 INFO request=1755 service=app-server healthy=true
+2026-11-26T04:31:02.472389340Z 2026-11-26T04:31:02+00:00 WARN request=1755 demonstration warning from live workload
+2026-11-26T04:31:04.473354457Z 2026-11-26T04:31:04+00:00 INFO request=1756 service=app-server healthy=true
+2026-11-26T04:31:04.474048171Z 2026-11-26T04:31:04+00:00 WARN request=1756 demonstration warning from live workload
+2026-11-26T04:31:06.475057974Z 2026-11-26T04:31:06+00:00 INFO request=1757 service=app-server healthy=true
+2026-11-26T04:31:06.475444853Z 2026-11-26T04:31:06+00:00 WARN request=1757 demonstration warning from live workload
+2026-11-26T04:31:08.476606543Z 2026-11-26T04:31:08+00:00 INFO request=1758 service=app-server healthy=true
+2026-11-26T04:31:08.477138567Z 2026-11-26T04:31:08+00:00 WARN request=1758 demonstration warning from live workload
+2026-11-26T04:31:10.478305413Z 2026-11-26T04:31:10+00:00 INFO request=1759 service=app-server healthy=true
+2026-11-26T04:31:10.478917680Z 2026-11-26T04:31:10+00:00 WARN request=1759 demonstration warning from live workload
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
+│ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
+│ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │
+│ e  events   │ c  container  │ D  download   │ L  level all │ left/right  pan       │ n/N  next / prev    │ q  back                                                    │
+│ !  why      │ f  follow off │ >  export log │ +  4x lines  │ A           all lines │ F    all pods' logs │ Q  quit                                                    │
+└─────────────┴───────────────┴───────────────┴──────────────┴───────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────┘
+

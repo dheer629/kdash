@@ -1,0 +1,50 @@
+[1;7m KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [38;5;243m 3 WORKLOADS [39m [38;5;243m 4 IP POOL [39m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [1;7m 7 ALERTS [0m [38;5;243m 8 SVCS [39m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-26 09:16:49[0m[38;5;243m IST[39m
+[38;5;243m┌─ [1m[39mSCOPE[0m[38;5;243m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[38;5;243m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[38;5;243m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[38;5;243m ───────┐
+│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msort cpu ▼ high first[0m                      [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m547[39m           [38;5;243m│[39m [38;5;243mcpu [39m    59m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14               [38;5;243m│
+│[39m [38;5;243mpoll 2s  spec 28s/30s   session [39m09:16:21[38;5;243m up [39m28s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    1Mi [38;5;29m░░░░░░░░[39m [38;5;29m  0%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;29m^ 0[39m        [38;5;243m│
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+[1m[38;5;231m[48;5;24m DATA [0m[38;5;29m●[39m pods [1m[38;5;29mfresh[0m [38;5;243m28s old[39m  metrics [1m[38;5;29mavailable[0m [38;5;243m│[39m [1m[38;5;63mC[0m certs (1 expiring) [38;5;243m│[39m [1m[38;5;63m/[0m search [38;5;243m│[39m [1m[38;5;63mK[0m check [38;5;243m│[39m [1m[38;5;63mi[0m inspect [38;5;243m│[39m [1m[38;5;63m8[0m services  [1m[38;5;63m9[0m storage  [1m[38;5;63mE[0m events  [1m[38;5;63m![0m explain [38;5;243m│[39m [1m[38;5;63m:[0m commands
+ [1m[38;5;98mALERTS[0m[38;5;243m   live critical summary of every section, with the action for each signal[39m
+[38;5;243m┌─ [1m[39mALERT STATE[0m[38;5;243m ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│[39m [1m[38;5;231m[48;5;160m  CRITICAL  [0m  [1m[38;5;196m4[0m [38;5;243mcritical[39m   [1m[38;5;98m8[0m [38;5;243mwarning[39m   [38;5;243m0[39m [38;5;243mnew[39m   [38;5;243m0[39m [38;5;243mcleared in 5 min[39m   [38;5;243mrules run every refresh (2s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000[39m          [38;5;243m│
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+[1m[38;5;63m►[0m [1mSECTIONS[0m [38;5;243m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1m[38;5;196m●[0m [1mPODS      [0m [1m[38;5;196m14/18[0m ready  rst 547  [1m[38;5;196m2 crit[0m [38;5;163m3 warn[39m                                   [38;5;163m●[39m [1mMEMORY    [0m 1Mi / 976Mi lim [38;5;29m 0.1[39m%  [38;5;243m0 >=90%[39m  [38;5;163m1 no-limit[39m  [38;5;63m░░░░░░░░░░░░[39m
+  [38;5;29m●[39m [1mNODES     [0m 1 hosting  [38;5;29m0 NotReady[39m  max node mem [38;5;29m29.7[39m% dev                         [1m[38;5;196m●[0m [1mWORKLOADS [0m 14  [38;5;29m0 degraded[39m  [38;5;163m2 HA risk[39m  [38;5;243m0 rolling[39m
+  [38;5;163m●[39m [1mIP        [0m 14 pod IPs  [38;5;163m4 no IP[39m  [38;5;243m0 duplicate[39m  11 svc                              [38;5;29m●[39m [1mTRAFFIC   [0m [38;5;243mno IO source (unavailable)[39m
+
+[1m[38;5;63m►[0m [1mACTIVE ALERTS[0m[38;5;243m  12 (4 critical, 8 warning)   critical first, NEW first, action under each[39m [38;5;243m─────────────────────────────────────────────────────────────────────────────[39m
+[1m[38;5;231m[48;5;24m    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE                           TREND
+[0m  [1m[38;5;196m![0m [1m[38;5;231m[48;5;160mNEW  [0m  PODS      [1mz-crash                       [0m [1m[38;5;196mCrashLoopBackOff  [0m restarts 461, ready 0/1              [38;5;63m          [39m
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100[39m
+  [1m[38;5;196m![0m [1m[38;5;231m[48;5;160mNEW  [0m  PODS      [1mz-imagepull                   [0m [1m[38;5;196mImagePullBackOff  [0m image / config error
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e describe pod z-imagepull[39m
+  [1m[38;5;196m![0m [1m[38;5;231m[48;5;160mNEW  [0m  WORKLOADS [1mPod/z-pending                 [0m [1m[38;5;196mUNSCHEDULED       [0m 1 pod(s) not placed
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e get events --field-selector reason=FailedScheduling[39m
+  [1m[38;5;196m![0m [1m[38;5;231m[48;5;160mNEW  [0m  WORKLOADS [1mPod/z-unschedulable           [0m [1m[38;5;196mUNSCHEDULED       [0m 1 pod(s) not placed
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e get events --field-selector reason=FailedScheduling[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  PODS      [1mz-oom                         [0m [38;5;163mCPU_LIMIT_PRESSURE[39m cpu 50m = 100% of limit 50m          [38;5;63m████______[39m
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e top pod z-oom --containers[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  PODS      [1mz-pending                     [0m [38;5;163mPending           [39m node (unscheduled)
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  PODS      [1mz-unschedulable               [0m [38;5;163mPending           [39m node (unscheduled)
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e get events --field-selector involvedObject.name=z-unschedulable[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  MEMORY    [1m1 pod(s)                      [0m [38;5;163mNO_MEM_LIMIT      [39m can grow until the node runs out
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e get pods -o custom-columns=POD:.metadata.name,LIM:.spec.containers[*].resources.limits.memory[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  WORKLOADS [1mDeployment/app-server         [0m [38;5;163mHA_RISK           [39m 2 replicas on 1 node
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e get pods -o wide | grep app-server   (topologySpreadConstraints)[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  WORKLOADS [1mStatefulSet/db-stateful       [0m [38;5;163mHA_RISK           [39m 2 replicas on 1 node
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e get pods -o wide | grep db-stateful   (topologySpreadConstraints)[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  IP        [1mz-pending                     [0m [38;5;163mNO_IP             [39m status Pending
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e describe pod z-pending[39m
+  [38;5;163m^[39m [1m[38;5;231m[48;5;160mNEW  [0m  IP        [1mz-unschedulable               [0m [38;5;163mNO_IP             [39m status Pending
+                   [38;5;243m↳ [38;5;63mkubectl -n kdash-e2e describe pod z-unschedulable[39m
+
+[1m[38;5;63m►[0m [1mLIVE TOP CONSUMERS[0m [38;5;243m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+  [1mmemory % of limit                                     [0m  [1mCPU % of limit                                        [0m  [1mtraffic in+out[0m
+  [38;5;29m  6.2[39m z-oom                                             [1m[38;5;196m100.0[0m z-oom
+  [38;5;29m  0.0[39m app-server-8fb4699bc-cx5vz                        [38;5;29m  2.0[39m functionality-legacy-67ks7
+[38;5;243m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [38;5;243mlegend[39m ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS[38;5;243m›
+[7m[39m ● LIVE 09:16:50  next 1s  data 1s old  spec 29/30s  fetch 0.0s  poll 2s  AUDITED | alerts | rows 1-36/43 | ? help  1-9 view  n ns  s sort(cpu)  / search  > export     [0m

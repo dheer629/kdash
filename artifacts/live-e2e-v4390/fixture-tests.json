@@ -1,0 +1,143 @@
+{
+  "completed_utc": "2026-11-26T04:05:30.971647+00:00",
+  "kdash_sha256": "847c298bc86e960985ecee4aa64ff3a8bd34c6c7526f19fe62e638b56f395ea0",
+  "kdash_sha256_after": "847c298bc86e960985ecee4aa64ff3a8bd34c6c7526f19fe62e638b56f395ea0",
+  "unchanged": true,
+  "passed": 19,
+  "total": 19,
+  "results": [
+    {
+      "test": "tests/test-build.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 12 build/import checks (no cluster required)",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-build.log",
+      "log_sha256": "2683b5b74d5bb807f62f5b45764e13b52ad3b2f241573e78243e09b43559ad31"
+    },
+    {
+      "test": "tests/test-capture-terminal.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 23 terminal replay checks preserve bright colors, bold, reset, RGB/indexed payloads and reverse video",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-capture-terminal.log",
+      "log_sha256": "2e3cd5e2ab5034e59fe8383979e0552efc73d6d4278b0d34e619a22b87543fc8"
+    },
+    {
+      "test": "tests/test-events.sh",
+      "exit_code": 0,
+      "last_line": "All Events tests passed.",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-events.log",
+      "log_sha256": "62c8bbe367382dcc3a914d76db08066f5799817996c1dc1b0b339f2c6a51587f"
+    },
+    {
+      "test": "tests/test-fmea.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 83 FMEA fixture checks",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-fmea.log",
+      "log_sha256": "677bdac1e697cce64aea08ebc92b261a9c50b3a488be2c245c85e4c3f6b6b8d8"
+    },
+    {
+      "test": "tests/test-health.sh",
+      "exit_code": 0,
+      "last_line": "9 health fixture tests passed.",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-health.log",
+      "log_sha256": "f311aff5ed1833848290a3aca18a86c029d03ab7b09f3bdc44117e49976f28a7"
+    },
+    {
+      "test": "tests/test-inspector.sh",
+      "exit_code": 0,
+      "last_line": "PASS: inspector identity, bounded opt-in logs, search and highlighting, level filter, container drill-down, export, failures, filters and report isolation",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-inspector.log",
+      "log_sha256": "d79a05a796454f62ff778c1eb5a9e9676b3e8dc7f70189f8c5e552e41b33ad1e"
+    },
+    {
+      "test": "tests/test-interactive.sh",
+      "exit_code": 0,
+      "last_line": "interactive regression checks passed",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-interactive.log",
+      "log_sha256": "49d38e6548b501f8a09d4c58d9a6a1aac7f5798123f630474a53dc8ffdf68922"
+    },
+    {
+      "test": "tests/test-log-history.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 22 rotated-log decoding, ordering, gzip, byte-cap, access and incomplete-read checks",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-log-history.log",
+      "log_sha256": "b8884e5ffea6c0252ebf09cab955f665d790bd0738a3de94c95f77380aefe324"
+    },
+    {
+      "test": "tests/test-login-cleanup.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 27 login-cleanup checks, exact helper/tag scope, keep tree, detached login and TERM/KILL",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-login-cleanup.log",
+      "log_sha256": "b1d5ad2778c89f8e0d8b926caeec07fc62a77fc45e0b690b23fbd7a7419304d1"
+    },
+    {
+      "test": "tests/test-login-flow.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 39 login-flow PTY checks (no cluster or identity provider required)",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-login-flow.log",
+      "log_sha256": "f7697c4df7a4679a8e19b65545db8cae0586fbb904afd32a42de0bbf03943466"
+    },
+    {
+      "test": "tests/test-mode-switch.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 198 mode-switch terminal checks, guarded writes, detail panes, follow and parent state",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-mode-switch.log",
+      "log_sha256": "2011f768ad25f2c3910ea358bd97fc2b7da5ab9e08ecbd80a6d5764c51d364f6"
+    },
+    {
+      "test": "tests/test-runtime.sh",
+      "exit_code": 0,
+      "last_line": "PASS: runtime doctor, CLI scoping/filters, missing metrics, empty/error transitions, command deadline, panel wiring and asynchronous recovery",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-runtime.log",
+      "log_sha256": "67490d693f553a8d6eb666aa19266f25569a39b050e071e1b32a67dc2e2d7ba7"
+    },
+    {
+      "test": "tests/test-transfer-download-regressions.sh",
+      "exit_code": 0,
+      "last_line": "PASS: downloads verify before replacing destinations; keep both and hardlink caching preserve data; failed or incomplete verification leaves no partial files",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-transfer-download-regressions.log",
+      "log_sha256": "7011381230412e02c6e1d32dca29e7d97ed323a695edd648d5ff491682bc58aa"
+    },
+    {
+      "test": "tests/test-transfer-progress.sh",
+      "exit_code": 0,
+      "last_line": "PASS: progress reaches 100% only after success; verification is cancellable and all nested workers stop",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-transfer-progress.log",
+      "log_sha256": "09b1e15006c4bbd8da8e7e54112e8b9884106f355836db25d2073faeee34221c"
+    },
+    {
+      "test": "tests/test-transfer-upload-regressions.sh",
+      "exit_code": 0,
+      "last_line": "PASS: uploads preserve files, links and empty directories; corruption, incomplete verification and failed stream stages return failure",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-transfer-upload-regressions.log",
+      "log_sha256": "f648fcc31714f93432066411add160c6d3a020d6284fe6cf47d274ff3e6af927"
+    },
+    {
+      "test": "tests/test-transfer-verification.sh",
+      "exit_code": 0,
+      "last_line": "PASS: transfer fingerprints and archive checks catch corruption; mismatches fail and are audited; keep both and namespace defaults preserve user data",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-transfer-verification.log",
+      "log_sha256": "9fdae7825bccd9292d91d3dd354ca541f625c633a24a39b828005784c59bfd78"
+    },
+    {
+      "test": "tests/test-transfer.sh",
+      "exit_code": 0,
+      "last_line": "PASS: Python ZIP fallback preserves regular files and six file/directory/dangling links without reading host targets",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-transfer.log",
+      "log_sha256": "f78b57acdabd72502ef4b664543ae0c463700e8d2b7e193125e637a89930cc95"
+    },
+    {
+      "test": "tests/test-uninstall.sh",
+      "exit_code": 0,
+      "last_line": "Passed 12 uninstall integration tests.",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-uninstall.log",
+      "log_sha256": "121c1966a5d276c94e08f04516bd71d4879f295b348113cf4fe8ba3f9f4f7721"
+    },
+    {
+      "test": "tests/test-visuals.sh",
+      "exit_code": 0,
+      "last_line": "PASS: 24 frame encoding, junction, clipping and width combinations (C/UTF-8, ASCII/Unicode, color/mono, 80/100/170 columns)",
+      "log": "artifacts/live-e2e-v4390/fixture-tests/test-visuals.log",
+      "log_sha256": "eef8dd8617b593977968ea915ffb3d55df59a8cf4b80223937fb0dbe440e871f"
+    }
+  ]
+}

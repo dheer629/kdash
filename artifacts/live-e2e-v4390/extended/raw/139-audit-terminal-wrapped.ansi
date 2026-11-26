@@ -1,0 +1,30 @@
+│                          │              │              │               │         │ kdash-local   │
+│                          │              │              │               │         │ get nodes -o  │
+│                          │              │              │               │         │ <fmt> | 1x -- │
+│                          │              │              │               │         │ request-      │
+│                          │              │              │               │         │ timeout=5s -- │
+│                          │              │              │               │         │ context       │
+│                          │              │              │               │         │ kdash-local   │
+│                          │              │              │               │         │ get deploymen │
+│                          │              │              │               │         │ ts,statefulse │
+│                          │              │              │               │         │ ts,daemonsets │
+│                          │              │              │               │         │ ,cronjobs -n  │
+│                          │              │              │               │         │ kdash-e2e --  │
+│                          │              │              │               │         │ request-      │
+│                          │              │              │               │         │ timeout=5s -  │
+│                          │              │              │               │         │ o <fmt> | 1x  │
+│                          │              │              │               │         │ --request-    │
+│                          │              │              │               │         │ timeout=5s -- │
+│                          │              │              │               │         │ context       │
+│                          │              │              │               │         │ kdash-local   │
+│                          │              │              │               │         │ top pod --    │
+│                          │              │              │               │         │ all-namespace │
+│                          │              │              │               │         │ s --no-       │
+│                          │              │              │               │         │ headers --    │
+│                          │              │              │               │         │ request-      │
+│                          │              │              │               │         │ timeout=20s   │
+│ 2026-11-26 10:01:21+0530 │ operator@wsl │ local /dev/  │ kdash-local / │ END     │ rc=0 mode=    │
+│                          │ -validation  │ pts/3        │ kdash-e2e     │         │ once duration │
+│                          │              │              │               │         │ =0s reports=0 │
+└──────────────────────────┴──────────────┴──────────────┴───────────────┴─────────┴───────────────┘
+

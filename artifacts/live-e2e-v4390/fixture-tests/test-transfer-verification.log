@@ -1,0 +1,1 @@
+PASS: transfer fingerprints and archive checks catch corruption; mismatches fail and are audited; keep both and namespace defaults preserve user data

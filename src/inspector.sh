@@ -58,8 +58,103 @@ inspector_containers() { # ns pod -> TYPE<TAB>NAME<TAB>IMAGE (including init/deb
     inspector_clean
 }
 
-inspector_summary() { # ns pod output-file
-  inspector_query "$3" get pod "$2" -n "$1" -o 'jsonpath=Name: {.metadata.name}{"\n"}Namespace: {.metadata.namespace}{"\n"}UID: {.metadata.uid}{"\n"}Created: {.metadata.creationTimestamp}{"\n"}Phase: {.status.phase}{"\n"}Reason: {.status.reason}{"\n"}Message: {.status.message}{"\n"}Node: {.spec.nodeName}{"\n"}Pod IP: {.status.podIP}{"\n"}Service account: {.spec.serviceAccountName}{"\n"}{range .metadata.ownerReferences[*]}Owner: {.kind}/{.name}{"\n"}{end}{"\nCONDITIONS\n"}{range .status.conditions[*]}{.type}{"\t"}{.status}{"\t"}{.reason}{"\t"}{.message}{"\n"}{end}{"\nCONTAINERS (requests / limits)\n"}{range .spec.containers[*]}{.name}{"\t"}{.image}{"\n"}  CPU: {.resources.requests.cpu} / {.resources.limits.cpu}{"\t"}Memory: {.resources.requests.memory} / {.resources.limits.memory}{"\n"}{end}{"\nCONTAINER STATUS\n"}{range .status.containerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\n"}  Waiting: {.state.waiting.reason} {.state.waiting.message}{"\n"}  Running since: {.state.running.startedAt}{"\n"}  Terminated: {.state.terminated.reason} exit={.state.terminated.exitCode}{"\n"}  Previous: {.lastState.terminated.reason} exit={.lastState.terminated.exitCode}{"\n"}{end}{"\nINIT CONTAINER STATUS\n"}{range .status.initContainerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\t"}{.state.waiting.reason}{.state.terminated.reason}{"\n"}{end}'
+# ---- pod detail panes: structure and colour -----------------------------------------
+# Body files are plain text (inspector_clean removed every control byte the cluster
+# sent). Panes kdash lays out itself (summary, describe, events, why) may carry markers
+# that only kdash writes: \001[<sgr>m a colour, \001R a space and a rule to the right edge, \001P
+# spaces to the edge (a header band). The view turns them into colours for the screen;
+# search, line counts and exports see the plain text.
+# Summary: the pod, its conditions, containers (requests / limits) and container state
+# as aligned tables instead of raw "Key: value" lines; empty fields are left out.
+INSPECTOR_SUM_AWK='
+function K(c, s) { return (mk == "1" && c != "" && s != "") ? "\001[" c "m" s "\001[0m" : s }
+function bad(v) { return v ~ /CrashLoop|Error|Failed|OOMKilled|ImagePull|ErrImage|Evicted|Unknown|CannotRun|DeadlineExceeded|CreateContainer|InvalidImage|Unschedulable/ }
+function stc(v) { if (v ~ /^(Running|Succeeded|Completed)/) return "32"; if (bad(v)) return "1;31"; return (v == "" || v == "-") ? "" : "35" }
+function title(s) { if (started) print ""; started = 1; print K("1", s) (mk == "1" ? K("90", "\001R") : "") }
+function hdr(a, b, c, d, e, f) { split("", V); split("", C); NRW = 0; NC = 0
+  H[++NC] = a; H[++NC] = b; if (c != "") H[++NC] = c; if (d != "") H[++NC] = d; if (e != "") H[++NC] = e; if (f != "") H[++NC] = f }
+function cell(c, v, col) { V[NRW, c] = v; C[NRW, c] = col }
+function flush(   r, c, w, out, v, use, last) {
+  for (c = 1; c <= NC; c++) { w[c] = length(H[c]); use[c] = (c == 1) }
+  for (r = 1; r <= NRW; r++) for (c = 1; c <= NC; c++) { v = V[r, c]; if (v != "" && v != "-") use[c] = 1; if (length(v) > w[c]) w[c] = length(v) }
+  last = 1; for (c = 1; c <= NC; c++) if (use[c]) last = c
+  out = " "; for (c = 1; c <= NC; c++) if (use[c]) out = out " " (c < last ? sprintf("%-" w[c] "s", H[c]) "  " : H[c])
+  print (mk == "1") ? "\001[1;7m" out "\001P\001[0m" : out
+  for (r = 1; r <= NRW; r++) { out = " "
+    for (c = 1; c <= NC; c++) if (use[c]) { v = V[r, c]; if (v == "") v = "-"; out = out " " K(C[r, c], v) (c < last ? sprintf("%" (w[c] - length(v) + 2) "s", "") : "") }
+    sub(/ +$/, "", out); print out } }
+function endsec() {
+  if (sec == "cond" || sec == "spec" || sec == "st") { title(stitle); if (NRW) flush(); else print "  " K("90", "none reported") }
+  else if (sec == "init" && NRW) { title(stitle); flush() }
+  sec = "" }
+function lim(s,   q) { n_ = split(s, q, " / "); return (q[1] == "" ? "-" : q[1]) " / " (q[2] == "" ? "-" : q[2]) }
+BEGIN { sec = "pod"; started = 0 }
+$0 == "CONDITIONS" { endsec(); sec = "cond"; stitle = "CONDITIONS"; hdr("TYPE", "STATUS", "REASON", "MESSAGE"); next }
+$0 == "CONTAINERS (requests / limits)" { endsec(); sec = "spec"; stitle = "CONTAINERS"; hdr("NAME", "IMAGE", "CPU REQUEST / LIMIT", "MEMORY REQUEST / LIMIT"); next }
+$0 == "CONTAINER STATUS" { endsec(); sec = "st"; stitle = "CONTAINER STATUS"; hdr("NAME", "READY", "RESTARTS", "STATE", "LAST EXIT", "MESSAGE"); next }
+$0 == "INIT CONTAINER STATUS" { endsec(); sec = "init"; stitle = "INIT CONTAINERS"; hdr("NAME", "READY", "RESTARTS", "STATE"); next }
+$0 == "" { next }
+sec == "pod" { if (!started) title("POD")
+  p = index($0, ": "); if (!p && $0 ~ /:$/) p = length($0)
+  if (!p) { print "                     " $0; next }
+  k = substr($0, 1, p - 1); v = substr($0, p + 2); sub(/^ +/, "", v); sub(/ +$/, "", v); if (v == "") next
+  col = (k == "Phase") ? stc(v) : (k == "Reason") ? (bad(v) ? "1;31" : "35") : (k == "Message") ? "35" : (k == "Name") ? "1" : ""
+  print "  " K("90", sprintf("%-17s", k)) "  " K(col, v); next }
+sec == "cond" { n = split($0, f, "\t"); NRW++
+  cell(1, f[1], ""); cell(2, f[2], (f[2] == "True") ? ((f[1] == "DisruptionTarget") ? "35" : "32") : (f[2] == "False" ? "1;31" : "35")); cell(3, f[3], ""); cell(4, f[4], ""); next }
+sec == "spec" { if ($0 ~ /^  CPU: /) { n = split($0, f, "\t"); c_ = f[1]; sub(/^  CPU: /, "", c_); m_ = f[2]; sub(/^Memory: /, "", m_)
+    cell(3, lim(c_), ""); m_ = lim(m_); cell(4, m_, (m_ ~ / \/ -$/) ? "35" : ""); next }
+  n = split($0, f, "\t"); NRW++; cell(1, f[1], "1"); cell(2, f[2], ""); next }
+sec == "st" {
+  if ($0 ~ /^  Waiting: /) { v = substr($0, 12); sub(/^ +/, "", v); sub(/ +$/, "", v); if (v != "") { r_ = v; sub(/ .*/, "", r_); m_ = substr(v, length(r_) + 2); cell(4, "Waiting: " r_, stc(r_)); cell(6, m_, "") }; next }
+  if ($0 ~ /^  Running since: /) { v = substr($0, 18); sub(/ +$/, "", v); if (v != "" && V[NRW, 4] == "") cell(4, "Running since " v, "32"); next }
+  if ($0 ~ /^  Terminated: /) { v = substr($0, 15); x_ = v; sub(/.*exit=/, "", x_); sub(/ *exit=.*/, "", v); sub(/^ +/, "", v)
+    if ((v != "" || x_ != "") && V[NRW, 4] == "") cell(4, "Terminated: " (v == "" ? "-" : v) (x_ == "" ? "" : " (exit " x_ ")"), stc(v == "" ? "Error" : v)); next }
+  if ($0 ~ /^  Previous: /) { v = substr($0, 13); x_ = v; sub(/.*exit=/, "", x_); sub(/ *exit=.*/, "", v); sub(/^ +/, "", v)
+    if (v != "" || x_ != "") cell(5, (v == "" ? "-" : v) (x_ == "" ? "" : " (exit " x_ ")"), (v ~ /^Completed$/ && x_ == "0") ? "" : "1;31"); next }
+  n = split($0, f, "\t"); NRW++; r_ = f[2]; sub(/^ready=/, "", r_); x_ = f[3]; sub(/^restarts=/, "", x_)
+  cell(1, f[1], "1"); cell(2, r_, (r_ == "true") ? "32" : "1;31"); cell(3, x_, (x_ + 0 > 0) ? "35" : ""); next }
+sec == "init" { n = split($0, f, "\t"); NRW++; r_ = f[2]; sub(/^ready=/, "", r_); x_ = f[3]; sub(/^restarts=/, "", x_)
+  cell(1, f[1], "1"); cell(2, r_, (r_ == "true") ? "32" : ""); cell(3, x_, (x_ + 0 > 0) ? "35" : ""); cell(4, f[4], stc(f[4])); next }
+{ print }
+END { endsec() }
+'
+# Describe: the top-level sections as titles with a rule, keys in the secondary colour,
+# states coloured (Running / Ready True green, Waiting magenta, CrashLoop / OOMKilled /
+# False / a non-zero exit code red), the Conditions and Events headers as bands.
+INSPECTOR_DESC_AWK='
+function K(c, s) { return (c != "" && s != "") ? "\001[" c "m" s "\001[0m" : s }
+function vc(k, v) {
+  if (v ~ /^<(none|nil|unset)>$/) return "90"
+  if (k == "Status" || k == "State") return (v ~ /^(Running|Succeeded|Completed)/) ? "32" : ((v ~ /^(Failed|Unknown)/) ? "1;31" : "35")
+  if (k == "Reason") return (v == "Completed") ? "" : ((v ~ /CrashLoop|Error|OOMKilled|ImagePull|ErrImage|Evicted|CannotRun|DeadlineExceeded|CreateContainer|InvalidImage/) ? "1;31" : "35")
+  if ((k == "Ready" || k == "ContainersReady" || k == "Started") && v ~ /^(True|true)$/) return "32"
+  if ((k == "Ready" || k == "ContainersReady") && v ~ /^(False|false)$/) return "1;31"
+  if (k == "Restart Count") return (v + 0 > 0) ? "35" : ""
+  if (k == "Exit Code") return (v + 0 != 0) ? "1;31" : ""
+  if (k == "Name" && ind == 0) return "1"
+  return "" }
+{ s = $0 }
+s ~ /^[A-Z][A-Za-z0-9 -]*:$/ { sec = substr(s, 1, length(s) - 1); th = (sec == "Conditions" || sec == "Events"); print K("1;35", s) K("90", "\001R"); next }
+s ~ /^[A-Z]/ { th = 0 }
+th && s ~ /^  [A-Z]/ { th = 0; print "\001[1;7m" s "\001P\001[0m"; next }
+sec == "Events" && s ~ /^  -+( |$)/ { print K("90", s); next }
+sec == "Events" && match(s, /^  (Warning|Normal) +[^ ]+/) { t = substr(s, 3, RLENGTH - 2); print "  " K((t ~ /^Warning/) ? "35" : "", t) substr(s, RLENGTH + 1); next }
+sec == "Conditions" && match(s, /^  [A-Za-z]+ +(True|False|Unknown)/) { t = substr(s, 1, RLENGTH); v = t; sub(/.* /, "", v); t = substr(t, 1, length(t) - length(v))
+  print t K((v == "True") ? "32" : "1;31", v) substr(s, RLENGTH + 1); next }
+match(s, /^ *[A-Za-z][A-Za-z0-9._\/-]*( [A-Za-z0-9._\/()-]+)*:( |$)/) {
+  L0 = RLENGTH; k = substr(s, 1, L0); ind = match(k, /[^ ]/) - 1; k = substr(k, ind + 1); sub(/: ?$/, "", k)
+  rest = substr(s, L0 + 1); g = rest; sub(/[^ ].*/, "", g); v = substr(rest, length(g) + 1)
+  if (v == "") { print substr(s, 1, ind) K((ind == 2 || ind == 0) ? "1" : "90", k ":"); next }
+  print substr(s, 1, ind) K("90", k ":") ((substr(s, L0, 1) == " ") ? " " : "") g K(vc(k, v), v); next }
+{ print }
+'
+inspector_summary() { # ns pod output-file [1 = colour markers for the pod detail screen]
+  local rc=0
+  inspector_query "$3" get pod "$2" -n "$1" -o 'jsonpath=Name: {.metadata.name}{"\n"}Namespace: {.metadata.namespace}{"\n"}UID: {.metadata.uid}{"\n"}Created: {.metadata.creationTimestamp}{"\n"}Phase: {.status.phase}{"\n"}Reason: {.status.reason}{"\n"}Message: {.status.message}{"\n"}Node: {.spec.nodeName}{"\n"}Pod IP: {.status.podIP}{"\n"}Service account: {.spec.serviceAccountName}{"\n"}{range .metadata.ownerReferences[*]}Owner: {.kind}/{.name}{"\n"}{end}{"\nCONDITIONS\n"}{range .status.conditions[*]}{.type}{"\t"}{.status}{"\t"}{.reason}{"\t"}{.message}{"\n"}{end}{"\nCONTAINERS (requests / limits)\n"}{range .spec.containers[*]}{.name}{"\t"}{.image}{"\n"}  CPU: {.resources.requests.cpu} / {.resources.limits.cpu}{"\t"}Memory: {.resources.requests.memory} / {.resources.limits.memory}{"\n"}{end}{"\nCONTAINER STATUS\n"}{range .status.containerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\n"}  Waiting: {.state.waiting.reason} {.state.waiting.message}{"\n"}  Running since: {.state.running.startedAt}{"\n"}  Terminated: {.state.terminated.reason} exit={.state.terminated.exitCode}{"\n"}  Previous: {.lastState.terminated.reason} exit={.lastState.terminated.exitCode}{"\n"}{end}{"\nINIT CONTAINER STATUS\n"}{range .status.initContainerStatuses[*]}{.name}{"\tready="}{.ready}{"\trestarts="}{.restartCount}{"\t"}{.state.waiting.reason}{.state.terminated.reason}{"\n"}{end}' || rc=$?
+  # the raw "Key: value" lines become sections and aligned tables (a failed read stays as it is)
+  if [ "$rc" = 0 ] && [ -s "$3" ]; then awk -v mk="${4:-0}" "$INSPECTOR_SUM_AWK" "$3" > "$3.f" && mv -f -- "$3.f" "$3"; fi
+  return "$rc"
 }
 
 # ---- older log files (rotated by the kubelet) -------------------------------------------
@@ -253,9 +348,16 @@ inspector_logs() { # ns pod container current|previous output-file
   return "$rc"
 }
 
+# Events and WHY are kdash's own tables: drawn at the width of the pane (nothing wraps)
+# with their colours as markers (~[..m -> \001[..m after the control bytes are removed).
+inspector_tk() { # render-function args... -> the output at the pane width
+  local m=$'\001' tc=0
+  [ "${COLOR:-1}" != 1 ] || tc=1
+  TK_COLOR="$tc" TK_COLS="$(( ${INSPECTOR_COLS:-160} - 1 ))" TK_GLYPH="${BARCHR:-unicode}" "$@" | inspector_clean | sed "s/~\[\([0-9;]*m\)/${m}[\1/g"
+}
 inspector_events() { # ns pod output-file
   if declare -F events_render >/dev/null; then
-    events_render "$1" "$2" | inspector_clean > "$3"
+    inspector_tk events_render "$1" "$2" > "$3"
   else
     inspector_query "$3" get events -n "$1" --field-selector="involvedObject.kind=Pod,involvedObject.name=$2" \
       --sort-by=.metadata.creationTimestamp -o wide
@@ -264,7 +366,7 @@ inspector_events() { # ns pod output-file
 
 inspector_explain() { # ns pod output-file
   if declare -F explain_render >/dev/null; then
-    explain_render "$1" "$2" | inspector_clean > "$3"
+    inspector_tk explain_render "$1" "$2" > "$3"
   else
     printf 'Failure explanations are unavailable. Inspect conditions, Events and previous logs for evidence.\n' > "$3"
   fi
@@ -407,13 +509,42 @@ inspector_level_cycle() {
 
 # Build the view: level filter, then search filter, plus the line numbers of the matches
 # inside that view (so n/N can jump) and the counts for the header.
-inspector_view_build() { # body view matches [width]
-  local body="$1" view="$2" matchf="$3" icase=0 w="${4:-0}"
+inspector_view_build() { # body view matches [width] [1 = for the screen (colours, empty-pane note) / 0 = plain, for exports]
+  local body="$1" view="$2" matchf="$3" icase=0 w="${4:-0}" deco="${5:-1}" edge="${4:-0}" hr=$'\342\224\200'
   [ -z "${INSPECTOR_SEARCH:-}" ] || icase="$(inspector_icase "$INSPECTOR_SEARCH")"
   [ "${INSPECTOR_WRAP:-1}" = 1 ] || w=0
-  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v icase="$icase" -v lvl="${INSPECTOR_LEVEL_PAT:-}" \
-      -v only="${INSPECTOR_ONLY:-0}" -v matchf="$matchf" -v metaf="$view.meta" -v w="$w" -v json="${INSPECTOR_JSON:-0}" '
-    BEGIN { pat = ENVIRON["KD_PAT"] }
+  [ "$edge" -gt 0 ] 2>/dev/null || edge=$(( ${INSPECTOR_COLS:-100} - 1 ))
+  [ "${BARCHR:-unicode}" != ascii ] || hr=-
+  KD_PAT="${INSPECTOR_SEARCH:-}" KD_EMPTY="${INSPECTOR_EMPTY:-}" KD_MARKED="${INSPECTOR_MARKED:-1}" awk -v icase="$icase" -v lvl="${INSPECTOR_LEVEL_PAT:-}" \
+      -v only="${INSPECTOR_ONLY:-0}" -v matchf="$matchf" -v metaf="$view.meta" -v w="$w" -v json="${INSPECTOR_JSON:-0}" \
+      -v deco="$deco" -v edge="$edge" -v hr="$hr" -v color="${COLOR:-1}" -v lvn="${INSPECTOR_LEVEL_NAME:-all}" '
+    BEGIN { pat = ENVIRON["KD_PAT"]; emsg = ENVIRON["KD_EMPTY"]; mkp = (ENVIRON["KD_MARKED"] != "0"); VLB = (length("\342\224\200") != 1); ESC = sprintf("%c", 27); SOH = sprintf("%c", 1)
+            # byte classes only where awk counts bytes (a UTF-8 gawk rejects them)
+            if (VLB) { HI = "[\200-\377]"; CONT = "[\200-\277]" } }
+    # widths in characters, also where awk counts bytes (mawk, C locale)
+    function vl(s,   t) { if (!VLB || s !~ HI) return length(s); t = s; return length(s) - gsub(CONT, "", t) }
+    function usub(s, a, n,   i, L, c, k, out) {
+      if (!VLB || s !~ HI) return substr(s, a, n)
+      L = length(s); k = 0; out = ""
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1); if (c !~ CONT) { k++; if (k >= a + n) break }; if (k >= a) out = out c }
+      return out }
+    # markers -> colours (or nothing), a fill -> the rule / the spaces to the right edge
+    function paint(s, plain,   p, f, fl, fs) {
+      if (color == "1") gsub(/\001\[/, ESC "[", s); else gsub(/\001\[[0-9;]*m/, "", s)
+      p = index(s, SOH "R"); fl = hr; if (!p) { p = index(s, SOH "P"); fl = " " }
+      if (p) { f = edge - vl(plain); fs = ""; if (fl != " " && f > 1) { fs = " "; f-- } else if (fl != " ") f = 0
+               while (f-- > 0) fs = fs fl; s = substr(s, 1, p - 1) fs substr(s, p + 2) }
+      return s }
+    # visible characters o+1 .. o+n of a coloured line; the colour codes before them are
+    # kept, so a continuation row goes on in the colour it had
+    function epart(s, o, n,   i, j, L, c, k, out, any, q) {
+      L = length(s); k = 0; out = ""; any = 0
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1)
+        if (c == ESC) { j = i; while (j < L && substr(s, j, 1) != "m") j++; q = substr(s, i, j - i + 1); i = j
+          if (k <= o && q == ESC "[0m") { out = ""; any = 0 } else { out = out q; any = (q != ESC "[0m") }; continue }
+        if (!(VLB && c ~ CONT)) { k++; if (k > o + n) break }
+        if (k > o) out = out c }
+      return out (any ? ESC "[0m" : "") }
     function hit(line) {
       if (pat == "") return 0
       return (icase ? (tolower(line) ~ tolower(pat)) : (line ~ pat))
@@ -437,17 +568,28 @@ inspector_view_build() { # body view matches [width]
       lv = jstr(rest, "severity"); if (lv == "") lv = jstr(rest, "level")
       if (ts ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T/) ts = substr(ts, 6, 5) " " substr(ts, 12, 12)
       return ts "  " tag sprintf("%-7s", toupper(lv == "" ? "-" : lv)) "  " m }
-    { line = (json == "1") ? readable($0) : $0
+    { if (mkp && index($0, SOH)) { mk = 1; raw = $0; plain = raw; gsub(/\001\[[0-9;]*m/, "", plain); gsub(/\001[RP]/, "", plain) } else { mk = 0; plain = $0 }
+      line = (json == "1" && !mk) ? readable(plain) : plain
       if (lvl != "" && line !~ lvl) next
       m = hit(line)
       if (only == "1" && pat != "" && !m) next
       lines++
       if (m) { hits++; print n + 1 > matchf }
-      if (w < 20 || length(line) <= w) { n++; print line; next }
+      if (w < 20 || length(line) <= w || (VLB && vl(line) <= w)) { n++; if (mk && deco == "1") print paint(raw, line); else print line; next }
       # wrap: the whole line is shown, continuation rows are indented
-      n++; print substr(line, 1, w); rest = substr(line, w + 1)
-      while (rest != "") { n++; print "    " substr(rest, 1, w - 4); rest = substr(rest, w - 3) } }
-    END { printf "%d %d %d\n", n + 0, hits + 0, lines + 0 > metaf }
+      if (mk && deco == "1" && color == "1") { pr = paint(raw, line); tl = vl(line); n++; print epart(pr, 0, w)
+        for (o = w; o < tl; o += w - 4) { n++; print "    " epart(pr, o, w - 4) }
+        next }
+      n++; print usub(line, 1, w); rest = usub(line, w + 1, 1e9)
+      while (rest != "") { n++; print "    " usub(rest, 1, w - 4); rest = usub(rest, w - 3, 1e9) } }
+    END {
+      # an empty pane says why (the note is not a line of the pane: counts and exports stay 0)
+      if (deco == "1" && n == 0) {
+        if (NR > 0 && lvl != "") t = "No line at log level " lvn " or above in the " NR " lines read - L switches the level."
+        else if (NR > 0 && only == "1" && pat != "") t = "No line matches /" pat " - / searches again, & shows every line."
+        else t = (emsg != "") ? emsg : "Nothing to show."
+        print (color == "1" ? ESC "[90m" : "") "  " t (color == "1" ? ESC "[0m" : "") }
+      printf "%d %d %d\n", n + 0, hits + 0, lines + 0 > metaf }
   ' "$body" > "$view"
   INSPECTOR_VIEW_LINES=0; INSPECTOR_MATCHES=0; INSPECTOR_VIEW_LOGICAL=0
   [ -r "$view.meta" ] && read -r INSPECTOR_VIEW_LINES INSPECTOR_MATCHES INSPECTOR_VIEW_LOGICAL < "$view.meta"
@@ -456,11 +598,48 @@ inspector_view_build() { # body view matches [width]
 
 # Print the visible slice, clipped to the terminal width and with the matches marked.
 # Clipping happens before the colour codes are added so the width stays exact.
-inspector_show() { # view first last cols color [horizontal offset]
+inspector_show() { # view first last cols color [horizontal offset] [1 = log lines: level words coloured]
   local icase="" view="$1" hoff="${6:-0}"
   [ -z "${INSPECTOR_SEARCH:-}" ] || icase="$(inspector_icase "$INSPECTOR_SEARCH")"
-  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v first="$2" -v last="$3" -v w="$4" -v color="$5" -v hoff="$hoff" -v icase="$icase" '
-    BEGIN { pat = ENVIRON["KD_PAT"]; if (icase == "1") pat = tolower(pat) }
+  KD_PAT="${INSPECTOR_SEARCH:-}" awk -v first="$2" -v last="$3" -v w="$4" -v color="$5" -v hoff="$hoff" -v icase="$icase" -v lv="${7:-0}" '
+    BEGIN { pat = ENVIRON["KD_PAT"]; if (icase == "1") pat = tolower(pat); VLB = (length("\342\224\200") != 1); ESC = sprintf("%c", 27)
+            if (VLB) { HI = "[\200-\377]"; CONT = "[\200-\277]" }
+            DIM = (color == "1") ? ESC "[2m>" ESC "[0m" : ">" }
+    function vl(s,   t) { if (!VLB || s !~ HI) return length(s); t = s; return length(s) - gsub(CONT, "", t) }
+    function usub(s, a, n,   i, L, c, k, out) {
+      if (!VLB || s !~ HI) return substr(s, a, n)
+      L = length(s); k = 0; out = ""
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1); if (c !~ CONT) { k++; if (k >= a + n) break }; if (k >= a) out = out c }
+      return out }
+    # a coloured line: skip o visible characters, keep w (MORE = 1 when the line goes on)
+    function ecut(s, o, w,   t, i, j, L, c, k, out, keep, any, q) {
+      t = s; gsub(/\033\[[0-9;]*m/, "", t); MORE = (vl(t) - o > w); keep = MORE ? w - 1 : w
+      L = length(s); k = 0; out = ""; any = 0
+      for (i = 1; i <= L; i++) { c = substr(s, i, 1)
+        if (c == ESC) { j = i; while (j < L && substr(s, j, 1) != "m") j++; q = substr(s, i, j - i + 1); i = j
+          if (k <= o && q == ESC "[0m") { out = ""; any = 0 } else { out = out q; any = (q != ESC "[0m") }; continue }
+        if (!(VLB && c ~ CONT)) { k++; if (k > o + keep) break }
+        if (k > o) out = out c }
+      return out (any ? ESC "[0m" : "") }
+    # log lines: the first level word - klog E / W, ERROR FATAL PANIC ... red, WARN magenta,
+    # level=error / "level":"warn" as well
+    function cw(s, c, a, n) { return substr(s, 1, a - 1) ESC "[" c "m" substr(s, a, n) ESC "[0m" substr(s, a + n) }
+    function lvc(s,   pre, q) {
+      pre = ""
+      if (match(s, /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9:.,+Z-]+ /) || match(s, /^[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9.]+ /)) {
+        pre = ESC "[90m" substr(s, 1, RLENGTH - 1) ESC "[0m "; s = substr(s, RLENGTH + 1) }
+      if (substr(s, 1, 1) == "[" && (q = index(s, "] ")) > 2 && q < 160) { pre = pre ESC "[94m" substr(s, 1, q) ESC "[0m "; s = substr(s, q + 2) }
+      return pre lvw(s) }
+    function lvw(s,   l, a, n, u) {
+      if (match(s, /(^|[ \t])[EF][01][0-9][0-3][0-9] [0-2][0-9]:[0-5][0-9]:/)) { a = RSTART; if (substr(s, a, 1) ~ /[ \t]/) a++; return cw(s, "1;31", a, 5) }
+      if (match(s, /(^|[ \t])W[01][0-9][0-3][0-9] [0-2][0-9]:[0-5][0-9]:/)) { a = RSTART; if (substr(s, a, 1) ~ /[ \t]/) a++; return cw(s, "35", a, 5) }
+      if (match(s, /(^|[^A-Za-z])(ERROR|FATAL|PANIC|CRITICAL|SEVERE|EMERG|ALERT|CRIT|ERR|Exception|Traceback)([^A-Za-z]|$)/)) u = "1;31"
+      else if (match(s, /(^|[^A-Za-z])(WARN|WARNING)([^A-Za-z]|$)/)) u = "35"
+      if (u != "") { a = RSTART; n = RLENGTH; if (substr(s, a, 1) !~ /[A-Za-z]/) { a++; n-- }; if (substr(s, a + n - 1, 1) !~ /[A-Za-z]/) n--; return cw(s, u, a, n) }
+      l = tolower(s)
+      if (match(l, /(level|lvl|severity)"?[=:] ?"?(error|fatal|panic|crit[a-z]*|err|emerg|alert)/)) return cw(s, "1;31", RSTART, RLENGTH)
+      if (match(l, /(level|lvl|severity)"?[=:] ?"?warn[a-z]*/)) return cw(s, "35", RSTART, RLENGTH)
+      return s }
     function hl(s, p,   out, rest, hay, at, len) {
       if (p == "" || color != "1") return s
       out = ""; rest = s
@@ -476,8 +655,17 @@ inspector_show() { # view first last cols color [horizontal offset]
       return out
     }
     NR > last { exit }
-    NR >= first && NR <= last { s = substr($0, 1 + hoff); more = (length(s) > w)
-      s = substr(s, 1, more ? w - 1 : w); print hl(s, pat) (more ? (color == "1" ? "\033[2m>\033[0m" : ">") : "") }
+    NR >= first && NR <= last { r = $0
+      if (index(r, ESC)) {
+        p = r; gsub(/\033\[[0-9;]*m/, "", p)
+        # a line with a search match is shown plain, the match marked; others keep their colours
+        if (pat == "" || !(((icase == "1") ? tolower(p) : p) ~ pat)) { print ecut(r, hoff, w) (MORE ? DIM : ""); next }
+        r = p }
+      s = usub(r, 1 + hoff, 1e9); more = (vl(s) > w); s = usub(s, 1, more ? w - 1 : w)
+      t = hl(s, pat)
+      # log lines: timestamp, [pod/container] tag and level word coloured - around the search marks too
+      if (color == "1") { if (lv == "1") t = lvc(t); else if (t == s && s ~ /^Read failed \(exit [0-9]+\)/) t = ESC "[1;31m" s ESC "[0m" }
+      print t (more ? DIM : "") }
   ' "$view"
 }
 # Container inventory with live state: the spec gives name, image and type, the status
@@ -600,9 +788,9 @@ inspector_container_picker() { # ns pod dir
     bx_layout "$W" 7 2 "$w_n" "$w_t" "$w_r" 3 "$w_s" "$w_l" 20
     local -a cw=("${BX_CW[@]}")
     bx_sep "$W" t "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_TL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
-    out="$V_"; for ((kk = 0; kk < 8; kk++)); do
+    out="$V_${PC_HB:-}"; for ((kk = 0; kk < 8; kk++)); do
       if [ "${al:kk:1}" = r ]; then printf -v cell " %*s " "${cw[kk]}" "${hd[kk]:0:${cw[kk]}}"; else printf -v cell " %-*s " "${cw[kk]}" "${hd[kk]:0:${cw[kk]}}"; fi
-      out+="${PC_B}${cell}${PC_R}${V_}"; done
+      out+="${cell}${BX_V}"; done; out="${out%"$BX_V"}${PC_R}${V_}"
     buf+="$out"$'\033[K\n'
     bx_sep "$W" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
     local shown=$((n - top < rows ? n - top : rows))
@@ -738,12 +926,106 @@ inspector_export() { # view-file ns pod container pane [total-lines] [matching-l
   printf '%s' "$file"
 }
 
+# ---- help screens: titles, keys and the colour legend in colour --------------------
+# The help texts stay plain heredocs; HELP_AWK adds colour roles on the way out (the
+# theme maps them like every other screen): section titles in the accent colour with a
+# rule, keys in bold blue, terms of a view's help in bold, the colour legend in its own
+# colours. mode: dash (view help, then KEYS), keys (key list from the start), cols (the
+# pod list help: label / key / text columns). The text itself is not changed.
+HELP_AWK='
+function C(c, s) { return (s == "") ? s : ESC "[" c "m" s ESC "[0m" }
+function rule(n,   r) { r = ""; while (n-- > 0) r = r HR; return r }
+function legend(seg) {
+  if (seg ~ /^green /) return C("32", seg); if (seg ~ /^blue /) return C("94", seg); if (seg ~ /^magenta /) return C("35", seg)
+  if (seg ~ /^bold red /) return C("1;31", seg); if (seg ~ /^(red|bold red) /) return C("1;31", seg); if (seg ~ /^grey /) return C("90", seg)
+  return "" }
+function kseg(seg, first, g, rest,   k, t) {
+  if ((t = legend(seg)) != "") return t
+  if (first && length(g) > 3) return seg
+  if (first && keys && seg ~ /^[A-Z][A-Z][A-Z]+$/) return C("1;35", seg)
+  if (match(seg, /  [^ ]/)) { k = substr(seg, 1, RSTART - 1); if (length(k) <= 12 && (first || keys)) return C(keys ? "1;94" : "1", k) substr(seg, RSTART) ; return seg }
+  if (first && rest != "" && length(seg) <= 12) return C(keys ? "1;94" : "1", seg)
+  return seg }
+function segs(s,   out, rest, g, seg, first) {
+  out = ""; rest = s; first = 1
+  while (rest != "") {
+    g = ""; if (match(rest, /^ +/)) { g = substr(rest, 1, RLENGTH); rest = substr(rest, RLENGTH + 1) }
+    if (rest == "") { out = out g; break }
+    if (match(rest, /   /)) { seg = substr(rest, 1, RSTART - 1); rest = substr(rest, RSTART) } else { seg = rest; rest = "" }
+    out = out g ((first || keys) ? kseg(seg, first, g, rest) : seg); first = 0 }
+  return out }
+function colours(s,   t) {   # "Colours: green running and ready, magenta pending ..." (pod list help)
+  t = s
+  if (match(t, /green [^,.]*/)) t = substr(t, 1, RSTART - 1) C("32", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  if (match(t, /magenta [^,.]*/)) t = substr(t, 1, RSTART - 1) C("35", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  if (match(t, /(^|  )red [^,.]*/)) t = substr(t, 1, RSTART - 1) C("1;31", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  if (match(t, /grey [^,.]*/)) t = substr(t, 1, RSTART - 1) C("90", substr(t, RSTART, RLENGTH)) substr(t, RSTART + RLENGTH)
+  return t }
+BEGIN { ESC = sprintf("%c", 27); keys = (mode != "dash"); w += 0 }
+# a line of section titles only: " KEYS", " FIND      PANES      NAVIGATE"
+$0 ~ /^ ?[A-Z][A-Z0-9 &\/-]*[A-Z0-9]$/ {
+  s = $0; ind = s; sub(/[^ ].*/, "", ind); t = substr(s, length(ind) + 1)
+  if (t !~ /   /) { n = w - length(s) - 1; print ind C("1;35", t) (n > 2 ? " " C("90", rule(n)) : ""); if (t == "KEYS") keys = 1; next }
+  out = ind; while (match(t, /   +/)) { out = out C("1;35", substr(t, 1, RSTART - 1)) substr(t, RSTART, RLENGTH); t = substr(t, RSTART + RLENGTH) }
+  print out C("1;35", t); next }
+# the title of a view help: " PODS - every pod ..."
+mode == "dash" && !keys && match($0, /^ [A-Z][A-Z0-9 &]+ - /) { print " " C("1;35", substr($0, 2, RLENGTH - 4)) substr($0, RLENGTH - 2); next }
+# the view help: a term in columns 4-14, its text from column 16
+mode == "dash" && !keys && /^   [^ ]/ && substr($0, 15, 1) == " " { t = substr($0, 4, 11); sub(/ +$/, "", t); print "   " C("1", t) substr($0, 4 + length(t)); next }
+# KEYS: the key in columns 4-13, its text from column 15, more key / text pairs after a gap
+mode == "dash" && keys && /^   [^ ]/ && substr($0, 14, 1) == " " { t = substr($0, 4, 10); sub(/ +$/, "", t); print "   " C("1;94", t) segs2(substr($0, 4 + length(t))); next }
+# " COLOURS   green = ... " legend lines and their continuation
+/^ COLOURS   / { print " " C("1;35", "COLOURS") segs(substr($0, 9)); next }
+/^           (green|blue|magenta|bold red|grey) = / { print segs($0); next }
+/^  Colours: / { print "  " C("1", "Colours:") colours(substr($0, 11)); next }
+/^  red failing/ { print colours($0); next }
+mode == "cols" && /^  [A-Z][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ][A-Z ]  [^ ]/ {
+  lab = substr($0, 3, 10); key = substr($0, 15, 19); txt = substr($0, 34)
+  sub(/ +$/, "", lab); kt = key; sub(/ +$/, "", kt)
+  print "  " C("1;35", lab) sprintf("%" (12 - length(lab)) "s", "") (kt == "" ? key : C("1;94", kt) substr(key, length(kt) + 1)) segs2(txt); next }
+mode == "cols" && /^              [^ ]/ {
+  key = substr($0, 15, 19); txt = substr($0, 34); kt = key; sub(/ +$/, "", kt)
+  if (kt ~ /^[^ ].*[^ ]$|^[^ ]$/ && key ~ / $/) { print "              " C("1;94", kt) substr(key, length(kt) + 1) segs2(txt); next } }
+{ print segs($0) }
+function segs2(s,   out, rest, g, seg) {   # "summary          l  current logs" -> the later key / text pairs
+  out = ""; rest = s
+  while (rest != "") {
+    if (match(rest, /   +/)) { seg = substr(rest, 1, RSTART - 1); g = substr(rest, RSTART, RLENGTH); rest = substr(rest, RSTART + RLENGTH) } else { seg = rest; g = ""; rest = "" }
+    if (out != "" && match(seg, /^[^ ]+( [^ ]+)*  [^ ]/)) { k = seg; sub(/  .*/, "", k); if (length(k) <= 24) seg = C("1;94", k) substr(seg, length(k) + 1) }
+    out = out seg g }
+  return out }
+'
+# A help taller than the window is shown a page at a time (the top of it - the view's own
+# help - used to scroll away): Space / j / f next page, b previous, any other key returns.
+# 0 = the last page is on the screen (the caller waits for a key), 1 = a key returned already.
+help_page() { # title right mode: help text on stdin
+  local -a HL; local i=0 j n rows k
+  mapfile -t HL < <(help_paint "$3" "")
+  picker_size; rows=$((PK_ROWS - 3)); [ "$rows" -ge 5 ] || rows=5
+  n=${#HL[@]}
+  while :; do
+    ui_screen "$1" "$2"
+    for ((j = i; j < i + rows && j < n; j++)); do printf '%s\033[K\n' "${HL[j]}"; done
+    [ $((i + rows)) -lt "$n" ] || return 0
+    k=" -- lines $((i + 1))-$((i + rows)) of $n: Space next page$([ "$i" = 0 ] || printf ', b back'), any other key returns --"
+    if [ "${COLOR:-1}" = 1 ]; then ui_mapl $'\033[1;7m'"$k"$'\033[0m'; printf '%s' "$UI_ML"; else printf '%s' "$k"; fi
+    IFS= read -rsn1 k </dev/tty || k=q
+    case "$k" in ' '|j|f) i=$((i + rows)) ;; b|k) i=$((i - rows)); [ "$i" -ge 0 ] || i=0 ;; *) return 1 ;; esac
+  done
+}
+help_paint() { # mode [width]: help text on stdin -> screen
+  if [ "${COLOR:-1}" != 1 ]; then cat; return 0; fi
+  local ln hr=$'\342\224\200'
+  [ "${BARCHR:-unicode}" != ascii ] || hr=-
+  [ -n "${2:-}" ] || picker_size
+  awk -v mode="${1:-keys}" -v w="${2:-${PK_COLS:-120}}" -v HR="$hr" "$HELP_AWK" | while IFS= read -r ln; do ui_mapl "$ln"; printf '%s\n' "$UI_ML"; done
+}
+
 inspector_help() {
-  ui_screen "POD DETAIL | KEYS" "any key returns"
-  printf ' FIND                          PANES                       NAVIGATE\n'
+  { printf ' FIND                          PANES                       NAVIGATE\n'
   printf '  /  find in this pane         s  summary                  j k arrows  line\n'
-  printf '  &  show only matches         d  describe                 space b     page\n'
-  printf '  n N  next / previous match   e  events                   PgUp PgDn   page\n'
+  printf '  &  show only matches         d  describe                 space b  page\n'
+  printf '  n N  next / previous match   e  events                   PgUp PgDn  page\n'
   printf '  L  log level: all, ERROR,    !  why (event hypotheses)    g G Home End  top/bottom\n'
   printf '     WARN, INFO, DEBUG         l  current logs             c  choose container\n'
   printf '  f  follow logs               p  previous logs            r  reload now\n'
@@ -767,8 +1049,10 @@ inspector_help() {
   printf ' c lists every container with readiness, restarts, state and last exit: pick one\n'
   printf ' and l/p read that container. Search and level stay active across panes.\n'
   printf ' w writes the filtered pane to %s/inspector/ (review it before sharing).\n\n' "$(inspector_report_dir)"
+  } | help_page "POD DETAIL | KEYS" "any key returns" keys && {
   printf '\033[?25h any key returns'
-  IFS= read -rsn1 _ </dev/tty || true
+  IFS= read -rsn1 _ </dev/tty || true; }
+  printf '\033[?25l'
 }
 
 inspector_pane_title() { # pane -> title shown in the bar
@@ -946,10 +1230,11 @@ inspector_find_all() { # ns pod dir -> d/found, d/found.info; 0 = a result was w
   done
   for c in "${JP[@]}"; do wait "$c" 2>/dev/null; done
   # the result: what was read, then the matching lines of every log in time order
-  local nread=0 nlines=0 nhit=0 r ln_ hi_ st w1=6 rc_ olderfiles=0
+  local nread=0 nlines=0 nhit=0 r ln_ hi_ st w1=6 rc_ olderfiles=0 m=$'\001' sc
   for ((c = 0; c < n; c++)); do r="${LP[c]}/${LC[c]}"; [ "${LM[c]}" = current ] || r+=" (previous)"; [ "${#r}" -le "$w1" ] || w1=${#r}; done
   {
-    printf '%-*s  %10s  %7s  %s\n' "$w1" "LOG" "LINES" "MATCH" "RESULT"
+    # \001 markers (kdash's own lines only): the header band and the result colours
+    printf '%s[1;7m%-*s  %10s  %7s  %s%sP%s[0m\n' "$m" "$w1" "LOG" "LINES" "MATCH" "RESULT" "$m" "$m"
     for ((c = 0; c < n; c++)); do
       r="${LP[c]}/${LC[c]}"; [ "${LM[c]}" = current ] || r+=" (previous)"
       ln_=-; hi_=-; st="not read (stopped)"
@@ -968,12 +1253,13 @@ inspector_find_all() { # ns pod dir -> d/found, d/found.info; 0 = a result was w
       if [ "$nlok" = 1 ]; then
         nodelog_result "$fd/$c.oldn"; st+=", $NODELOG_RESULT"; olderfiles=$((olderfiles + NODELOG_READ))
       fi
-      printf '%-*s  %10s  %7s  %s\n' "$w1" "$r" "$ln_" "$hi_" "$st"
+      case "$st" in ok*) sc=32 ;; "no access"*) sc=35 ;; INCOMPLETE*|failed*) sc="1;31" ;; *) sc=90 ;; esac
+      printf '%-*s  %10s  %7s  %s\n' "$w1" "$r" "$ln_" "$hi_" "${m}[${sc}m${st}${m}[0m"
     done
     if [ "$nlok" = 1 ]; then printf '\nRotated history: %s file(s) read from nodes; per-log coverage and failures appear above.\n' "$olderfiles"
     else nodelog_can || true; printf '\nNot searched: the older log files the kubelet rotated - %s.\n' "$NODELOG_WHY"; fi
-    printf 'Matching lines of all logs, oldest first (G jumps to the newest); each line is tagged [pod/container]:\n'
-    printf -- '----------------------------------------------------------------------------------------------------\n'
+    printf '%s[1mMatching lines of all logs%s[0m, oldest first (G jumps to the newest); each line is tagged [pod/container]:\n' "$m" "$m"
+    printf -- '%s[90m----------------------------------------------------------------------------------------------------%s[0m\n' "$m" "$m"
     cat "$fd"/*.hits 2>/dev/null | LC_ALL=C sort -s -k1,1
     [ "$nhit" -gt 0 ] || printf '(no line matched)\n'
   } > "$d/found"
@@ -985,7 +1271,7 @@ inspector_find_all() { # ns pod dir -> d/found, d/found.info; 0 = a result was w
 inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   local ns="$1" pod="$2" d="$3" pane="${INSPECTOR_PANE:-summary}" loaded="" reload=1 viewdirty=1 rows_stale=1
   local body="$3/body" view="$3/view" matchf="$3/matches"
-  local offset=0 count=0 total=0 matches=0 msg="" rows pid rc keep_offset=0 follow=0 atbottom=0 vcols=0 hoff=0
+  local offset=0 count=0 total=0 matches=0 msg="" rows pid rc keep_offset=0 follow=0 atbottom=0 vcols=0 hoff=0 bcols=0 lvp=0
   INSPECTOR_JUMPED=""
   local container file="" target=0 idx=0 cline="" pinfo=""
   # speed: one frame per key through ui_flush (only changed lines are sent, no screen clear),
@@ -1005,6 +1291,10 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
   while :; do
     # bar + framed header (4), the key rows (3, more when a narrow screen wraps them), 1 message row
     inspector_size; picker_colors; inspector_keylines; rows=$((INSPECTOR_ROWS - 6 - ${#IK_LINES[@]})); [ "$ityping" != 1 ] || rows=$((rows - 3)); [ "$rows" -ge 3 ] || rows=3
+    # events / why are tables drawn for the width: a new width draws them again
+    if [ "$loaded" = "$pane" ] && [ "$reload" != 1 ] && [ "${bcols:-0}" != "$INSPECTOR_COLS" ]; then
+      case "$pane" in events|explain) reload=1; keep_offset=1 ;; esac
+    fi
     if [ "$loaded" != "$pane" ] || [ "$reload" = 1 ]; then
       picker_colors
       ui_bar "$INSPECTOR_COLS" " KDASH ${PC_SEP} POD DETAIL ${PC_SEP} context ${CTX_NAME:-current} ${PC_SEP} namespace $ns " " $(inspector_pane_title "$pane") "
@@ -1020,8 +1310,9 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
           if [ ! -f "${TOOLKIT_DIR:-}/events.status" ] || [ "$INSPECTOR_REFRESH_EVENTS" = 1 ]; then events_collect; fi
         fi
         case "$pane" in
-          summary) inspector_summary "$ns" "$pod" "$body" ;;
-          describe) inspector_query "$body" describe pod "$pod" -n "$ns" ;;
+          summary) inspector_summary "$ns" "$pod" "$body" 1 ;;
+          describe) if inspector_query "$body" describe pod "$pod" -n "$ns" && [ -s "$body" ]; then
+                      awk "$INSPECTOR_DESC_AWK" "$body" > "$body.f" && mv -f -- "$body.f" "$body"; fi ;;
           events) inspector_events "$ns" "$pod" "$body" ;;
           explain) inspector_explain "$ns" "$pod" "$body" ;;
           current|previous)
@@ -1055,7 +1346,7 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
         INSPECTOR_TAIL_SET="$iwas_t"; INSPECTOR_BYTES_SET="$iwas_b"; [ -n "$iwas_t" ] || unset INSPECTOR_TAIL_SET; [ -n "$iwas_b" ] || unset INSPECTOR_BYTES_SET
         msg="whole-log read stopped - the search covers the $(cat "$body.info" 2>/dev/null)"
       fi
-      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; viewdirty=1; ifl=1; rgen=$((rgen + 1))
+      INSPECTOR_REFRESH_EVENTS=0; rows_stale=0; reload=0; loaded="$pane"; bcols="$INSPECTOR_COLS"; viewdirty=1; ifl=1; rgen=$((rgen + 1))
       if [ -n "$iopen" ]; then         # the read / asked for is done (or stopped): open the box now
         sv_search="${INSPECTOR_SEARCH:-}"; sv_only="${INSPECTOR_ONLY:-0}"; ityping=1; ibad=0
         if [ "$iopen" = '&' ]; then INSPECTOR_ONLY=1; else INSPECTOR_ONLY=0; fi
@@ -1070,6 +1361,13 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     fi
     [ "${vcols:-0}" = "$INSPECTOR_COLS" ] || viewdirty=1
     if [ "$viewdirty" = 1 ]; then
+      case "$pane" in
+        summary|describe) INSPECTOR_MARKED=1; INSPECTOR_EMPTY="Nothing came back for this pane: the API answered without data for this pod. r reads it again." ;;
+        events|explain) INSPECTOR_MARKED=1; INSPECTOR_EMPTY="Nothing to show for this pod. r reads the events again." ;;
+        current) INSPECTOR_MARKED=0; INSPECTOR_EMPTY="No log lines: the container has written nothing to its current log yet. p shows the previous instance, F searches every container." ;;
+        previous) INSPECTOR_MARKED=0; INSPECTOR_EMPTY="No previous log: the container has not restarted, or its earlier instance is gone. l shows the current log." ;;
+        *) INSPECTOR_MARKED=1; INSPECTOR_EMPTY="" ;;
+      esac
       inspector_view_build "$body" "$view" "$matchf" "$((INSPECTOR_COLS - 1))"
       viewdirty=0; count="$INSPECTOR_VIEW_LINES"; matches="$INSPECTOR_MATCHES"; vcols="$INSPECTOR_COLS"
       total="$(awk 'END { print NR }' "$body" 2>/dev/null || printf 0)"
@@ -1134,7 +1432,8 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
     bx_bot "$IW" "${PC_B}${pinfo}${PC_R}" ""
     frame=$'\033[H'"${hdr}${BX_LINE}"$'\033[K\n'
     if [ "${INSPECTOR_WRAP:-1}" = 1 ]; then t_=0; else t_=$hoff; fi
-    btxt="$(inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$t_"; printf x)"; btxt="${btxt%x}"
+    case "$pane" in current|previous|found) lvp=1 ;; *) lvp=0 ;; esac
+    btxt="$(inspector_show "$view" "$((offset + 1))" "$((offset + rows))" "$INSPECTOR_COLS" "${COLOR:-1}" "$t_" "$lvp"; printf x)"; btxt="${btxt%x}"
     t_="${btxt//[!$'\n']/}"; nb=${#t_}
     frame+="${btxt//$'\n'/$'\033[K\n'}"
     for ((; nb < rows; nb++)); do frame+=$'\033[K\n'; done
@@ -1275,14 +1574,14 @@ inspector_detail() { # nested UI; q returns to the picker, keeping the identity
            *) msg='follow applies to the log panes (l current, p previous)' ;;
          esac ;;
       w) # the export has whole lines (not the wrapped screen rows)
-         inspector_view_build "$body" "$view.x" "$matchf.x" 0
+         inspector_view_build "$body" "$view.x" "$matchf.x" 0 0
          local xn="$INSPECTOR_VIEW_LINES"; INSPECTOR_VIEW_LINES="$count"; INSPECTOR_MATCHES="$matches"
          if file="$(inspector_export "$view.x" "$ns" "$pod" "$container" "$pane" "$total" "$matches")"; then
            msg="exported $xn complete line(s) to $file"
            declare -F audit >/dev/null && audit INSPECT_EXPORT "namespace=$ns pod=$pod container=${container:--} pane=$pane lines=$xn search=${INSPECTOR_SEARCH:-none} level=${INSPECTOR_LEVEL_NAME:-all} file=$file"
          else msg='export failed: is the report directory writable?'; fi ;;
       '>') # quick export: the screen, then the whole pane in whole lines (search / level as shown)
-         inspector_view_build "$body" "$view.x" "$matchf.x" 0
+         inspector_view_build "$body" "$view.x" "$matchf.x" 0 0
          INSPECTOR_VIEW_LINES="$count"; INSPECTOR_MATCHES="$matches"
          local xt="pod detail, pane $pane | pod $ns/$pod | container ${container:-(none)}"
          case "$pane" in current|previous) [ ! -s "$body.info" ] || xt+=" | read: $(< "$body.info")" ;;
@@ -1389,9 +1688,9 @@ END { for (i = 1; i <= 22; i++) close(F[i]); print wns, wst, wnd, wpod > (d "/pk
 picker_colors() {
   if [ "${COLOR:-1}" = 1 ]; then
     PC_R=$'\033[0m'; PC_B=$'\033[1m'; PC_D=$'\033[90m'; PC_INV=$'\033[7m'; PC_OK=$'\033[32m'; PC_BAD=$'\033[1;31m'
-    PC_WARN=$'\033[35m'; PC_INFO=$'\033[1;94m'; PC_TITLE=$'\033[7;1m'; PC_ACT=$'\033[1;97;41m'
+    PC_WARN=$'\033[35m'; PC_INFO=$'\033[1;94m'; PC_TITLE=$'\033[7;1m'; PC_ACT=$'\033[1;97;41m'; PC_HB=$'\033[1;7m'
   else
-    PC_R=""; PC_B=""; PC_D=""; PC_INV=""; PC_OK=""; PC_BAD=""; PC_WARN=""; PC_INFO=""; PC_TITLE=""; PC_ACT=""
+    PC_R=""; PC_B=""; PC_D=""; PC_INV=""; PC_OK=""; PC_BAD=""; PC_WARN=""; PC_INFO=""; PC_TITLE=""; PC_ACT=""; PC_HB=""
   fi
   if [ "${BARCHR:-unicode}" = ascii ]; then PC_PTR=">"; PC_UP="^"; PC_DN="v"; PC_CARET="_"; PC_SEP="|"; PC_HR="-"; PC_DOT="*"; PC_MID="-"
   else PC_PTR=$'\342\226\272'; PC_UP=$'\342\206\221'; PC_DN=$'\342\206\223'; PC_CARET=$'\342\226\214'
@@ -1872,9 +2171,9 @@ picker_draw() {
   local V_="${BX_C}${BX_V}${BX_R}" ncol=${#cw[@]} k cell out sty
   # rows are built with printf on plain text, colour is wrapped around the padded cell
   bx_sep "$W" t "${BX_J[@]}"; line="${BX_LINE/${BX_LT}/${BX_TL}}"; buf+="${line%${BX_RT}${BX_R}}${BX_TR}${BX_R}"$'\033[K\n'
-  out="$V_"; for ((k = 0; k < ncol; k++)); do
+  out="$V_${PC_HB:-}"; for ((k = 0; k < ncol; k++)); do
     if [ "${al:k:1}" = r ]; then printf -v cell " %*s " "${cw[k]}" "${hd[k]:0:${cw[k]}}"; else printf -v cell " %-*s " "${cw[k]}" "${hd[k]:0:${cw[k]}}"; fi
-    out+="${PC_B}${cell}${PC_R}${V_}"; done
+    out+="${cell}${BX_V}"; done; out="${out%"$BX_V"}${PC_R}${V_}"
   buf+="$out"$'\033[K\n'
   bx_sep "$W" x "${BX_J[@]}"; buf+="$BX_LINE"$'\033[K\n'
   local shown=$((nv - top < rows ? nv - top : rows)); [ "$shown" -ge 1 ] || shown=1
@@ -1980,9 +2279,8 @@ picker_key() { # timeout
 }
 
 picker_help() {
-  ui_screen "SELECT POD | KEYS" "any key returns"
-  cat <<'H'
-  MOVE        j / k / arrows     one row          PgDn / PgUp / space / b   one page
+  help_page "SELECT POD | KEYS" "any key returns" cols <<'H' && IFS= read -rsn1 _k </dev/tty
+  MOVE        j / k / arrows     one row          PgDn / PgUp / space / b  one page
               g / G / Home / End first / last     12 (digits)  jump to row 12 of the list
   FIND        /                  type to filter: every word must match the pod name,
                                  status or node (e.g. "/fileserver3 failed")
@@ -2002,7 +2300,7 @@ picker_help() {
   red failing / not ready / >= 90% of memory limit, grey completed.
   "needs attention" = failing, pending or restarted pods.
 H
-  IFS= read -rsn1 _k </dev/tty || true
+  true
 }
 
 # After a shell / copy: "kdswitch" in the container asks for the pods related to the
@@ -2221,7 +2519,22 @@ inspector_filter_prompt() {
 inspector_palette() {
   local command=""
   ui_screen "COMMAND PALETTE" "Enter on an empty line cancels"
-  printf ' shell [FILTER]          Shell in a pod: one match opens it, otherwise the filtered list\n quit                    Leave kdash (also Q on any screen)\n secrets                 Certificates and keys in Secrets: expiry, users, paths (also Y)\n fmea | access           Failure modes ranked by Action Priority | your RBAC access (also M)\n inspect                 Choose a pod and inspect it\n filter                  Structured pod filters\n pods / nodes / workloads / ip / mem / io / alerts\n check / services / storage / events / explain / doctor / certs\n runbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\n help                    Dashboard help\n\n Commands use fixed handlers and never execute shell text.\n\033[?25h : '
+  # one line per command: the command in bold blue (arguments and separators grey), what it does
+  local pl_ ln_
+  pl_=$'shell [FILTER]\tShell in a pod: one match opens it, otherwise the filtered list\nquit\tLeave kdash (also Q on any screen)\nsecrets\tCertificates and keys in Secrets: expiry, users, paths (also Y)\nfmea | access\tFailure modes ranked by Action Priority | your RBAC access (also M)\ninspect\tChoose a pod and inspect it\nfilter\tStructured pod filters\npods / nodes / workloads / ip / mem / io / alerts\t\ncheck / services / storage / events / explain / doctor / certs\t\nrunbook [etcd-restore | cert-rotate | node-notready | api-unreachable | oidc-login]\t\nhelp\tDashboard help'
+  printf '%s\n' "$pl_" | awk -F '\t' -v c="${COLOR:-1}" -v w="${PK_COLS:-100}" '
+    function C(k, s) { return (c == "1" && s != "") ? "\033[" k "m" s "\033[0m" : s }
+    function cmd(s,   out, t) { out = ""
+      while (s != "") {
+        if (match(s, /^\[[^]]*\]/)) { t = substr(s, 1, RLENGTH); out = out C("90", t); s = substr(s, RLENGTH + 1); continue }
+        if (match(s, /^ [\/|] /)) { out = out C("90", substr(s, 1, 3)); s = substr(s, 4); continue }
+        if (match(s, /^[a-z][a-z-]*/)) { out = out C("1;94", substr(s, 1, RLENGTH)); s = substr(s, RLENGTH + 1); continue }
+        out = out substr(s, 1, 1); s = substr(s, 2) }
+      return out }
+    BEGIN { h = sprintf(" %-23s %s", "COMMAND", "WHAT IT DOES"); if (c == "1") { p = w - 1 - length(h); while (p-- > 0) h = h " "; h = "\033[1;7m" h "\033[0m" }; print h }
+    { pad = 24 - length($1); g = (pad > 0 && $2 != "") ? sprintf("%" pad "s", "") : ""; print " " cmd($1) g ($2 != "" ? $2 : "") }
+    END { print ""; print " " C("90", "Commands use fixed handlers and never execute shell text.") }' | while IFS= read -r ln_; do ui_mapl "$ln_"; printf '%s\n' "$UI_ML"; done
+  printf '\033[?25h : '
   ui_edit_line command " : " palette || { printf '\033[?25l'; return 0; }; printf '\033[?25l'
   case "$command" in
     '') return 0 ;; inspect|i) inspector_open ;; filter|F) inspector_filter_prompt ;;

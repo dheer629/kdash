@@ -1,0 +1,435 @@
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:18 IST
+ match .*   sort cpu ▼ high first
+ ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat list)
+                                       │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILISATION (used vs req
+WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ c%LIM  m%REQ m%LIM
+► Pod z-oom  (1 pod)           1/1   3 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+  z-oom                        1/1   3 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+      node dev   pool role:control-plane,master   ip 10.244.0.157   qos Burstable   status Running   last-exit Unknown
+    └─ hog                     Y     3 │     51 ·       1 · │     10     50       8      16 │ 510.0 102.0  12.5   6.2
+        last-exit Unknown
+................................................................................
+► Deployment app-server  (2 p~ 2/2  41 │      5 ·       0 · │     50    500      24     192 │  10.0   1.0   0.0   0.0
+  app-server-8fb4699bc-cx5vz   2/2  21 │      3 ·       0 · │     25    250      12      96 │  12.0   1.2   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.166   qos Burstable   status Running   last-exit Unknown
+    ├─ app                     Y    11 │      2 ·       0 · │     20    200       8      64 │  10.0   1.0   0.0   0.0
+        last-exit Unknown
+    └─ sidecar                 Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+        last-exit Unknown
+  app-server-8fb4699bc-t7zxj   2/2  20 │      2 ·       0 · │     25    250      12      96 │   8.0   0.8   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.163   qos Burstable   status Running   last-exit Unknown
+    ├─ app                     Y    10 │      1 ·       0 · │     20    200       8      64 │   5.0   0.5   0.0   0.0
+        last-exit Unknown
+    └─ sidecar                 Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0   2.0   0.0   0.0
+        last-exit Unknown
+................................................................................
+► StatefulSet db-stateful  (2~ 2/2   6 │      2 ·       0 · │     40    200      64     128 │   5.0   1.0   0.0   0.0
+  db-stateful-0                1/1   3 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.159   qos Burstable   status Running   last-exit Unknown
+    └─ db                      Y     3 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+        last-exit Unknown
+  db-stateful-1                1/1   3 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.177   qos Burstable   status Running   last-exit Unknown
+    └─ db                      Y     3 │      1 ·       0 · │     20    100      32      64 │   5.0   1.0   0.0   0.0
+        last-exit Unknown
+................................................................................
+► ReplicationController funct~ 1/1   3 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0   0.0   0.0
+  functionality-legacy-67ks7   1/1   3 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.167   qos Burstable   status Running   last-exit Unknown
+    └─ web                     Y     3 │      1 ·       0 · │     10     50       8      32 │  10.0   2.0   0.0   0.0
+        last-exit Unknown
+................................................................................
+► DaemonSet node-agent  (1 po~ 1/1   4 │      1 ·       0 · │     10     50      16      32 │  10.0   2.0   0.0   0.0
+  node-agent-ctvg6             1/1   4 │      1 ·       0 · │     10     50      16      32 │  10.0   2.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.152   qos Burstable   status Running   last-exit Unknown
+    └─ agent                   Y     4 │      1 ·       0 · │     10     50      16      32 │  10.0   2.0   0.0   0.0
+        last-exit Unknown
+................................................................................
+► Pod kdash-secrets-live-cons~ 1/1   3 │      0 ·       0 · │     50    200      32     128 │   0.0   0.0   0.0   0.0
+  kdash-secrets-live-consumer  1/1   3 │      0 ·       0 · │     50    200      32     128 │   0.0   0.0   0.0   0.0
+      node dev   pool role:control-plane,master   ip 10.244.0.156   qos Burstable   status Running   last-exit Unknown
+    └─ consumer                Y     3 │      0 ·       0 · │     50    200      32     128 │   0.0   0.0   0.0   0.0
+        last-exit Unknown
+................................................................................
+► StatefulSet test-sts  (1 po~ 1/1  26 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+  test-sts-0                   1/1  26 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.176   qos BestEffort   status Running   last-exit Unknown
+    └─ c                       Y    26 │      0 ·       0 · │      -      -       -       - │     -     -     -     -
+        last-exit Unknown
+................................................................................
+► Job completed-check  (1 pod) 0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  completed-check-m9swm        0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos Burstable   status Succeeded
+    └─ check                   N     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+................................................................................
+► CronJob nightly-report  (3 ~ 0/3   0 │      - ·       - · │     30    150      48      96 │     -     -     -     -
+  nightly-report-29927735-m6d~ 0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.181   qos Burstable   status Succeeded
+    └─ report                  N     0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+  nightly-report-29927740-mqx~ 0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.183   qos Burstable   status Succeeded
+    └─ report                  N     0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+  nightly-report-29927745-vvw~ 0/1   0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.186   qos Burstable   status Succeeded
+    └─ report                  N     0 │      - ·       - · │     10     50      16      32 │     -     -     -     -
+................................................................................
+► Pod sync-pod  (1 pod)        0/1   0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+  sync-pod                     0/1   0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+      node dev   pool role:control-plane,master   ip -   qos BestEffort   status Succeeded
+    └─ sync-pod                N     0 │      - ·       - · │      -      -       -       - │     -     -     -     -
+................................................................................
+► Pod z-crash  (1 pod)         0/1 461 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-crash                      0/1 461 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.178   qos Burstable   status CrashLoopBackOff   last-exit Error
+    └─ crash                   N   461 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+        waiting CrashLoopBackOff   last-exit Error
+................................................................................
+► Pod z-imagepull  (1 pod)     0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+  z-imagepull                  0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+      node dev   pool role:control-plane,master   ip 10.244.0.175   qos Burstable   status ImagePullBackOff
+    └─ bad                     N     0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+        waiting ImagePullBackOff   
+................................................................................
+► Pod z-pending  (1 pod)       0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+  z-pending                    0/1   0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    └─ pending                 -     0 │      - ·       - · │      5     50       4      32 │     -     -     -     -
+................................................................................
+► Pod z-unschedulable  (1 pod) 0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+  z-unschedulable              0/1   0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+      node (unscheduled)   pool (none)   ip -   qos Burstable   status Pending
+    └─ wait                    -     0 │      - ·       - · │     50    200      32     128 │     -     -     -     -
+────────────────────────────────────────────────────────────────────────────────
+TOTAL (18 pods, 14 workloads)      547 │     60 ·       1 · │    315   1750     276     976 │  19.0   3.4   0.4   0.1
+ legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / OOMKill risk.  s = sort key, o = order, w = group.
+
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:18 IST
+ match .*   sort cpu ▼ high first
+ ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ NODE POOLS   this namespace vs the whole cluster, per pool and worker node
+ namespace  18 pods on 1 of 1 nodes   mem used 1Mi  req 276Mi  lim 976Mi   cpu used 60m  req 315m  lim 1750m
+ cluster    1 nodes  2 pools   alloc mem 7524Mi  cpu 24.0c   used mem 2203Mi (29.3%)  cpu 252m (1.1%)
+ requests   46 pods in 11 namespaces   requested mem 2578Mi (34.3% of cluster)  cpu 1930m (8.0%)   used mem 1063Mi  cpu 165m (pod metrics)
+            namespace share of cluster   mem used 0.0%  req 3.7%   cpu used 0.2%  req 1.3%   pool label node-role
+────────────────────────────────────────────────────────────────────────────────
+► NAMESPACE vs CLUSTER  share of pool allocatable:   █ used   ▒ requested, not used   ░ free    zoom x20  left bars magnified, % values true - Z: true scale
+POOL [ns nodes/all]                    ALLOC │ THIS NA~     used / req  │ WHOLE C~     used / req
+role:control-plane,master [1/~ mem    7524Mi │ █▒▒▒▒░░░   0.0% /  3.2% │ ██▒░░░░░  29.3% / 33.3%
+                               cpu     24.0c │ █▒░░░░░░   0.2% /  1.1% │ █▒░░░░░░   1.1% /  7.6%
+────────────────────────────────────────────────────────────────────────────────
+CLUSTER TOTAL                  mem    7524Mi │ █▒▒▒▒▒░░   0.0% /  3.7% │ ██▒░░░░░  29.3% / 34.3%
+                               cpu     24.0c │ █▒░░░░░░   0.2% /  1.3% │ █▒░░░░░░   1.1% /  8.0%
+
+► WORKER NODES RUNNING THIS NAMESPACE  grouped by pool ───────────────────────
+                                             │       CPU millicores       │                   MEMORY GiB                  
+POOL [ns nodes/all] /~ STATUS    PODS ns/all │ nsUsed  nsReq  alloc   %al │  nsUsed   nsReq   nsLim   alloc   %al node% clReq%
+► role:control-plane,~                 16/42 │     60    260  24000   0.2 │     0.0     0.2     0.8     7.3   0.0  29.3   33.3
+  dev                  Ready           16/42 │     60    260  24000   0.2 │     0.0     0.2     0.8     7.3   0.0  29.3   33.3
+      ip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 14/16   ns-restarts 547   namespaces 11   cluster-req mem 2506Mi cpu 1820m   node-cpu 252m (1%)   node-mem 2203Mi of 7524Mi
+
+► unscheduled pods                       2/4 │      -     55      -     - │       -     0.0     0.2       -     -     -      -
+  (unscheduled)        -                 2/4 │      -     55      -     - │       -     0.0     0.2       -     -     -      -
+      ip -   podCIDR -   roles -   ns-ready 0/2   ns-restarts 0   namespaces 3   cluster-req mem 72Mi cpu 110m
+
+► NAMESPACES  usage and requests of each namespace in the cluster (top 20 by sort key) - bar: share of the memory used by all of them
+  NAMESPACE                           PODS rdy  WKLD NODES  CPU used   CPU req  MEM used   MEM req   MEM lim   %used  %clMem │ share of memory used
+  default                                  5/7     7     1       63m      420m     415Mi     856Mi    2864Mi    39.0    11.4 │ ████████████░░░░░░░░░░░░░░░░░░
+  ► kdash-e2e                             9/13    11     1       59m      280m       2Mi     224Mi     848Mi     0.2     3.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  learnalgorithm                           4/4     4     1        9m      400m     169Mi     768Mi    2048Mi    15.9    10.2 │ █████░░░░░░░░░░░░░░░░░░░░░░░░░
+  algorithm-learn                          4/4     4     1        8m        0m     238Mi       0Mi       0Mi    22.4     0.0 │ ███████░░░░░░░░░░░░░░░░░░░░░░░
+  kube-system                              3/3     3     1        6m      120m      59Mi     264Mi     170Mi     5.6     3.5 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  kube-flannel                             1/1     1     1        5m      100m      13Mi      50Mi       0Mi     1.2     0.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  flux-system                              4/4     4     1        4m      350m      71Mi     256Mi    4096Mi     6.7     3.4 │ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  kdash-e2e-qa-20261114-fast               2/4     3     1        4m       60m       1Mi      32Mi     256Mi     0.1     0.4 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  cert-manager                             3/3     3     1        3m        0m      48Mi       0Mi       0Mi     4.5     0.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  podinfo-demo                             2/2     1     1        3m      200m      39Mi     128Mi    1024Mi     3.7     1.7 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  local-path-storage                       1/1     1     1        1m        0m       8Mi       0Mi       0Mi     0.8     0.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+────────────────────────────────────────────────────────────────────────────────
+NAMESPACE (1 nodes)                       18 │     60    315  24000   0.2 │     0.0     0.3     1.0     7.3   0.0  29.3      -
+ legend nsUsed/nsReq/nsLim = this namespace.  alloc = allocatable.  %al = namespace share.  node% = whole node used.  clReq% = requested by all namespaces.
+
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:18 IST
+ match .*   sort cpu ▼ high first
+ ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ WORKLOADS   what runs in the namespace, replicas vs desired, its pods, and how they spread over worker nodes
+ workloads 14: Deployment 1  StatefulSet 2  DaemonSet 1  CronJob 1  Job 1  Pod 7  ReplicationController 1   pods 18 (14 ready)   0 degraded  0 rolling out  2 HA risk  0 skewed  2 unscheduled
+────────────────────────────────────────────────────────────────────────────────
+► WORKLOADS   READY = ready / desired replicas (pods ready / pods when the workload object is not readable)   UPD = updated to the latest spec
+  KIND        WORKLOAD               READY  UPD  PODS NODES  CPU used / req       MEM used / req / lim  RST STATUS
+  Pod         z-oom                    1/1    -     1     1    51m / 10m        1Mi /     8Mi / 16Mi       3 N/A
+      └─ z-oom                    Running              1/1 dev                          cpu    51m  mem     1Mi  rst 3  10.244.0.157
+  Deployment  app-server               2/2    2     2     1     5m / 50m        0Mi /    24Mi / 192Mi     41 HA_RISK
+      ├─ app-server-8fb4699bc-cx~ Running              2/2 dev                          cpu     3m  mem     0Mi  rst 21  10.244.0.166
+      ├─ app-server-8fb4699bc-t7~ Running              2/2 dev                          cpu     2m  mem     0Mi  rst 20  10.244.0.163
+      └─ image busybox:1.36 busybox:1.36
+  StatefulSet db-stateful              2/2    2     2     1     2m / 40m        0Mi /    64Mi / 128Mi      6 HA_RISK
+      ├─ db-stateful-0            Running              1/1 dev                          cpu     1m  mem     0Mi  rst 3  10.244.0.159
+      ├─ db-stateful-1            Running              1/1 dev                          cpu     1m  mem     0Mi  rst 3  10.244.0.177
+      └─ image busybox:1.36
+  DaemonSet   node-agent               1/1    1     1     1     1m / 10m        0Mi /    16Mi / 32Mi       4 PER_NODE
+      ├─ node-agent-ctvg6         Running              1/1 dev                          cpu     1m  mem     0Mi  rst 4  10.244.0.152
+      └─ image busybox:1.36
+  Replicatio~ functionality-legacy     1/1    -     1     1     1m / 10m        0Mi /     8Mi / 32Mi       3 SINGLE
+      └─ functionality-legacy-67~ Running              1/1 dev                          cpu     1m  mem     0Mi  rst 3  10.244.0.167
+  Pod         kdash-secrets-live-~     1/1    -     1     1     0m / 50m        0Mi /    32Mi / 128Mi      3 N/A
+      └─ kdash-secrets-live-cons~ Running              1/1 dev                          cpu     0m  mem     0Mi  rst 3  10.244.0.156
+  StatefulSet test-sts                 1/1    1     1     1     0m / -          0Mi /       - / -         26 SINGLE
+      ├─ test-sts-0               Running              1/1 dev                          cpu     0m  mem     0Mi  rst 26  10.244.0.176
+      └─ image busybox:1.36
+  CronJob     nightly-report           3/3    -     3     1      - / 30m          - /    48Mi / 96Mi       0 N/A  rollout scheduled
+      ├─ nightly-report-29927735~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.181
+      ├─ nightly-report-29927740~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.183
+      ├─ nightly-report-29927745~ Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.186
+      ├─ schedule */5 * * * *   last run 2026-11-26T03:45:00Z
+      └─ image busybox:1.36
+  Job         completed-check          1/1    -     1     1      - / 5m           - /     4Mi / 32Mi       0 N/A
+      └─ completed-check-m9swm    Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  -
+  Pod         sync-pod                 1/1    -     1     1      - / -            - /       - / -          0 N/A
+      └─ sync-pod                 Succeeded            0/1 dev                          cpu      -  mem       -  rst 0  -
+  Pod         z-crash                  0/1    -     1     1      - / 5m           - /     4Mi / 32Mi     461 N/A
+      └─ z-crash                  CrashLoopBackOff     0/1 dev                          cpu      -  mem       -  rst 461  10.244.0.178
+  Pod         z-imagepull              0/1    -     1     1      - / 50m          - /    32Mi / 128Mi      0 N/A
+      └─ z-imagepull              ImagePullBackOff     0/1 dev                          cpu      -  mem       -  rst 0  10.244.0.175
+  Pod         z-pending                0/1    -     1     0      - / 5m           - /     4Mi / 32Mi       0 N/A+UNSCHEDULED+NOT_READY
+      └─ z-pending                Pending              0/1 (unscheduled)                cpu      -  mem       -  rst 0  -
+  Pod         z-unschedulable          0/1    -     1     0      - / 50m          - /    32Mi / 128Mi      0 N/A+UNSCHEDULED+NOT_READY
+      └─ z-unschedulable          Pending              0/1 (unscheduled)                cpu      -  mem       -  rst 0  -
+
+► SPREAD OVER WORKER NODES   pods per node (N1.. = nodes listed below)   HA_RISK = all replicas on one node
+  KIND        WORKLOAD               N1  N2  VERDICT                            
+  Pod         z-oom                   1   .  N/A
+  Deployment  app-server              2   .  HA_RISK
+  StatefulSet db-stateful             2   .  HA_RISK
+  DaemonSet   node-agent              1   .  PER_NODE
+  Replicatio~ functionality-legacy    1   .  SINGLE
+  Pod         kdash-secrets-live-~    1   .  N/A
+  StatefulSet test-sts                1   .  SINGLE
+  CronJob     nightly-report          3   .  N/A
+  Job         completed-check         1   .  N/A
+  Pod         sync-pod                1   .  N/A
+  Pod         z-crash                 1   .  N/A
+  Pod         z-imagepull             1   .  N/A
+  Pod         z-pending               .   1  N/A+UNSCHEDULED+NOT_READY
+  Pod         z-unschedulable         .   1  N/A+UNSCHEDULED+NOT_READY
+              pods on node           16   2
+  N1   dev                                      pool role:control-plane,master   pods 16
+  N2   (unscheduled)                            pool (none)   pods 2
+────────────────────────────────────────────────────────────────────────────────
+ legend DEGRADED = fewer ready than desired.  ROLLING = new spec rolling out.  HA_RISK = 2+ replicas on one node.  SKEWED = uneven spread.  PER_NODE = DaemonSet.  d = hide pods.
+
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:18 IST
+ match .*   sorted by IP address
+ ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
+ pod IPs 14 in use   no IP 4   host-network 0   duplicate 0   subnets 1
+ services 11   ClusterIP 7   headless 2   NodePort 2   LoadBalancer 2   external addresses 0
+────────────────────────────────────────────────────────────────────────────────
+► POD SUBNETS (observed, /24) ────────────────────────────────────────────────
+  SUBNET                 PODS  NODES                                            
+  10.244.0.0/24            14  dev
+
+► NODE IP BLOCKS (per worker node) ───────────────────────────────────────────
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 █░░░░░░░░░  10.244.0.128/26
+
+► SERVICES ───────────────────────────────────────────────────────────────────
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  app-server                           ClusterIP              10.111.83.216    -                        80/TCP
+  db-headless                          ClusterIP/Headless     None             -                        5432/TCP
+  external-api                         ExternalName           -                -                        -
+  functionality-external               ExternalName           -                -                        -
+  functionality-headless               ClusterIP/Headless     None             -                        8080/TCP
+  functionality-loadbalancer           LoadBalancer           10.109.199.192   -                        8080/TCP
+  functionality-nodeport               NodePort               10.102.33.174    -                        8080/TCP
+  kdash-secrets-live                   ClusterIP              10.97.194.243    -                        80/TCP
+  missing-backend                      ClusterIP              10.104.104.128   -                        80/TCP
+  web-loadbalancer                     LoadBalancer           10.101.152.223   -                        80/TCP
+  web-nodeport                         NodePort               10.107.100.32    -                        80/TCP
+
+► POD IP ASSIGNMENTS ─────────────────────────────────────────────────────────
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.152     node-agent-ctvg6                             dev                        172.18.0.2       node-agent                   
+  10.244.0.156     kdash-secrets-live-consumer                  dev                        172.18.0.2       kdash-secrets-live-consumer  
+  10.244.0.157     z-oom                                        dev                        172.18.0.2       z-oom                        
+  10.244.0.159     db-stateful-0                                dev                        172.18.0.2       db-stateful                  
+  10.244.0.163     app-server-8fb4699bc-t7zxj                   dev                        172.18.0.2       app-server                   
+  10.244.0.166     app-server-8fb4699bc-cx5vz                   dev                        172.18.0.2       app-server                   
+  10.244.0.167     functionality-legacy-67ks7                   dev                        172.18.0.2       functionality-legacy         
+  10.244.0.175     z-imagepull                                  dev                        172.18.0.2       z-imagepull                  ImagePullBackOff
+  10.244.0.176     test-sts-0                                   dev                        172.18.0.2       test-sts                     
+  10.244.0.177     db-stateful-1                                dev                        172.18.0.2       db-stateful                  
+  10.244.0.178     z-crash                                      dev                        172.18.0.2       z-crash                      CrashLoopBackOff
+  10.244.0.181     nightly-report-29927735-m6d6c                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.183     nightly-report-29927740-mqxh6                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.186     nightly-report-29927745-vvwzh                dev                        172.18.0.2       nightly-report               Succeeded
+  -                completed-check-m9swm                        dev                        172.18.0.2       completed-check              NO_IP
+  -                sync-pod                                     dev                        172.18.0.2       sync-pod                     NO_IP
+  -                z-pending                                    (unscheduled)              -                z-pending                    NO_IP
+  -                z-unschedulable                              (unscheduled)              -                z-unschedulable              NO_IP
+────────────────────────────────────────────────────────────────────────────────
+ legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the node IP.  DUPLICATE = same IP on 2+ pods.
+
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:18 IST
+ match .*   sort mem ▼ high first
+ ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ MEMORY   live namespace memory dashboard
+ MEMORY used      1Mi  req    276Mi  lim    976Mi   used/req    0.4%  used/lim    0.1%  ░░░░░░░░░░░░░░░░░░░░░░░░
+ window 09:15:17 -> 09:15:18 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
+ CPU    used      60m  req     315m  lim    1750m   used/req   19.0%  used/lim    3.4%  ░
+ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 547
+────────────────────────────────────────────────────────────────────────────────
+► TIMELINE  09:15:17 -> 09:15:18 IST  (all since kdash started, host clock) ──
+   MEMORY used - namespace                                                      
+         one sample so far - the chart starts with the 2nd (run kdash live)     
+
+   CPU used - namespace                                                         
+         one sample so far - the chart starts with the 2nd (run kdash live)     
+  events: recorded in live mode (session history)
+
+► POD MEMORY HEATMAP  % of each pod memory limit over time (live sessions) ───
+  builds from the session samples while kdash runs live (no samples yet)
+
+► MEMORY BY WORKER NODE ──────────────────────────────────────────────────────
+  NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory  ns trend
+  dev                          role:contro~      1Mi   7524Mi   0.0  29.3  █▓▓░░░░░░░  ░
+
+► PODS BY MEMORY USED  (top 15, --top N) ─────────────────────────────────────
+  POD                      NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  z-oom                    dev                             1Mi      8Mi     16Mi  12.5   6.2 ░░░░░░░░   3  
+  app-server-8fb4699bc-cx~ dev                             0Mi     12Mi     96Mi   0.0   0.0 ░░░░░░░░  21  
+  app-server-8fb4699bc-t7~ dev                             0Mi     12Mi     96Mi   0.0   0.0 ░░░░░░░░  20  
+  db-stateful-0            dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   3  
+  db-stateful-1            dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   3  
+  functionality-legacy-67~ dev                             0Mi      8Mi     32Mi   0.0   0.0 ░░░░░░░░   3  
+  kdash-secrets-live-cons~ dev                             0Mi     32Mi    128Mi   0.0   0.0 ░░░░░░░░   3  
+  node-agent-ctvg6         dev                             0Mi     16Mi     32Mi   0.0   0.0 ░░░░░░░░   4  
+  test-sts-0               dev                             0Mi        -        -     -     - n/a       26  NO_LIMIT
+  completed-check-m9swm    dev                               -      4Mi     32Mi     -     - n/a        0  
+  nightly-report-29927735~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29927740~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29927745~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  sync-pod                 dev                               -        -        -     -     - n/a        0  
+  z-crash                  dev                               -      4Mi     32Mi     -     - n/a      461  
+
+► OOM RISK  (>= 90% of memory limit) ─────────────────────────────────────────
+  none
+
+► MEMORY GROWTH FORECAST  (linear trend of the last 30m, a restart starts the trend again)
+  needs a live session with 2m of samples (every 2s) - the forecast appears here
+
+► RECENT OOMKilled  (last container termination) ─────────────────────────────
+  none
+
+► NO MEMORY LIMIT  (unbounded containers) ────────────────────────────────────
+  test-sts-0
+
+► MEMORY BY WORKLOAD ─────────────────────────────────────────────────────────
+  KIND        WORKLOAD                    PODS     USED      REQ      LIM  %LIM MEM/LIM 
+  Pod         z-oom                          1      1Mi      8Mi     16Mi   6.2 █░░░░░░░
+  DaemonSet   node-agent                     1      0Mi     16Mi     32Mi   0.0 ░░░░░░░░
+  Deployment  app-server                     2      0Mi     24Mi    192Mi   0.0 ░░░░░░░░
+  Pod         kdash-secrets-live-consum~     1      0Mi     32Mi    128Mi   0.0 ░░░░░░░░
+  Replicatio~ functionality-legacy           1      0Mi      8Mi     32Mi   0.0 ░░░░░░░░
+  StatefulSet db-stateful                    2      0Mi     64Mi    128Mi   0.0 ░░░░░░░░
+  StatefulSet test-sts                       1      0Mi        -        -     - n/a     
+  CronJob     nightly-report                 3        -     48Mi     96Mi     - n/a     
+  Job         completed-check                1        -      4Mi     32Mi     - n/a     
+  Pod         sync-pod                       1        -        -        -     - n/a     
+  Pod         z-crash                        1        -      4Mi     32Mi     - n/a     
+  Pod         z-imagepull                    1        -     32Mi    128Mi     - n/a     
+  Pod         z-pending                      1        -      4Mi     32Mi     - n/a     
+  Pod         z-unschedulable                1        -     32Mi    128Mi     - n/a     
+────────────────────────────────────────────────────────────────────────────────
+ legend node bar: █ this namespace  ▓ other ns used  ▒ other ns requested  ░ free allocatable.  trend: last 1 polls.  metrics refresh about every 15 s.
+
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:18 IST
+ match .*   sort cpu ▼ high first
+ ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ NETWORK & DISK IO   ingress (in = received) and egress (out = sent), disk read / write and IOPS, per worker node and pod
+ ! IO is sampled in live mode (or with --io-wait SEC in one-shot modes) - rates need two samples
+────────────────────────────────────────────────────────────────────────────────
+ nothing to show yet
+────────────────────────────────────────────────────────────────────────────────
+
+ KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:18 IST
+ match .*   sort cpu ▼ high first
+ ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+    wl 14
+ DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ ALERTS   live critical summary of every section, with the action for each signal
+   CRITICAL    4 critical   8 warning   0 new   0 cleared in 5 min   rules run every refresh (2s) on live data  │  thresholds mem 90%  net 100MiB/s  iops 3000
+────────────────────────────────────────────────────────────────────────────────
+► SECTIONS ───────────────────────────────────────────────────────────────────
+  ● PODS       14/18 ready  rst 547  2 crit 3 warn                            
+  ● MEMORY     1Mi / 976Mi lim  0.1%  0 >=90%  1 no-limit  ░                  
+  ● NODES      1 hosting  0 NotReady  max node mem 29.3% dev                  
+  ● WORKLOADS  14  0 degraded  2 HA risk  0 rolling                           
+  ● IP         14 pod IPs  4 no IP  0 duplicate  11 svc                       
+  ● TRAFFIC    no IO source (not-sampled)                                     
+
+► ACTIVE ALERTS  12 (4 critical, 8 warning)   critical first, NEW first, action under each
+    AGE    SECTION   OBJECT                         SIGNAL             LIVE VALUE       
+  ! -      PODS      z-crash                        CrashLoopBackOff   restarts 461, r~ 
+                   ↳ kubectl -n kdash-e2e logs z-crash --previous --all-containers --tail=100
+  ! -      PODS      z-imagepull                    ImagePullBackOff   image / config ~ 
+                   ↳ kubectl -n kdash-e2e describe pod z-imagepull
+  ! -      WORKLOADS Pod/z-pending                  UNSCHEDULED        1 pod(s) not pl~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector reason=FailedScheduling
+  ! -      WORKLOADS Pod/z-unschedulable            UNSCHEDULED        1 pod(s) not pl~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector reason=FailedScheduling
+  ^ -      PODS      z-oom                          CPU_LIMIT_PRESSURE cpu 51m = 102% ~ 
+                   ↳ kubectl -n kdash-e2e top pod z-oom --containers
+  ^ -      PODS      z-pending                      Pending            node (unschedul~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-pending
+  ^ -      PODS      z-unschedulable                Pending            node (unschedul~ 
+                   ↳ kubectl -n kdash-e2e get events --field-selector involvedObject.name=z-unschedulable
+  ^ -      MEMORY    1 pod(s)                       NO_MEM_LIMIT       can grow until ~ 
+                   ↳ kubectl -n kdash-e2e get pods -o custom-columns=POD:.metadata.name,LIM:.spec.containers[*].resources.limits.memory
+  ^ -      WORKLOADS Deployment/app-server          HA_RISK            2 replicas on 1~ 
+                   ↳ kubectl -n kdash-e2e get pods -o wide | grep app-server   (topologySpreadConstraints)
+  ^ -      WORKLOADS StatefulSet/db-stateful        HA_RISK            2 replicas on 1~ 
+                   ↳ kubectl -n kdash-e2e get pods -o wide | grep db-stateful   (topologySpreadConstraints)
+  ^ -      IP        z-pending                      NO_IP              status Pending   
+                   ↳ kubectl -n kdash-e2e describe pod z-pending
+  ^ -      IP        z-unschedulable                NO_IP              status Pending   
+                   ↳ kubectl -n kdash-e2e describe pod z-unschedulable
+
+► LIVE TOP CONSUMERS ─────────────────────────────────────────────────────────
+  memory % of limit                                                           
+    6.2 z-oom
+    0.0 app-server-8fb4699bc-cx5vz
+    0.0 app-server-8fb4699bc-t7zxj
+    0.0 db-stateful-0
+    0.0 db-stateful-1
+  CPU % of limit                                                              
+  102.0 z-oom
+    2.0 functionality-legacy-67ks7
+    2.0 node-agent-ctvg6
+    1.2 app-server-8fb4699bc-cx5vz
+    1.0 db-stateful-0
+  traffic in+out
+
+► EVENTS  last hour ──────────────────────────────────────────────────────────
+  events: recorded in live mode (session history)
+────────────────────────────────────────────────────────────────────────────────
+ legend ! critical  ^ warning  NEW = first seen in the last 30 s, AGE = active for.  ↳ = action.  Thresholds: KDASH_ALERT_MEM (%), KDASH_ALERT_NET_MBPS, KDASH_ALERT_IOPS.  x = HTML report.

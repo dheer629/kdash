@@ -1,0 +1,11 @@
+namespace/kdash-e2e unchanged
+persistentvolume/kdash-e2e-data configured
+persistentvolumeclaim/app-data unchanged
+deployment.apps/app-server unchanged
+service/app-server unchanged
+service/missing-backend unchanged
+ingress.networking.k8s.io/app-server unchanged
+pod/z-crash unchanged
+persistentvolumeclaim/z-unbound unchanged
+pod/z-pending configured
+job.batch/completed-check unchanged
