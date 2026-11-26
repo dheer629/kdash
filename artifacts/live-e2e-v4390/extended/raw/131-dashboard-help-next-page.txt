@@ -1,5 +1,6 @@
  KDASH │ HELP │ PODS VIEW │ context kdash-local │ namespace kdash-e2e                                             v4.39.0 │ any key returns
 
+   E / e      EVENTS: API events, newest first   !  incident evidence (why)
    >          quick export: the screen and every line of the view to a log file - on every screen
               (KDASH_EXPORT_DIR, default ~/kdash_reports/exports; latest.log = the newest export)
    P          pause / resume live   + -  poll interval 1..60 s
@@ -20,5 +21,4 @@
    Y          secrets map: certificates and keys in Secrets, expiry, who manages and uses them, the
               path in the container and on the node, what needs a restart after a rotation
    M          FMEA: every failure mode of every object you can read, ranked by Action Priority,
-              with next commands; only what your RBAC allows is checked (: access shows it)
- -- lines 22-42 of 55: Space next page, b back, any other key returns --
+ -- lines 22-42 of 56: Space next page, b back, any other key returns --

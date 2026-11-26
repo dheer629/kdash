@@ -9,11 +9,13 @@ Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser che
 
 
 
+
+
 The 136 published screenshots comprise 91 baseline views, 40 extension scenarios
 (search, full logs, exports, themes, compatibility, terminal design and the audit
 table) and 5 Secrets-map screens. Every capture links its raw ANSI screen and
 native xterm grab. The 324 live checks are 200 baseline plus 124 extension checks;
-31 Secrets checks, 33 browser checks and all 19 fixture suites pass alongside them.
+31 Secrets checks, 33 browser checks and all 20 fixture suites pass alongside them.
 
 
 The current **4.39.0** terminal gallery is [`cli_4390/`](cli_4390/README.md),

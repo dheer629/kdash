@@ -1,8 +1,8 @@
 [1;7m KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [38;5;243m 3 WORKLOADS [39m [1;7m 4 IP POOL [0m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [38;5;243m 8 SVCS [39m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-26 09:16:37[0m[38;5;243m IST[39m
+[0m [38;5;243m 1 PODS [39m [38;5;243m 2 NODE POOLS [39m [38;5;243m 3 WORKLOADS [39m [1;7m 4 IP POOL [0m [38;5;243m 5 MEMORY [39m [38;5;243m 6 NET & DISK IO [39m [38;5;243m 7 ALERTS [39m [38;5;243m 8 SVCS [39m [38;5;243m 9 STOR [39m [38;5;243m E EVENTS [39m [38;5;243m ! WHY [39m  [1m2026-11-26 15:00:11[0m[38;5;243m IST[39m
 [38;5;243m┌─ [1m[39mSCOPE[0m[38;5;243m ───────────────────────────────────────────────┬─ [1m[39mPOD HEALTH[0m[38;5;243m ────────────────────────────────┬─ [1m[39mUSAGE vs LIMITS[0m[38;5;243m ───────────────────┬─ [1m[39mWORKLOADS · EVENTS[0m[38;5;243m ───────┐
-│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msorted by IP address[0m                       [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m547[39m           [38;5;243m│[39m [38;5;243mcpu [39m    61m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14               [38;5;243m│
-│[39m [38;5;243mpoll 2s  spec 16s/30s   session [39m09:16:21[38;5;243m up [39m16s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    1Mi [38;5;29m░░░░░░░░[39m [38;5;29m  0%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;29m^ 0[39m        [38;5;243m│
+│[39m [38;5;243mmatch [39m.*   [1m[38;5;63msorted by IP address[0m                       [38;5;243m│[39m [1m[38;5;196m! pods 14/18 ready[0m[38;5;243m   restarts [38;5;163m624[39m           [38;5;243m│[39m [38;5;243mcpu [39m    59m [38;5;29m░░░░░░░░[39m [38;5;29m  3%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mworkloads [39m14               [38;5;243m│
+│[39m [38;5;243mpoll 2s  spec 16s/30s   session [39m14:59:55[38;5;243m up [39m16s       [38;5;243m│[39m [38;5;243mOOM risk [38;5;29m0[38;5;243m   OOMKilled [38;5;29m0[38;5;243m   no-limit [38;5;163m1[39m       [38;5;243m│[39m [38;5;243mmem [39m    2Mi [38;5;29m░░░░░░░░[39m [38;5;29m  0%[38;5;243m lim[39m       [38;5;243m│[39m [38;5;243mevents 15m [38;5;29m! 0[39m  [38;5;29m^ 0[39m        [38;5;243m│
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
 [1m[38;5;231m[48;5;24m DATA [0m[38;5;29m●[39m pods [1m[38;5;29mfresh[0m [38;5;243m16s old[39m  metrics [1m[38;5;29mavailable[0m [38;5;243m│[39m [1m[38;5;63mC[0m certs (1 expiring) [38;5;243m│[39m [1m[38;5;63m/[0m search [38;5;243m│[39m [1m[38;5;63mK[0m check [38;5;243m│[39m [1m[38;5;63mi[0m inspect [38;5;243m│[39m [1m[38;5;63m8[0m services  [1m[38;5;63m9[0m storage  [1m[38;5;63mE[0m events  [1m[38;5;63m![0m explain [38;5;243m│[39m [1m[38;5;63m:[0m commands
  [1m[38;5;98mIP POOL[0m[38;5;243m   namespace pod IPs, node IP blocks, subnets and service addresses[39m
@@ -16,7 +16,7 @@
 
 [1m[38;5;63m►[0m [1mNODE IP BLOCKS (per worker node)[0m [38;5;243m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
 [1m[38;5;231m[48;5;24m  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
-[0m  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 [38;5;29m█░░░░░░░░░[39m  [38;5;63m10.244.0.128/26[39m
+[0m  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 [38;5;29m█░░░░░░░░░[39m  [38;5;63m10.244.0.128/26 10.244.0.64/26[39m
 
 [1m[38;5;63m►[0m [1mSERVICES[0m [38;5;243m─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
 [1m[38;5;231m[48;5;24m  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
@@ -34,7 +34,10 @@
 
 [1m[38;5;63m►[0m [1mPOD IP ASSIGNMENTS[0m [38;5;243m───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
 [1m[38;5;231m[48;5;24m  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
-[0m  10.244.0.152     node-agent-ctvg6                             dev                        172.18.0.2       node-agent
+[0m  10.244.0.64      nightly-report-29928075-27m6x                dev                        172.18.0.2       nightly-report               [38;5;29mSucceeded[39m
+  10.244.0.67      nightly-report-29928080-wz9d4                dev                        172.18.0.2       nightly-report               [38;5;29mSucceeded[39m
+  10.244.0.68      nightly-report-29928085-sm4xz                dev                        172.18.0.2       nightly-report               [38;5;29mSucceeded[39m
+  10.244.0.152     node-agent-ctvg6                             dev                        172.18.0.2       node-agent
   10.244.0.156     kdash-secrets-live-consumer                  dev                        172.18.0.2       kdash-secrets-live-consumer
   10.244.0.157     z-oom                                        dev                        172.18.0.2       z-oom
   10.244.0.159     db-stateful-0                                dev                        172.18.0.2       db-stateful
@@ -42,9 +45,6 @@
   10.244.0.166     app-server-8fb4699bc-cx5vz                   dev                        172.18.0.2       app-server
   10.244.0.167     functionality-legacy-67ks7                   dev                        172.18.0.2       functionality-legacy
   10.244.0.175     z-imagepull                                  dev                        172.18.0.2       z-imagepull                  [38;5;243mImagePullBackOff[39m
-  10.244.0.176     test-sts-0                                   dev                        172.18.0.2       test-sts
-  10.244.0.177     db-stateful-1                                dev                        172.18.0.2       db-stateful
-  10.244.0.178     z-crash                                      dev                        172.18.0.2       z-crash                      [1m[38;5;196mCrashLoopBackOff[0m
 [38;5;243m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 [39m [38;5;243mlegend[39m IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n[38;5;243m›
-[7m[39m certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ● LIVE 09:16:38  next 1s  data 1s old  fetch >
+[7m[39m certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ● LIVE 15:00:12  next 1s  data 1s old  fetch >

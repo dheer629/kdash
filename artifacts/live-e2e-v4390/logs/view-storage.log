@@ -67,18 +67,12 @@ STORAGE CLASSES  1 class
 │ local-path │ rancher.io/local-path │ WaitForFirstConsumer │ no        │ Delete  │ yes       │
 └────────────┴───────────────────────┴──────────────────────┴───────────┴─────────┴───────────┘
 
-STORAGE EVENTS  8 events   newest first, up to 15
+STORAGE EVENTS  2 events   newest first, up to 15
 ┌───────────┬───────────┬─────────────────────────────────┬────────────────────┬───────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ LAST SEEN │ TYPE      │ OBJECT                          │ REASON             │ COUNT │ MESSAGE                                                                                                                                                     │
 ├───────────┼───────────┼─────────────────────────────────┼────────────────────┼───────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 2m        │ ● Warning │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │    42 │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                     │
-│ 7m        │ ● Warning │ Pod/z-pending                   │ FailedScheduling   │     2 │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
-│ 17m       │ ● Warning │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │     1 │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                     │
-│ 17m       │ ● Warning │ Pod/z-pending                   │ FailedScheduling   │     1 │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
-│ 23m       │ ● Warning │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │    42 │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                     │
-│ 28m       │ ● Warning │ Pod/z-pending                   │ FailedScheduling   │     2 │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
-│ 6d03h     │ ● Warning │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │  8222 │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                     │
-│ 6d03h     │ ● Warning │ Pod/z-pending                   │ FailedScheduling   │   412 │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
+│ 1m        │ ● Warning │ PersistentVolumeClaim/z-unbound │ ProvisioningFailed │  1421 │ storageclass.storage.k8s.io "kdash-e2e-intentionally-missing" not found                                                                                     │
+│ 29m       │ ● Warning │ Pod/z-pending                   │ FailedScheduling   │    66 │ 0/1 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling. │
 └───────────┴───────────┴─────────────────────────────────┴────────────────────┴───────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
   Allocation (request / capacity) and measured filesystem usage can differ; a missing sample never means zero usage.

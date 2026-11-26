@@ -1,4 +1,4 @@
-kdash instant check - finding #1 - context kdash-local - 2026-11-26 09:15:48 IST
+kdash instant check - finding #1 - context kdash-local - 2026-11-26 14:59:20 IST
 read-only commands, run now through the audited kubectl guard
 
 $ kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100
@@ -21,7 +21,7 @@ IPs:
   IP:  10.244.0.178
 Containers:
   crash:
-    Container ID:  containerd://051a459f822386e72217e782bd2512172dca8325f27318e8586fbc37e0c8eb65
+    Container ID:  containerd://13218b54188614860846072d9e893be492f4769b729980dff624761e0436369d
     Image:         busybox:1.36
     Image ID:      docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
     Port:          <none>
@@ -35,10 +35,10 @@ Containers:
     Last State:     Terminated
       Reason:       Error
       Exit Code:    42
-      Started:      Thu, 26 Nov 2026 09:13:28 +0530
-      Finished:     Thu, 26 Nov 2026 09:13:31 +0530
+      Started:      Thu, 26 Nov 2026 14:57:58 +0530
+      Finished:     Thu, 26 Nov 2026 14:58:01 +0530
     Ready:          False
-    Restart Count:  461
+    Restart Count:  528
     Limits:
       cpu:     50m
       memory:  32Mi
@@ -67,30 +67,8 @@ Node-Selectors:              <none>
 Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
                              node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
 Events:
-  Type     Reason                  Age                    From     Message
-  ----     ------                  ----                   ----     -------
-  Warning  BackOff                 6d3h (x9358 over 12d)  kubelet  Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
-  Warning  FailedCreatePodSandBox  35m                    kubelet  Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "aa73558ec1f119f067695e52f59d1187052f8496f1a33bbc9d6186ab6165d227": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory
-  Normal   SandboxChanged          34m (x2 over 35m)      kubelet  Pod sandbox changed, it will be killed and re-created.
-  Normal   Pulled                  33m (x4 over 34m)      kubelet  Container image "busybox:1.36" already present on machine
-  Normal   Created                 33m (x4 over 34m)      kubelet  Created container crash
-  Normal   Started                 33m (x4 over 34m)      kubelet  Started container crash
-  Warning  BackOff                 24m (x45 over 34m)     kubelet  Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
-  Normal   SandboxChanged          19m                    kubelet  Pod sandbox changed, it will be killed and re-created.
-  Warning  FailedCreatePodSandBox  19m                    kubelet  Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "7c0fbdeb0ee57aead66e2ff55fb1eff8afb4b312f070c68ed99f33b404502135": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory
-  Warning  FailedCreatePodSandBox  18m                    kubelet  Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "84eb2c9e13dbd95239a5bf6ffc34169a0e3cc19aed5aa0297002d08723671c17": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory
-  Normal   SandboxChanged          18m (x2 over 18m)      kubelet  Pod sandbox changed, it will be killed and re-created.
-  Normal   Created                 18m (x2 over 18m)      kubelet  Created container crash
-  Normal   Pulled                  18m (x2 over 18m)      kubelet  Container image "busybox:1.36" already present on machine
-  Normal   Started                 18m (x2 over 18m)      kubelet  Started container crash
-  Warning  BackOff                 18m (x2 over 18m)      kubelet  Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
-  Warning  FailedCreatePodSandBox  14m                    kubelet  Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "24ef52451875e328eec2378860ff9aeecfa694bc72138eeb9f0cec5c18769748": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory
-  Normal   SandboxChanged          14m (x2 over 14m)      kubelet  Pod sandbox changed, it will be killed and re-created.
-  Warning  FailedCreatePodSandBox  13m                    kubelet  Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "d4325026b567b34b71566185f97bbb6c0bfa90768141e35fc8c3be84f58bd2a2": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory
-  Warning  FailedCreatePodSandBox  13m                    kubelet  Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "82c5ac7813fb1524d6ebbdbeea1c043cdbe7f50ff98f8495a91af0aa4ccf69d7": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory
-  Normal   SandboxChanged          13m (x3 over 13m)      kubelet  Pod sandbox changed, it will be killed and re-created.
-  Normal   Pulled                  11m (x4 over 13m)      kubelet  Container image "busybox:1.36" already present on machine
-  Normal   Created                 11m (x4 over 13m)      kubelet  Created container crash
-  Normal   Started                 11m (x4 over 13m)      kubelet  Started container crash
-  Warning  BackOff                 3m40s (x44 over 13m)   kubelet  Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
+  Type     Reason   Age                       From     Message
+  ----     ------   ----                      ----     -------
+  Normal   Pulled   37m (x67 over 5h56m)      kubelet  Container image "busybox:1.36" already present on machine
+  Warning  BackOff  2m17s (x1614 over 5h56m)  kubelet  Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)
 (0s)

@@ -914,7 +914,7 @@ OTHER
 
 KEYS WHILE RUNNING
   1-9 / Tab     switch view       x         HTML report: all tabs + history so far
-  e             HTML menu: all-tabs report, current view, views 1-6, or the bundle
+  E / e         events view        ^E        HTML menu: all-tabs report, current view, views 1-6, or the bundle
   j k / arrows  scroll            space b   page down / up
   h l / arrows  pan left / right  0         back to column 1
   g G           top / bottom      /         search box: find in the view (n/N), Tab = pod filter
@@ -6265,7 +6265,8 @@ H
    s          next sort key        o  reverse the sort order     w  PODS grouped / flat
    j k arrows scroll               h l arrows  pan left / right   g G  top / bottom
    d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
-   x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
+   x          HTML report (all tabs + history)   ^E HTML menu    r  re-read now
+   E / e      EVENTS: API events, newest first   !  incident evidence (why)
    >          quick export: the screen and every line of the view to a log file - on every screen
               (KDASH_EXPORT_DIR, default ~/kdash_reports/exports; latest.log = the newest export)
    P          pause / resume live   + -  poll interval 1..60 s
@@ -15384,7 +15385,7 @@ while :; do
   fi
   if [ "${BASH_VERSINFO[0]:-3}" -lt 4 ]; then sleep "$INTERVAL"; continue; fi
   if IFS= read -rsn1 -t 0.4 key; then [ -n "$key" ] || key=$'\n'; else key=""; fi
-  case "$key" in 1|2|3|4|5|6|7|8|9|E|'!'|C|R|K|Y|M|$'\t'|v) RC_USE=1 ;; ''|j|k) RC_USE=0 ;; *) RC_USE=0; RC_GEN=$((RC_GEN + 1)) ;; esac
+  case "$key" in 1|2|3|4|5|6|7|8|9|E|e|'!'|C|R|K|Y|M|$'\t'|v) RC_USE=1 ;; ''|j|k) RC_USE=0 ;; *) RC_USE=0; RC_GEN=$((RC_GEN + 1)) ;; esac
   out=""; AK_NS="$NS"
   case "$key" in
     1) VIEW=pods; SCROLL=0; HSCROLL=0 ;; 2) VIEW=nodes; SCROLL=0; HSCROLL=0 ;; 3) VIEW=workloads; SCROLL=0; HSCROLL=0 ;;
@@ -15392,7 +15393,7 @@ while :; do
     7) VIEW=alerts; SCROLL=0; HSCROLL=0 ;;
     8) VIEW=services; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     9) VIEW=storage; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
-    E) VIEW=events; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
+    E|e) VIEW=events; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     '!') VIEW=explain; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0 ;;
     C) VIEW=certs; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(certs_age)" -lt 60 ] || TOOLKIT_NEXT=0 ;;
     R) VIEW=runbook; TOOLKIT_REQUESTED=1; SCROLL=0; HSCROLL=0; [ "$(rb_age)" -lt 60 ] || TOOLKIT_NEXT=0 ;;
@@ -15441,7 +15442,7 @@ while :; do
     x) flash "writing namespace report (all tabs + history) ..." 30; paint
        if out="$(namespace_report "$SDIR" 2>&1)"; then flash "report: $(printf '%s\n' "$out" | tail -1)" 12
        else flash "report failed: $(printf '%s' "$out" | tail -1)" 8; fi ;;
-    e) printf '\033[%d;1H\033[K' "${KDASH_LINES:-$(tput lines 2>/dev/null || echo 40)}"
+    $'\005') printf '\033[%d;1H\033[K' "${KDASH_LINES:-$(tput lines 2>/dev/null || echo 40)}"
        sel=""; ui_edit_line sel $'\033[7m'" HTML: Enter = one file, all tabs + history | c current view ($VIEW) | 1-6 views (e.g. 256) | a all 6 separate | b full bundle > "$'\033[0m' html || sel=""
        printf '\033[?25l'
        sel="$(printf '%s' "$sel" | tr -d ' ')"
@@ -15891,5 +15892,5 @@ say "DISCLAIMER: provided as is. The person running kdash is solely responsible 
 say "for having authorisation to read the clusters / namespaces. Every run, user action, report and"
 say "kubectl call is audited (~/kdash_reports/audit, /var/log/kdash when present, syslog)."
 say "keys: K check now  L login  1-9/Tab view (7 ALERTS, 8 SERVICES, 9 STORAGE)  E events  ! explain  C certificates  R runbooks  M fmea  Y secrets  Enter/i inspect  : palette  F filters"
-say "      ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  e HTML menu  / search  > export  h/l pan  j/k scroll  q quit"
+say "      ? help  n namespace  s/o sort  w group  a nodes  z chart window  Z zoom  P pause  +/- poll  T theme  x HTML report  ^E HTML menu  / search  > export  h/l pan  j/k scroll  q quit"
 exit "$PROBE_RC"

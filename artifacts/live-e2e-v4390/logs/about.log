@@ -20,6 +20,6 @@ configured, and syslog).
 │ local    │ /workspace/kdash/artifacts/live-e2e-v4390/audit/audit_202611.log                      │
 │ central  │ not configured (/workspace/kdash/artifacts/live-e2e-v4390/unused-central missing or ~ │
 │ syslog   │ off                                                                                   │
-│ session  │ 20261126-091539-171211 (operator@validation-host from local)                                     │
-│ accepted │ 2026-11-26T09:14:44+0530 operator@validation-host from local via flag kdash 4.39.0               │
+│ session  │ 20261126-145910-95065 (operator@validation-host from local)                                      │
+│ accepted │ 2026-11-26T14:58:14+0530 operator@validation-host from local via flag kdash 4.39.0               │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘

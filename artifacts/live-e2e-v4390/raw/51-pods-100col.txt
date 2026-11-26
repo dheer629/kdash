@@ -1,40 +1,40 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e            audited
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-26 09:23:30 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   2026-11-26 15:07:02 IST
  match .*   sort cpu ▼ high first
- ! pods 14/18 ready rst 548 oom 0 oomk 0 nolim 1 cpu 59m 3% lim mem 1Mi 0% lim wl 14 ev15m ! 0 ^ 0
- DATA ● pods fresh 3s old  metrics available │ C certs (1 expiring) │ / search │ K check │ i inspec›
+ ! pods 14/18 ready rst 627 oom 0 oomk 0 nolim 1 cpu 62m 4% lim mem 2Mi 0% lim wl 14 ev15m ! 0 ^ 0
+ DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 service›
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by workload (w = flat lis›
-► TIMELINE  09:23:27 -> 09:23:30 IST  (all since kdash started, z window, c hides graphs) ────────
-   CPU used - namespace
-         one sample so far - the chart starts with the 2nd (run kdash live)
-   MEMORY used - namespace
-         one sample so far - the chart starts with the 2nd (run kdash live)
-
-► PODS ───────────────────────────────────────────────────────────────────────────────────────────
                                        │   ACTUAL (live)    │    ASSIGNED (req / limit)     │ UTILI›
 WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim  MEMreq  MEMlim │ c%REQ›
-► Pod z-oom  (1 pod)           1/1   3 │     50 ·       1 · │     10     50       8      16 │ 500.0›
-  z-oom                        1/1   3 │     50 ·       1 · │     10     50       8      16 │ 500.0›
-      cpu ░░                mem ░░                pk 1Mi    node dev   pool role:control-plane,mast›
-    └─ hog                     Y     3 │     50 ·       1 · │     10     50       8      16 │ 500.0›
+► Pod z-oom  (1 pod)           1/1   3 │     51 ·       1 · │     10     50       8      16 │ 510.0›
+  z-oom                        1/1   3 │     51 ·       1 · │     10     50       8      16 │ 510.0›
+      node dev   pool role:control-plane,master   ip 10.244.0.157   qos Burstable   status Running ›
+    └─ hog                     Y     3 │     51 ·       1 · │     10     50       8      16 │ 510.0›
         last-exit Unknown
 ....................................................................................................
-► Deployment app-server  (2 p~ 2/2  41 │      5 ·       0 · │     50    500      24     192 │  10.0›
-  app-server-8fb4699bc-cx5vz   2/2  21 │      3 ·       0 · │     25    250      12      96 │  12.0›
-      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,mast›
-    ├─ app                     Y    11 │      2 ·       0 · │     20    200       8      64 │  10.0›
+► Deployment app-server  (2 p~ 2/2  41 │      7 ·       1 · │     50    500      24     192 │  14.0›
+  app-server-8fb4699bc-cx5vz   2/2  21 │      5 ·       1 · │     25    250      12      96 │  20.0›
+      node dev   pool role:control-plane,master   ip 10.244.0.166   qos Burstable   status Running ›
+    ├─ app                     Y    11 │      4 ·       1 · │     20    200       8      64 │  20.0›
         last-exit Unknown
     └─ sidecar                 Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0›
         last-exit Unknown
   app-server-8fb4699bc-t7zxj   2/2  20 │      2 ·       0 · │     25    250      12      96 │   8.0›
-      cpu ░░                mem ░░                pk 0Mi    node dev   pool role:control-plane,mast›
+      node dev   pool role:control-plane,master   ip 10.244.0.163   qos Burstable   status Running ›
     ├─ app                     Y    10 │      1 ·       0 · │     20    200       8      64 │   5.0›
         last-exit Unknown
     └─ sidecar                 Y    10 │      1 ·       0 · │      5     50       4      32 │  20.0›
         last-exit Unknown
 ....................................................................................................
 ► StatefulSet db-stateful  (2~ 2/2   6 │      2 ·       0 · │     40    200      64     128 │   5.0›
+  db-stateful-0                1/1   3 │      1 ·       0 · │     20    100      32      64 │   5.0›
+      node dev   pool role:control-plane,master   ip 10.244.0.159   qos Burstable   status Running ›
+    └─ db                      Y     3 │      1 ·       0 · │     20    100      32      64 │   5.0›
+        last-exit Unknown
+  db-stateful-1                1/1   3 │      1 ·       0 · │     20    100      32      64 │   5.0›
+      node dev   pool role:control-plane,master   ip 10.244.0.177   qos Burstable   status Running ›
+    └─ db                      Y     3 │      1 ·       0 · │     20    100      32      64 │   5.0›
 ────────────────────────────────────────────────────────────────────────────────────────────────────
-TOTAL (18 pods, 14 workloads)      548 │     59 ·       1 · │    315   1750     276     976 │  18.7›
+TOTAL (18 pods, 14 workloads)      627 │     62 ·       2 · │    315   1750     276     976 │  19.7›
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=90%LIM = throttle / O›
- AUDITED session 20261126-092327-249244 - every action is logged; use is your responsibility (kdash>
+ AUDITED session 20261126-150701-20133 - every action is logged; use is your responsibility (kdash >

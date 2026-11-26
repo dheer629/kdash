@@ -15,7 +15,7 @@
 │ readable here               │ ● pass    │ 1 of 1 item(s)                                                                                                              │
 │ tar in the container        │ ● pass    │ receives the stream                                                                                                         │
 │ destination writable        │ ● pass    │ /tmp/kdash-transfer                                                                                                         │
-│ free space in the container │ ● pass    │ 924.0 GiB free, about 1.0 KiB needed                                                                                        │
+│ free space in the container │ ● pass    │ 923.9 GiB free, about 1.0 KiB needed                                                                                        │
 │ checksum in the container   │ ● pass    │ sha256sum - every file is verified after the copy                                                                           │
 │ names                       │ ● pass    │ same names as here, none exists in the destination yet                                                                      │
 └─────────────────────────────┴───────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘

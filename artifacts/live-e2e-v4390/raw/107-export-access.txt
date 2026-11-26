@@ -1,13 +1,13 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:56:59 IST
-┌─ SCOPE ────────────────────────────────────────────────┬─ POD HEALTH ───────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                       │ ! pods 14/18 ready   restarts 555          │ cpu     58m ░░░░░░░░   3% lim       │ workloads 14               │
-│ poll 2s  spec 29s/30s   session 09:55:30 up 1m29s      │ OOM risk 0   OOMKilled 0   no-limit 1      │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
-└────────────────────────────────────────────────────────┴────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
- DATA ● pods fresh 29s old  metrics available │ C certs  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : ›
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 15:10:51 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 628           │ cpu     59m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 0s/30s   session 15:09:21 up 1m30s      │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 1        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 0s old  metrics available │ C certs  M fmea (11 high, 96% visible) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : c›
  ACCESS   what you may read, checked with kubectl auth whoami / can-i - every FMEA check runs only where this allows
 
- user kubernetes-super-admin   groups system:masters system:authenticated   context kdash-local   scope kdash-e2e   checked 15s ago
+ user kubernetes-super-admin   groups system:masters system:authenticated   context kdash-local   scope kdash-e2e   checked 16s ago
 
 PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) and never asks for more
 ┌──────────────────────────────────────────────────────────┬─────────────┬─────────┬─────────────────────────────────────────────────────────────────────────────────────┐
@@ -47,4 +47,4 @@ PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) a
 COVERAGE  1 level   full = every check runs; partial = a fallback signal, D + 2; none = no access, D 10 and never counted as OK
 ┌────────┬───────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 M fmea | / search | > export | : access | Enter run checks | t kind | s sort AP/RPN/S | r re-score | K check | C certs | R runbooks | j/k scroll | h/l pan | q quit
- exported to /var/tmp/kdash-extended-exports-di3zf4hz/kdash_view-access_kdash-e2e_20261126-095659.log | ○ LIVE 09:57:01  next 2s  data 2s old  fetch 0.0s  AUDITED
+ exported to /var/tmp/kdash-extended-exports-a8ivvqv4/kdash_view-access_kdash-e2e_20261126-151049.log | ● LIVE 15:10:52  next 1s  data 1s old  fetch 0.0s  AUDITED

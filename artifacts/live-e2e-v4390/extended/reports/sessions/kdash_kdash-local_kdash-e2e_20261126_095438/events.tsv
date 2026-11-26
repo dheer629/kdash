@@ -1,5 +1,0 @@
-EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
-1795667078	info	SESSION	kdash-e2e	kdash 4.39.0 started on Dheeraj by dheer - filter .*
-1795667098	info	FILTER	kdash-e2e	pod filter changed to app-server
-1795667103	info	FILTER	kdash-e2e	pod filter changed to .*
-1795667106	info	SESSION	kdash-e2e	kdash stopped after 27s

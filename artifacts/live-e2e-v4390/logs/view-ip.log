@@ -1,7 +1,7 @@
  KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:14:46 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   14:58:16 IST
  match .*   sorted by IP address
- ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+ ! pods 14/18 ready rst 624 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 2Mi 0% lim
     wl 14
  DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
@@ -14,7 +14,7 @@
 
 ► NODE IP BLOCKS (per worker node) ───────────────────────────────────────────
   NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
-  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 █░░░░░░░░░  10.244.0.128/26
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 █░░░░░░░░░  10.244.0.128/26 10.244.0.64/26
 
 ► SERVICES ───────────────────────────────────────────────────────────────────
   SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
@@ -32,6 +32,9 @@
 
 ► POD IP ASSIGNMENTS ─────────────────────────────────────────────────────────
   POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.64      nightly-report-29928075-27m6x                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.67      nightly-report-29928080-wz9d4                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.68      nightly-report-29928085-sm4xz                dev                        172.18.0.2       nightly-report               Succeeded
   10.244.0.152     node-agent-ctvg6                             dev                        172.18.0.2       node-agent                   
   10.244.0.156     kdash-secrets-live-consumer                  dev                        172.18.0.2       kdash-secrets-live-consumer  
   10.244.0.157     z-oom                                        dev                        172.18.0.2       z-oom                        
@@ -39,13 +42,10 @@
   10.244.0.163     app-server-8fb4699bc-t7zxj                   dev                        172.18.0.2       app-server                   
   10.244.0.166     app-server-8fb4699bc-cx5vz                   dev                        172.18.0.2       app-server                   
   10.244.0.167     functionality-legacy-67ks7                   dev                        172.18.0.2       functionality-legacy         
-  10.244.0.171     nightly-report-29927730-wvsrh                dev                        172.18.0.2       nightly-report               Succeeded
   10.244.0.175     z-imagepull                                  dev                        172.18.0.2       z-imagepull                  ImagePullBackOff
   10.244.0.176     test-sts-0                                   dev                        172.18.0.2       test-sts                     
   10.244.0.177     db-stateful-1                                dev                        172.18.0.2       db-stateful                  
-  10.244.0.178     z-crash                                      dev                        172.18.0.2       z-crash                      CrashLoopBackOff
-  10.244.0.181     nightly-report-29927735-m6d6c                dev                        172.18.0.2       nightly-report               Succeeded
-  10.244.0.183     nightly-report-29927740-mqxh6                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.178     z-crash                                      dev                        172.18.0.2       z-crash                      NotReady
   -                completed-check-m9swm                        dev                        172.18.0.2       completed-check              NO_IP
   -                sync-pod                                     dev                        172.18.0.2       sync-pod                     NO_IP
   -                z-pending                                    (unscheduled)              -                z-pending                    NO_IP

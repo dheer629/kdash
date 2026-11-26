@@ -22,7 +22,7 @@ CHECKS  9 checks   all required checks passed
 │ persistentvolumeclaims          │ ● PASS    │ readable                                                                                     │ -                         │
 │ events                          │ ● PASS    │ readable                                                                                     │ -                         │
 │ metrics                         │ ● PASS    │ pod CPU / memory readable                                                                    │ -                         │
-│ certificates                    │ ● WARNING │ 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) in 18 d │ kdash --certs  (or key C) │
+│ certificates                    │ ● WARNING │ 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) in 17 d │ kdash --certs  (or key C) │
 │ local reports                   │ ● PASS    │ writable: /workspace/kdash/artifacts/live-e2e-v4390/reports                                  │ -                         │
 └─────────────────────────────────┴───────────┴──────────────────────────────────────────────────────────────────────────────────────────────┴───────────────────────────┘
 

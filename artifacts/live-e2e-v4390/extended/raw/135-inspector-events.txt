@@ -2,7 +2,7 @@
 ┌─ EVENTS ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
-└─ rows 1-38 / 107 · 107 lines ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+└─ rows 1-11 / 11 · 11 lines ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
  KUBERNETES EVENTS   API events, newest first - local session changes are recorded separately
 
 DATA SOURCES   context kdash-local
@@ -12,35 +12,35 @@ DATA SOURCES   context kdash-local
 │ events │ ● ok  │ 0s ago │ kdash-e2e / pod app-server-8fb4699bc-cx5vz │ read succeeded │
 └────────┴───────┴────────┴────────────────────────────────────────────┴────────────────┘
 
-EVENTS  38 events   11 warning, 27 normal
-┌───────────┬───────────┬────────────────────────┬────────────────────────────────┬───────┬────────────┬────────────────────────────────────────────────────────────────┐
-│ LAST SEEN │ TYPE      │ REASON                 │ OBJECT                         │ COUNT │ FIRST SEEN │ MESSAGE                                                        │
-├───────────┼───────────┼────────────────────────┼────────────────────────────────┼───────┼────────────┼────────────────────────────────────────────────────────────────┤
-│ 58m       │ ● Normal  │ Created                │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 58m ago    │ Created container app                                          │
-│ 58m       │ ● Normal  │ Created                │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 58m ago    │ Created container sidecar                                      │
-│ 58m       │ ● Normal  │ Pulled                 │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 58m ago    │ Container image "busybox:1.36" already present on machine      │
-│ 58m       │ ● Normal  │ Pulled                 │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 58m ago    │ Container image "busybox:1.36" already present on machine      │
-│ 58m       │ ● Normal  │ Started                │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 58m ago    │ Started container app                                          │
-│ 58m       │ ● Normal  │ Started                │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 58m ago    │ Started container sidecar                                      │
-│ 58m       │ ● Normal  │ SandboxChanged         │ Pod/app-server-8fb4699bc-cx5vz │     4 │ 59m ago    │ Pod sandbox changed, it will be killed and re-created.         │
-│ 58m       │ ● Warning │ FailedCreatePodSandBox │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 58m ago    │ Failed to create pod sandbox: rpc error: code = Unknown desc = │
-│           │           │                        │                                │       │            │  failed to setup network for sandbox                           │
-│           │           │                        │                                │       │            │ "f85247adf97fc20ee5c80888e691d8416699f0a22b8f9cf49e025d2c6a2f1 │
-│           │           │                        │                                │       │            │ a4f": plugin type="flannel" failed (add):                      │
-│           │           │                        │                                │       │            │ loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no  │
-│           │           │                        │                                │       │            │ such file or directory                                         │
-│ 59m       │ ● Warning │ FailedCreatePodSandBox │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 59m ago    │ Failed to create pod sandbox: rpc error: code = Unknown desc = │
-│           │           │                        │                                │       │            │  failed to setup network for sandbox                           │
-│           │           │                        │                                │       │            │ "723f58b3df127715ade98f755677e56e0311b7733ae6a6a0c494abf813703 │
-│           │           │                        │                                │       │            │ 19b": plugin type="flannel" failed (add):                      │
-│           │           │                        │                                │       │            │ loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no  │
-│           │           │                        │                                │       │            │ such file or directory                                         │
-│ 59m       │ ● Warning │ FailedCreatePodSandBox │ Pod/app-server-8fb4699bc-cx5vz │     1 │ 59m ago    │ Failed to create pod sandbox: rpc error: code = Unknown desc = │
-│           │           │                        │                                │       │            │  failed to setup network for sandbox                           │
-│           │           │                        │                                │       │            │ "3b867985ae814abed7fdc9aa24e1bdf18dda0b92289bcefe49240b2d7b996 │
-│           │           │                        │                                │       │            │ 51b": plugin type="flannel" failed (add):                      │
-│           │           │                        │                                │       │            │ loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no  │
-│           │           │                        │                                │       │            │ such file or directory                                         │
+EVENTS
+  no retained Events match - this does not establish application health
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
 │ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
 │ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │

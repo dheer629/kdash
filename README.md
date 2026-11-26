@@ -120,8 +120,10 @@ Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser che
 
 
 
+
+
 The run covers 200 baseline checks plus 124 extension checks, 31 Secrets checks,
-33 browser checks and all 19 fixture suites. The whole-log check read a real
+33 browser checks and all 20 fixture suites. The whole-log check read a real
 kubelet-rotated file (the fixture container exceeds the 10 MiB rotation size)
 alongside the current one.
 
@@ -367,8 +369,8 @@ matching workload scaled to zero remains visible.
 
 | Key | Action | Key | Action |
 |---|---|---|---|
-| `1`-`9`, `E`, `!`, `C`, `R`, `K`, `M`, `Y`, `Tab` | switch view; `: access` opens access review | `x` | HTML report: all tabs + history since start |
-| `e` | HTML menu (all-tabs report, current view, views 1-6, all, bundle) | `>` | export screen and whole view/list/pane to a log |
+| `1`-`9`, `E` / `e`, `!`, `C`, `R`, `K`, `M`, `Y`, `Tab` | switch view; `: access` opens access review | `x` | HTML report: all tabs + history since start |
+| `^E` (Ctrl-E) | HTML menu (all-tabs report, current view, views 1-6, all, bundle) | `>` | export screen and whole view/list/pane to a log |
 | `j` `k`, arrows | scroll | `/` | search whole view; Tab in box switches to pod regex filter |
 | `h` `l`, arrows | pan left / right | `0` | back to column 1 |
 | `space` `b` | page | `g` `G` | top / bottom |
@@ -815,7 +817,7 @@ in a collapsible block.
 
 | While running | |
 |---|---|
-| `e` | HTML menu: Enter (namespace report), `c` (current supported view), `2`, `25`, `135`... (one HTML per view), `a` (all six), `b` (combined bundle) |
+| `^E` (Ctrl-E) | HTML menu: Enter (namespace report), `c` (current supported view), `2`, `25`, `135`... (one HTML per view), `a` (all six), `b` (combined bundle) |
 
 ```bash
 kdash -v nodes --snapshot current  # node pools only

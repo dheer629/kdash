@@ -1,8 +1,8 @@
  KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
-  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 09:24:14 IST
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 15:07:48 IST
 ┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
-│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 549           │ cpu     59m ░░░░░░░░   3% lim       │ workloads 14               │
-│ poll 2s  spec 12s/30s   session 09:24:02 up 12s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     1Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
+│ match .*   sort cpu ▼ high first                      │ ! pods 14/18 ready   restarts 627           │ cpu     59m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 12s/30s   session 15:07:36 up 12s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
 └───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
  DATA ● pods fresh 12s old  metrics available │ C certs (2 critical, 3 expiring) │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : comman›
  RUNBOOK - etcd-restore   printed procedures with your cluster's names filled in - kdash never runs them
@@ -47,4 +47,4 @@ A. RESTORE ONTO THE EXISTING SERVERS  servers: dev
       note   nodes are restored from the snapshot too: delete nodes that no longer exist (kubectl --context kdash-local delete node NAME) and re-run workloads changed af›
 
 K check | / search | > export | Enter run checks | L login | 8 services | 9 storage | E events | ! why | C certs | R runbooks [ ] | M fmea | Y secrets | j/k scroll | h/l›
- certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ○ LIVE 09:24:15  next 1s  data 1s old  fetch >
+ certificates: 1 expiring - soonest: cert-manager certificate (kdash-e2e/functionality-certificate) - press C for details | ○ LIVE 15:07:49  next 1s  data 1s old  fetch >

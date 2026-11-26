@@ -1,6 +1,0 @@
-EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
-1795667107	info	SESSION	kdash-e2e	kdash 4.39.0 started on Dheeraj by dheer - filter .*
-1795667408	info	POD_ADDED	nightly-report-29927790-4rlb6	added on dev (CronJob/nightly-report, Succeeded)
-1795667408	warn	RESTART	z-crash	restarts +1 (now 470), last exit Error
-1795667408	warn	POD_REMOVED	nightly-report-29927775-pb7gh	gone (was on dev, Succeeded)
-1795667490	info	SESSION	kdash-e2e	kdash stopped after 383s

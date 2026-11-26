@@ -2,7 +2,7 @@
 ┌─ WHY (EVENT HYPOTHESES) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── READ-ONLY / audited ─┐
 │ POD        app-server-8fb4699bc-cx5vz                                                                                                                                 │
 │ CONTAINER  app   ● Running   ready   restarts 11   last exit Unknown exit=255   busybox:1.36                                                                          │
-└─ rows 1-38 / 40 · 40 lines ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+└─ rows 1-25 / 25 · 25 lines ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
  WHY - INCIDENT EVIDENCE   warning events grouped into possible explanations - timing alone does not establish a cause
 
 DATA SOURCES   context kdash-local
@@ -19,28 +19,28 @@ PODS NEEDING ATTENTION  1 pod    - from the dashboard model
 │ app-server-8fb4699bc-cx5vz │ ● Running │   2/2 │       21 │ dev  │
 └────────────────────────────┴───────────┴───────┴──────────┴──────┘
 
-WARNING EVIDENCE  1 item   one row per object and category, newest first, up to 20
-┌───┬───────────┬────────────────────────────────┬────────────────────────┬───────┬──────────┬──────────────────────────────────────────────────────────────────────────┐
-│ # │ LAST SEEN │ OBJECT                         │ REASON                 │ COUNT │ CATEGORY │ MESSAGE                                                                  │
-├───┼───────────┼────────────────────────────────┼────────────────────────┼───────┼──────────┼──────────────────────────────────────────────────────────────────────────┤
-│ 1 │ 58m       │ Pod/app-server-8fb4699bc-cx5vz │ FailedCreatePodSandBox │     1 │ other    │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed    │
-│   │           │                                │                        │       │          │ to setup network for sandbox                                             │
-│   │           │                                │                        │       │          │ "f85247adf97fc20ee5c80888e691d8416699f0a22b8f9cf49e025d2c6a2f1a4f":      │
-│   │           │                                │                        │       │          │ plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /  │
-│   │           │                                │                        │       │          │ run/flannel/subnet.env: no such file or directory                        │
-└───┴───────────┴────────────────────────────────┴────────────────────────┴───────┴──────────┴──────────────────────────────────────────────────────────────────────────┘
-
-POSSIBLE EXPLANATIONS  1 category   hypotheses to check, not conclusions
-┌──────────┬──────────┬─────────────────────────────────────────────────────────────────────────────────────┐
-│ CATEGORY │ EVIDENCE │ POSSIBLE EXPLANATION                                                                │
-├──────────┼──────────┼─────────────────────────────────────────────────────────────────────────────────────┤
-│ other    │ #1       │ needs object-specific investigation - its presence alone does not establish a cause │
-└──────────┴──────────┴─────────────────────────────────────────────────────────────────────────────────────┘
+WARNING EVIDENCE   one row per object and category, newest first, up to 20
+  no retained warning events - coverage gaps, expired events and failures without events remain possible
 
 NEXT COMMANDS  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
 
-  #1    evidence #1  (WARNING EVIDENCE above)
-      read   kubectl --context kdash-local -n kdash-e2e describe pod app-server-8fb4699bc-cx5vz
+  #-  pod  app-server-8fb4699bc-cx5vz
+      read   kubectl --context kdash-local describe pod app-server-8fb4699bc-cx5vz -n kdash-e2e --request-timeout=10s
+
+  Compare current readiness, resource identities, logs and workload conditions before deciding on a change.
+
+
+
+
+
+
+
+
+
+
+
+
+
 ┌─ PANES ─────┬─ LOGS ────────┬─ ATTACH ──────┬─ READ ───────┬─ MOVE ────────────────┬─ FIND ──────────────┬─ OTHER ────────────────────────────────────────────────────┐
 │ s  summary  │ l  logs       │ S  shell      │ W  wrap on   │ j/k         scroll    │ /    find           │ r  reload                                                  │
 │ d  describe │ p  prev logs  │ U  upload     │ J  JSON off  │ g/G         top / end │ &    only matches   │ ?  keys                                                    │

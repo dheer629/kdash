@@ -1,50 +1,50 @@
-[1;7m KDASH │ HELP │ PODS VIEW │ context kdash-local │ namespace kdash-e2e                                                                           v4.39.0 │ any key returns
+[1;7m KDASH │ SELECT POD │ KEYS │ context kdash-local │ namespace kdash-e2e                                                                                    any key returns
 
-[0m [1m[38;5;98mPODS[0m - every pod and container of the namespace, live usage against what it asked for.
-   [1mHealth line[0m (every view): ready pods, restarts, OOM risk, OOMKilled, pods without a memory
-               limit, CPU / memory against limits, degraded / rolling workloads, events of 15 min.
-   Grouped by workload (Deployment / StatefulSet / ...): the workload line is the sum of its pods.
-   [1mACTUAL[0m      CPU in millicores (1000m = 1 core) and memory in MiB, measured by metrics-server.
-               T = trend since the last poll: up / down / flat.
-   [1mASSIGNED[0m    requests (reserved for scheduling) and limits (hard cap) from the pod spec.
-   [1mUTILISATION[0m used as % of request and of limit. Red at >= 90% of the limit:
-               CPU is throttled, memory is about to be OOM-killed.
-   [1mRDY / RST[0m   ready containers / all containers, and restarts.
-   [1mDetail line[0m CPU and memory sparkline of the pod (last 40 session samples + now; memory
-               coloured by % of its limit, pk = peak), node, pool, pod IP, QoS class, status
-               and the last exit reason (OOMKilled ...).
-   [1mTimeline[0m    namespace CPU and memory over the session (z window, c hides the graphs).
+[0m  [1m[38;5;98mMOVE[0m        [1m[38;5;63mj / k / arrows[0m     one row          [1m[38;5;63mPgDn / PgUp / space / b[0m  one page
+              [1m[38;5;63mg / G / Home / End[0m first / last     [1m[38;5;63m12 (digits)[0m  jump to row 12 of the list
+  [1m[38;5;98mFIND[0m        [1m[38;5;63m/[0m                  type to filter: every word must match the pod name,
+                                 status or node (e.g. "/fileserver3 failed")
+              [1m[38;5;63mEsc[0m                clear the filter    [1m[38;5;63mu[0m  only pods that need attention
+              [1m[38;5;63ms[0m                  sort: name, status (worst first), restarts, cpu, mem, mem% of limit
+              [1m[38;5;63mF[0m                  structured filters (label / status / node / workload)
+  [1m[38;5;98mACT ON THE[0m  [1m[38;5;63mEnter / i[0m          summary          [1m[38;5;63ml[0m  current logs      [1m[38;5;63mp[0m  previous logs
+  [1m[38;5;98mSELECTED[0m    [1m[38;5;63md[0m                  describe         [1m[38;5;63me[0m  events            [1m[38;5;63mw[0m  why (event hypotheses)
+  [1m[38;5;98mPOD[0m         [1m[38;5;63mc[0m                  pick a container first, then inspect
+              [1m[38;5;63mS / U / D[0m          shell / upload / download (interactive mode)
+              [1m[38;5;63mX[0m                  interactive mode on / off (asks first; also: kdx, kdash -X)
+  [1m[38;5;98mOTHER[0m       [1m[38;5;63mr[0m                  re-read now (the list also refreshes every poll)
+              [1m[38;5;63mq[0m                  back to the dashboard     [1m[38;5;63mQ[0m  quit kdash (from any screen)
+              [1m[38;5;63m>[0m                  export the screen and the whole list to a log file
 
- [1m[38;5;98mKEYS[0m [38;5;243m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[39m   [1m[38;5;63m1-9 / Tab[0m  switch view          [1m[38;5;63mn[0m  pick another namespace     [1m[38;5;63m/[0m  search box (n/N next/prev, Tab: pod filter)
-   [1m[38;5;63ms[0m          next sort key        [1m[38;5;63mo[0m  reverse the sort order     [1m[38;5;63mw[0m  PODS grouped / flat
-   [1m[38;5;63mj k arrows[0m scroll               [1m[38;5;63mh l arrows[0m  pan left / right   [1m[38;5;63mg G[0m  top / bottom
-   [1m[38;5;63md[0m          detail lines         [1m[38;5;63ma[0m  NODE POOLS: other nodes    [1m[38;5;63mp[0m  PODS: pods only
-   [1m[38;5;63mx[0m          HTML report (all tabs + history)   [1m[38;5;63me[0m  HTML menu    [1m[38;5;63mr[0m  re-read now
-   [1m[38;5;63m>[0m          quick export: the screen and every line of the view to a log file - on every screen
-              (KDASH_EXPORT_DIR, default ~/kdash_reports/exports; latest.log = the newest export)
-   [1m[38;5;63mP[0m          pause / resume live   [1m[38;5;63m+ -[0m  poll interval 1..60 s
-   [1m[38;5;63mT[0m          colour theme         [1m[38;5;63mz[0m  chart window (all/15m/1h/6h/24h)
-   [1m[38;5;63mZ[0m          NODE POOLS auto zoom / true scale     [1m[38;5;63mc[0m  PODS timeline graphs on / off
-   [1m[38;5;63m?[0m          this help            [1m[38;5;63mq[0m  quit
-   [1m[38;5;63mEnter / i[0m  inspect a pod: s summary, d describe, e events, ! why, l current logs,
-              p previous logs, c choose container, / find (& only matches), n N jumps,
-              L log level, f follow logs, w export the pane, > quick export, ? keys, q back
-   [1m[38;5;63m:[0m          command palette (fixed commands, never shell text)   [1m[38;5;63mF[0m  structured filters
-   [1m[38;5;63mL[0m          OIDC login: runs the login helper in the foreground and shows its URL (with the
-              ssh -L tunnel command when the callback is on this host); kdash continues afterwards.
-              An expired login opens this by itself (KDASH_LOGIN_AUTO=0: only with L)
-   [1m[38;5;63mK[0m          CHECK NOW: everything wrong right now in every area, most severe first, with next
-              commands; Enter runs the read commands of a finding at once (also in 8 / 9 / ! / C)
-   [1m[38;5;63mR[0m          runbooks with this cluster's names filled in: etcd restore, certificate rotation,
-              node NotReady, API unreachable, OIDC login ( [ and ] switch runbook )
-   [1m[38;5;63mY[0m          secrets map: certificates and keys in Secrets, expiry, who manages and uses them, the
-              path in the container and on the node, what needs a restart after a rotation
-   [1m[38;5;63mM[0m          FMEA: every failure mode of every object you can read, ranked by Action Priority,
-              with next commands; only what your RBAC allows is checked (: access shows it)
-   [1m[38;5;63mC[0m          certificates and logins: expiry of the API, node, kubelet, webhook, cert-manager
-              and ingress certificates and of your OIDC login (warning < 30 d, critical < 7 d)
-   Times are this host's clock (date): TZ=UTC kdash shows UTC.
-   [1m[38;5;63mAudit[0m       this session is audited: every action, namespace
-               switch, report and kubectl call is logged. kdash --audit shows the log.
-[1m[38;5;231m[48;5;24m -- lines 1-47 of 55: Space next page, any other key returns --[0m
+  [1mColours:[0m [38;5;29mgreen running and ready[39m, [38;5;163mmagenta pending / starting / terminating[39m,
+[1m[38;5;196m  red failing / not ready / >= 90% of memory limit[0m, [38;5;243mgrey completed[39m.
+  "needs attention" = failing, pending or restarted pods.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -15,7 +15,7 @@
 [90m│[39m readable here               [90m│[39m [32m● pass[39m    [90m│[39m 1 of 1 item(s)                                                                                                              [90m│[39m
 [90m│[39m tar in the container        [90m│[39m [32m● pass[39m    [90m│[39m receives the stream                                                                                                         [90m│[39m
 [90m│[39m destination writable        [90m│[39m [32m● pass[39m    [90m│[39m /tmp/kdash-transfer                                                                                                         [90m│[39m
-[90m│[39m free space in the container [90m│[39m [32m● pass[39m    [90m│[39m 924.0 GiB free, about 1.0 KiB needed                                                                                        [90m│[39m
+[90m│[39m free space in the container [90m│[39m [32m● pass[39m    [90m│[39m 923.9 GiB free, about 1.0 KiB needed                                                                                        [90m│[39m
 [90m│[39m checksum in the container   [90m│[39m [32m● pass[39m    [90m│[39m sha256sum - every file is verified after the copy                                                                           [90m│[39m
 [90m│[39m names                       [90m│[39m [32m● pass[39m    [90m│[39m same names as here, none exists in the destination yet                                                                      [90m│[39m
 [90m└─────────────────────────────┴───────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘[39m

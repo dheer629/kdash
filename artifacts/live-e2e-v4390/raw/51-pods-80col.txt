@@ -1,11 +1,11 @@
  KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:23:41 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   15:07:15 IST
  match .*   sort cpu ▼ high first
- ! pods 14/18 ready rst 548 oom 0 oomk 0 nolim 1 cpu 59m 3% lim mem 1Mi 0% lim
+ ! pods 14/18 ready rst 627 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 2Mi 0% lim
      wl 14 ev15m ! 0 ^ 0
- DATA ● pods fresh 2s old  metrics available │ C certs (1 expiring) │ / search ›
+ DATA ● pods fresh 3s old  metrics available │ C certs (1 expiring) │ / search ›
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo›
-► TIMELINE  09:23:39 -> 09:23:41 IST  (all since kdash started, z window, c hid›
+► TIMELINE  15:07:12 -> 15:07:15 IST  (all since kdash started, z window, c hid›
    CPU used - namespace
          one sample so far - the chart starts with the 2nd (run kdash live)
    MEMORY used - namespace
@@ -20,11 +20,11 @@ WORKLOAD / POD / CONTAINER     RDY RST │   CPUm T  MEM Mi T │ CPUreq CPUlim 
     └─ hog                     Y     3 │     50 ·       1 · │     10     50    ›
         last-exit Unknown
 ................................................................................
-► Deployment app-server  (2 p~ 2/2  41 │      5 ·       0 · │     50    500    ›
-  app-server-8fb4699bc-cx5vz   2/2  21 │      3 ·       0 · │     25    250    ›
-      cpu ░░                mem ░░                pk 0Mi    node dev   pool rol›
-    ├─ app                     Y    11 │      2 ·       0 · │     20    200    ›
+► Deployment app-server  (2 p~ 2/2  41 │      6 ·       1 · │     50    500    ›
+  app-server-8fb4699bc-cx5vz   2/2  21 │      3 ·       1 · │     25    250    ›
+      cpu ░░                mem ░░                pk 1Mi    node dev   pool rol›
+    ├─ app                     Y    11 │      2 ·       1 · │     20    200    ›
 ────────────────────────────────────────────────────────────────────────────────
-TOTAL (18 pods, 14 workloads)      548 │     59 ·       1 · │    315   1750    ›
+TOTAL (18 pods, 14 workloads)      627 │     60 ·       2 · │    315   1750    ›
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9›
- AUDITED session 20261126-092338-251386 - every action is logged; use is your r>
+ AUDITED session 20261126-150712-25648 - every action is logged; use is your re>

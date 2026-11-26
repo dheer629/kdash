@@ -1,16 +1,16 @@
  KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:14:47 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   14:58:17 IST
  match .*   sort mem ▼ high first
- ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 1Mi 0% lim
+ ! pods 14/18 ready rst 624 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 2Mi 0% lim
     wl 14
  DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  MEMORY   live namespace memory dashboard
- MEMORY used      1Mi  req    276Mi  lim    976Mi   used/req    0.4%  used/lim    0.1%  ░░░░░░░░░░░░░░░░░░░░░░░░
- window 09:14:46 -> 09:14:47 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
+ MEMORY used      2Mi  req    276Mi  lim    976Mi   used/req    0.7%  used/lim    0.2%  ░░░░░░░░░░░░░░░░░░░░░░░░
+ window 14:58:16 -> 14:58:17 IST (UTC+05:30)   1s, all since kdash started   samples 1 (polls)   z: 15m 1h 6h 24h all
  CPU    used      60m  req     315m  lim    1750m   used/req   19.0%  used/lim    3.4%  ░
- risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 547
+ risk  >=90% of limit 0   no limit 1   over request 0   OOMKilled before 0   restarts 624
 ────────────────────────────────────────────────────────────────────────────────
-► TIMELINE  09:14:46 -> 09:14:47 IST  (all since kdash started, host clock) ──
+► TIMELINE  14:58:16 -> 14:58:17 IST  (all since kdash started, host clock) ──
    MEMORY used - namespace                                                      
          one sample so far - the chart starts with the 2nd (run kdash live)     
 
@@ -23,25 +23,25 @@
 
 ► MEMORY BY WORKER NODE ──────────────────────────────────────────────────────
   NODE                         POOL          NS USED    ALLOC   NS% NODE%  node memory  ns trend
-  dev                          role:contro~      1Mi   7524Mi   0.0  29.2  █▓▓░░░░░░░  ░
+  dev                          role:contro~      2Mi   7524Mi   0.0  34.6  █▓▓░░░░░░░  ░
 
 ► PODS BY MEMORY USED  (top 15, --top N) ─────────────────────────────────────
   POD                      NODE                           USED      REQ      LIM  %REQ  %LIM MEM/LIM  RST  RISK
+  app-server-8fb4699bc-cx~ dev                             1Mi     12Mi     96Mi   8.3   1.0 ░░░░░░░░  21  
   z-oom                    dev                             1Mi      8Mi     16Mi  12.5   6.2 ░░░░░░░░   3  
-  app-server-8fb4699bc-cx~ dev                             0Mi     12Mi     96Mi   0.0   0.0 ░░░░░░░░  21  
   app-server-8fb4699bc-t7~ dev                             0Mi     12Mi     96Mi   0.0   0.0 ░░░░░░░░  20  
   db-stateful-0            dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   3  
   db-stateful-1            dev                             0Mi     32Mi     64Mi   0.0   0.0 ░░░░░░░░   3  
   functionality-legacy-67~ dev                             0Mi      8Mi     32Mi   0.0   0.0 ░░░░░░░░   3  
-  kdash-secrets-live-cons~ dev                             0Mi     32Mi    128Mi   0.0   0.0 ░░░░░░░░   3  
+  kdash-secrets-live-cons~ dev                             0Mi     32Mi    128Mi   0.0   0.0 ░░░░░░░░   8  
   node-agent-ctvg6         dev                             0Mi     16Mi     32Mi   0.0   0.0 ░░░░░░░░   4  
-  test-sts-0               dev                             0Mi        -        -     -     - n/a       26  NO_LIMIT
+  test-sts-0               dev                             0Mi        -        -     -     - n/a       31  NO_LIMIT
   completed-check-m9swm    dev                               -      4Mi     32Mi     -     - n/a        0  
-  nightly-report-29927730~ dev                               -     16Mi     32Mi     -     - n/a        0  
-  nightly-report-29927735~ dev                               -     16Mi     32Mi     -     - n/a        0  
-  nightly-report-29927740~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29928075~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29928080~ dev                               -     16Mi     32Mi     -     - n/a        0  
+  nightly-report-29928085~ dev                               -     16Mi     32Mi     -     - n/a        0  
   sync-pod                 dev                               -        -        -     -     - n/a        0  
-  z-crash                  dev                               -      4Mi     32Mi     -     - n/a      461  
+  z-crash                  dev                               -      4Mi     32Mi     -     - n/a      528  
 
 ► OOM RISK  (>= 90% of memory limit) ─────────────────────────────────────────
   none
@@ -57,9 +57,9 @@
 
 ► MEMORY BY WORKLOAD ─────────────────────────────────────────────────────────
   KIND        WORKLOAD                    PODS     USED      REQ      LIM  %LIM MEM/LIM 
+  Deployment  app-server                     2      1Mi     24Mi    192Mi   0.5 ░░░░░░░░
   Pod         z-oom                          1      1Mi      8Mi     16Mi   6.2 █░░░░░░░
   DaemonSet   node-agent                     1      0Mi     16Mi     32Mi   0.0 ░░░░░░░░
-  Deployment  app-server                     2      0Mi     24Mi    192Mi   0.0 ░░░░░░░░
   Pod         kdash-secrets-live-consum~     1      0Mi     32Mi    128Mi   0.0 ░░░░░░░░
   Replicatio~ functionality-legacy           1      0Mi      8Mi     32Mi   0.0 ░░░░░░░░
   StatefulSet db-stateful                    2      0Mi     64Mi    128Mi   0.0 ░░░░░░░░

@@ -1,30 +1,30 @@
  KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:23:45 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   15:07:18 IST
  match .*   sort cpu ▼ high first
- ! pods 14/18 ready rst 548 oom 0 oomk 0 nolim 1 cpu 59m 3% lim mem 1Mi 0% lim
+ ! pods 14/18 ready rst 627 oom 0 oomk 0 nolim 1 cpu 60m 3% lim mem 2Mi 0% lim
      wl 14 ev15m ! 0 ^ 0
  DATA ● pods fresh 6s old  metrics available │ C certs (1 expiring) │ / search ›
  POD / CONTAINER RESOURCES   actual usage vs requests and limits, grouped by wo›
-► TIMELINE  09:23:39 -> 09:23:45 IST  (all since kdash started, z window, c hid›
+► TIMELINE  15:07:12 -> 15:07:18 IST  (all since kdash started, z window, c hid›
    CPU used - namespace
-     68m┤                ·      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-        │                ·      █████████████████████████████████████
-     34m┤                ·      █████████████████████████████████████
-        │                ·      █████████████████████████████████████
+     69m┤                ·                  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        │                ·                  ████████████████████████████████████
+     35m┤                ·                  ████████████████████████████████████
+        │                ·                  ████████████████████████████████████
       0m└┴───────────────┴──────────────────┴────────────────┴─────────────────┴
-         09:23:39                       09:23:42                        09:23:45
+         15:07:12                       15:07:15                        15:07:18
   events
-  now 59m  min 59m  avg 59m  max 59m @ 09:23:44
+  now 60m  min 60m  avg 60m  max 60m @ 15:07:18
   request 315m (above)  limit 1750m (above)  3% of limit
    MEMORY used - namespace
-     1Mi┤                ·      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-        │                ·      █████████████████████████████████████
-     1Mi┤                ·      █████████████████████████████████████
-        │                ·      █████████████████████████████████████
+     2Mi┤                ·                  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+        │                ·                  ████████████████████████████████████
+     1Mi┤                ·                  ████████████████████████████████████
+        │                ·                  ████████████████████████████████████
      0Mi└┴───────────────┴──────────────────┴────────────────┴─────────────────┴
-         09:23:39                       09:23:42                        09:23:45
+         15:07:12                       15:07:15                        15:07:18
   events
 ────────────────────────────────────────────────────────────────────────────────
-TOTAL (18 pods, 14 workloads)      548 │     59 ·       1 · │    315   1750    ›
+TOTAL (18 pods, 14 workloads)      627 │     60 ·       2 · │    315   1750    ›
  legend cpu millicores, mem MiB.  T: ▲ up  ▼ down  · flat since last poll.  >=9›
  interactive mode ON - S shell, U upload, D download (X turns it off) | ○ LIVE >

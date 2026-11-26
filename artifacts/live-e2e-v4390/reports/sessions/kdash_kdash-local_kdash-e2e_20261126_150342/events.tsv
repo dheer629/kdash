@@ -1,0 +1,3 @@
+EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
+1795685622	info	SESSION	kdash-e2e	kdash 4.39.0 started on Dheeraj by dheer - filter .*
+1795685651	info	SESSION	kdash-e2e	kdash stopped after 29s

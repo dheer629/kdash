@@ -2,27 +2,27 @@
 [0m[38;5;243m┌─[39m [1mLOGS[0m [38;5;243m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m [38;5;243mREAD-ONLY / audited[39m [38;5;243m─┐[39m
 [38;5;243m│[39m [38;5;243mPOD      [39m  [1mapp-server-8fb4699bc-cx5vz[0m                                                                                                                                 [38;5;243m│[39m
 [38;5;243m│[39m [38;5;243mCONTAINER[39m  [1mapp[0m   [38;5;29m● Running[39m   [38;5;243mready[39m   [38;5;243mrestarts[39m 11   [38;5;243mlast exit[39m [1m[38;5;196mUnknown exit=255[0m   [38;5;243mbusybox:1.36[39m                                                                          [38;5;243m│[39m
-[38;5;243m└─[39m [1mrows 1-20 / 20 · 20 lines 2.2 KiB since 2026-11-26 04:30:52, newest only (+ more, A all)[0m [38;5;243m────────────────────────────────────────────────────────────────────────────┘[39m
-[38;5;243m2026-11-26T04:30:52.463388671Z[39m 2026-11-26T04:30:52+00:00 INFO request=1750 service=app-server healthy=true
-[38;5;243m2026-11-26T04:30:52.463936689Z[39m 2026-11-26T04:30:52+00:00 [38;5;163mWARN[39m request=1750 demonstration warning from live workload
-[38;5;243m2026-11-26T04:30:54.465169986Z[39m 2026-11-26T04:30:54+00:00 INFO request=1751 service=app-server healthy=true
-[38;5;243m2026-11-26T04:30:54.465804219Z[39m 2026-11-26T04:30:54+00:00 [38;5;163mWARN[39m request=1751 demonstration warning from live workload
-[38;5;243m2026-11-26T04:30:56.466835043Z[39m 2026-11-26T04:30:56+00:00 INFO request=1752 service=app-server healthy=true
-[38;5;243m2026-11-26T04:30:56.467549609Z[39m 2026-11-26T04:30:56+00:00 [38;5;163mWARN[39m request=1752 demonstration warning from live workload
-[38;5;243m2026-11-26T04:30:58.468510831Z[39m 2026-11-26T04:30:58+00:00 INFO request=1753 service=app-server healthy=true
-[38;5;243m2026-11-26T04:30:58.469176124Z[39m 2026-11-26T04:30:58+00:00 [38;5;163mWARN[39m request=1753 demonstration warning from live workload
-[38;5;243m2026-11-26T04:31:00.470231443Z[39m 2026-11-26T04:31:00+00:00 INFO request=1754 service=app-server healthy=true
-[38;5;243m2026-11-26T04:31:00.470788511Z[39m 2026-11-26T04:31:00+00:00 [38;5;163mWARN[39m request=1754 demonstration warning from live workload
-[38;5;243m2026-11-26T04:31:02.471768098Z[39m 2026-11-26T04:31:02+00:00 INFO request=1755 service=app-server healthy=true
-[38;5;243m2026-11-26T04:31:02.472389340Z[39m 2026-11-26T04:31:02+00:00 [38;5;163mWARN[39m request=1755 demonstration warning from live workload
-[38;5;243m2026-11-26T04:31:04.473354457Z[39m 2026-11-26T04:31:04+00:00 INFO request=1756 service=app-server healthy=true
-[38;5;243m2026-11-26T04:31:04.474048171Z[39m 2026-11-26T04:31:04+00:00 [38;5;163mWARN[39m request=1756 demonstration warning from live workload
-[38;5;243m2026-11-26T04:31:06.475057974Z[39m 2026-11-26T04:31:06+00:00 INFO request=1757 service=app-server healthy=true
-[38;5;243m2026-11-26T04:31:06.475444853Z[39m 2026-11-26T04:31:06+00:00 [38;5;163mWARN[39m request=1757 demonstration warning from live workload
-[38;5;243m2026-11-26T04:31:08.476606543Z[39m 2026-11-26T04:31:08+00:00 INFO request=1758 service=app-server healthy=true
-[38;5;243m2026-11-26T04:31:08.477138567Z[39m 2026-11-26T04:31:08+00:00 [38;5;163mWARN[39m request=1758 demonstration warning from live workload
-[38;5;243m2026-11-26T04:31:10.478305413Z[39m 2026-11-26T04:31:10+00:00 INFO request=1759 service=app-server healthy=true
-[38;5;243m2026-11-26T04:31:10.478917680Z[39m 2026-11-26T04:31:10+00:00 [38;5;163mWARN[39m request=1759 demonstration warning from live workload
+[38;5;243m└─[39m [1mrows 1-20 / 20 · 20 lines 2.2 KiB since 2026-11-26 09:44:46, newest only (+ more, A all)[0m [38;5;243m────────────────────────────────────────────────────────────────────────────┘[39m
+[38;5;243m2026-11-26T09:44:46.368594142Z[39m 2026-11-26T09:44:46+00:00 INFO request=11165 service=app-server healthy=true
+[38;5;243m2026-11-26T09:44:46.369061787Z[39m 2026-11-26T09:44:46+00:00 [38;5;163mWARN[39m request=11165 demonstration warning from live workload
+[38;5;243m2026-11-26T09:44:48.370332494Z[39m 2026-11-26T09:44:48+00:00 INFO request=11166 service=app-server healthy=true
+[38;5;243m2026-11-26T09:44:48.370841683Z[39m 2026-11-26T09:44:48+00:00 [38;5;163mWARN[39m request=11166 demonstration warning from live workload
+[38;5;243m2026-11-26T09:44:50.371865033Z[39m 2026-11-26T09:44:50+00:00 INFO request=11167 service=app-server healthy=true
+[38;5;243m2026-11-26T09:44:50.372604862Z[39m 2026-11-26T09:44:50+00:00 [38;5;163mWARN[39m request=11167 demonstration warning from live workload
+[38;5;243m2026-11-26T09:44:52.373719514Z[39m 2026-11-26T09:44:52+00:00 INFO request=11168 service=app-server healthy=true
+[38;5;243m2026-11-26T09:44:52.374344586Z[39m 2026-11-26T09:44:52+00:00 [38;5;163mWARN[39m request=11168 demonstration warning from live workload
+[38;5;243m2026-11-26T09:44:54.375402292Z[39m 2026-11-26T09:44:54+00:00 INFO request=11169 service=app-server healthy=true
+[38;5;243m2026-11-26T09:44:54.375931234Z[39m 2026-11-26T09:44:54+00:00 [38;5;163mWARN[39m request=11169 demonstration warning from live workload
+[38;5;243m2026-11-26T09:44:56.377100203Z[39m 2026-11-26T09:44:56+00:00 INFO request=11170 service=app-server healthy=true
+[38;5;243m2026-11-26T09:44:56.377634902Z[39m 2026-11-26T09:44:56+00:00 [38;5;163mWARN[39m request=11170 demonstration warning from live workload
+[38;5;243m2026-11-26T09:44:58.378640310Z[39m 2026-11-26T09:44:58+00:00 INFO request=11171 service=app-server healthy=true
+[38;5;243m2026-11-26T09:44:58.379543400Z[39m 2026-11-26T09:44:58+00:00 [38;5;163mWARN[39m request=11171 demonstration warning from live workload
+[38;5;243m2026-11-26T09:45:00.380393768Z[39m 2026-11-26T09:45:00+00:00 INFO request=11172 service=app-server healthy=true
+[38;5;243m2026-11-26T09:45:00.380959518Z[39m 2026-11-26T09:45:00+00:00 [38;5;163mWARN[39m request=11172 demonstration warning from live workload
+[38;5;243m2026-11-26T09:45:02.382093710Z[39m 2026-11-26T09:45:02+00:00 INFO request=11173 service=app-server healthy=true
+[38;5;243m2026-11-26T09:45:02.382837506Z[39m 2026-11-26T09:45:02+00:00 [38;5;163mWARN[39m request=11173 demonstration warning from live workload
+[38;5;243m2026-11-26T09:45:04.383848524Z[39m 2026-11-26T09:45:04+00:00 INFO request=11174 service=app-server healthy=true
+[38;5;243m2026-11-26T09:45:04.384409329Z[39m 2026-11-26T09:45:04+00:00 [38;5;163mWARN[39m request=11174 demonstration warning from live workload
 
 
 

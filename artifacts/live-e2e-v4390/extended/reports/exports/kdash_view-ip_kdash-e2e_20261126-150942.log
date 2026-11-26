@@ -1,0 +1,107 @@
+# kdash 4.39.0 - quick export (key >)
+# screen   : dashboard, view IP POOL (4) | pod filter .* | sort cpu
+# context  : kdash-local    namespace: kdash-e2e
+# taken    : 2026-11-26 15:09:42 +0530 by operator on Dheeraj (session 20261126-150921-89616)
+# a copy of what kdash showed - nothing was run against the cluster to make it
+
+================================================================================
+ ON THE SCREEN (50 rows, as you saw it)
+================================================================================
+ KDASH 4.39.0 │ KUBERNETES RESOURCES │ context kdash-local │ namespace kdash-e2e                                                          read-only │ audited │ Dheeraj V
+  1 PODS   2 NODE POOLS   3 WORKLOADS   4 IP POOL   5 MEMORY   6 NET & DISK IO   7 ALERTS   8 SVCS   9 STOR   E EVENTS   ! WHY   2026-11-26 15:09:41 IST
+┌─ SCOPE ───────────────────────────────────────────────┬─ POD HEALTH ────────────────────────────────┬─ USAGE vs LIMITS ───────────────────┬─ WORKLOADS · EVENTS ───────┐
+│ match .*   sorted by IP address                       │ ! pods 14/18 ready   restarts 628           │ cpu     61m ░░░░░░░░   3% lim       │ workloads 14               │
+│ poll 2s  spec 20s/30s   session 15:09:21 up 20s       │ OOM risk 0   OOMKilled 0   no-limit 1       │ mem     2Mi ░░░░░░░░   0% lim       │ events 15m ! 0  ^ 0        │
+└───────────────────────────────────────────────────────┴─────────────────────────────────────────────┴─────────────────────────────────────┴────────────────────────────┘
+ DATA ● pods fresh 20s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ IP POOL   namespace pod IPs, node IP blocks, subnets and service addresses
+┌─ ADDRESSES ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ pod IPs 14 in use   no IP 4   host-network 0   duplicate 0   subnets 1                                                                                                 │
+│ services 11   ClusterIP 7   headless 2   NodePort 2   LoadBalancer 2   external addresses 0                                                                            │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+► POD SUBNETS (observed, /24) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SUBNET                 PODS  NODES
+  10.244.0.0/24            14  dev
+
+► NODE IP BLOCKS (per worker node) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 █░░░░░░░░░  10.244.0.128/26 10.244.0.64/26
+
+► SERVICES ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  app-server                           ClusterIP              10.111.83.216    -                        80/TCP
+  db-headless                          ClusterIP/Headless     None             -                        5432/TCP
+  external-api                         ExternalName           -                -                        -
+  functionality-external               ExternalName           -                -                        -
+  functionality-headless               ClusterIP/Headless     None             -                        8080/TCP
+  functionality-loadbalancer           LoadBalancer           10.109.199.192   -                        8080/TCP
+  functionality-nodeport               NodePort               10.102.33.174    -                        8080/TCP
+  kdash-secrets-live                   ClusterIP              10.97.194.243    -                        80/TCP
+  missing-backend                      ClusterIP              10.104.104.128   -                        80/TCP
+  web-loadbalancer                     LoadBalancer           10.101.152.223   -                        80/TCP
+  web-nodeport                         NodePort               10.107.100.32    -                        80/TCP
+
+► POD IP ASSIGNMENTS ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.68      nightly-report-29928085-sm4xz                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.70      nightly-report-29928090-sx6nw                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.72      nightly-report-29928095-2kb82                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.152     node-agent-ctvg6                             dev                        172.18.0.2       node-agent
+  10.244.0.156     kdash-secrets-live-consumer                  dev                        172.18.0.2       kdash-secrets-live-consumer
+  10.244.0.157     z-oom                                        dev                        172.18.0.2       z-oom
+  10.244.0.159     db-stateful-0                                dev                        172.18.0.2       db-stateful
+  10.244.0.163     app-server-8fb4699bc-t7zxj                   dev                        172.18.0.2       app-server
+  10.244.0.166     app-server-8fb4699bc-cx5vz                   dev                        172.18.0.2       app-server
+  10.244.0.167     functionality-legacy-67ks7                   dev                        172.18.0.2       functionality-legacy
+  10.244.0.175     z-imagepull                                  dev                        172.18.0.2       z-imagepull                  ImagePullBackOff
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ legend IP blocks are derived from live pod IPs (Calico-style /26 per node).  CIDR# = node podCIDR addresses, NSIPS = this namespace uses.  HOST_NETWORK pods share the n›
+ exported to /var/tmp/kdash-extended-exports-a8ivvqv4/kdash_view-workloads_kdash-e2e_20261126-150937.log | ● LIVE 15:09:42  next 1s  data 1s old  fetch 0.0s  AUDITED
+
+================================================================================
+ THE WHOLE IP POOL VIEW (42 lines, every line and column - nothing cut)
+================================================================================
+► POD SUBNETS (observed, /24) ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SUBNET                 PODS  NODES
+  10.244.0.0/24            14  dev
+
+► NODE IP BLOCKS (per worker node) ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  NODE                           POOL           NODE IP          POD CIDR            CIDR# NSIPS  HOST CIDR USE    IP BLOCKS (observed /26)
+  dev                            role:control-~ 172.18.0.2       10.244.0.0/24         254    14     0 █░░░░░░░░░  10.244.0.128/26 10.244.0.64/26
+
+► SERVICES ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  SERVICE                              TYPE                   CLUSTER IP       EXTERNAL / LB            PORTS
+  app-server                           ClusterIP              10.111.83.216    -                        80/TCP
+  db-headless                          ClusterIP/Headless     None             -                        5432/TCP
+  external-api                         ExternalName           -                -                        -
+  functionality-external               ExternalName           -                -                        -
+  functionality-headless               ClusterIP/Headless     None             -                        8080/TCP
+  functionality-loadbalancer           LoadBalancer           10.109.199.192   -                        8080/TCP
+  functionality-nodeport               NodePort               10.102.33.174    -                        8080/TCP
+  kdash-secrets-live                   ClusterIP              10.97.194.243    -                        80/TCP
+  missing-backend                      ClusterIP              10.104.104.128   -                        80/TCP
+  web-loadbalancer                     LoadBalancer           10.101.152.223   -                        80/TCP
+  web-nodeport                         NodePort               10.107.100.32    -                        80/TCP
+
+► POD IP ASSIGNMENTS ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  POD IP           POD                                          NODE                       HOST IP          WORKLOAD                     NOTE
+  10.244.0.68      nightly-report-29928085-sm4xz                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.70      nightly-report-29928090-sx6nw                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.72      nightly-report-29928095-2kb82                dev                        172.18.0.2       nightly-report               Succeeded
+  10.244.0.152     node-agent-ctvg6                             dev                        172.18.0.2       node-agent
+  10.244.0.156     kdash-secrets-live-consumer                  dev                        172.18.0.2       kdash-secrets-live-consumer
+  10.244.0.157     z-oom                                        dev                        172.18.0.2       z-oom
+  10.244.0.159     db-stateful-0                                dev                        172.18.0.2       db-stateful
+  10.244.0.163     app-server-8fb4699bc-t7zxj                   dev                        172.18.0.2       app-server
+  10.244.0.166     app-server-8fb4699bc-cx5vz                   dev                        172.18.0.2       app-server
+  10.244.0.167     functionality-legacy-67ks7                   dev                        172.18.0.2       functionality-legacy
+  10.244.0.175     z-imagepull                                  dev                        172.18.0.2       z-imagepull                  ImagePullBackOff
+  10.244.0.176     test-sts-0                                   dev                        172.18.0.2       test-sts
+  10.244.0.177     db-stateful-1                                dev                        172.18.0.2       db-stateful
+  10.244.0.178     z-crash                                      dev                        172.18.0.2       z-crash                      CrashLoopBackOff
+  -                completed-check-m9swm                        dev                        172.18.0.2       completed-check              NO_IP
+  -                sync-pod                                     dev                        172.18.0.2       sync-pod                     NO_IP
+  -                z-pending                                    (unscheduled)              -                z-pending                    NO_IP
+  -                z-unschedulable                              (unscheduled)              -                z-unschedulable              NO_IP
+
+# end of export

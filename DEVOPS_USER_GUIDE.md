@@ -39,8 +39,10 @@ Run `live-e2e-v4390` records **324 passed live checks**, **33 passed browser che
 
 
 
+
+
 The run covers 200 baseline checks plus 124 extension checks, 31 Secrets checks,
-33 browser checks and all 19 fixture suites; 136 terminal screenshots are
+33 browser checks and all 20 fixture suites; 136 terminal screenshots are
 published with native grabs and ANSI replays.
 
 Current screenshots include native xterm windows captured live inside WSL on an

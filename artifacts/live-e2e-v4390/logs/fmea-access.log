@@ -1,6 +1,6 @@
 ACCESS  -  what you may read, checked with kubectl auth whoami / can-i - every FMEA check runs only where this allows
 
- user kubernetes-super-admin   groups system:masters system:authenticated   context kdash-local   scope kdash-e2e   checked 1s ago
+ user kubernetes-super-admin   groups system:masters system:authenticated   context kdash-local   scope kdash-e2e   checked 2s ago
 
 PERMISSIONS  26 permissions   read verbs only; kdash never impersonates (--as) and never asks for more
 ┌──────────────────────────────────────────┬─────────────┬─────────┬──────────────────────────┐

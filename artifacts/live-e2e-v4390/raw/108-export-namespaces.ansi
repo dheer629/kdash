@@ -40,7 +40,7 @@
 
 
 
-[38;5;243m──[39m [38;5;29m►[39m exported to /var/tmp/kdash-extended-exports-di3zf4hz/kdash_namespace-list_kdash-local_20261126-095703.log [38;5;243m──────────────────────────────────────[39m [38;5;243m1 / 14 · audited[39m [38;5;243m──[39m
+[38;5;243m──[39m [38;5;29m►[39m exported to /var/tmp/kdash-extended-exports-a8ivvqv4/kdash_namespace-list_kdash-local_20261126-151054.log [38;5;243m──────────────────────────────────────[39m [38;5;243m1 / 14 · audited[39m [38;5;243m──[39m
 [38;5;243m┌─[39m [1mMOVE[0m [38;5;243m──────────────────┬─[39m [1mFIND[0m [38;5;243m────────────────────┬─[39m [1mLEAVE[0m [38;5;243m────────────────────────────┬─[39m [1mCHOOSE[0m [38;5;243m───────────────────────────────────────────────────────────────────┐[39m
 [38;5;243m│[39m [1mj/k ↑↓[0m     move         [38;5;243m│[39m [1m/[0m  filter by name         [38;5;243m│[39m [1mq / Esc[0m  cancel, stay on kdash-e2e [38;5;243m│[39m [1mEnter[0m  open kdash-e2e                                                      [38;5;243m│[39m
 [38;5;243m│[39m [1mPgUp/PgDn[0m  page         [38;5;243m│[39m [1mt[0m  type a name not listed [38;5;243m│[39m [1mQ[0m        quit kdash                [38;5;243m│[39m [1mA[0m      all namespaces at once                                              [38;5;243m│[39m

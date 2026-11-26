@@ -6,7 +6,7 @@ PVCs, certificate fixtures and container logs. The validation runner uses an
 isolated kubeconfig, kdash configuration, audit directory and tmux socket.
 
 The run records 200 baseline checks plus 124 extension checks (324 live checks),
-31 Secrets-map checks, 33 browser checks and all 19 fixture suites. It saved 136
+31 Secrets-map checks, 33 browser checks and all 20 fixture suites. It saved 136
 terminal screenshots (131 run captures plus 5 Secrets-map captures), each with a
 native xterm grab and an ANSI replay. The whole-log check read a real
 kubelet-rotated file, and the narrow audit table check rendered live events with

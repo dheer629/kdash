@@ -1,31 +1,31 @@
  KDASH 4.39.0 │ context kdash-local │ namespace kdash-e2e               audited 
-  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   09:15:26 IST
+  1 PODS   2 NODES   3 WLOADS   4 IP   5 MEM   6 IO   7 ALERTS   14:58:57 IST
  match .*   sort cpu ▼ high first
- ! pods 14/18 ready rst 547 oom 0 oomk 0 nolim 1 cpu 58m 3% lim mem 1Mi 0% lim
+ ! pods 14/18 ready rst 624 oom 0 oomk 0 nolim 1 cpu 58m 3% lim mem 2Mi 0% lim
     wl 14
- DATA ● pods fresh 0s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
+ DATA ● pods fresh 1s old  metrics available │ C certs │ / search │ K check │ i inspect │ 8 services  9 storage  E events  ! explain │ : commands
  NODE POOLS   this namespace vs the selected namespaces (--compare), per pool and worker node
- namespace  18 pods on 1 of 1 nodes   mem used 1Mi  req 276Mi  lim 976Mi   cpu used 58m  req 315m  lim 1750m
- cluster    1 nodes  2 pools   alloc mem 7524Mi  cpu 24.0c   used mem 2222Mi (29.5%)  cpu 411m (1.7%)
- selected   20 pods in 2 namespaces   requested mem 1080Mi (14.4% of cluster)  cpu 700m (2.9%)   used mem 419Mi  cpu 122m (pod metrics)   (kdash-e2e default)
-            namespace share of the selected namespaces   mem used    0.2%  req   25.6%   cpu used   47.5%  req   45.0%   pods   90.0%
+ namespace  18 pods on 1 of 1 nodes   mem used 2Mi  req 276Mi  lim 976Mi   cpu used 58m  req 315m  lim 1750m
+ cluster    1 nodes  2 pools   alloc mem 7524Mi  cpu 24.0c   used mem 2638Mi (35.1%)  cpu 374m (1.6%)
+ selected   20 pods in 2 namespaces   requested mem 1080Mi (14.4% of cluster)  cpu 700m (2.9%)   used mem 528Mi  cpu 118m (pod metrics)   (kdash-e2e default)
+            namespace share of the selected namespaces   mem used    0.4%  req   25.6%   cpu used   49.2%  req   45.0%   pods   90.0%
             namespace share of cluster   mem used 0.0%  req 3.7%   cpu used 0.2%  req 1.3%   pool label node-role
  i comparing with the namespaces given by --compare / KDASH_COMPARE_NS (2 readable)
 ────────────────────────────────────────────────────────────────────────────────
 ► NAMESPACE vs SELECTED NAMESPACES  share of pool allocatable:   █ used   ▒ requested, not used   ░ free    zoom x20  left bars magnified, % values true - Z: true scale
 POOL [ns nodes/all]                    ALLOC │ THIS NA~     used / req  │ SELECTE~     used / req
-role:control-plane,master [1/~ mem    7524Mi │ █▒▒▒▒░░░   0.0% /  3.2% │ █▒░░░░░░   5.6% / 13.5%
+role:control-plane,master [1/~ mem    7524Mi │ █▒▒▒▒░░░   0.0% /  3.2% │ █▒░░░░░░   7.0% / 13.5%
                                cpu     24.0c │ █▒░░░░░░   0.2% /  1.1% │ █▒░░░░░░   0.5% /  2.5%
 ────────────────────────────────────────────────────────────────────────────────
-CLUSTER TOTAL                  mem    7524Mi │ █▒▒▒▒▒░░   0.0% /  3.7% │ █▒░░░░░░   5.6% / 14.4%
+CLUSTER TOTAL                  mem    7524Mi │ █▒▒▒▒▒░░   0.0% /  3.7% │ █▒░░░░░░   7.0% / 14.4%
                                cpu     24.0c │ █▒░░░░░░   0.2% /  1.3% │ █▒░░░░░░   0.5% /  2.9%
 
 ► WORKER NODES RUNNING THIS NAMESPACE  grouped by pool ───────────────────────
                                              │       CPU millicores       │                   MEMORY GiB                  
 POOL [ns nodes/all] /~ STATUS    PODS ns/all │ nsUsed  nsReq  alloc   %al │  nsUsed   nsReq   nsLim   alloc   %al node% clReq%
-► role:control-plane,~                 16/17 │     58    260  24000   0.2 │     0.0     0.2     0.8     7.3   0.0  29.5   13.5
-  dev                  Ready           16/17 │     58    260  24000   0.2 │     0.0     0.2     0.8     7.3   0.0  29.5   13.5
-      ip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 14/16   ns-restarts 547   namespaces 2   readable-req mem 1012Mi cpu 595m   node-cpu 411m (2%)   node-mem 2222Mi of 7524Mi
+► role:control-plane,~                 16/17 │     58    260  24000   0.2 │     0.0     0.2     0.8     7.3   0.0  35.1   13.5
+  dev                  Ready           16/17 │     58    260  24000   0.2 │     0.0     0.2     0.8     7.3   0.0  35.1   13.5
+      ip 172.18.0.2   podCIDR 10.244.0.0/24   roles control-plane,master   ns-ready 14/16   ns-restarts 624   namespaces 2   readable-req mem 1012Mi cpu 595m   node-cpu 374m (2%)   node-mem 2638Mi of 7524Mi
 
 ► unscheduled pods                       2/3 │      -     55      -     - │       -     0.0     0.2       -     -     -      -
   (unscheduled)        -                 2/3 │      -     55      -     - │       -     0.0     0.2       -     -     -      -
@@ -33,8 +33,8 @@ POOL [ns nodes/all] /~ STATUS    PODS ns/all │ nsUsed  nsReq  alloc   %al │ 
 
 ► SELECTED NAMESPACES  usage and requests of each namespace compared - bar: share of the memory used by all of them
   NAMESPACE                           PODS rdy  WKLD NODES  CPU used   CPU req  MEM used   MEM req   MEM lim   %used  %clMem │ share of memory used
-  default                                  5/7     7     1       64m      420m     416Mi     856Mi    2864Mi    99.3    11.4 │ ██████████████████████████████
-  ► kdash-e2e                             9/13    11     1       58m      280m       3Mi     224Mi     848Mi     0.7     3.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  default                                  5/7     7     1       60m      420m     526Mi     856Mi    2864Mi    99.6    11.4 │ ██████████████████████████████
+  ► kdash-e2e                             9/13    11     1       58m      280m       2Mi     224Mi     848Mi     0.4     3.0 │ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ────────────────────────────────────────────────────────────────────────────────
-NAMESPACE (1 nodes)                       18 │     58    315  24000   0.2 │     0.0     0.3     1.0     7.3   0.0  29.5      -
+NAMESPACE (1 nodes)                       18 │     58    315  24000   0.2 │     0.0     0.3     1.0     7.3   0.0  35.1      -
  legend nsUsed/nsReq/nsLim = this namespace.  alloc = allocatable.  %al = namespace share.  node% = whole node used.  clReq% = requested by the namespaces you can read.

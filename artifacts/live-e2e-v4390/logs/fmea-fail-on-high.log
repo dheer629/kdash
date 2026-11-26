@@ -20,7 +20,7 @@ WORKSHEET  60 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 │ 5  │ HIGH   │  8 │ 10 │  4 │ 320 │ SVC-01 │ kdash-e2e/web-       │ No endpoints         │ selector app=app-server  │
 │    │        │    │    │    │     │        │ nodeport             │                      │ matches no pod in this   │
 │    │        │    │    │    │     │        │                      │                      │ scope                    │
-│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash    │ CrashLoopBackOff     │ CrashLoopBackOff, 461    │
+│ 6  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-01 │ kdash-e2e/z-crash    │ CrashLoopBackOff     │ CrashLoopBackOff, 528    │
 │    │        │    │    │    │     │        │                      │                      │ restarts (last: Error)   │
 │ 7  │ HIGH   │  7 │ 10 │  4 │ 280 │ POD-03 │ kdash-e2e/z-pending  │ Pending,             │ Pending                  │
 │    │        │    │    │    │     │        │                      │ unschedulable        │                          │
@@ -99,11 +99,11 @@ WORKSHEET  60 rows   * = O estimated (under 7 days of saved runs) - s sorts AP /
 │    │        │    │    │    │     │        │                      │ failing              │                          │
 │ 40 │ LOW    │  6 │  4 │  2 │  48 │ CFG-02 │ kdash-e2e/           │ Certificate inside   │ cert-manager             │
 │    │        │    │    │    │     │        │ functionality-       │ it expiring or       │ certificate expires in   │
-│    │        │    │    │    │     │        │ certificate          │ broken               │ 18 d (2026-12-14 09:16   │
+│    │        │    │    │    │     │        │ certificate          │ broken               │ 17 d (2026-12-14 09:16   │
 │    │        │    │    │    │     │        │                      │                      │ UTC)                     │
 │ 41 │ LOW    │  6 │  4 │  2 │  48 │ CFG-02 │ kdash-e2e/           │ Certificate inside   │ certificate              │
 │    │        │    │    │    │     │        │ functionality-tls    │ it expiring or       │ functionality.local.test │
-│    │        │    │    │    │     │        │                      │ broken               │  (ca.crt) expires in 18  │
+│    │        │    │    │    │     │        │                      │ broken               │  (ca.crt) expires in 17  │
 │    │        │    │    │    │     │        │                      │                      │ d; cert-manager:         │
 │    │        │    │    │    │     │        │                      │                      │ functionality-           │
 │    │        │    │    │    │     │        │                      │                      │ certificate (issuer      │
@@ -166,7 +166,7 @@ NEXT COMMANDS  -  read = only reads, CHANGE = modifies the cluster or a node (pr
       read   kubectl --context kdash-local -n kdash-e2e get service web-nodeport -o jsonpath='{.spec.selector}{"\n"}'  # what the Service selects
       CHANGE kubectl --context kdash-local -n kdash-e2e edit service web-nodeport  # make spec.selector match the pod labels (or fix the labels on the workload)
 
-  #6  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 461 restarts (last: Error)
+  #6  CRITICAL  kdash-e2e/z-crash  POD-01 CrashLoopBackOff: CrashLoopBackOff, 528 restarts (last: Error)
       read   kubectl --context kdash-local -n kdash-e2e logs z-crash --all-containers --previous --tail=100  # why the last run ended
       read   kubectl --context kdash-local -n kdash-e2e describe pod z-crash  # exit codes, reasons and events
 

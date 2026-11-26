@@ -20,5 +20,5 @@
    [1m[38;5;63ms[0m          next sort key        [1m[38;5;63mo[0m  reverse the sort order     [1m[38;5;63mw[0m  PODS grouped / flat
    [1m[38;5;63mj k arrows[0m scroll               [1m[38;5;63mh l arrows[0m  pan left / right   [1m[38;5;63mg G[0m  top / bottom
    [1m[38;5;63md[0m          detail lines         [1m[38;5;63ma[0m  NODE POOLS: other nodes    [1m[38;5;63mp[0m  PODS: pods only
-   [1m[38;5;63mx[0m          HTML report (all tabs + history)   [1m[38;5;63me[0m  HTML menu    [1m[38;5;63mr[0m  re-read now
-[1m[38;5;231m[48;5;24m -- lines 1-21 of 55: Space next page, any other key returns --[0m
+   [1m[38;5;63mx[0m          HTML report (all tabs + history)   ^E HTML menu    [1m[38;5;63mr[0m  re-read now
+[1m[38;5;231m[48;5;24m -- lines 1-21 of 56: Space next page, any other key returns --[0m

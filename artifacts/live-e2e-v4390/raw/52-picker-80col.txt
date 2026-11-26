@@ -4,20 +4,20 @@
 ┌──────────────────────────┬─────────┬───────┬─────┬────────┬─────────┬───────┐
 │ POD                      │ STATUS  │ READY │ RST │    CPU │     MEM │  %LIM │
 ├──────────────────────────┼─────────┼───────┼─────┼────────┼─────────┼───────┤
-│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  21 │     3m │     0Mi │    0% │
-│ app-server-8~699bc-t7zxj │ Running │ 2/2   │  20 │     2m │     0Mi │    0% │
+│ app-server-8~699bc-cx5vz │ Running │ 2/2   │  21 │     3m │     1Mi │    1% │
+│ app-server-8~699bc-t7zxj │ Running │ 2/2   │  20 │     3m │     0Mi │    0% │
 │ completed-check-m9swm    │ Succeed │ 0/1   │   0 │      - │       - │     - │
 │ db-stateful-0            │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
 │ db-stateful-1            │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
 │ functionalit~egacy-67ks7 │ Running │ 1/1   │   3 │     1m │     0Mi │    0% │
-│ kdash-secret~ve-consumer │ Running │ 1/1   │   3 │     0m │     0Mi │    0% │
-│ nightly-repo~27740-mqxh6 │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ nightly-repo~27745-vvwzh │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ nightly-repo~27750-c7zrv │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ kdash-secret~ve-consumer │ Running │ 1/1   │   9 │     0m │     0Mi │    0% │
+│ nightly-repo~28085-sm4xz │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~28090-sx6nw │ Succeed │ 0/1   │   0 │      - │       - │     - │
+│ nightly-repo~28095-2kb82 │ Succeed │ 0/1   │   0 │      - │       - │     - │
 │ node-agent-ctvg6         │ Running │ 1/1   │   4 │     1m │     0Mi │    0% │
 │ sync-pod                 │ Succeed │ 0/1   │   0 │      - │       - │     - │
-│ test-sts-0               │ Running │ 1/1   │  26 │     0m │     0Mi │     - │
-│ z-crash                  │ CrashLo │ 0/1   │ 462 │      - │       - │     - │
+│ test-sts-0               │ Running │ 1/1   │  32 │     0m │     0Mi │     - │
+│ z-crash                  │ CrashLo │ 0/1   │ 529 │      - │       - │     - │
 │ z-imagepull              │ ImagePu │ 0/1   │   0 │      - │       - │     - │
 │ z-oom                    │ Running │ 1/1   │   3 │    50m │     1Mi │    6% │
 └──────────────────────────┴─────────┴───────┴─────┴────────┴─────────┴───────┘

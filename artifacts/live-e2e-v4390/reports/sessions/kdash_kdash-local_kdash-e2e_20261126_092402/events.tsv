@@ -1,4 +1,0 @@
-EPOCH	SEVERITY	KIND	OBJECT	MESSAGE
-1795665242	info	SESSION	kdash-e2e	kdash 4.39.0 started on Dheeraj by dheer - filter .*
-1795665265	bad	STATUS	z-crash	NotReady -> CrashLoopBackOff on dev
-1795665280	info	SESSION	kdash-e2e	kdash stopped after 38s

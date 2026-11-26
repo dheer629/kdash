@@ -7,21 +7,19 @@ DATA SOURCES   context kdash-local
 │ events │ ● ok  │ 0s ago │ kdash-e2e / pod z-crash │ read succeeded │
 └────────┴───────┴────────┴─────────────────────────┴────────────────┘
 
-WARNING EVIDENCE  2 items   one row per object and category, newest first, up to 20
-┌───┬───────────┬─────────────┬────────────────────────┬───────┬──────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ # │ LAST SEEN │ OBJECT      │ REASON                 │ COUNT │ CATEGORY │ MESSAGE                                                                                                                                                                                                                                                                                         │
-├───┼───────────┼─────────────┼────────────────────────┼───────┼──────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1 │ 3m        │ Pod/z-crash │ BackOff                │    44 │ restart  │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3)                                                                                                                                                                                       │
-│ 2 │ 13m       │ Pod/z-crash │ FailedCreatePodSandBox │     1 │ other    │ Failed to create pod sandbox: rpc error: code = Unknown desc = failed to setup network for sandbox "82c5ac7813fb1524d6ebbdbeea1c043cdbe7f50ff98f8495a91af0aa4ccf69d7": plugin type="flannel" failed (add): loadFlannelSubnetEnv failed: open /run/flannel/subnet.env: no such file or directory │
-└───┴───────────┴─────────────┴────────────────────────┴───────┴──────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+WARNING EVIDENCE  1 item   one row per object and category, newest first, up to 20
+┌───┬───────────┬─────────────┬─────────┬───────┬──────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ # │ LAST SEEN │ OBJECT      │ REASON  │ COUNT │ CATEGORY │ MESSAGE                                                                                                   │
+├───┼───────────┼─────────────┼─────────┼───────┼──────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1 │ 1m        │ Pod/z-crash │ BackOff │  1614 │ restart  │ Back-off restarting failed container crash in pod z-crash_kdash-e2e(c908fc39-4ddb-46bf-b546-41038ddd13a3) │
+└───┴───────────┴─────────────┴─────────┴───────┴──────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-POSSIBLE EXPLANATIONS  2 categories   hypotheses to check, not conclusions
-┌──────────┬──────────┬─────────────────────────────────────────────────────────────────────────────────────┐
-│ CATEGORY │ EVIDENCE │ POSSIBLE EXPLANATION                                                                │
-├──────────┼──────────┼─────────────────────────────────────────────────────────────────────────────────────┤
-│ restart  │ #1       │ a container may be exiting repeatedly - the event alone does not say why            │
-│ other    │ #2       │ needs object-specific investigation - its presence alone does not establish a cause │
-└──────────┴──────────┴─────────────────────────────────────────────────────────────────────────────────────┘
+POSSIBLE EXPLANATIONS  1 category   hypotheses to check, not conclusions
+┌──────────┬──────────┬──────────────────────────────────────────────────────────────────────────┐
+│ CATEGORY │ EVIDENCE │ POSSIBLE EXPLANATION                                                     │
+├──────────┼──────────┼──────────────────────────────────────────────────────────────────────────┤
+│ restart  │ #1       │ a container may be exiting repeatedly - the event alone does not say why │
+└──────────┴──────────┴──────────────────────────────────────────────────────────────────────────┘
 
 NEXT COMMANDS  -  printed only - kdash never runs them; read = only reads, CHANGE = modifies the cluster
 

@@ -16,7 +16,7 @@
 [90m│[39m checksum in the container  [90m│[39m [32m● pass[39m    [90m│[39m sha256sum - every file is verified after the copy                                                                            [90m│[39m
 [90m│[39m readable in the container  [90m│[39m [32m● pass[39m    [90m│[39m 1 of 1 item(s)                                                                                                               [90m│[39m
 [90m│[39m local directory            [90m│[39m [32m● pass[39m    [90m│[39m writable                                                                                                                     [90m│[39m
-[90m│[39m local free space           [90m│[39m [32m● pass[39m    [90m│[39m 470.1 GiB free, about 1.0 KiB needed                                                                                         [90m│[39m
+[90m│[39m local free space           [90m│[39m [32m● pass[39m    [90m│[39m 462.0 GiB free, about 1.0 KiB needed                                                                                         [90m│[39m
 [90m│[39m names                      [90m│[39m [35m● check[39m   [90m│[39m 1 item already here - Enter asks: replace or keep both                                                                       [90m│[39m
 [90m└────────────────────────────┴───────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘[39m
 

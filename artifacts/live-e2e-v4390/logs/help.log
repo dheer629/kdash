@@ -147,7 +147,7 @@ OTHER
 
 KEYS WHILE RUNNING
   1-9 / Tab     switch view       x         HTML report: all tabs + history so far
-  e             HTML menu: all-tabs report, current view, views 1-6, or the bundle
+  E / e         events view        ^E        HTML menu: all-tabs report, current view, views 1-6, or the bundle
   j k / arrows  scroll            space b   page down / up
   h l / arrows  pan left / right  0         back to column 1
   g G           top / bottom      /         search box: find in the view (n/N), Tab = pod filter

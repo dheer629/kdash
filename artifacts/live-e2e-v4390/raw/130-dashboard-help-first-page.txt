@@ -20,5 +20,5 @@
    s          next sort key        o  reverse the sort order     w  PODS grouped / flat
    j k arrows scroll               h l arrows  pan left / right   g G  top / bottom
    d          detail lines         a  NODE POOLS: other nodes    p  PODS: pods only
-   x          HTML report (all tabs + history)   e  HTML menu    r  re-read now
- -- lines 1-21 of 55: Space next page, any other key returns --
+   x          HTML report (all tabs + history)   ^E HTML menu    r  re-read now
+ -- lines 1-21 of 56: Space next page, any other key returns --

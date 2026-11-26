@@ -26,6 +26,8 @@ the detailed per-release notes.
 - Retry kubelet I/O source detection after node inventory loads on startup.
 - Keep UTF-8 characters intact when wrapping or clipping inspector text.
 - Return a verification error when audit records or their hashes cannot be read.
+- Open the Events view with `e` as well as `E`. The HTML export menu moved to
+  Ctrl-E, so typing `e` no longer leaves a prompt that swallows the next key.
 
 ## [4.37.0] - 2026-11-19
 

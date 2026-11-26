@@ -1,0 +1,7 @@
+PASS: e and E both switch to the Events view
+PASS: the HTML export menu is bound to Ctrl-E
+PASS: lowercase e no longer opens the HTML menu prompt
+PASS: both keys appear in the dashboard help text
+PASS: the README key table documents both bindings
+PASS: the installer summary matches the new binding
+PASS: 6 Events/HTML-menu key checks
